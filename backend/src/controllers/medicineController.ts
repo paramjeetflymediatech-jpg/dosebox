@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Op } from 'sequelize';
+import { Op, col } from 'sequelize';
 import { Medicine, Category, Brand, Inventory, Review, User } from '../models';
 import redisClient from '../config/redis';
 
@@ -292,7 +292,7 @@ export class MedicineController {
         }],
         where: {
           stock: {
-            [Op.lte]: Op.col('inventory.minStockAlertThreshold')
+            [Op.lte]: col('inventory.minStockAlertThreshold')
           }
         }
       });

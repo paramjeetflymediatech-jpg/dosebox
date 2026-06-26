@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Op } from 'sequelize';
+import { Op, col } from 'sequelize';
 import { 
   Order, User, Medicine, Prescription, Category, Coupon, Banner, Blog, Inventory, OrderItem 
 } from '../models';
@@ -33,7 +33,7 @@ export class AdminController {
         }],
         where: {
           stock: {
-            [Op.lte]: Op.col('inventory.minStockAlertThreshold')
+            [Op.lte]: col('inventory.minStockAlertThreshold')
           }
         }
       });

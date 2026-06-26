@@ -274,7 +274,7 @@ export class OrderController {
   public static async getInvoicePdf(req: AuthenticatedRequest, res: Response) {
     try {
       const { id } = req.params;
-      const order = await Order.findByPk(id, {
+      const order: any = await Order.findByPk(id, {
         include: [
           { model: User, as: 'user' },
           { model: Address, as: 'shippingAddress' },

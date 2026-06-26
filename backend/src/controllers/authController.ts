@@ -86,13 +86,13 @@ export class AuthController {
       const accessToken = jwt.sign(
         { id: user.id, email: user.email, roleId: user.roleId, roleName },
         JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || '1h' }
+        { expiresIn: (process.env.JWT_EXPIRE || '1h') as any }
       );
 
       const refreshToken = jwt.sign(
         { id: user.id },
         JWT_REFRESH_SECRET,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRE || '7d') as any }
       );
 
       return res.status(200).json({
@@ -137,7 +137,7 @@ export class AuthController {
       const accessToken = jwt.sign(
         { id: user.id, email: user.email, roleId: user.roleId, roleName },
         JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || '1h' }
+        { expiresIn: (process.env.JWT_EXPIRE || '1h') as any }
       );
 
       return res.status(200).json({
@@ -195,13 +195,13 @@ export class AuthController {
       const accessToken = jwt.sign(
         { id: user!.id, email: user!.email, roleId: user!.roleId, roleName },
         JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || '1h' }
+        { expiresIn: (process.env.JWT_EXPIRE || '1h') as any }
       );
 
       const refreshToken = jwt.sign(
         { id: user!.id },
         JWT_REFRESH_SECRET,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRE || '7d') as any }
       );
 
       return res.status(200).json({
