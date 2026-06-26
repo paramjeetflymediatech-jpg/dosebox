@@ -470,7 +470,7 @@ export default function HomePage() {
                     
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{med.brand?.name || 'GENERIC'}</span>
                     <h3 className="font-bold text-slate-900 text-base mt-1 line-clamp-1 group-hover:text-brand-600 transition-colors">
-                      <Link href={`/medicines/${med.id}`}>{med.name}</Link>
+                      <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                     </h3>
                     <p className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-1">{med.genericName}</p>
                     

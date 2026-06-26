@@ -306,7 +306,7 @@ function MedicinesCatalogContent() {
                         )}
 
                         <div>
-                          <Link href={`/medicines/${med.id}`}>
+                          <Link href={`/medicines/detail?id=${med.id}`}>
                             <div className="h-40 rounded-2xl bg-white flex items-center justify-center overflow-hidden mb-5 relative mix-blend-multiply border border-slate-100/50">
                               <img src={imagesArr[0]} alt={med.name} className="object-contain max-h-28 group-hover:scale-110 transition-transform duration-500 ease-out p-4" />
                             </div>
@@ -314,7 +314,7 @@ function MedicinesCatalogContent() {
                           
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{med.brand?.name || 'GENERIC'}</span>
                           <h3 className="font-bold text-slate-900 text-sm mt-1 line-clamp-2 leading-snug">
-                            <Link href={`/medicines/${med.id}`}>{med.name}</Link>
+                            <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                           </h3>
                         </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { 
   ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, Calendar
 } from 'lucide-react';
@@ -37,8 +37,9 @@ interface MedicineDetails {
   reviews?: Review[];
 }
 
-export default function MedicineDetailsPage() {
-  const { id } = useParams() as { id: string };
+function MedicineDetailsContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
   const { addToCart } = useCart();
   
   const [medicine, setMedicine] = useState<MedicineDetails | null>(null);
@@ -312,5 +313,13 @@ export default function MedicineDetailsPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function MedicineDetailsPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center animate-pulse">Loading medicine data...</div>}>
+      <MedicineDetailsContent />
+    </Suspense>
   );
 }

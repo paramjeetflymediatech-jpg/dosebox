@@ -47,12 +47,20 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', uptime: process.uptime() });
 });
 
-// Default 404 Route
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ success: false, message: `Endpoint '${req.originalUrl}' not found` });
+// 6. Serve Frontend Build Statically
+const frontendBuildPath = path.join(__dirname, '../../frontend/out');
+app.use(express.static(frontendBuildPath, { extensions: ['html'] }));
+
+// Default Route: Serve Frontend index.html for all non-API routes (to support React Router / Next.js client-side routing)
+app.get('*', (req: Request, res: Response) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, message: 'API Endpoint Not Found' });
+  }
+  // Try to serve a matching HTML file if it exists, otherwise fallback to 404 (Next.js is not an SPA)
+  res.sendFile(path.join(frontendBuildPath, '404.html'));
 });
 
-// 6. Global Error Handler
+// 7. Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('[Global Error]', err.stack || err.message || err);
   
