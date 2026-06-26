@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
-import { 
-  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload
+import {
+  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -17,8 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <title>MrMed | Online Pharmacy, Doctor Consultation & Lab Packages</title>
-        <meta name="description" content="Order medicines, health products online, upload prescriptions, and book video doctor consultations on India's premium healthcare SaaS platform." />
+        <title>DoseBox.in | Specialty Smart Pharmacy</title>
+        <meta name="description" content="India's digital super-specialty pharmacy. Save up to 85% on oncology, kidney, and transplant medicines." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -50,7 +50,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const pathname = usePathname();
   const isPosPage = pathname === '/pos';
-  
+
   // Form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -115,26 +115,38 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {/* TOP ANNOUNCEMENT BANNER */}
+      <div className="bg-brand-700 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2">
+        <span className="text-accent-light">⚡</span>
+        Government-Compliant Indian Specialty Drugs. Swapping branded oncology & kidney medications saves up to 85% under Special Patient Assistance programs!
+      </div>
+
       {/* HEADER SECTION */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-border shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          
-          {/* LOGO */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-brand-500/20">
-              M
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[88px] flex items-center justify-between gap-6">
+
+          {/* LOGO & LOCATION */}
+          <div className="flex items-center gap-8 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/Media.jpg" alt="Logo" className="h-16 w-auto rounded-lg object-contain" />
+            </Link>
+
+            <div className="hidden lg:flex items-center gap-2 text-xs border-l border-slate-200 pl-8">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              </div>
+              <div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">DELIVERING TO</div>
+                <div className="font-bold text-slate-700">New Delhi (110001) <span className="text-brand-500 ml-1">▼</span></div>
+              </div>
             </div>
-            <div className="hidden sm:block">
-              <span className="font-bold text-2xl text-slate-900 tracking-tight">Mr</span>
-              <span className="font-extrabold text-2xl text-brand-600 tracking-tight">Med</span>
-            </div>
-          </Link>
+          </div>
 
           {/* SEARCH BAR */}
-          <div className="flex-1 max-w-lg relative hidden md:block">
+          <div className="flex-1 max-w-2xl relative hidden md:block">
             <input
               type="text"
-              placeholder="Search medicines, composition, generics..."
+              placeholder="Search chronic care drugs, Galvus, Trastuzumab..."
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
               onKeyDown={(e) => {
@@ -142,126 +154,179 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   window.location.href = `/medicines?search=${encodeURIComponent(searchVal)}`;
                 }
               }}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-full py-2.5 pl-11 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-sm shadow-inner"
+              className="w-full bg-slate-50/50 border-2 border-slate-100 text-slate-800 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-sm font-medium shadow-inner"
             />
-            <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
           </div>
 
-          {/* NAVIGATION LINKS */}
-          <nav className="flex items-center gap-1 sm:gap-6 text-sm font-semibold text-slate-600">
-            <Link href="/medicines" className="hover:text-brand-600 transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50">
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden lg:inline">Medicines</span>
-            </Link>
-            <Link href="/consultations" className="hover:text-brand-600 transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50">
-              <Stethoscope className="w-4 h-4" />
-              <span className="hidden lg:inline">Doctor Clinic</span>
-            </Link>
-            <Link href="/blogs" className="hover:text-brand-600 transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden lg:inline">Health Blogs</span>
-            </Link>
-            <Link href="/upload-prescription" className="hover:text-brand-600 transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 bg-brand-50 text-brand-700">
-              <Upload className="w-4 h-4 text-brand-600" />
-              <span className="hidden lg:inline font-bold">Upload Rx</span>
+          {/* NAVIGATION BUTTONS */}
+          <nav className="flex items-center gap-4 text-sm font-semibold">
+            {/* WhatsApp Buy */}
+            <a href="#" className="hidden xl:flex items-center gap-2 bg-[#E8F8F5] text-[#059669] px-4 py-2.5 rounded-full hover:bg-[#D1F2EB] transition-colors border border-[#A3E4D7]">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              <span>WhatsApp Buy</span>
+            </a>
+
+            {/* Upload Rx */}
+            <Link href="/upload-prescription" className="hidden lg:flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-full hover:bg-accent-dark transition-colors shadow-sm shadow-accent/20 border border-accent-dark/50">
+              <Upload className="w-4 h-4" />
+              <span>Upload Rx</span>
             </Link>
 
-            {/* CART ICON */}
-            <Link href="/cart" className="relative p-2 text-slate-700 hover:text-brand-600 transition-colors">
-              <ShoppingBag className="w-6 h-6" />
-              {cartItems.length > 0 && (
-                <span className="absolute top-0 right-0 w-5 h-5 bg-accent text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                  {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                </span>
-              )}
-            </Link>
-
-            {/* AUTH ACTIONS */}
-            {user ? (
-              <div className="flex items-center gap-2">
+            {/* Admin / Pharmacist Dashboards */}
+            {user && (isAdmin || isPharmacist) && (
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
                 {isAdmin && (
-                  <Link href="/dashboard/admin" className="p-2 text-brand-700 hover:bg-brand-50 rounded-full transition-colors" title="Admin Control Room">
+                  <Link href="/dashboard/admin" className="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-full transition-colors" title="Admin">
                     <LayoutDashboard className="w-5 h-5" />
                   </Link>
                 )}
                 {isPharmacist && (
-                  <Link href="/dashboard/pharmacist" className="p-2 text-blue-700 hover:bg-blue-50 rounded-full transition-colors" title="Pharmacist Verification Panel">
+                  <Link href="/dashboard/pharmacist" className="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-full transition-colors" title="Pharmacist">
                     <Clipboard className="w-5 h-5" />
                   </Link>
                 )}
-                {!isAdmin && !isPharmacist && (
-                  <Link href="/dashboard/customer" className="p-2 text-teal-700 hover:bg-teal-50 rounded-full transition-colors" title="Customer Dashboard">
-                    <User className="w-5 h-5" />
-                  </Link>
+              </div>
+            )}
+
+            {/* Cart */}
+            <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
+              <Link href="/cart" className="relative p-2 text-slate-600 hover:text-brand-600 transition-colors">
+                <ShoppingBag className="w-6 h-6" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
                 )}
+              </Link>
+              
+              {/* User Login/Logout */}
+              {user ? (
                 <button
                   onClick={logout}
-                  className="p-2 text-slate-500 hover:text-rose-600 rounded-full hover:bg-rose-50 transition-all"
-                  title="Sign Out"
+                  className="flex items-center gap-2 text-slate-600 hover:text-rose-600 transition-colors bg-slate-50 px-4 py-2.5 rounded-full"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-bold py-2 px-4 rounded-full shadow-md shadow-brand-500/10 transition-all flex items-center gap-1.5"
-              >
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </button>
-            )}
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="flex items-center gap-2 text-slate-600 hover:text-brand-600 transition-colors bg-slate-50 px-4 py-2.5 rounded-full hover:bg-brand-50"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Login</span>
+                </button>
+              )}
+            </div>
+
           </nav>
         </div>
       </header>
 
       {/* MAIN CONTAINER */}
-      <main className="flex-1">
+      <main className="flex-1 bg-white">
         {children}
       </main>
 
-      {/* PREMIUM FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 py-16 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">M</div>
-              <span className="font-bold text-xl text-white">MrMed</span>
+      {/* DOSEBOX FOOTER */}
+      <footer className="bg-slate-900 text-slate-400">
+        {/* Trust Badges Strip */}
+        <div className="border-b border-slate-800 bg-slate-900/50">
+          <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-slate-800">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-brand-400">
+                <Shield className="w-6 h-6" />
+              </div>
+              <h4 className="text-white font-bold text-sm">Govt Registered Chemist</h4>
+              <p className="text-[11px] text-slate-500">Legal license for specialty medicines (Schedule H, H1, X)</p>
             </div>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-brand-400">
+                <ThermometerSnowflake className="w-6 h-6" />
+              </div>
+              <h4 className="text-white font-bold text-sm">Safe Cold-Chain Storage</h4>
+              <p className="text-[11px] text-slate-500">All thermolabile drugs shipped in 2-8°C insulated valid packs.</p>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-brand-400">
+                <BadgeCheck className="w-6 h-6" />
+              </div>
+              <h4 className="text-white font-bold text-sm">WHO-GMP Generics Sourced</h4>
+              <p className="text-[11px] text-slate-500">Efficacy-assured, verified facilities of the highest standards.</p>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-brand-400">
+                <CheckSquare className="w-6 h-6" />
+              </div>
+              <h4 className="text-white font-bold text-sm">Double Verification Routine</h4>
+              <p className="text-[11px] text-slate-500">RX is checked twice by two supervisory pharmacists before dispatch.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Footer Links */}
+        <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-12 gap-12">
+          <div className="md:col-span-5">
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <img src="/Media.jpg" alt="Logo" className="h-16 w-auto rounded-lg object-contain bg-white p-1" />
+            </Link>
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-              India\'s trusted enterprise online pharmacy and diagnostic aggregator, delivering genuine medications, certified consulting, and full care management.
+              DoseBox.in is India's pioneering specialty generic healthcare delivery portal. By shortening distribution chains and sourcing from exclusively accredited formulators, we protect daily chronic patients from heavy financial stress.
             </p>
-            <div className="text-xs text-slate-500">
-              © {new Date().getFullYear()} MrMed. All rights reserved.
+            <div className="space-y-2 text-xs font-semibold">
+              <div className="flex items-center gap-2 text-slate-400"><div className="w-2 h-2 bg-emerald-500 rounded-full"></div> License No: DL-05-320092 | FSSAI: 13320011000329</div>
+              <div className="flex items-center gap-2 text-slate-400"><div className="w-2 h-2 bg-brand-500 rounded-full"></div> Registered Pharmacists on Roll: 15+ (D.Pharm / B.Pharm / Pharm.D)</div>
             </div>
           </div>
-          
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Quick Access</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/medicines" className="hover:text-white transition-colors">Medicine Store</Link></li>
-              <li><Link href="/consultations" className="hover:text-white transition-colors">Video Consultations</Link></li>
-              <li><Link href="/blogs" className="hover:text-white transition-colors">Healthcare Blogs</Link></li>
-              <li><Link href="/cart" className="hover:text-white transition-colors">My Cart</Link></li>
+
+          <div className="md:col-span-4">
+            <h4 className="text-white font-bold text-xs mb-6 uppercase tracking-widest">REGISTERED OFFICE & SUPPORT</h4>
+            <ul className="space-y-4 text-sm text-slate-400">
+              <li className="flex items-start gap-3">
+                <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                DoseBox Healthcare Intermediaries Private Limited. C1 - 2, Okhla Ind. Marg, Connaught Place, New Delhi - 110001
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg></div>
+                +91 11 4000 3000 (Support Hrs: 9AM - 8PM IST)
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
+                pharma.rx@dosebox.in
+              </li>
             </ul>
           </div>
-          
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Legal & Compliance</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">FDA Guidelines</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">GST Invoicing Policy</a></li>
+
+          <div className="md:col-span-3">
+            <h4 className="text-white font-bold text-xs mb-6 uppercase tracking-widest">OPERATIONAL LINKS</h4>
+            <ul className="space-y-3 text-sm font-medium">
+              <li><Link href="/medicines" className="hover:text-white transition-colors">Browse Chronic Brands</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">FDA Guidelines (India)</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Institutional Supply</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Privacy & HIPAA Compliance</Link></li>
+              <li><Link href="#" className="hover:text-white transition-colors">Return / Safety Policy</Link></li>
             </ul>
+            
+            {/* Dev Login Panel - Mocking only */}
+            <div className="mt-8 pt-6 border-t border-slate-800">
+               <h4 className="text-slate-600 font-bold text-[10px] mb-2 uppercase tracking-widest">Test Accounts (Dev)</h4>
+               <div className="text-[10px] text-slate-500 space-y-1">
+                 <div>Admin: admin@mrmed.com</div>
+                 <div>Pharm: pharmacist@mrmed.com</div>
+               </div>
+            </div>
           </div>
-          
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Developer & Admin Test accounts</h4>
-            <div className="space-y-1.5 text-xs text-slate-500">
-              <div><strong className="text-slate-400">Admin:</strong> admin@mrmed.com / password123</div>
-              <div><strong className="text-slate-400">Pharmacist:</strong> pharmacist@mrmed.com / password123</div>
-              <div><strong className="text-slate-400">Customer:</strong> customer@mrmed.com / password123</div>
+        </div>
+        
+        {/* Bottom Bar */}
+        <div className="bg-slate-950 py-4 border-t border-slate-900/50">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] text-slate-600">
+              © {new Date().getFullYear()} DoseBox.in. All rights reserved. Registered with relevant local regulatory compliance authorities.
+            </p>
+            <div className="text-[10px] text-slate-600 font-bold">
+              Approved by D&C Act, India
             </div>
           </div>
         </div>
@@ -271,8 +336,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       {showAuthModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl relative border border-slate-100 transform scale-100 transition-all">
-            
-            <button 
+
+            <button
               onClick={() => { setShowAuthModal(false); resetForm(); }}
               className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
             >
@@ -356,10 +421,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               >
                 {/* SVG Google icon */}
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.39 7.56l3.85 2.99c.92-2.75 3.5-4.51 6.76-4.51z"/>
-                  <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.76 2.91c2.2-2.03 3.66-5.02 3.66-8.73z"/>
-                  <path fill="#FBBC05" d="M5.24 10.55c-.24-.72-.37-1.49-.37-2.3s.13-1.58.37-2.3L1.39 2.96C.5 4.77 0 6.83 0 9c0 2.17.5 4.23 1.39 6.04l3.85-2.99c-.24-.72-.37-1.49-.37-2.3z"/>
-                  <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.76-2.91c-1.1.74-2.5 1.18-4.2 1.18-3.26 0-5.84-1.76-6.76-4.51L1.39 15.1C3.37 19.35 7.35 22 12 22z"/>
+                  <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.39 7.56l3.85 2.99c.92-2.75 3.5-4.51 6.76-4.51z" />
+                  <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.76 2.91c2.2-2.03 3.66-5.02 3.66-8.73z" />
+                  <path fill="#FBBC05" d="M5.24 10.55c-.24-.72-.37-1.49-.37-2.3s.13-1.58.37-2.3L1.39 2.96C.5 4.77 0 6.83 0 9c0 2.17.5 4.23 1.39 6.04l3.85-2.99c-.24-.72-.37-1.49-.37-2.3z" />
+                  <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.76-2.91c-1.1.74-2.5 1.18-4.2 1.18-3.26 0-5.84-1.76-6.76-4.51L1.39 15.1C3.37 19.35 7.35 22 12 22z" />
                 </svg>
                 Sign In with Google
               </button>

@@ -5,12 +5,12 @@ const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
     // If we're hitting localhost:3000 in dev, backend is on localhost:5000
     if (window.location.hostname === 'localhost') {
-      return 'http://localhost:5050/api';
+      return 'http://localhost:5000/api';
     }
     // Otherwise in docker deployment we reverse proxy via Nginx, so same origin /api is standard
     return '/api';
   }
-  return 'http://localhost:5050/api';
+  return 'http://localhost:5000/api';
 };
 
 export const api = axios.create({

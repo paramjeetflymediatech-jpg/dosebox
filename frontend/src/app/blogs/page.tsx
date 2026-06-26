@@ -1,11 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BookOpen, Clock, Tag, Search, ChevronRight, Sparkles, User
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../lib/api';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
+}
 
 interface Blog {
   id: number;
@@ -24,6 +31,10 @@ export default function BlogsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadBlogs() {
@@ -74,8 +85,30 @@ export default function BlogsPage() {
     return matchesCategory && matchesSearch;
   });
 
+  useGSAP(() => {
+    if (headerRef.current) {
+      gsap.fromTo(headerRef.current, { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' });
+    }
+    if (gridRef.current && filteredBlogs.length > 0) {
+      gsap.fromTo(
+        gsap.utils.toArray('.blog-card', gridRef.current),
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.15,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: gridRef.current,
+            start: 'top 85%'
+          }
+        }
+      );
+    }
+  }, { scope: containerRef, dependencies: [filteredBlogs] });
   return (
-    <div className="bg-slate-50 min-h-screen py-12">
+    <div ref={containerRef} className="bg-slate-50 min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* breadcrumbs */}
@@ -86,8 +119,8 @@ export default function BlogsPage() {
         </div>
 
         {/* Banner */}
-        <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 mb-10 overflow-hidden relative border border-slate-800 shadow-xl text-center sm:text-left">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div ref={headerRef} className="bg-slate-900 text-white rounded-[2.5rem] p-8 sm:p-12 mb-10 overflow-hidden relative border border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.1)] text-center sm:text-left">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
           <div className="relative z-10 max-w-2xl">
             <span className="text-brand-400 font-bold text-xxs uppercase tracking-widest flex items-center justify-center sm:justify-start gap-1.5">
               <Sparkles className="w-4 h-4" />
@@ -138,17 +171,17 @@ export default function BlogsPage() {
             <p className="text-slate-400 text-sm font-semibold">No medical articles found matching selection.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {filteredBlogs.map((blog) => (
               <div 
                 key={blog.id}
-                className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                className="blog-card bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex flex-col justify-between group"
               >
-                <div>
+                <div className="overflow-hidden">
                   <img 
                     src={blog.coverImage || 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600'} 
                     alt={blog.title}
-                    className="h-48 w-full object-cover"
+                    className="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="p-6">
                     <div className="flex items-center gap-4 text-xxs font-bold text-slate-400 uppercase tracking-widest mb-3">

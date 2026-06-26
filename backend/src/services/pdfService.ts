@@ -82,10 +82,12 @@ export class PdfService {
     doc
       .fillColor('#1a202c')
       .fontSize(10)
-      .text('Item Description', 50, tableTop, { bold: true })
-      .text('Quantity', 280, tableTop, { align: 'right', bold: true })
-      .text('Unit Price (INR)', 370, tableTop, { align: 'right', bold: true })
-      .text('Total (INR)', 470, tableTop, { align: 'right', bold: true });
+      .font('Helvetica-Bold')
+      .text('Item Description', 50, tableTop)
+      .text('Quantity', 280, tableTop, { align: 'right' })
+      .text('Unit Price (INR)', 370, tableTop, { align: 'right' })
+      .text('Total (INR)', 470, tableTop, { align: 'right' })
+      .font('Helvetica');
 
     doc
       .strokeColor('#cbd5e0')
@@ -144,8 +146,10 @@ export class PdfService {
     doc
       .fontSize(11)
       .fillColor('#005c53')
-      .text('Grand Total:', 350, subtotalY + 52, { bold: true })
-      .text(`Rs. ${data.finalAmount.toFixed(2)}`, 470, subtotalY + 52, { align: 'right', bold: true });
+      .font('Helvetica-Bold')
+      .text('Grand Total:', 350, subtotalY + 52)
+      .text(`Rs. ${data.finalAmount.toFixed(2)}`, 470, subtotalY + 52, { align: 'right' })
+      .font('Helvetica');
 
     // Terms
     doc

@@ -4,7 +4,10 @@ const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
 // Instantiate Redis Client
 export const redisClient = createClient({
-  url: redisUrl
+  url: redisUrl,
+  socket: {
+    reconnectStrategy: false
+  }
 });
 
 redisClient.on('error', (err) => {

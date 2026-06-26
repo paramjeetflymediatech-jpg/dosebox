@@ -14,7 +14,7 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
@@ -58,14 +58,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+  const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+    const qtyToAdd = item.quantity || 1;
     const existingIndex = cartItems.findIndex(i => i.id === item.id);
     if (existingIndex > -1) {
       const updated = [...cartItems];
-      updated[existingIndex].quantity += 1;
+      updated[existingIndex].quantity += qtyToAdd;
       saveCart(updated);
     } else {
-      saveCart([...cartItems, { ...item, quantity: 1 }]);
+      // Create a clean item without the optional quantity property for the rest object
+      const { quantity, ...itemWithoutQty } = item;
+      saveCart([...cartItems, { ...itemWithoutQty, quantity: qtyToAdd }]);
     }
   };
 

@@ -15,26 +15,26 @@ const config: Config = {
           200: '#99f6e4',
           300: '#5eead4',
           400: '#2dd4bf',
-          500: '#14b8a6', // primary teal
-          600: '#0d9488',
-          700: '#0f766e', // deep teal
+          500: '#14b8a6', 
+          600: '#0d9488', // Primary Teal
+          700: '#0f766e', // Deep Teal
           800: '#115e59',
           900: '#134e4a',
         },
         primary: {
-          DEFAULT: '#0f766e',
-          light: '#0d9488',
-          dark: '#115e59',
+          DEFAULT: '#0d9488',
+          light: '#14b8a6',
+          dark: '#0f766e',
         },
         secondary: {
-          DEFAULT: '#0284c7', // Slate Blue for clinical items
-          light: '#38bdf8',
-          dark: '#0369a1',
+          DEFAULT: '#1e293b', // Navy Blue
+          light: '#334155',
+          dark: '#0f172a',
         },
         accent: {
-          DEFAULT: '#e11d48', // rose accent for discounts & alerts
-          light: '#fda4af',
-          dark: '#be123c',
+          DEFAULT: '#f28b82', // Soft Coral/Orange
+          light: '#f8b4b0',
+          dark: '#d9736a',
         },
         neutral: {
           card: '#ffffff',
