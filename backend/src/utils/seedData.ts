@@ -378,3 +378,22 @@ export async function runSeeder() {
     console.error('[Seeder] Database seeding error:', error);
   }
 }
+
+// Support running the seeder directly from command line using `npx tsx src/utils/seedData.ts`
+if (typeof require !== 'undefined' && require.main === module) {
+  const { sequelize } = require('../config/database');
+  (async () => {
+    try {
+      console.log('[Seeder Standalone] Authenticating database connection...');
+      await sequelize.authenticate();
+      console.log('[Seeder Standalone] Running database sync...');
+      await sequelize.sync({ alter: true });
+      await runSeeder();
+      console.log('[Seeder Standalone] Done!');
+      process.exit(0);
+    } catch (e) {
+      console.error('[Seeder Standalone] Initialization error:', e);
+      process.exit(1);
+    }
+  })();
+}
