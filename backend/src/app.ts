@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import fs from 'fs';
 import apiRouter from './routes/api';
 
 const app = express();
@@ -56,8 +57,12 @@ app.get('*', (req: Request, res: Response) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ success: false, message: 'API Endpoint Not Found' });
   }
-  // Try to serve a matching HTML file if it exists, otherwise fallback to 404 (Next.js is not an SPA)
-  res.sendFile(path.join(frontendBuildPath, '404.html'));
+  // Try to serve a matching HTML file if it exists, otherwise return a clean 404 JSON
+  const notFoundPage = path.join(frontendBuildPath, '404.html');
+  if (fs.existsSync(notFoundPage)) {
+    return res.status(404).sendFile(notFoundPage);
+  }
+  return res.status(404).json({ success: false, message: 'Page Not Found. The frontend build may not be deployed yet.' });
 });
 
 // 7. Global Error Handler
