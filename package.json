@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "dev": "ts-node-dev --project tsconfig.server.json --ignore-watch .next --ignore-watch src/app --ignore-watch src/components --ignore-watch src/context --ignore-watch src/lib --respawn --transpile-only server.ts",
     "build": "next build && tsc --project tsconfig.server.json",
     "start": "NODE_ENV=production node dist/server.js",
     "db:migrate": "npx sequelize-cli db:migrate",

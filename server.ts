@@ -50,9 +50,9 @@ nextApp.prepare().then(async () => {
   }
 
   // Load Express configurations dynamically
-  const app = require('./src/app').default;
-  const { sequelize } = require('./src/config/database');
-  const { runSeeder } = require('./src/utils/seedData');
+  const app = (await import('./src/app')).default;
+  const { sequelize } = await import('./src/config/database');
+  const { runSeeder } = await import('./src/utils/seedData');
 
   try {
     await sequelize.authenticate();
