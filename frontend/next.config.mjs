@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'export', // Removed to allow dynamic [id] routes in admin dashboard
+  output: 'export',
   distDir: 'out',
   trailingSlash: true,
   eslint: {
