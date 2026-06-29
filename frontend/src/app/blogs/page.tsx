@@ -189,9 +189,11 @@ export default function BlogsPage() {
                       <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {blog.readTime}</span>
                     </div>
 
-                    <h2 className="font-extrabold text-slate-900 text-base sm:text-lg hover:underline leading-snug">
-                      {blog.title}
-                    </h2>
+                    <Link href={`/blogs/${blog.slug}`}>
+                      <h2 className="font-extrabold text-slate-900 text-base sm:text-lg hover:underline leading-snug">
+                        {blog.title}
+                      </h2>
+                    </Link>
                     
                     <p className="text-xs text-slate-500 mt-2.5 line-clamp-3 leading-relaxed">
                       {blog.content}
@@ -201,9 +203,9 @@ export default function BlogsPage() {
 
                 <div className="p-6 border-t border-slate-50 flex justify-between items-center bg-slate-50/20 text-xxs font-bold uppercase tracking-wider text-slate-400">
                   <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Checked by Pharmacist</span>
-                  <span className="text-brand-600 hover:text-brand-700 transition-colors flex items-center gap-0.5 cursor-pointer">
+                  <Link href={`/blogs/${blog.slug}`} className="text-brand-600 hover:text-brand-700 transition-colors flex items-center gap-0.5 cursor-pointer">
                     Read Full Guide <ChevronRight className="w-3 h-3" />
-                  </span>
+                  </Link>
                 </div>
               </div>
             ))}

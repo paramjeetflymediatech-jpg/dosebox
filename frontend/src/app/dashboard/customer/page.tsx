@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
 import api from '../../../lib/api';
+import { toast } from 'react-hot-toast';
 
 interface OrderItem {
   id: number;
@@ -124,7 +125,7 @@ export default function CustomerDashboardPage() {
       prescriptionRequired: med.prescriptionRequired,
       image: imagesArr[0]
     });
-    alert(`${med.name} added to cart! You can view it in the cart page.`);
+    toast.success(`${med.name} added to cart! You can view it in the cart page.`);
   };
 
   const addAllScannedToCart = () => {
@@ -143,7 +144,7 @@ export default function CustomerDashboardPage() {
         image: imagesArr[0]
       });
     });
-    alert('All scanned medicines added to cart! Proceed to cart page to checkout.');
+    toast.success('All scanned medicines added to cart! Proceed to cart page to checkout.');
   };
 
   useEffect(() => {

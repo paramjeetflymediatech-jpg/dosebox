@@ -10,12 +10,44 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import './globals.css';
+import api from '../lib/api';
 
 const queryClient = new QueryClient();
 
+function ScriptInjector({ html, target }: { html: string, target: 'head' | 'body' }) {
+  React.useEffect(() => {
+    if (!html) return;
+    const template = document.createElement('div');
+    template.innerHTML = html;
+    const elements = Array.from(template.childNodes);
+    const addedNodes: Node[] = [];
+    
+    elements.forEach(el => {
+      if (el.nodeName === 'SCRIPT') {
+        const script = document.createElement('script');
+        Array.from((el as HTMLScriptElement).attributes).forEach(attr => script.setAttribute(attr.name, attr.value));
+        script.text = (el as HTMLScriptElement).text;
+        (target === 'head' ? document.head : document.body).appendChild(script);
+        addedNodes.push(script);
+      } else {
+        const cloned = el.cloneNode(true);
+        (target === 'head' ? document.head : document.body).appendChild(cloned);
+        addedNodes.push(cloned);
+      }
+    });
+    
+    return () => {
+      addedNodes.forEach(node => node.parentNode?.removeChild(node));
+    };
+  }, [html, target]);
+  return null;
+}
+
+import { Toaster } from 'react-hot-toast';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>DoseBox.in | Specialty Smart Pharmacy</title>
         <meta name="description" content="India's digital super-specialty pharmacy. Save up to 85% on oncology, kidney, and transplant medicines." />
@@ -28,11 +60,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }
         `}</style>
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <CartProvider>
               <LayoutContent>{children}</LayoutContent>
+              <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#333', color: '#fff', borderRadius: '12px' } }} />
             </CartProvider>
           </AuthProvider>
         </QueryClientProvider>
@@ -48,14 +81,26 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [searchVal, setSearchVal] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [globalSettings, setGlobalSettings] = useState<Record<string, string>>({});
   const pathname = usePathname();
-  const isPosPage = pathname === '/pos';
 
   // Form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  React.useEffect(() => {
+    api.get('/admin/settings')
+      .then(res => {
+        if(res.data?.success) {
+          const sm: Record<string, string> = {};
+          res.data.data.forEach((s: any) => sm[s.key] = s.value);
+          setGlobalSettings(sm);
+        }
+      })
+      .catch(e => console.error('Failed to load global settings', e));
+  }, []);
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,12 +154,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     setErrorMsg('');
   };
 
-  if (isPosPage) {
+  const isPlainLayout = pathname === '/pos' || pathname?.startsWith('/admin/login') || pathname?.startsWith('/dashboard/admin');
+
+  if (isPlainLayout) {
     return <main className="min-h-screen bg-[#080b11]">{children}</main>;
   }
 
   return (
     <>
+      <ScriptInjector html={globalSettings['global_head_scripts'] || ''} target="head" />
+      <ScriptInjector html={globalSettings['global_footer_scripts'] || ''} target="body" />
       {/* TOP ANNOUNCEMENT BANNER */}
       <div className="bg-brand-700 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2">
         <span className="text-accent-light">⚡</span>
@@ -128,7 +177,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           {/* LOGO & LOCATION */}
           <div className="flex items-center gap-8 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/Media.jpg" alt="Logo" className="h-16 w-auto rounded-lg object-contain" />
+              <img src={globalSettings['logo_url'] || "/Media.jpg"} alt="Logo" className="h-16 w-auto rounded-lg object-contain" />
             </Link>
 
             <div className="hidden lg:flex items-center gap-2 text-xs border-l border-slate-200 pl-8">
@@ -269,10 +318,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-12 gap-12">
           <div className="md:col-span-5">
             <Link href="/" className="flex items-center gap-2 mb-6">
-              <img src="/Media.jpg" alt="Logo" className="h-16 w-auto rounded-lg object-contain bg-white p-1" />
+              <img src={globalSettings['logo_url'] || "/Media.jpg"} alt="Logo" className="h-16 w-auto rounded-lg object-contain bg-white p-1" />
             </Link>
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-              DoseBox.in is India's pioneering specialty generic healthcare delivery portal. By shortening distribution chains and sourcing from exclusively accredited formulators, we protect daily chronic patients from heavy financial stress.
+              {globalSettings['site_name'] || 'DoseBox.in'} is India's pioneering specialty generic healthcare delivery portal. By shortening distribution chains and sourcing from exclusively accredited formulators, we protect daily chronic patients from heavy financial stress.
             </p>
             <div className="space-y-2 text-xs font-semibold">
               <div className="flex items-center gap-2 text-slate-400"><div className="w-2 h-2 bg-emerald-500 rounded-full"></div> License No: DL-05-320092 | FSSAI: 13320011000329</div>
@@ -285,17 +334,24 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <ul className="space-y-4 text-sm text-slate-400">
               <li className="flex items-start gap-3">
                 <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
-                DoseBox Healthcare Intermediaries Private Limited. C1 - 2, Okhla Ind. Marg, Connaught Place, New Delhi - 110001
+                {globalSettings['physical_address'] || 'DoseBox Healthcare Intermediaries Private Limited. C1 - 2, Okhla Ind. Marg, Connaught Place, New Delhi - 110001'}
               </li>
               <li className="flex items-start gap-3">
                 <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg></div>
-                +91 11 4000 3000 (Support Hrs: 9AM - 8PM IST)
+                {globalSettings['contact_phone'] || '+91 11 4000 3000'} (Support Hrs: 9AM - 8PM IST)
               </li>
               <li className="flex items-start gap-3">
                 <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
-                pharma.rx@dosebox.in
+                {globalSettings['contact_email'] || 'pharma.rx@dosebox.in'}
               </li>
             </ul>
+            {/* Dynamic Social Links */}
+            <div className="flex gap-4 mt-6">
+              {globalSettings['social_facebook'] && <a href={globalSettings['social_facebook']} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">FB</a>}
+              {globalSettings['social_twitter'] && <a href={globalSettings['social_twitter']} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">TW</a>}
+              {globalSettings['social_instagram'] && <a href={globalSettings['social_instagram']} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">IG</a>}
+              {globalSettings['social_linkedin'] && <a href={globalSettings['social_linkedin']} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">LI</a>}
+            </div>
           </div>
 
           <div className="md:col-span-3">
@@ -323,7 +379,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <div className="bg-slate-950 py-4 border-t border-slate-900/50">
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-[10px] text-slate-600">
-              © {new Date().getFullYear()} DoseBox.in. All rights reserved. Registered with relevant local regulatory compliance authorities.
+              © {new Date().getFullYear()} {globalSettings['site_name'] || 'DoseBox.in'}. All rights reserved. Registered with relevant local regulatory compliance authorities.
             </p>
             <div className="text-[10px] text-slate-600 font-bold">
               Approved by D&C Act, India

@@ -618,7 +618,44 @@ Setting.init(
 );
 
 // ----------------------------------------------------
-// 19. BANNER
+// 19. PAGEMETA (SEO)
+// ----------------------------------------------------
+export interface PageMetaAttributes {
+  id: number;
+  routePath: string;
+  title: string;
+  description: string;
+  keywords: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+}
+export class PageMeta extends Model<PageMetaAttributes, Optional<PageMetaAttributes, 'id' | 'ogTitle' | 'ogDescription' | 'ogImage'>> implements PageMetaAttributes {
+  declare id: number;
+  declare routePath: string;
+  declare title: string;
+  declare description: string;
+  declare keywords: string;
+  declare ogTitle?: string;
+  declare ogDescription?: string;
+  declare ogImage?: string;
+}
+PageMeta.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    routePath: { type: DataTypes.STRING, allowNull: false, unique: true },
+    title: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: false },
+    keywords: { type: DataTypes.TEXT, allowNull: false },
+    ogTitle: { type: DataTypes.STRING, allowNull: true },
+    ogDescription: { type: DataTypes.TEXT, allowNull: true },
+    ogImage: { type: DataTypes.STRING, allowNull: true },
+  },
+  { sequelize, modelName: 'PageMeta', tableName: 'page_meta', timestamps: true }
+);
+
+// ----------------------------------------------------
+// 20. BANNER
 // ----------------------------------------------------
 export interface BannerAttributes {
   id: number;
@@ -755,4 +792,5 @@ export default {
   Notification,
   Setting,
   Banner,
+  PageMeta,
 };

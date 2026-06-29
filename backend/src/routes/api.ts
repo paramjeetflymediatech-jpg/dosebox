@@ -67,24 +67,42 @@ router.put('/appointments/:id', authenticateJWT, authorizeRoles('Pharmacist', 'A
 // ====================================================
 router.get('/admin/blogs', AdminController.getBlogs);
 router.get('/admin/blogs/:slug', AdminController.getBlogBySlug);
+router.get('/admin/blogs/id/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.getBlogById);
 router.post('/admin/blogs', authenticateJWT, authorizeRoles('Admin'), AdminController.createBlog);
+router.put('/admin/blogs/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.updateBlog);
 router.delete('/admin/blogs/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.deleteBlog);
 
 // ====================================================
 // ADMINISTRATIVE / DASHBOARD PORTALS ROUTES
 // ====================================================
+router.post('/admin/upload', authenticateJWT, authorizeRoles('Admin'), upload.single('file'), AdminController.uploadFile);
 router.get('/admin/stats', authenticateJWT, authorizeRoles('Admin'), AdminController.getDashboardStats);
 router.get('/admin/users', authenticateJWT, authorizeRoles('Admin'), AdminController.getUsers);
 router.put('/admin/users/:id/status', authenticateJWT, authorizeRoles('Admin'), AdminController.updateUserStatus);
 
 // Coupon & Promo configs
 router.get('/admin/coupons', AdminController.getCoupons);
+router.get('/admin/coupons/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.getCouponById);
 router.post('/admin/coupons', authenticateJWT, authorizeRoles('Admin'), AdminController.createCoupon);
+router.put('/admin/coupons/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.updateCoupon);
 router.delete('/admin/coupons/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.deleteCoupon);
 
 // Hero banners configurations
 router.get('/admin/banners', AdminController.getBanners);
+router.get('/admin/banners/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.getBannerById);
 router.post('/admin/banners', authenticateJWT, authorizeRoles('Admin'), AdminController.createBanner);
+router.put('/admin/banners/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.updateBanner);
 router.delete('/admin/banners/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.deleteBanner);
+
+// Global settings configurations (SEO) - DEPRECATED for page specific SEO
+router.get('/admin/settings', AdminController.getSettings);
+router.put('/admin/settings', authenticateJWT, authorizeRoles('Admin'), AdminController.updateSettings);
+
+// Dynamic PageMeta (SEO)
+router.get('/admin/page-meta', AdminController.getPageMeta);
+router.get('/admin/page-meta/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.getPageMetaById);
+router.post('/admin/page-meta', authenticateJWT, authorizeRoles('Admin'), AdminController.createPageMeta);
+router.put('/admin/page-meta/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.updatePageMeta);
+router.delete('/admin/page-meta/:id', authenticateJWT, authorizeRoles('Admin'), AdminController.deletePageMeta);
 
 export default router;

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
+import { toast } from 'react-hot-toast';
 
 export default function CartPage() {
   const { 
@@ -42,7 +43,7 @@ export default function CartPage() {
       prescriptionRequired: med.prescriptionRequired,
       image: imagesArr[0]
     });
-    alert(`${med.name} added to cart!`);
+    toast.success(`${med.name} added to cart!`);
   };
 
   const addAllScannedToCart = () => {
@@ -61,7 +62,7 @@ export default function CartPage() {
         image: imagesArr[0]
       });
     });
-    alert('All scanned medicines added to cart!');
+    toast.success('All scanned medicines added to cart!');
   };
 
   const handleApplyPromo = (e: React.FormEvent) => {

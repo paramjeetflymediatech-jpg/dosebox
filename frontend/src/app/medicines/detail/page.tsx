@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { useCart } from '../../../context/CartContext';
+import { toast } from 'react-hot-toast';
 
 interface Review {
   id: number;
@@ -81,7 +82,7 @@ function MedicineDetailsContent() {
         image: imagesArr[0]
       });
     }
-    alert(`${medicine.name} (${quantity} items) added to cart!`);
+    toast.success(`${medicine.name} (${quantity} items) added to cart!`);
   };
 
   if (loading) {

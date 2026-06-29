@@ -5,6 +5,7 @@ import {
   Upload, FileText, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, ShoppingBag, PlusCircle, Check
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import api from '../../lib/api';
@@ -118,7 +119,7 @@ export default function UploadPrescriptionPage() {
       prescriptionRequired: med.prescriptionRequired,
       image: imagesArr[0]
     });
-    alert(`${med.name} added to cart!`);
+    toast.success(`${med.name} added to cart!`);
   };
 
   const addAllScannedToCart = () => {
@@ -137,7 +138,7 @@ export default function UploadPrescriptionPage() {
         image: imagesArr[0]
       });
     });
-    alert('All scanned medicines added to cart!');
+    toast.success('All scanned medicines added to cart!');
   };
 
   return (

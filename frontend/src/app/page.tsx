@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar
+  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../lib/api';
 import { useCart } from '../context/CartContext';
+import { toast } from 'react-hot-toast';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -51,6 +52,10 @@ export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  
+  // Calculator state
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcExpense, setCalcExpense] = useState<number>(3000);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -148,7 +153,7 @@ export default function HomePage() {
         }
       );
     }
-  }, { scope: containerRef });
+  }, { scope: containerRef, dependencies: [categories, trending, banners] });
 
   // Load content
   useEffect(() => {
@@ -213,7 +218,7 @@ export default function HomePage() {
       prescriptionRequired: med.prescriptionRequired,
       image: imagesArr[0]
     });
-    alert(`${med.name} added to cart!`);
+    toast.success(`${med.name} added to cart!`);
   };
 
   const faqs = [
@@ -306,7 +311,7 @@ export default function HomePage() {
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Estimated Annual Savings</span>
                   <span className="text-2xl font-black text-emerald-600">₹6,840.00</span>
                 </div>
-                <button className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-6 rounded-xl transition-all text-sm whitespace-nowrap shadow-md shadow-brand-500/20">
+                <button onClick={() => setShowCalculator(true)} className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-6 rounded-xl transition-all text-sm whitespace-nowrap shadow-md shadow-brand-500/20">
                   Launch Calculator <ArrowRight className="w-4 h-4 inline ml-1" />
                 </button>
               </div>
@@ -761,6 +766,85 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+
+      {/* SAVINGS CALCULATOR MODAL */}
+      <AnimatePresence>
+        {showCalculator && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setShowCalculator(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col z-10"
+            >
+              <div className="p-6 bg-brand-900 text-white relative">
+                <button onClick={() => setShowCalculator(false)} className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-brand-500/30 flex items-center justify-center border border-brand-400/30 text-brand-300">
+                    <ActivitySquare className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-bold">Savings Calculator</h3>
+                </div>
+                <p className="text-brand-200 text-sm">See how much you can save yearly with MrMed's up to 85% discounts.</p>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Current Monthly Medicine Expense: <span className="text-brand-600 text-lg">₹{calcExpense.toLocaleString()}</span>
+                  </label>
+                  <input 
+                    type="range" 
+                    min="500" 
+                    max="50000" 
+                    step="500"
+                    value={calcExpense}
+                    onChange={(e) => setCalcExpense(Number(e.target.value))}
+                    className="w-full accent-brand-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 font-medium mt-2">
+                    <span>₹500</span>
+                    <span>₹50,000+</span>
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="text-emerald-800 font-bold text-sm leading-tight">Estimated Annual Savings</div>
+                    <div className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">
+                      ₹{((calcExpense * 12) * 0.65).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                </div>
+
+                <div className="text-xs text-slate-400 text-center leading-relaxed">
+                  *Calculation based on average 65% discount across our specialty catalog. Actual savings may vary.
+                </div>
+              </div>
+              
+              <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button 
+                  onClick={() => setShowCalculator(false)}
+                  className="px-6 py-2.5 w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-colors shadow-sm"
+                >
+                  Got it
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
