@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "outDir": "./dist",
+    "target": "es2022"
+  },
+  "include": [
+    "server.ts",
+    "src/app.ts",
+    "src/config/**/*",
+    "src/controllers/**/*",
+    "src/middleware/**/*",
+    "src/models/**/*",
+    "src/routes/**/*",
+    "src/services/**/*",
+    "src/utils/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/app/**/*",
+    "src/components/**/*",
+    "src/context/**/*",
+    "src/lib/**/*"
+  ]
+}

@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
-import sequelize from './src/config/database';
-import { Category, Brand, Medicine, Inventory } from './src/models';
+import sequelize from './config/database';
+import { Category, Brand, Medicine, Inventory } from './models';
 
 async function seed() {
   try {
