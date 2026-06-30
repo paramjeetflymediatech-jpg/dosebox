@@ -36,7 +36,7 @@ export default function AdminDashboardPage() {
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const statsRes = await api.get('/admin/stats');
+      const statsRes = await api.get('/admin/dashboard');
       const statsData = statsRes.data.data;
       setKpis(statsData.kpis);
       setRevenueChart(statsData.charts.revenueChart);

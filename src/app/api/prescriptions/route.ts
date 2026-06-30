@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT } from '../../../middleware/auth';
 import { Prescription, Medicine, User } from '../../../models';
 import { saveUploadFile } from '../../../middleware/upload';
-import Tesseract from 'tesseract.js';
 import { Op } from 'sequelize';
 
 export async function POST(req: NextRequest) {
@@ -37,12 +36,15 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         
+        // Dynamically load tesseract to bypass Next.js Webpack mangling
+        const Tesseract = eval(`require('tesseract.js')`);
+        
         // Run OCR
         const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
         
         // Extract potential medicine names (words > 4 letters)
         const words = text.match(/[A-Za-z]{4,}/g) || [];
-        const uniqueWords = [...new Set(words.map(w => w.toLowerCase()))];
+        const uniqueWords = [...new Set(words.map((w: string) => w.toLowerCase()))];
         
         if (uniqueWords.length > 0) {
           const likeConditions = uniqueWords.map(word => ({
