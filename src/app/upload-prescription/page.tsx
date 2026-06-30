@@ -38,7 +38,7 @@ export default function UploadPrescriptionPage() {
     if (user) {
       async function loadHistory() {
         try {
-          const res = await api.get('/prescriptions/my');
+          const res = await api.get('/prescriptions/customer');
           if (res.data?.success) {
             setHistory(res.data.data);
           }
@@ -77,9 +77,9 @@ export default function UploadPrescriptionPage() {
     setIsScanning(true);
     try {
       const formData = new FormData();
-      formData.append('prescription', prescriptionFile);
+      formData.append('file', prescriptionFile);
 
-      const res = await api.post('/prescriptions/upload', formData, {
+      const res = await api.post('/prescriptions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

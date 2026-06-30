@@ -47,21 +47,7 @@ A modern, scalable, and responsive online pharmacy and tele-consulting platform 
 
 ---
 
-## Test Accounts & Credentials
 
-The system seeds default test accounts automatically on startup:
-
-- **Admin Account**:
-  - Email: `admin@mrmed.com`
-  - Password: `password123`
-- **Pharmacist Account**:
-  - Email: `pharmacist@mrmed.com`
-  - Password: `password123`
-- **Customer Account**:
-  - Email: `customer@mrmed.com`
-  - Password: `password123`
-
----
 
 ## REST API Reference
 

@@ -1,41 +1,33 @@
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { writeFile } from 'fs/promises';
 
-// Ensure upload directories exist
-const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-  }
-});
-
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+export const saveUploadFile = async (file: File): Promise<string> => {
   const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
-  const ext = path.extname(file.originalname).toLowerCase();
+  const ext = path.extname(file.name).toLowerCase();
   
-  if (allowedExtensions.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only JPG, PNG, and PDF files are allowed!') as any, false);
+  if (!allowedExtensions.includes(ext)) {
+    throw new Error('Only JPG, PNG, and PDF files are allowed!');
   }
+
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('File size exceeds 5 MB limit!');
+  }
+
+  const uploadDir = path.join(process.cwd(), 'public/uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  const filename = `file-${uniqueSuffix}${ext}`;
+  const filepath = path.join(uploadDir, filename);
+
+  await writeFile(filepath, buffer);
+  
+  // Return the public URL path
+  return `/uploads/${filename}`;
 };
-
-export const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5 MB limit
-  },
-  fileFilter: fileFilter
-});
-
-export default upload;

@@ -11,7 +11,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import './globals.css';
 import api from '../lib/api';
-
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 const queryClient = new QueryClient();
 
 function ScriptInjector({ html, target }: { html: string, target: 'head' | 'body' }) {
@@ -61,14 +62,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
       <body suppressHydrationWarning>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <CartProvider>
-              <LayoutContent>{children}</LayoutContent>
-              <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#333', color: '#fff', borderRadius: '12px' } }} />
-            </CartProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <CartProvider>
+                <LayoutContent>{children}</LayoutContent>
+                <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#333', color: '#fff', borderRadius: '12px' } }} />
+              </CartProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );
@@ -129,21 +132,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       } else {
         setErrorMsg('Invalid email or password');
       }
-    }
-  };
-
-  const handleGoogleMock = async () => {
-    // Quick simulator for testing Google Auth
-    const success = await googleLogin(
-      `g_${Math.random().toString(36).substr(2, 9)}`,
-      email || 'google_user@gmail.com',
-      name || 'Google User'
-    );
-    if (success) {
-      setShowAuthModal(false);
-      resetForm();
-    } else {
-      setErrorMsg('Google login simulation failed');
     }
   };
 
@@ -251,13 +239,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               
               {/* User Login/Logout */}
               {user ? (
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-2 text-slate-600 hover:text-rose-600 transition-colors bg-slate-50 px-4 py-2.5 rounded-full"
+                <Link
+                  href="/account"
+                  className="flex items-center gap-2 text-slate-600 hover:text-brand-600 transition-colors bg-slate-50 px-4 py-2.5 rounded-full hover:bg-brand-50"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
+                  {(user as any)?.avatar ? (
+                    <img src={(user as any).avatar} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
+                  <span className="truncate max-w-[100px]">{user.name?.split(' ')[0] || 'Account'}</span>
+                </Link>
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
@@ -466,24 +458,38 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <div className="relative my-6 text-center">
                 <hr className="border-slate-100" />
                 <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xxs font-semibold uppercase tracking-wider text-slate-300">
-                  Or Simulate
+                  Or Sign in with Google
                 </span>
               </div>
 
-              <button
-                onClick={handleGoogleMock}
-                type="button"
-                className="w-full border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-sm py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {/* SVG Google icon */}
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.39 7.56l3.85 2.99c.92-2.75 3.5-4.51 6.76-4.51z" />
-                  <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.76 2.91c2.2-2.03 3.66-5.02 3.66-8.73z" />
-                  <path fill="#FBBC05" d="M5.24 10.55c-.24-.72-.37-1.49-.37-2.3s.13-1.58.37-2.3L1.39 2.96C.5 4.77 0 6.83 0 9c0 2.17.5 4.23 1.39 6.04l3.85-2.99c-.24-.72-.37-1.49-.37-2.3z" />
-                  <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.76-2.91c-1.1.74-2.5 1.18-4.2 1.18-3.26 0-5.84-1.76-6.76-4.51L1.39 15.1C3.37 19.35 7.35 22 12 22z" />
-                </svg>
-                Sign In with Google
-              </button>
+              <div className="flex justify-center w-full">
+                <GoogleLogin
+                  onSuccess={async (credentialResponse) => {
+                    if (credentialResponse.credential) {
+                      const decoded: any = jwtDecode(credentialResponse.credential);
+                      const success = await googleLogin(
+                        decoded.sub,
+                        decoded.email,
+                        decoded.name,
+                        decoded.picture || ''
+                      );
+                      if (success) {
+                        setShowAuthModal(false);
+                        resetForm();
+                      } else {
+                        setErrorMsg('Google login failed');
+                      }
+                    }
+                  }}
+                  onError={() => {
+                    setErrorMsg('Google Login Failed');
+                  }}
+                  useOneTap
+                  theme="outline"
+                  shape="rectangular"
+                  text="signin_with"
+                />
+              </div>
 
               <div className="mt-6 text-center text-xs">
                 {isSignUp ? (

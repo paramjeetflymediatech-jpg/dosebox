@@ -1,21 +1,19 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { User, Role } from '../models';
 
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    roleId: number;
-    roleName: string;
-  };
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  roleId: number;
+  roleName: string;
 }
 
-export const authenticateJWT = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+export const authenticateJWT = async (req: NextRequest): Promise<AuthenticatedUser | NextResponse> => {
+  const authHeader = req.headers.get('authorization');
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, message: 'Authentication token missing or invalid' });
+    return NextResponse.json({ success: false, message: 'Authentication token missing or invalid' }, { status: 401 });
   }
 
   const token = authHeader.split(' ')[1];
@@ -29,37 +27,26 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
     });
 
     if (!user || user.status !== 'active') {
-      return res.status(401).json({ success: false, message: 'User is suspended or does not exist' });
+      return NextResponse.json({ success: false, message: 'User is suspended or does not exist' }, { status: 401 });
     }
 
-    (req as AuthenticatedRequest).user  = {
+    return {
       id: user.id,
       email: user.email,
       roleId: user.roleId,
       roleName: user.role ? (user.role as any).name : 'Customer'
     };
-
-    return next();
   } catch (error) {
-    return res.status(401).json({ success: false, message: 'Token is invalid or expired' });
+    return NextResponse.json({ success: false, message: 'Token is invalid or expired' }, { status: 401 });
   }
 };
 
-export const authorizeRoles = (...allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const authReq = req as AuthenticatedRequest;
-    if (!authReq.user) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
-    }
-
-    const { roleName } = authReq.user;
-    if (!allowedRoles.includes(roleName)) {
-      return res.status(403).json({ 
-        success: false, 
-        message: `Role '${roleName}' is unauthorized to access this resources. Required: [${allowedRoles.join(', ')}]` 
-      });
-    }
-
-    return next();
-  };
+export const authorizeRoles = (user: AuthenticatedUser, ...allowedRoles: string[]): NextResponse | null => {
+  if (!allowedRoles.includes(user.roleName)) {
+    return NextResponse.json({ 
+      success: false, 
+      message: `Role '${user.roleName}' is unauthorized to access this resources. Required: [${allowedRoles.join(', ')}]` 
+    }, { status: 403 });
+  }
+  return null;
 };

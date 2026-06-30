@@ -30,16 +30,18 @@ export interface UserAttributes {
   password?: string;
   googleId?: string;
   phone?: string;
+  avatar?: string;
   roleId: number;
   status: string; // 'active' | 'inactive'
 }
-export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'status'>> implements UserAttributes {
+export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'status'>> implements UserAttributes {
   declare id: number;
   declare name: string;
   declare email: string;
   declare password?: string;
   declare googleId?: string;
   declare phone?: string;
+  declare avatar?: string;
   declare roleId: number;
   declare status: string;
   declare role?: Role;
@@ -52,6 +54,7 @@ User.init(
     password: { type: DataTypes.STRING, allowNull: true },
     googleId: { type: DataTypes.STRING, allowNull: true },
     phone: { type: DataTypes.STRING, allowNull: true },
+    avatar: { type: DataTypes.STRING, allowNull: true },
     roleId: { type: DataTypes.INTEGER, allowNull: false },
     status: { type: DataTypes.STRING, defaultValue: 'active' },
   },
@@ -287,12 +290,13 @@ export interface OrderAttributes {
   gstAmount: number;
   finalAmount: number;
   paymentStatus: string; // 'Unpaid' | 'Paid' | 'Failed' | 'Refunded'
-  paymentMethod: string; // 'COD' | 'Razorpay'
+  paymentMethod: string; // 'COD' | 'Razorpay' | 'PhonePe'
   trackingTimeline: string; // JSON Array string
   couponId?: number;
   shippingAddressId: number;
+  transactionId?: string;
 }
-export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id' | 'prescriptionId' | 'status' | 'discountAmount' | 'gstAmount' | 'paymentStatus' | 'paymentMethod' | 'trackingTimeline' | 'couponId'>> implements OrderAttributes {
+export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id' | 'prescriptionId' | 'status' | 'discountAmount' | 'gstAmount' | 'paymentStatus' | 'paymentMethod' | 'trackingTimeline' | 'couponId' | 'transactionId'>> implements OrderAttributes {
   declare id: number;
   declare userId: number;
   declare prescriptionId?: number;
@@ -306,6 +310,7 @@ export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id'
   declare trackingTimeline: string;
   declare couponId?: number;
   declare shippingAddressId: number;
+  declare transactionId?: string;
 }
 Order.init(
   {
@@ -322,6 +327,7 @@ Order.init(
     trackingTimeline: { type: DataTypes.TEXT, defaultValue: '[]' },
     couponId: { type: DataTypes.INTEGER, allowNull: true },
     shippingAddressId: { type: DataTypes.INTEGER, allowNull: false },
+    transactionId: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: 'Order', tableName: 'orders', timestamps: true }
 );

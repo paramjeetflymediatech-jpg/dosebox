@@ -30,7 +30,7 @@ export default function CheckoutPage() {
   // States
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Razorpay'>('COD');
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'PhonePe'>('COD');
   
   // Inline address creation fields
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -44,6 +44,120 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+
+  // Address Search & Location States
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Address Search & Location Logic
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5`);
+        const data = await res.json();
+        setSearchResults(data || []);
+        setShowSearchResults(true);
+      } catch (err) {
+        console.error('Search error', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleSelectSearchResult = (result: any) => {
+    const address = result.address || {};
+    const st = address.road || address.suburb || address.neighbourhood || result.name || '';
+    const c = address.city || address.town || address.county || '';
+    const stt = address.state || '';
+    const zc = address.postcode || '';
+
+    if (st) setStreet(st);
+    if (c) setCity(c);
+    if (stt) setState(stt);
+    if (zc) setZipCode(zc);
+    
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
+
+  const handleFetchLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    setIsFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+          
+          let st = '', c = '', stt = '', zc = '';
+
+          if (apiKey) {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+            const data = await res.json();
+            
+            if (data.status === 'OK' && data.results[0]) {
+              const result = data.results[0];
+              result.address_components.forEach((component: any) => {
+                if (component.types.includes('route')) st = component.long_name;
+                if (!st && component.types.includes('neighborhood')) st = component.long_name;
+                if (component.types.includes('locality')) c = component.long_name;
+                if (component.types.includes('administrative_area_level_1')) stt = component.long_name;
+                if (component.types.includes('postal_code')) zc = component.long_name;
+              });
+              if (!st) st = result.formatted_address.split(',')[0];
+            } else {
+              alert('Could not determine address from location');
+              setIsFetchingLocation(false);
+              return;
+            }
+          } else {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            
+            if (data && data.address) {
+              st = data.address.road || data.address.suburb || data.address.neighbourhood || '';
+              c = data.address.city || data.address.town || data.address.county || '';
+              stt = data.address.state || '';
+              zc = data.address.postcode || '';
+            } else {
+              alert('Demo API failed to locate address');
+              setIsFetchingLocation(false);
+              return;
+            }
+          }
+          
+          if (st) setStreet(st);
+          if (c) setCity(c);
+          if (stt) setState(stt);
+          if (zc) setZipCode(zc);
+        } catch (error) {
+          alert('Failed to fetch address details');
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (error) => {
+        alert('Location access denied or unavailable');
+        setIsFetchingLocation(false);
+      }
+    );
+  };
 
   // Load addresses on mount
   useEffect(() => {
@@ -61,6 +175,22 @@ export default function CheckoutPage() {
     }
     loadAddresses();
   }, [user]);
+
+  // Handle Return from PhonePe payment
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const status = urlParams.get('status');
+      if (status === 'success') {
+        setOrderComplete(true);
+        clearCart();
+        sessionStorage.removeItem('attachedPrescriptionId');
+      } else if (status === 'failed') {
+        alert('Payment failed or cancelled. Please try again.');
+        router.replace('/checkout');
+      }
+    }
+  }, [router, clearCart]);
 
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,10 +237,12 @@ export default function CheckoutPage() {
       const prescriptionIdStr = sessionStorage.getItem('attachedPrescriptionId');
       const prescriptionId = prescriptionIdStr ? parseInt(prescriptionIdStr, 10) : undefined;
 
+      const selectedAddrObj = addresses.find(a => a.id === selectedAddressId);
+
       const orderData = {
         items: itemsPayload,
         couponCode: sessionStorage.getItem('couponCode') || undefined,
-        shippingAddressId: 1, // mock valid DB address
+        shippingAddress: selectedAddrObj,
         paymentMethod,
         prescriptionId
       };
@@ -118,7 +250,28 @@ export default function CheckoutPage() {
       const res = await api.post('/orders', orderData);
 
       if (res.data?.success) {
-        setCreatedOrderId(res.data.data.id);
+        const orderId = res.data.data.id;
+        setCreatedOrderId(orderId);
+
+        if (paymentMethod === 'PhonePe') {
+          try {
+            const phonepeRes = await api.post('/payments/phonepe/initiate', { orderId });
+            if (phonepeRes.data?.success && phonepeRes.data?.redirectUrl) {
+              window.location.href = phonepeRes.data.redirectUrl;
+              return; // Halt and redirect
+            } else {
+              alert('Failed to initiate PhonePe payment.');
+              setProcessing(false);
+              return;
+            }
+          } catch (phonePeErr: any) {
+            alert('PhonePe init error: ' + (phonePeErr.response?.data?.message || phonePeErr.message));
+            setProcessing(false);
+            return;
+          }
+        }
+
+        // COD Flow
         clearCart();
         sessionStorage.removeItem('attachedPrescriptionId');
         setOrderComplete(true);
@@ -150,7 +303,7 @@ export default function CheckoutPage() {
 
         <div className="mt-12 w-full space-y-4">
           <Link 
-            href="/dashboard/customer" 
+            href="/account" 
             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
           >
             Track Order Status
@@ -162,6 +315,19 @@ export default function CheckoutPage() {
             Continue Shopping
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-32 text-center flex flex-col items-center">
+        <ShieldCheck className="w-16 h-16 text-slate-300 mb-6" />
+        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Please Log In</h2>
+        <p className="text-slate-500 mb-8 font-medium">You must be logged in to securely complete your checkout and place an order.</p>
+        <Link href="/" className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all">
+          Return Home to Login
+        </Link>
       </div>
     );
   }
@@ -212,6 +378,46 @@ export default function CheckoutPage() {
                     className="overflow-hidden"
                   >
                     <div className="bg-slate-50/50 border border-slate-100 rounded-[1.5rem] p-6 space-y-5 mb-6">
+                      <div className="relative z-10 mb-2">
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <input 
+                              type="text" 
+                              placeholder="Search for an address..." 
+                              value={searchQuery}
+                              onChange={e => setSearchQuery(e.target.value)}
+                              className="w-full bg-white border border-slate-200/60 text-slate-900 text-sm font-semibold rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
+                            />
+                            {isSearching && <span className="absolute right-3 top-3.5 text-xs text-slate-400">Searching...</span>}
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={handleFetchLocation} 
+                            disabled={isFetchingLocation}
+                            className="flex-shrink-0 flex items-center justify-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 py-3 px-4 rounded-xl transition-colors disabled:opacity-50"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            {isFetchingLocation ? 'Locating...' : 'Use Location'}
+                          </button>
+                        </div>
+                        
+                        {showSearchResults && searchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                            {searchResults.map((result: any, idx: number) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSelectSearchResult(result)}
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-sm text-slate-700 transition-colors"
+                              >
+                                <span className="font-bold text-slate-900 block">{result.name || (result.address && (result.address.road || result.address.suburb)) || 'Unknown Address'}</span>
+                                <span className="text-xs text-slate-500 block truncate mt-0.5">{result.display_name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Label (e.g. Home, Work)</label>
@@ -331,7 +537,8 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 
                 {/* Cash on Delivery */}
-                <label 
+                <div 
+                  onClick={() => setPaymentMethod('COD')}
                   className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
                     paymentMethod === 'COD' 
                       ? 'border-brand-500 bg-brand-50/30 shadow-sm' 
@@ -350,30 +557,31 @@ export default function CheckoutPage() {
                     </span>
                     <span className="text-slate-500 text-xs mt-1 block font-medium">Pay via cash or UPI to the delivery executive.</span>
                   </div>
-                </label>
+                </div>
 
                 {/* Online Payment */}
-                <label 
+                <div 
+                  onClick={() => setPaymentMethod('PhonePe')}
                   className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                    paymentMethod === 'Razorpay' 
+                    paymentMethod === 'PhonePe' 
                       ? 'border-brand-500 bg-brand-50/30 shadow-sm' 
                       : 'border-slate-100 hover:border-slate-200 bg-white'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
-                    paymentMethod === 'Razorpay' ? 'bg-brand-600' : 'bg-slate-200'
+                    paymentMethod === 'PhonePe' ? 'bg-brand-600' : 'bg-slate-200'
                   }`}>
-                    {paymentMethod === 'Razorpay' && <div className="w-2 h-2 bg-white rounded-full" />}
+                    {paymentMethod === 'PhonePe' && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                   <div>
                     <span className="font-extrabold text-slate-900 text-sm block flex items-center gap-2">
                       <CreditCard className="w-4 h-4 text-slate-400" />
-                      Online Payment
+                      PhonePe (Online)
                       <span className="bg-brand-100 text-brand-700 text-[9px] px-1.5 py-0.5 rounded-full">Secure</span>
                     </span>
-                    <span className="text-slate-500 text-xs mt-1 block font-medium">Credit/Debit Cards, UPI, Netbanking.</span>
+                    <span className="text-slate-500 text-xs mt-1 block font-medium">Credit/Debit Cards, UPI, Netbanking via PhonePe.</span>
                   </div>
-                </label>
+                </div>
               </div>
             </div>
 

@@ -3,14 +3,10 @@ import axios from 'axios';
 // Calculate the base API path. If running locally, check port 5000 or relative proxy path.
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // If we're hitting localhost or 127.0.0.1 in dev, backend is on localhost:5000
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:5000/api';
-    }
-    // Otherwise in docker deployment we reverse proxy via Nginx, so same origin /api is standard
     return '/api';
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const port = process.env.PORT || 3000;
+  return process.env.NEXT_PUBLIC_API_URL || `http://localhost:${port}/api`;
 };
 
 export const api = axios.create({

@@ -4,26 +4,34 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, loading, logout } = useAuth();
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!isAdmin) {
+    if (!loading && !isAdmin) {
       router.push('/');
     }
-  }, [isAdmin, router]);
+  }, [loading, isAdmin, router]);
 
-  if (!isAdmin) return null;
+  if (loading || !isAdmin) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutGrid },
+    { name: 'Orders', href: '/dashboard/admin/orders', icon: ShoppingBag },
+    { name: 'Prescriptions', href: '/dashboard/admin/prescriptions', icon: Clipboard },
     { name: 'Medicines', href: '/dashboard/admin/medicines', icon: Pill },
     { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText },
     { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings },

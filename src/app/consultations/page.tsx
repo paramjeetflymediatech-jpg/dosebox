@@ -111,7 +111,7 @@ export default function ConsultationsPage() {
 
         <div className="mt-8 flex flex-col gap-3">
           <a 
-            href="/dashboard/customer" 
+            href="/account" 
             className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-brand-500/10 transition-colors text-sm"
           >
             Open Dashboard

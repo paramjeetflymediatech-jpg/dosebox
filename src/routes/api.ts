@@ -7,6 +7,7 @@ import PrescriptionController from '../controllers/prescriptionController';
 import OrderController from '../controllers/orderController';
 import AppointmentController from '../controllers/appointmentController';
 import AdminController from '../controllers/adminController';
+import PaymentController from '../controllers/paymentController';
 
 const router = Router();
 
@@ -52,6 +53,13 @@ router.get('/orders/my', authenticateJWT, authorizeRoles('Customer'), OrderContr
 router.get('/orders', authenticateJWT, authorizeRoles('Pharmacist', 'Admin'), OrderController.getAllOrders);
 router.put('/orders/:id/status', authenticateJWT, authorizeRoles('Pharmacist', 'Admin'), OrderController.updateOrderStatus);
 router.get('/orders/:id/invoice', authenticateJWT, OrderController.getInvoicePdf);
+
+// ====================================================
+// PAYMENT ROUTES
+// ====================================================
+router.post('/payments/phonepe/initiate', authenticateJWT, authorizeRoles('Customer', 'Pharmacist', 'Admin'), PaymentController.initiatePhonePePayment);
+router.post('/payments/phonepe/callback', PaymentController.phonePeCallback);
+router.post('/payments/phonepe/redirect', PaymentController.phonePeRedirect);
 
 // ====================================================
 // DOCTOR APPOINTMENTS / CLINIC ROUTES

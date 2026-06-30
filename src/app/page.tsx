@@ -66,6 +66,10 @@ export default function HomePage() {
   const testimonialsRef = useRef<HTMLElement>(null);
   const faqRef = useRef<HTMLElement>(null);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useGSAP(() => {
     // Scroll animations
     const sections = [
@@ -99,59 +103,68 @@ export default function HomePage() {
 
     // Staggered cards in features
     if (featuresRef.current) {
-      gsap.fromTo(
-        gsap.utils.toArray('.feature-card', featuresRef.current),
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.15,
-          ease: 'back.out(1.2)',
-          scrollTrigger: {
-            trigger: featuresRef.current,
-            start: 'top 80%',
+      const targets = gsap.utils.toArray('.feature-card', featuresRef.current);
+      if (targets.length > 0) {
+        gsap.fromTo(
+          targets,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            stagger: 0.15,
+            ease: 'back.out(1.2)',
+            scrollTrigger: {
+              trigger: featuresRef.current,
+              start: 'top 80%',
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     // Staggered categories
     if (categoriesRef.current) {
-      gsap.fromTo(
-        gsap.utils.toArray('.category-card', categoriesRef.current),
-        { opacity: 0, scale: 0.9 },
-        {
-          opacity: 1,
-          scale: 1,
-          duration: 0.5,
-          stagger: 0.1,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: categoriesRef.current,
-            start: 'top 80%',
+      const targets = gsap.utils.toArray('.category-card', categoriesRef.current);
+      if (targets.length > 0) {
+        gsap.fromTo(
+          targets,
+          { opacity: 0, scale: 0.9 },
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 0.5,
+            stagger: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: categoriesRef.current,
+              start: 'top 80%',
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     // Staggered medicine cards
     if (trendingRef.current) {
-      gsap.fromTo(
-        gsap.utils.toArray('.medicine-card', trendingRef.current),
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: 'back.out(1.1)',
-          scrollTrigger: {
-            trigger: trendingRef.current,
-            start: 'top 80%',
+      const targets = gsap.utils.toArray('.medicine-card', trendingRef.current);
+      if (targets.length > 0) {
+        gsap.fromTo(
+          targets,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: 'back.out(1.1)',
+            scrollTrigger: {
+              trigger: trendingRef.current,
+              start: 'top 80%',
+            }
           }
-        }
-      );
+        );
+      }
     }
   }, { scope: containerRef, dependencies: [categories, trending, banners] });
 

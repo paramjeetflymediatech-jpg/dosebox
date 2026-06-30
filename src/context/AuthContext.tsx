@@ -15,7 +15,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  googleLogin: (googleId: string, email: string, name: string) => Promise<boolean>;
+  googleLogin: (googleId: string, email: string, name: string, avatar: string) => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
   isPharmacist: boolean;
@@ -69,9 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const googleLogin = async (googleId: string, email: string, name: string): Promise<boolean> => {
+  const googleLogin = async (googleId: string, email: string, name: string, avatar: string): Promise<boolean> => {
     try {
-      const res = await api.post('/auth/google', { googleId, email, name });
+      const res = await api.post('/auth/google', { googleId, email, name, avatar });
       if (res.data?.success) {
         const { accessToken, refreshToken, user: userData } = res.data;
         localStorage.setItem('accessToken', accessToken);
