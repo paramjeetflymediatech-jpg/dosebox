@@ -28,6 +28,7 @@ export default function UploadPrescriptionPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [prescriptionId, setPrescriptionId] = useState<number | null>(null);
+  const [uploadType, setUploadType] = useState<'SCAN' | 'CALL_ME' | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<any[]>([]);
   const [showScanResults, setShowScanResults] = useState(false);
@@ -60,7 +61,7 @@ export default function UploadPrescriptionPage() {
     }
   };
 
-  const handleUploadAndScan = async () => {
+  const handleUploadAndScan = async (isCallRequest: boolean = false) => {
     if (!prescriptionFile) {
       alert('Please select a file to upload first.');
       return;
@@ -78,6 +79,9 @@ export default function UploadPrescriptionPage() {
     try {
       const formData = new FormData();
       formData.append('file', prescriptionFile);
+      if (isCallRequest) {
+        formData.append('notes', 'CALL_ME');
+      }
 
       const res = await api.post('/prescriptions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -85,6 +89,7 @@ export default function UploadPrescriptionPage() {
 
       if (res.data?.success) {
         setPrescriptionId(res.data.data.id);
+        setUploadType(isCallRequest ? 'CALL_ME' : 'SCAN');
         setUploadSuccess(true);
         // Save attached prescription in session storage for checkout retrieve
         sessionStorage.setItem('attachedPrescriptionId', res.data.data.id.toString());
@@ -197,16 +202,32 @@ export default function UploadPrescriptionPage() {
                 </div>
               </div>
 
-              {/* Upload Button */}
-              {prescriptionFile && (
-                <button
-                  onClick={handleUploadAndScan}
-                  disabled={uploading || uploadSuccess}
-                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-full flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-500/10"
-                >
-                  {uploading ? 'Processing File...' : uploadSuccess ? 'Successfully Scanned' : 'Scan & Extract Medicines'}
-                  {uploadSuccess ? <CheckCircle2 className="w-5 h-5 text-emerald-300" /> : <ArrowRight className="w-5 h-5" />}
-                </button>
+              {/* Upload Buttons */}
+              {prescriptionFile && !uploadSuccess && (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleUploadAndScan(false)}
+                    disabled={uploading}
+                    className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-full flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-500/10"
+                  >
+                    {uploading ? 'Processing File...' : 'Scan & Extract Medicines'}
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                  
+                  <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-slate-200"></div>
+                    <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-wider">OR</span>
+                    <div className="flex-grow border-t border-slate-200"></div>
+                  </div>
+
+                  <button
+                    onClick={() => handleUploadAndScan(true)}
+                    disabled={uploading}
+                    className="w-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold py-3.5 rounded-full flex items-center justify-center gap-2 transition-all shadow-sm"
+                  >
+                    No time? Ask Pharmacist to Call & Order
+                  </button>
+                </div>
               )}
 
               {/* Login Requirement Banner */}
@@ -236,9 +257,15 @@ export default function UploadPrescriptionPage() {
                 <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs p-4 rounded-2xl flex items-start gap-3 animate-fadeIn">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-extrabold block">Prescription Scanned & Uploaded!</span>
+                    <span className="font-extrabold block">
+                      {uploadType === 'CALL_ME' ? 'Prescription Sent to Pharmacist!' : 'Prescription Scanned & Uploaded!'}
+                    </span>
                     <p className="mt-0.5 text-slate-600">
-                      Prescription ID: <strong>#{prescriptionId}</strong> has been successfully linked. Our pharmacist will review it to verify any Rx required items at checkout.
+                      Prescription ID: <strong>#{prescriptionId}</strong> has been successfully linked.
+                      {uploadType === 'CALL_ME' 
+                        ? ' Our pharmacist will review it and call you shortly to confirm and place your order.'
+                        : ' Our pharmacist will review it to verify any Rx required items at checkout.'
+                      }
                     </p>
                   </div>
                 </div>
@@ -349,9 +376,11 @@ export default function UploadPrescriptionPage() {
                       <div className="min-w-0">
                         <span className="font-bold text-slate-800 text-xxs block">Prescription #{presc.id}</span>
                         <span className="text-slate-400 text-xxs block mt-0.5">{new Date(presc.createdAt).toLocaleDateString()}</span>
-                        {presc.notes && (
+                        {presc.notes === 'CALL_ME' ? (
+                          <span className="text-amber-600 font-bold text-xxs block mt-1">📞 Callback Requested</span>
+                        ) : presc.notes ? (
                           <span className="text-slate-500 italic text-xxs block truncate mt-1">{presc.notes}</span>
-                        )}
+                        ) : null}
                       </div>
                       
                       <span className={`text-xxs font-bold py-0.5 px-2.5 rounded-full flex-shrink-0 ${

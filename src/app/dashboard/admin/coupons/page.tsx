@@ -85,17 +85,17 @@ export default function AdminCouponsPage() {
                     {new Date(coupon.expiryDate).toLocaleDateString()}
                   </td>
                   <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-2">
                       <Link 
                         href={`/dashboard/admin/coupons/${coupon.id}/edit`} 
-                        className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" 
+                        className="p-2 text-slate-400 rounded-lg transition-colors" 
                         title="Edit"
                       >
                         <Edit className="w-5 h-5" />
                       </Link>
                       <button 
                         onClick={() => handleDeleteCoupon(coupon.id)} 
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
+                        className="p-2 text-slate-400 rounded-lg transition-colors" 
                         title="Delete"
                       >
                         <Trash2 className="w-5 h-5" />

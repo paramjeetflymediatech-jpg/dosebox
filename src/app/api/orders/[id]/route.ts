@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
-import { Order, Notification } from '../../../../models';
+import { Order, Notification, User } from '../../../../models';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -44,6 +44,19 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     if (updated) {
+      if (order.status === 'Cancelled' && order.paymentStatus === 'Paid' && order.paymentMethod !== 'COD' && !order.refundedToPoints) {
+        const finalAmt = Number(order.finalAmount);
+        const refundPoints = finalAmt + (finalAmt === 500 ? 50 : finalAmt > 500 ? 100 : 0);
+        
+        const user = await User.findByPk(order.userId);
+        if (user) {
+          await user.update({
+            rewardPoints: (user.rewardPoints || 0) + refundPoints
+          });
+        }
+        order.refundedToPoints = true;
+      }
+
       await order.save();
       
       if (status || trackingMessage) {

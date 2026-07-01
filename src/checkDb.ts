@@ -1,20 +1,17 @@
 import dotenv from 'dotenv';
 dotenv.config();
+import sequelize from './config/database';
 import db from './models';
-const { User } = db;
 
 async function test() {
   try {
-    const user = await User.findOne({ where: { email: 'customer@mrmed.com' } });
-    if (user) {
-      console.log('--- PASSWORD CHECK ---');
-      console.log('user.password accessed directly:', user.password);
-      console.log("user.getDataValue('password') accessed via Sequelize:", user.getDataValue('password'));
-    } else {
-      console.log('User not found');
-    }
+    await sequelize.sync({ alter: true });
+    console.log('Database synced with alter: true');
+    process.exit(0);
   } catch (err: any) {
     console.error('Error:', err.message);
+    process.exit(1);
   }
 }
 test();
+

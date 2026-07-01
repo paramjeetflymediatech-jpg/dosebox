@@ -126,9 +126,16 @@ export default function AdminPrescriptionsPage() {
                     </td>
                     <td className="p-4 text-sm text-slate-600 font-medium">{new Date(rx.createdAt).toLocaleDateString()}</td>
                     <td className="p-4">
-                      <span className="uppercase text-xs font-bold text-slate-400 border border-slate-200 px-2 py-0.5 rounded bg-slate-50">
-                        {rx.fileType}
-                      </span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="uppercase text-xs font-bold text-slate-400 border border-slate-200 px-2 py-0.5 rounded bg-slate-50">
+                          {rx.fileType}
+                        </span>
+                        {rx.notes === 'CALL_ME' && (
+                          <span className="text-[9px] font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                            📞 CALLBACK
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4">
                       <span className={`text-xxs font-bold px-2.5 py-1 rounded-full ${
@@ -140,7 +147,7 @@ export default function AdminPrescriptionsPage() {
                       </span>
                     </td>
                     <td className="p-4 text-center">
-                      <button onClick={() => openUpdateModal(rx)} className="p-2 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-bold">
+                      <button onClick={() => openUpdateModal(rx)} className="p-2 bg-brand-50 text-brand-600 rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-bold">
                         <Edit2 className="w-3 h-3" /> Review
                       </button>
                     </td>
@@ -191,7 +198,14 @@ export default function AdminPrescriptionsPage() {
             {/* Right side: Actions */}
             <div className="w-full md:w-2/5 flex flex-col bg-white">
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <h3 className="text-xl font-extrabold text-slate-900">Review #RX-{selectedPrescription.id}</h3>
+                <div>
+                  <h3 className="text-xl font-extrabold text-slate-900">Review #RX-{selectedPrescription.id}</h3>
+                  {selectedPrescription.notes === 'CALL_ME' && (
+                    <span className="inline-block mt-1 text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded uppercase tracking-wider">
+                      📞 Customer Requested Callback to Create Order
+                    </span>
+                  )}
+                </div>
                 <button onClick={() => setSelectedPrescription(null)} className="text-slate-400 hover:text-slate-600 transition-colors p-1">
                   <XCircle className="w-6 h-6" />
                 </button>

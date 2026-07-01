@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  MapPin, CreditCard, ChevronRight, CheckCircle2, Plus, Loader2, ArrowLeft, ShieldCheck, Wallet
+  MapPin, CreditCard, ChevronRight, CheckCircle2, Plus, Loader2, ArrowLeft, ShieldCheck, Wallet, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,10 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'PhonePe'>('COD');
+  const [useRewardPoints, setUseRewardPoints] = useState(false);
+  
+  const pointsUsed = useRewardPoints && user?.rewardPoints ? Math.min(user.rewardPoints, totalAmount) : 0;
+  const finalPayable = Math.max(0, totalAmount - pointsUsed);
   
   // Inline address creation fields
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -247,7 +251,8 @@ export default function CheckoutPage() {
         couponCode: sessionStorage.getItem('couponCode') || undefined,
         shippingAddress: selectedAddrObj,
         paymentMethod,
-        prescriptionId
+        prescriptionId,
+        useRewardPoints
       };
 
       const res = await api.post('/orders', orderData);
@@ -628,7 +633,40 @@ export default function CheckoutPage() {
 
               <div className="border-t border-slate-100 pt-6 flex justify-between items-baseline">
                 <span className="font-extrabold text-slate-900 text-lg">Total</span>
-                <span className="font-black text-brand-600 text-2xl tracking-tight">₹{totalAmount.toFixed(2)}</span>
+                <span className="font-black text-slate-900 text-lg tracking-tight">₹{totalAmount.toFixed(2)}</span>
+              </div>
+              
+              {user && (user.rewardPoints || 0) > 0 && (
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="flex items-center gap-1.5 font-bold text-amber-700 text-sm">
+                      <Sparkles className="w-4 h-4" /> Reward Points
+                    </span>
+                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Balance: {user.rewardPoints} Pts</span>
+                  </div>
+                  
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={useRewardPoints}
+                      onChange={(e) => setUseRewardPoints(e.target.checked)}
+                      className="w-4 h-4 text-brand-600 border-amber-300 rounded focus:ring-brand-500 bg-white" 
+                    />
+                    <span className="text-sm font-semibold text-amber-800">Use points for this order</span>
+                  </label>
+                  
+                  {useRewardPoints && (
+                    <div className="flex justify-between text-sm font-bold text-amber-600 mt-3 pt-3 border-t border-amber-200/50">
+                      <span>Points Applied</span>
+                      <span>- ₹{pointsUsed.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="border-t border-slate-100 mt-4 pt-4 flex justify-between items-baseline">
+                <span className="font-extrabold text-slate-900 text-lg">Payable</span>
+                <span className="font-black text-brand-600 text-2xl tracking-tight">₹{finalPayable.toFixed(2)}</span>
               </div>
 
               <button

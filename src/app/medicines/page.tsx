@@ -308,7 +308,7 @@ function MedicinesCatalogContent() {
                         <div>
                           <Link href={`/medicines/detail?id=${med.id}`}>
                             <div className="h-40 rounded-2xl bg-white flex items-center justify-center overflow-hidden mb-5 relative mix-blend-multiply border border-slate-100/50">
-                              <img src={imagesArr[0]} alt={med.name} className="object-contain max-h-28 group-hover:scale-110 transition-transform duration-500 ease-out p-4" />
+                              <img src={imagesArr[0]} alt={med.name} className="object-contain group-hover:scale-110 transition-transform duration-500 ease-out " />
                             </div>
                           </Link>
                           

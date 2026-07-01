@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { 
+import {
   ArrowLeft, Clock, User, Calendar, Tag, AlertCircle, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
@@ -24,14 +24,14 @@ interface Blog {
 export default function BlogDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
-  
+
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
-    
+
     async function loadBlog() {
       try {
         const res = await api.get(`/admin/blogs/${slug}`);
@@ -47,7 +47,7 @@ export default function BlogDetailPage() {
         setLoading(false);
       }
     }
-    
+
     loadBlog();
   }, [slug]);
 
@@ -108,15 +108,15 @@ export default function BlogDetailPage() {
         {blog.coverImage && (
           <div className="mb-12 rounded-[2rem] overflow-hidden border border-slate-200 shadow-sm relative group">
             <div className="absolute inset-0 bg-brand-600/10 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none" />
-            <img 
-              src={blog.coverImage} 
-              alt={blog.title} 
+            <img
+              src={blog.coverImage}
+              alt={blog.title}
               className="w-full h-auto max-h-[500px] object-cover"
             />
           </div>
         )}
 
-        <article 
+        <article
           className="prose prose-slate prose-lg prose-headings:font-extrabold prose-a:text-brand-600 hover:prose-a:text-brand-700 max-w-none mb-16"
           dangerouslySetInnerHTML={{ __html: blog.content }}
         />

@@ -9,6 +9,7 @@ interface UserProfile {
   email: string;
   phone?: string;
   role: 'Admin' | 'Pharmacist' | 'Customer';
+  rewardPoints?: number;
 }
 
 interface AuthContextType {

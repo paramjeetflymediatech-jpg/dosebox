@@ -5,7 +5,7 @@ import { writeFile } from 'fs/promises';
 export const saveUploadFile = async (file: File): Promise<string> => {
   const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
   const ext = path.extname(file.name).toLowerCase();
-  
+
   if (!allowedExtensions.includes(ext)) {
     throw new Error('Only JPG, PNG, and PDF files are allowed!');
   }
@@ -27,7 +27,7 @@ export const saveUploadFile = async (file: File): Promise<string> => {
   const filepath = path.join(uploadDir, filename);
 
   await writeFile(filepath, buffer);
-  
+
   // Return the public URL path
   return `/uploads/${filename}`;
 };

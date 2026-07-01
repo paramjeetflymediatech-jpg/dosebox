@@ -82,17 +82,17 @@ export default function AdminBlogsPage() {
                   </td>
                   <td className="py-4 px-6 text-slate-600">{new Date(blog.createdAt).toLocaleDateString()}</td>
                   <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-2">
                       <Link 
                         href={`/dashboard/admin/blogs/${blog.id}/edit`} 
-                        className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" 
+                        className="p-2 text-slate-400 rounded-lg transition-colors" 
                         title="Edit"
                       >
                         <Edit className="w-5 h-5" />
                       </Link>
                       <button 
                         onClick={() => handleDeleteBlog(blog.id)} 
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
+                        className="p-2 text-slate-400 rounded-lg transition-colors" 
                         title="Delete"
                       >
                         <Trash2 className="w-5 h-5" />

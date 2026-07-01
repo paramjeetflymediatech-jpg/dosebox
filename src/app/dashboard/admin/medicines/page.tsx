@@ -133,14 +133,14 @@ export default function AdminMedicinesPage() {
                       <div className="flex items-center justify-end gap-2">
                         <Link 
                           href={`/dashboard/admin/medicines/${med.id}`}
-                          className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </Link>
                         <button 
                           onClick={() => handleDelete(med.id, med.name)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

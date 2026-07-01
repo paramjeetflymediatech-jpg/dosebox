@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        phone: user.phone
+        phone: user.phone,
+        rewardPoints: user.rewardPoints
       }
     }, { status: 201 });
   } catch (error: any) {

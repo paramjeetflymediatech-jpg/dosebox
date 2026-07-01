@@ -14,6 +14,7 @@ export default function NewMedicinePage() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    image: '',
     genericName: '',
     manufacturer: '',
     composition: '',
@@ -46,6 +47,38 @@ export default function NewMedicinePage() {
     }
     loadMeta();
   }, []);
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setFormData({ ...formData, image: data.fileUrl });
+      } else {
+        alert(data.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Image upload failed', err);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +135,40 @@ export default function NewMedicinePage() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Generic Name *</label>
                   <input type="text" value={formData.genericName} onChange={e => setFormData({...formData, genericName: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Paracetamol" />
                 </div>
+              </div>
+
+              {/* Image Upload */}
+              <div className="pt-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Medicine Image</label>
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  <div className="flex-1 w-full relative">
+                    <input 
+                      type="text" 
+                      value={formData.image} 
+                      onChange={e => setFormData({...formData, image: e.target.value})} 
+                      placeholder="Paste image URL here..." 
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                  <div className="text-sm font-bold text-slate-400">OR</div>
+                  <div className="relative flex-shrink-0">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingImage}
+                    />
+                    <div className="px-6 py-2.5 bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center pointer-events-none">
+                      {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                    </div>
+                  </div>
+                </div>
+                {formData.image && (
+                  <div className="mt-4 p-2 border border-slate-100 rounded-xl inline-block bg-slate-50">
+                    <img src={formData.image} alt="Medicine preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+                  </div>
+                )}
               </div>
             </div>
 

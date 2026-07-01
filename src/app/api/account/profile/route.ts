@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const user = await User.findByPk(userAuth.id, {
-      attributes: ['id', 'name', 'email', 'phone', 'avatar']
+      attributes: ['id', 'name', 'email', 'phone', 'avatar', 'rewardPoints']
     });
 
     if (!user) {
@@ -62,7 +62,8 @@ export async function PUT(req: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        phone: user.phone
+        phone: user.phone,
+        rewardPoints: user.rewardPoints
       }
     }, { status: 200 });
 

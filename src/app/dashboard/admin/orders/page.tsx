@@ -139,7 +139,7 @@ export default function AdminOrdersPage() {
                       </span>
                     </td>
                     <td className="p-4 text-center">
-                      <button onClick={() => openUpdateModal(order)} className="p-2 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-bold">
+                      <button onClick={() => openUpdateModal(order)} className="p-2 bg-brand-50 text-brand-600 rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-bold">
                         <Edit2 className="w-3 h-3" /> Update
                       </button>
                     </td>

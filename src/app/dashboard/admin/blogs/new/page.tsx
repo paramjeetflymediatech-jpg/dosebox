@@ -20,7 +20,6 @@ export default function NewBlogPage() {
     slug: '',
     content: '',
     category: 'Nutrition & Wellness',
-    readTime: '5 mins',
     coverImage: '',
     seoTitle: '',
     seoDescription: ''
@@ -75,7 +74,7 @@ export default function NewBlogPage() {
       .trim()
       .replace(/[\s\W-]+/g, '-')
       .replace(/^-+|-+$/g, '');
-    
+
     setNewBlog({ ...newBlog, title, slug });
   };
 
@@ -92,9 +91,9 @@ export default function NewBlogPage() {
 
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
         <form onSubmit={handleCreateBlog} className="space-y-8">
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Basic Info */}
             <div className="space-y-4 md:col-span-2">
               <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Article Details</h3>
@@ -105,17 +104,17 @@ export default function NewBlogPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">URL Slug *</label>
-                  <input required type="text" placeholder="e.g. benefits-of-vitamin-c" value={newBlog.slug} onChange={e => setNewBlog({...newBlog, slug: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
+                  <input required type="text" placeholder="e.g. benefits-of-vitamin-c" value={newBlog.slug} onChange={e => setNewBlog({ ...newBlog, slug: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
                 </div>
               </div>
             </div>
 
             {/* Categorization */}
             <div className="space-y-4 md:col-span-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Category *</label>
-                  <select value={newBlog.category} onChange={e => setNewBlog({...newBlog, category: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors">
+                  <select value={newBlog.category} onChange={e => setNewBlog({ ...newBlog, category: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors">
                     <option>Nutrition & Wellness</option>
                     <option>Disease Management</option>
                     <option>Vitamins & Supplements</option>
@@ -123,15 +122,11 @@ export default function NewBlogPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Estimated Read Time *</label>
-                  <input required type="text" placeholder="e.g. 5 mins" value={newBlog.readTime} onChange={e => setNewBlog({...newBlog, readTime: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
-                </div>
-                <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Cover Image URL *</label>
                   <div className="flex flex-col gap-2">
                     <div className="relative">
                       <ImageIcon className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                      <input required type="url" placeholder="https://..." value={newBlog.coverImage} onChange={e => setNewBlog({...newBlog, coverImage: e.target.value})} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
+                      <input required type="url" placeholder="https://..." value={newBlog.coverImage} onChange={e => setNewBlog({ ...newBlog, coverImage: e.target.value })} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400 font-bold uppercase">OR</span>
@@ -161,7 +156,7 @@ export default function NewBlogPage() {
                     background-color: #f8fafc !important;
                   }
                 `}</style>
-                <CustomEditor value={newBlog.content} onChange={(val) => setNewBlog({...newBlog, content: val})} />
+                <CustomEditor value={newBlog.content} onChange={(val) => setNewBlog({ ...newBlog, content: val })} />
               </div>
             </div>
 
@@ -172,18 +167,18 @@ export default function NewBlogPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Meta Title</label>
-                    <input type="text" placeholder="SEO Title" value={newBlog.seoTitle} onChange={e => setNewBlog({...newBlog, seoTitle: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors shadow-sm" />
+                    <input type="text" placeholder="SEO Title" value={newBlog.seoTitle} onChange={e => setNewBlog({ ...newBlog, seoTitle: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors shadow-sm" />
                     <p className="text-xs text-slate-400 mt-1.5">Optimal length: 50-60 characters</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Meta Description</label>
-                    <textarea placeholder="SEO Description" value={newBlog.seoDescription} onChange={e => setNewBlog({...newBlog, seoDescription: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl h-24 resize-none focus:outline-none focus:border-brand-500 transition-colors shadow-sm"></textarea>
+                    <textarea placeholder="SEO Description" value={newBlog.seoDescription} onChange={e => setNewBlog({ ...newBlog, seoDescription: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl h-24 resize-none focus:outline-none focus:border-brand-500 transition-colors shadow-sm"></textarea>
                     <p className="text-xs text-slate-400 mt-1.5">Optimal length: 150-160 characters</p>
                   </div>
                 </div>
               </div>
             </div>
-            
+
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex justify-end">

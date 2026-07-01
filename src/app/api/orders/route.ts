@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     const userId = userAuth.id;
     const body = await req.json().catch(() => ({}));
-    const { items, couponCode, shippingAddressId, shippingAddress, paymentMethod, prescriptionId } = body;
+    const { items, couponCode, shippingAddressId, shippingAddress, paymentMethod, prescriptionId, useRewardPoints } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, message: 'Shopping cart items are required' }, { status: 400 });
@@ -129,7 +129,14 @@ export async function POST(req: NextRequest) {
     const totalBill = subtotal - totalSavings - couponDiscount;
     const gstAmount = totalBill * 0.18;
     const shippingFee = totalBill > 500 ? 0 : 50.00;
-    const finalAmount = totalBill + shippingFee;
+    let finalAmount = totalBill + shippingFee;
+
+    let pointsUsed = 0;
+    const userRecord = await User.findByPk(userId);
+    if (useRewardPoints && userRecord && (userRecord.rewardPoints || 0) > 0) {
+      pointsUsed = Math.min(userRecord.rewardPoints || 0, finalAmount);
+      finalAmount -= pointsUsed;
+    }
 
     const trackingTimeline = [
       { status: 'Pending', time: new Date().toISOString(), desc: 'Order received. Awaiting system logs.' },
@@ -141,7 +148,7 @@ export async function POST(req: NextRequest) {
       prescriptionId: requiresPrescription ? prescriptionId : null,
       status: orderStatus,
       totalAmount: subtotal,
-      discountAmount: totalSavings + couponDiscount,
+      discountAmount: totalSavings + couponDiscount + pointsUsed,
       gstAmount,
       finalAmount,
       paymentStatus: 'Unpaid',
@@ -161,6 +168,12 @@ export async function POST(req: NextRequest) {
 
       await entry.medicine.update({
         stock: entry.medicine.stock - entry.quantity
+      });
+    }
+
+    if (pointsUsed > 0 && userRecord) {
+      await userRecord.update({
+        rewardPoints: (userRecord.rewardPoints || 0) - pointsUsed
       });
     }
 

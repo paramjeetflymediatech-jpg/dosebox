@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  ShoppingBag, MapPin, Eye, FileText, CheckCircle2, AlertCircle, XCircle, Download, Upload, ShieldCheck, User as UserIcon, Lock, LogOut, ChevronRight, Edit2, Trash2, Plus
+  ShoppingBag, MapPin, Eye, FileText, CheckCircle2, AlertCircle, XCircle, Download, Upload, ShieldCheck, User as UserIcon, Lock, LogOut, ChevronRight, Edit2, Trash2, Plus, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
@@ -423,10 +423,28 @@ export default function AccountPage() {
             
             {/* PROFILE TAB */}
             {activeTab === 'profile' && (
-              <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
-                <h3 className="text-xl font-extrabold text-slate-900 mb-6 flex items-center gap-2">
-                  <UserIcon className="w-6 h-6 text-brand-600" /> Personal Information
-                </h3>
+              <div className="space-y-6">
+                
+                {/* Reward Points Card */}
+                <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 sm:p-8 shadow-lg shadow-amber-500/20 text-white flex flex-col sm:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-xl font-extrabold flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-white" /> Your Reward Points
+                    </h3>
+                    <p className="text-amber-100 font-medium text-sm mt-1">
+                      Earn points on every purchase! 1 Point = ₹1 discount on your next order.
+                    </p>
+                  </div>
+                  <div className="bg-white/20 px-6 py-4 rounded-2xl border border-white/20 backdrop-blur-md text-center min-w-[140px]">
+                    <span className="block text-4xl font-black tracking-tight">{user?.rewardPoints || 0}</span>
+                    <span className="block text-xs font-bold text-amber-100 uppercase tracking-widest mt-1">Total Points</span>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
+                  <h3 className="text-xl font-extrabold text-slate-900 mb-6 flex items-center gap-2">
+                    <UserIcon className="w-6 h-6 text-brand-600" /> Personal Information
+                  </h3>
                 <form onSubmit={handleProfileUpdate} className="space-y-6 max-w-xl">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
@@ -481,6 +499,7 @@ export default function AccountPage() {
                     </button>
                   </div>
                 </form>
+              </div>
               </div>
             )}
 

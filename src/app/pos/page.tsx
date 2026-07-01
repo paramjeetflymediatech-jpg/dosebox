@@ -322,7 +322,6 @@ export default function POSPage() {
     const gst = rawSubtotal * gstRate;
     const total = rawSubtotal + gst;
     const rxRequired = cart.some(item => item.medicine.prescriptionRequired);
-
     return {
       subtotal: rawSubtotal,
       gst,
@@ -912,7 +911,7 @@ export default function POSPage() {
             <div className="p-6 overflow-y-auto space-y-4 font-mono text-xs flex-1">
               
               <div className="text-center space-y-1">
-                <h3 className="text-sm font-extrabold tracking-widest uppercase">MrMed Pharmacy</h3>
+                <h3 className="text-sm font-extrabold tracking-widest uppercase">Dosebox</h3>
                 <p className="text-[10px] text-slate-500">POS Billing Invoices System</p>
                 <p className="text-[10px] text-slate-500">GSTIN: 33AAFCM8435R1Z2</p>
               </div>
@@ -963,6 +962,12 @@ export default function POSPage() {
                   <span>GRAND TOTAL:</span>
                   <span>₹{recentOrder.total.toFixed(2)}</span>
                 </div>
+                {recentOrder.rewardPoints > 0 && (
+                  <div className="flex justify-between text-xs font-bold text-amber-600 mt-1 pt-1 border-t border-dashed border-slate-300">
+                    <span>REWARD POINTS EARNED:</span>
+                    <span>+{recentOrder.rewardPoints} Pts</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-b border-dashed border-slate-300 my-3"></div>

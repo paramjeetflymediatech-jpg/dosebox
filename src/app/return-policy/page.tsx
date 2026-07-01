@@ -59,11 +59,16 @@ export default function ReturnPolicyPage() {
 
             <div className="pt-6 border-t border-slate-100">
               <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-slate-400" /> How to initiate a return?
+                <HelpCircle className="w-5 h-5 text-slate-400" /> No Refund, Only Reward Points
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Contact our customer support within 48 hours of receiving the package. You will need to provide photographic evidence of the item, the packaging, and the invoice. Upon verification, our team will arrange a reverse pickup and process your replacement or refund within 5-7 business days.
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                We do not offer a refund policy. Instead, we have a rewarding points system for our customers on every purchase:
               </p>
+              <ul className="list-disc pl-5 text-sm text-slate-600 space-y-2">
+                <li><strong>Base Rewards:</strong> Earn 1 point for every ₹1 spent.</li>
+                <li><strong>Bonus for ₹500:</strong> If your bill amount is exactly ₹500, you receive an extra 50 bonus points (Total: 550 points).</li>
+                <li><strong>Bonus for over ₹500:</strong> If your bill amount exceeds ₹500 (e.g., ₹600, ₹1000), you receive an extra 100 bonus points in addition to your base points.</li>
+              </ul>
             </div>
           </div>
         </div>

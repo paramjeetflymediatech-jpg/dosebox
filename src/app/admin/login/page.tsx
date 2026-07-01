@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
               <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Admin Email</label>
               <input
                 type="email"
-                placeholder="admin@mrmed.com"
+                placeholder="admin@dosebox.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 focus:outline-none focus:border-brand-500 focus:bg-white transition-colors"
