@@ -6,7 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ['sequelize', 'pg', 'pg-hstore', 'sqlite3', 'tesseract.js'],
+  serverExternalPackages: ['sequelize', 'pg', 'pg-hstore', 'sqlite3', 'tesseract.js', 'pdfkit', 'fontkit'],
 };
 
 export default nextConfig;
