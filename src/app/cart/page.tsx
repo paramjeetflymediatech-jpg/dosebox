@@ -183,7 +183,7 @@ export default function CartPage() {
                     >
                       <div className="flex items-center gap-5">
                         <div className="w-20 h-20 rounded-2xl bg-slate-50 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-100/50">
-                          <img src={item.image} alt={item.name} className="object-contain max-h-16 mix-blend-multiply p-2" />
+                          <img src={item.image} alt={item.name} className="object-cover  mix-blend-multiply " />
                         </div>
                         
                         <div>

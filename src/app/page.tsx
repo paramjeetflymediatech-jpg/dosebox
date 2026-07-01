@@ -478,11 +478,11 @@ export default function HomePage() {
                   )}
 
                   <div>
-                    <div className="h-44 rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden mb-5 relative group-hover:bg-brand-50/50 transition-colors duration-500 border border-slate-100">
+                    <div className="h-44 rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden  relative group-hover:bg-brand-50/50 transition-colors duration-500 border border-slate-100">
                       <img 
                         src={imagesArr[0]} 
                         alt={med.name} 
-                        className="object-contain max-h-36 mix-blend-multiply drop-shadow-sm group-hover:scale-110 transition-transform duration-500"
+                        className="object-cover mix-blend-multiply drop-shadow-sm  transition-transform duration-500"
                       />
                     </div>
                     
