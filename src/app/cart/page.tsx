@@ -188,7 +188,7 @@ export default function CartPage() {
                         
                         <div>
                           <h4 className="font-bold text-slate-900 text-base leading-tight hover:text-brand-600 transition-colors">
-                            <Link href={`/medicines/${item.id}`}>{item.name}</Link>
+                            <Link href={`/medicines/detail?id=${item.id}`}>{item.name}</Link>
                           </h4>
                           
                           <div className="flex items-center gap-3 mt-2">

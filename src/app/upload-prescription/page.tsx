@@ -297,7 +297,7 @@ export default function UploadPrescriptionPage() {
                           </div>
                           <div className="min-w-0">
                             <h5 className="font-bold text-slate-800 text-xs truncate hover:underline">
-                              <Link href={`/medicines/${med.id}`}>{med.name}</Link>
+                              <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                             </h5>
                             <span className="text-slate-400 text-xxs block mt-0.5 truncate">Comp: {med.composition}</span>
                             <span className="text-brand-600 text-xxs font-bold block mt-1">₹{Number(med.price).toFixed(2)}</span>

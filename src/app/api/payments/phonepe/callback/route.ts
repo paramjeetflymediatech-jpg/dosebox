@@ -4,6 +4,8 @@ import { Order } from '../../../../../models';
 
 const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET || '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399';
 const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
+const rawSecret = PHONEPE_CLIENT_SECRET;
+const ACTUAL_CLIENT_SECRET = (!rawSecret.includes('-') && rawSecret.length > 20) ? Buffer.from(rawSecret, 'base64').toString('utf-8') : rawSecret;
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Invalid payload' }, { status: 400 });
     }
 
-    const stringToSign = base64Response + PHONEPE_CLIENT_SECRET;
+    const stringToSign = base64Response + ACTUAL_CLIENT_SECRET;
     const sha256 = crypto.createHash('sha256').update(stringToSign).digest('hex');
     const expectedSignature = sha256 + '###' + PHONEPE_SALT_INDEX;
 
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
+    console.error('Webhook Error:', error.message);
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }

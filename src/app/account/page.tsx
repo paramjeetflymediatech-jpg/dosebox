@@ -58,6 +58,8 @@ export default function AccountPage() {
 
   // Data States
   const [orders, setOrders] = useState<Order[]>([]);
+  const [orderPage, setOrderPage] = useState(1);
+  const ordersPerPage = 5;
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   
@@ -536,7 +538,8 @@ export default function AccountPage() {
                     </Link>
                   </div>
                 ) : (
-                  orders.map((order) => {
+                  <>
+                    {orders.slice((orderPage - 1) * ordersPerPage, orderPage * ordersPerPage).map((order) => {
                     const isExpanded = expandedOrderId === order.id;
                     let timeline = [];
                     try { timeline = JSON.parse(order.trackingTimeline || '[]'); } catch(e){}
@@ -615,7 +618,29 @@ export default function AccountPage() {
                         )}
                       </div>
                     );
-                  })
+                  })}
+                  {Math.ceil(orders.length / ordersPerPage) > 1 && (
+                    <div className="flex items-center justify-center gap-6 pt-6 pb-2">
+                      <button
+                        onClick={() => setOrderPage((p) => Math.max(1, p - 1))}
+                        disabled={orderPage === 1}
+                        className="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-900 disabled:opacity-30 disabled:hover:bg-white hover:bg-slate-50 flex items-center justify-center transition-all shadow-sm font-bold"
+                      >
+                        ←
+                      </button>
+                      <span className="text-slate-900 text-sm font-bold bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+                        {orderPage} / {Math.ceil(orders.length / ordersPerPage)}
+                      </span>
+                      <button
+                        onClick={() => setOrderPage((p) => Math.min(Math.ceil(orders.length / ordersPerPage), p + 1))}
+                        disabled={orderPage === Math.ceil(orders.length / ordersPerPage)}
+                        className="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-900 disabled:opacity-30 disabled:hover:bg-white hover:bg-slate-50 flex items-center justify-center transition-all shadow-sm font-bold"
+                      >
+                        →
+                      </button>
+                    </div>
+                  )}
+                  </>
                 )}
               </div>
             )}

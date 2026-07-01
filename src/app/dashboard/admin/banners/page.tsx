@@ -17,6 +17,8 @@ interface Banner {
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const loadBanners = async () => {
     try {
@@ -60,7 +62,7 @@ export default function AdminBannersPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {banners.map(banner => (
+        {banners.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(banner => (
           <div key={banner.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group">
             <div className="h-48 bg-slate-100 relative overflow-hidden">
               <img src={banner.image} alt={banner.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -98,6 +100,18 @@ export default function AdminBannersPage() {
           </div>
         )}
       </div>
+
+      {Math.ceil(banners.length / itemsPerPage) > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 mt-6 border-t border-slate-100 gap-4">
+          <span className="text-sm font-semibold text-slate-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, banners.length)} of {banners.length} banners
+          </span>
+          <div className="flex gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
+            <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(banners.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(banners.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

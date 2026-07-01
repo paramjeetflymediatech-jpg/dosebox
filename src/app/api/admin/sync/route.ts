@@ -3,8 +3,13 @@ import sequelize from '../../../../config/database';
 
 export async function GET(req: NextRequest) {
   try {
-    // DO NOT expose this openly in a real production app without auth.
-    // For this debug phase, we allow it so the admin can trigger it easily.
+    const url = new URL(req.url);
+    const secret = url.searchParams.get('secret');
+
+    // Secure the route using an environment variable
+    if (secret !== process.env.SYNC_SECRET) {
+      return NextResponse.json({ success: false, message: 'Unauthorized. Invalid sync secret.' }, { status: 401 });
+    }
     
     await sequelize.sync({ alter: true });
     

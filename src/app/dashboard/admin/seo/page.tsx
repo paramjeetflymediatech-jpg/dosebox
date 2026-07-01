@@ -15,6 +15,8 @@ interface PageMeta {
 export default function AdminSEOPage() {
   const [pageMetas, setPageMetas] = useState<PageMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const loadPageMetas = async () => {
     try {
@@ -77,7 +79,7 @@ export default function AdminSEOPage() {
               </tr>
             </thead>
             <tbody>
-              {pageMetas.map(meta => (
+              {pageMetas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(meta => (
                 <tr key={meta.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                   <td className="py-4 px-6 text-slate-800">
                     <span className="font-mono bg-slate-100 px-2 py-1 rounded text-sm text-brand-600 border border-slate-200">
@@ -119,6 +121,18 @@ export default function AdminSEOPage() {
             </tbody>
           </table>
         </div>
+
+        {Math.ceil(pageMetas.length / itemsPerPage) > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50 gap-4">
+            <span className="text-sm font-semibold text-slate-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, pageMetas.length)} of {pageMetas.length} entries
+            </span>
+            <div className="flex gap-2">
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
+              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(pageMetas.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(pageMetas.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

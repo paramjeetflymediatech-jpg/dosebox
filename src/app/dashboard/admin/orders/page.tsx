@@ -8,6 +8,8 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Modal State
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -88,7 +90,7 @@ export default function AdminOrdersPage() {
               type="text" 
               placeholder="Search by Order ID or Name..." 
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm font-medium"
             />
           </div>
@@ -117,7 +119,7 @@ export default function AdminOrdersPage() {
                   <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No orders found.</td>
                 </tr>
               ) : (
-                filteredOrders.map((order) => (
+                filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => (
                   <tr key={order.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 font-bold text-slate-900">#OD-{order.id}</td>
                     <td className="p-4">
@@ -147,6 +149,18 @@ export default function AdminOrdersPage() {
             </tbody>
           </table>
         </div>
+
+        {Math.ceil(filteredOrders.length / itemsPerPage) > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50 gap-4">
+            <span className="text-sm font-semibold text-slate-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} entries
+            </span>
+            <div className="flex gap-2">
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
+              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredOrders.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Update Order Modal */}

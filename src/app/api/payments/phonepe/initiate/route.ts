@@ -1,24 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import axios from 'axios';
-import { authenticateJWT } from '../../../../../middleware/auth';
+import { StandardCheckoutClient, Env, StandardCheckoutPayRequest } from '@phonepe-pg/pg-sdk-node';
 import { Order } from '../../../../../models';
+import { authenticateJWT } from '../../../../../middleware/auth';
 
-const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID || 'PGTESTPAYUAT';
-const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET || '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399';
-const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
+const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID!;
+const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET!;
+const PHONEPE_SALT_INDEX = parseInt(process.env.PHONEPE_SALT_INDEX || '1');
+const PHONEPE_ENV = process.env.PHONEPE_ENV === 'production' ? Env.PRODUCTION : Env.SANDBOX;
+
+let phonePeClient: StandardCheckoutClient | null = null;
+try {
+  phonePeClient = StandardCheckoutClient.getInstance(
+    PHONEPE_CLIENT_ID,
+    PHONEPE_CLIENT_SECRET,
+    PHONEPE_SALT_INDEX,
+    PHONEPE_ENV
+  );
+} catch (error) {
+  console.error("PhonePe SDK Init Error:", error);
+}
 
 export async function POST(req: NextRequest) {
   try {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
-
     const userId = userAuth.id;
-    const body = await req.json().catch(() => ({}));
+
+    if (!phonePeClient) {
+      throw new Error("PhonePe SDK not initialized properly.");
+    }
+
+    const body = await req.json();
     const { orderId } = body;
 
     const order = await Order.findOne({ where: { id: orderId, userId } });
-
     if (!order) {
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
@@ -27,9 +42,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Order is already paid' }, { status: 400 });
     }
 
+    const merchantOrderId = 'MT-' + order.id.toString() + '-' + Date.now();
     const amountInPaise = Math.round(Number(order.finalAmount) * 100);
-    const merchantTransactionId = `MT-${order.id}-${Date.now()}`;
-    
+
     const host = process.env.NEXT_PUBLIC_APP_URL ? process.env.NEXT_PUBLIC_APP_URL.replace(/https?:\/\//, '') : (req.headers.get('host') || 'localhost:3000');
     const protocol = req.headers.get('x-forwarded-proto') || 'http';
     let baseUrl = `${protocol}://${host}`;
@@ -37,60 +52,34 @@ export async function POST(req: NextRequest) {
         baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     }
 
-    const payloadData = {
-      merchantId: PHONEPE_CLIENT_ID,
-      merchantTransactionId: merchantTransactionId,
-      merchantUserId: `U${userId}`,
-      amount: amountInPaise,
-      redirectUrl: `${baseUrl}/api/payments/phonepe/redirect`,
-      redirectMode: 'POST',
-      callbackUrl: process.env.PHONEPE_CALLBACK_URL || `${baseUrl}/api/payments/phonepe/callback`,
-      mobileNumber: '9999999999',
-      paymentInstrument: {
-        type: 'PAY_PAGE'
-      }
-    };
+    const redirectUrl = new URL(
+      `/api/payments/phonepe/redirect?orderId=${order.id}`,
+      baseUrl
+    ).toString();
 
-    const payloadString = JSON.stringify(payloadData);
-    const base64EncodedPayload = Buffer.from(payloadString).toString('base64');
-    
-    const endpoint = process.env.PHONEPE_PAY_URL || '/pg/checkout/v2/pay';
-    const stringToSign = base64EncodedPayload + endpoint + PHONEPE_CLIENT_SECRET;
-    
-    const sha256 = crypto.createHash('sha256').update(stringToSign).digest('hex');
-    const checksum = sha256 + '###' + PHONEPE_SALT_INDEX;
+    const payRequest = StandardCheckoutPayRequest.builder()
+      .merchantOrderId(merchantOrderId)
+      .amount(amountInPaise)
+      .redirectUrl(redirectUrl)
+      .build();
 
-    let requestUrl = process.env.PHONEPE_PAY_URL || endpoint;
-    if (requestUrl.startsWith('/')) {
-      const base = process.env.PHONEPE_BASE_URL || 'https://api.phonepe.com/apis';
-      requestUrl = `${base}${requestUrl}`;
-    }
+    const response = await phonePeClient.pay(payRequest);
 
-    const options = {
-      method: 'POST',
-      url: requestUrl,
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        'X-VERIFY': checksum
-      },
-      data: {
-        request: base64EncodedPayload
-      }
-    };
+    // Save transaction ID in order
+    await order.update({ transactionId: merchantOrderId });
 
-    const response = await axios.request(options);
-
-    if (response.data && response.data.success) {
-      const redirectUrl = response.data.data.instrumentResponse.redirectInfo.url;
-      await order.update({ transactionId: merchantTransactionId });
-      return NextResponse.json({ success: true, redirectUrl }, { status: 200 });
-    } else {
-      return NextResponse.json({ success: false, message: 'PhonePe API error', error: response.data }, { status: 400 });
-    }
+    // Ensure we return exactly what the frontend expects
+    return NextResponse.json({ 
+      success: true, 
+      redirectUrl: response.redirectUrl 
+    }, { status: 200 });
 
   } catch (error: any) {
-    console.error('PhonePe Initiate Error:', error.response?.data || error.message);
-    return NextResponse.json({ success: false, message: 'Failed to initiate payment', error: error.response?.data || error.message }, { status: 500 });
+    console.error('PhonePe Initiate Error:', error.message || error);
+    if (error.response?.data) console.error(error.response.data);
+    return NextResponse.json(
+      { error: 'Failed to initiate payment', details: error.message },
+      { status: 500 }
+    );
   }
 }

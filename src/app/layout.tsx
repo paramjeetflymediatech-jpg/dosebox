@@ -350,10 +350,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <h4 className="text-white font-bold text-xs mb-6 uppercase tracking-widest">OPERATIONAL LINKS</h4>
             <ul className="space-y-3 text-sm font-medium">
               <li><Link href="/medicines" className="hover:text-white transition-colors">Browse Chronic Brands</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">FDA Guidelines (India)</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Institutional Supply</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Privacy & HIPAA Compliance</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Return / Safety Policy</Link></li>
+              <li><Link href="/fda-guidelines" className="hover:text-white transition-colors">FDA Guidelines (India)</Link></li>
+              <li><Link href="/institutional-supply" className="hover:text-white transition-colors">Institutional Supply</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy & HIPAA Compliance</Link></li>
+              <li><Link href="/return-policy" className="hover:text-white transition-colors">Return / Safety Policy</Link></li>
             </ul>
             
             {/* Dev Login Panel - Mocking only */}

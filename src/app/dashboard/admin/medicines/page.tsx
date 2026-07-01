@@ -20,6 +20,8 @@ export default function AdminMedicinesPage() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     loadMedicines();
@@ -76,7 +78,7 @@ export default function AdminMedicinesPage() {
             type="text"
             placeholder="Search by name or generic name..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors text-sm"
           />
         </div>
@@ -102,7 +104,7 @@ export default function AdminMedicinesPage() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {filteredMedicines.map((med) => (
+                {filteredMedicines.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((med) => (
                   <tr key={med.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="py-4 px-4">
                       <div className="font-bold text-slate-900">{med.name}</div>
@@ -149,6 +151,18 @@ export default function AdminMedicinesPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {Math.ceil(filteredMedicines.length / itemsPerPage) > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-slate-100 mt-6 gap-4">
+            <span className="text-sm font-semibold text-slate-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredMedicines.length)} of {filteredMedicines.length} entries
+            </span>
+            <div className="flex gap-2">
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-all disabled:opacity-50">Prev</button>
+              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredMedicines.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(filteredMedicines.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-all disabled:opacity-50">Next</button>
+            </div>
           </div>
         )}
       </div>

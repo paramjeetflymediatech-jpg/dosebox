@@ -178,19 +178,22 @@ export default function CheckoutPage() {
 
   // Handle Return from PhonePe payment
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !orderComplete) {
       const urlParams = new URLSearchParams(window.location.search);
       const status = urlParams.get('status');
       if (status === 'success') {
         setOrderComplete(true);
         clearCart();
         sessionStorage.removeItem('attachedPrescriptionId');
+        // Clean up the URL to prevent re-triggering on refresh
+        router.replace('/checkout');
       } else if (status === 'failed') {
         alert('Payment failed or cancelled. Please try again.');
         router.replace('/checkout');
       }
     }
-  }, [router, clearCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, orderComplete]);
 
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
