@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { Category, Brand, Supplier, Role, User, Medicine } from '@/models';
 import sequelize from '@/config/database';
 import bcrypt from 'bcryptjs';
-import xlsx from 'xlsx';
+import * as xlsx from 'xlsx';
 import path from 'path';
 
 export async function GET() {
