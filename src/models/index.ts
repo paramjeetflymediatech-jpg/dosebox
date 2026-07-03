@@ -1,18 +1,10 @@
-import * as SequelizePackage from 'sequelize';
+import { Model as ModelType, DataTypes as DataTypesType } from 'sequelize';
 import type { Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-const Sq = (SequelizePackage as any).default || SequelizePackage;
-const { DataTypes, Model } = Sq;
-
-if (process.env.npm_lifecycle_event === 'build' && Model && typeof Model.init !== 'function') {
-  console.log('[Sequelize Mock] Mocking Model methods for Next.js build');
-  (Model as any).init = function() {};
-  (Model as any).hasMany = function() {};
-  (Model as any).belongsTo = function() {};
-  (Model as any).hasOne = function() {};
-  (Model as any).belongsToMany = function() {};
-}
+const Sq = require('sequelize');
+const Model = Sq.Model as typeof ModelType;
+const DataTypes = Sq.DataTypes as typeof DataTypesType;
 
 
 // ----------------------------------------------------
