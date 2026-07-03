@@ -19,71 +19,71 @@ async function seed() {
   try {
     // 1. Roles
     console.log('Seeding Roles...');
-    const roles = [
-      [1, 'SuperAdmin'], [2, 'Admin'], [3, 'Pharmacist'], [4, 'Customer']
-    ];
-    for (const [id, name] of roles) {
-      await connection.execute(
-        'INSERT IGNORE INTO roles (id, name, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())',
-        [id, name]
-      );
-    }
+    // const roles = [
+    //   [1, 'SuperAdmin'], [2, 'Admin'], [3, 'Pharmacist'], [4, 'Customer']
+    // ];
+    // for (const [id, name] of roles) {
+    //   await connection.execute(
+    //     'INSERT IGNORE INTO roles (id, name, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())',
+    //     [id, name]
+    //   );
+    // }
 
-    // 2. Admin User
-    console.log('Seeding Admin User...');
-    const [adminRows] = await connection.execute('SELECT id FROM users WHERE email = ?', ['admin@dosebox.com']);
-    if (adminRows.length === 0) {
-      const hash = await bcrypt.hash('admin123', 10);
-      await connection.execute(
-        'INSERT INTO users (name, email, phone, password, roleId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
-        ['System Admin', 'admin@dosebox.com', '1234567890', hash, 1, 'active']
-      );
-    }
+    // // 2. Admin User
+    // console.log('Seeding Admin User...');
+    // const [adminRows] = await connection.execute('SELECT id FROM users WHERE email = ?', ['admin@dosebox.com']);
+    // if (adminRows.length === 0) {
+    //   const hash = await bcrypt.hash('admin123', 10);
+    //   await connection.execute(
+    //     'INSERT INTO users (name, email, phone, password, roleId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+    //     ['System Admin', 'admin@dosebox.com', '1234567890', hash, 1, 'active']
+    //   );
+    // }
 
-    // 3. Categories
-    console.log('Seeding Categories...');
-    const categories = [
-      [1, 'Pain Relief', 'pain-relief', '[]'],
-      [2, 'Antibiotics', 'antibiotics', '[]'],
-      [3, 'Cough & Cold', 'cough-cold', '[]'],
-      [4, 'Diabetes', 'diabetes', '[]'],
-      [5, 'Digestion', 'digestion', '[]'],
-      [6, 'Vitamins', 'vitamins', '[]'],
-      [7, 'First Aid', 'first-aid', '[]']
-    ];
-    for (const [id, name, slug, image] of categories) {
-      await connection.execute(
-        'INSERT IGNORE INTO categories (id, name, slug, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
-        [id, name, slug, image]
-      );
-    }
+    // // 3. Categories
+    // console.log('Seeding Categories...');
+    // const categories = [
+    //   [1, 'Pain Relief', 'pain-relief', '[]'],
+    //   [2, 'Antibiotics', 'antibiotics', '[]'],
+    //   [3, 'Cough & Cold', 'cough-cold', '[]'],
+    //   [4, 'Diabetes', 'diabetes', '[]'],
+    //   [5, 'Digestion', 'digestion', '[]'],
+    //   [6, 'Vitamins', 'vitamins', '[]'],
+    //   [7, 'First Aid', 'first-aid', '[]']
+    // ];
+    // for (const [id, name, slug, image] of categories) {
+    //   await connection.execute(
+    //     'INSERT IGNORE INTO categories (id, name, slug, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+    //     [id, name, slug, image]
+    //   );
+    // }
 
-    // 4. Brands
-    console.log('Seeding Brands...');
-    const brands = [
-      [1, 'PharmaCorp', 'pharmacorp', '[]'],
-      [2, 'MedPlus', 'medplus', '[]'],
-      [3, 'HealthCare Inc', 'healthcare-inc', '[]']
-    ];
-    for (const [id, name, slug, logo] of brands) {
-      await connection.execute(
-        'INSERT IGNORE INTO brands (id, name, slug, logo, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
-        [id, name, slug, logo]
-      );
-    }
+    // // 4. Brands
+    // console.log('Seeding Brands...');
+    // const brands = [
+    //   [1, 'PharmaCorp', 'pharmacorp', '[]'],
+    //   [2, 'MedPlus', 'medplus', '[]'],
+    //   [3, 'HealthCare Inc', 'healthcare-inc', '[]']
+    // ];
+    // for (const [id, name, slug, logo] of brands) {
+    //   await connection.execute(
+    //     'INSERT IGNORE INTO brands (id, name, slug, logo, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+    //     [id, name, slug, logo]
+    //   );
+    // }
 
-    // 5. Suppliers
-    console.log('Seeding Suppliers...');
-    const suppliers = [
-      [1, 'HealthCorp Supplies', 'healthcorp@example.com', '1234567890'],
-      [2, 'MedLife Distributors', 'medlife@example.com', '0987654321']
-    ];
-    for (const [id, name, email, phone] of suppliers) {
-      await connection.execute(
-        'INSERT IGNORE INTO suppliers (id, name, email, phone, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
-        [id, name, email, phone]
-      );
-    }
+    // // 5. Suppliers
+    // console.log('Seeding Suppliers...');
+    // const suppliers = [
+    //   [1, 'HealthCorp Supplies', 'healthcorp@example.com', '1234567890'],
+    //   [2, 'MedLife Distributors', 'medlife@example.com', '0987654321']
+    // ];
+    // for (const [id, name, email, phone] of suppliers) {
+    //   await connection.execute(
+    //     'INSERT IGNORE INTO suppliers (id, name, email, phone, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+    //     [id, name, email, phone]
+    //   );
+    // }
 
     // 6. Medicines
     console.log('Seeding Medicines from CSV...');
