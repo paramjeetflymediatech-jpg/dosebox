@@ -1,6 +1,8 @@
 import sequelize from './src/config/database';
-import { Category, Brand, Supplier, Role, User } from './src/models';
+import { Category, Brand, Supplier, Role, User, Medicine } from './src/models';
 import bcrypt from 'bcryptjs';
+import xlsx from 'xlsx';
+import path from 'path';
 
 async function seedDB() {
   try {
@@ -62,6 +64,24 @@ async function seedDB() {
     ];
     for (const s of suppliers) {
       await Supplier.findOrCreate({ where: { id: s.id }, defaults: s });
+    }
+
+    console.log('Seeding Medicines from CSV...');
+    const csvPath = path.join(process.cwd(), 'medicines_sample.csv');
+    const workbook = xlsx.readFile(csvPath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const medicinesData = xlsx.utils.sheet_to_json(sheet) as any[];
+
+    for (const med of medicinesData) {
+      await Medicine.findOrCreate({
+        where: { name: med.name },
+        defaults: {
+          ...med,
+          description: med.description || 'Quality medicine for your well-being.',
+          images: med.images ? med.images : '[]',
+          prescriptionRequired: false
+        }
+      });
     }
 
     console.log('Database seeded successfully!');
