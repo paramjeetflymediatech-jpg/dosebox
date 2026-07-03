@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import models from '../../../models';
 import { authenticateJWT } from '../../../middleware/auth';

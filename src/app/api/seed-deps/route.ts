@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { Category, Brand, Supplier } from '@/models';
 import sequelize from '@/config/database';

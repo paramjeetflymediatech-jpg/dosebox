@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Op, col } from 'sequelize';
 import { Medicine, Category, Brand, Inventory } from '../../../models';

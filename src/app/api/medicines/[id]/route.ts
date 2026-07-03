@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Medicine, Category, Brand, Inventory, Review, User } from '../../../../models';
 import redisClient from '../../../../config/redis';
