@@ -26,8 +26,7 @@ export async function GET() {
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('admin123', 10);
       await User.create({
-        firstName: 'System',
-        lastName: 'Admin',
+        name: 'System Admin',
         email: 'admin@dosebox.com',
         phone: '1234567890',
         password: hashedPassword,

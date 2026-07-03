@@ -35,8 +35,8 @@ async function seed() {
     if (adminRows.length === 0) {
       const hash = await bcrypt.hash('admin123', 10);
       await connection.execute(
-        'INSERT INTO users (firstName, lastName, email, phone, password, roleId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-        ['System', 'Admin', 'admin@dosebox.com', '1234567890', hash, 1, 'active']
+        'INSERT INTO users (name, email, phone, password, roleId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['System Admin', 'admin@dosebox.com', '1234567890', hash, 1, 'active']
       );
     }
 
