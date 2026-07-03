@@ -1,5 +1,5 @@
+import { DataTypes, Model } from 'sequelize';
 import type { Optional } from 'sequelize';
-const { DataTypes, Model } = require('sequelize') as typeof import('sequelize');
 import sequelize from '../config/database';
 
 if (Model && typeof Model.init !== 'function') {
