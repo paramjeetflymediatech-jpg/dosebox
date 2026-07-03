@@ -1,6 +1,5 @@
-import sequelizePkg from 'sequelize';
 import type { Optional } from 'sequelize';
-const { DataTypes, Model } = sequelizePkg;
+const { DataTypes, Model } = require('sequelize') as typeof import('sequelize');
 import sequelize from '../config/database';
 
 // ----------------------------------------------------
