@@ -1,4 +1,6 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import sequelizePkg from 'sequelize';
+import type { Optional } from 'sequelize';
+const { DataTypes, Model } = sequelizePkg;
 import sequelize from '../config/database';
 
 // ----------------------------------------------------
