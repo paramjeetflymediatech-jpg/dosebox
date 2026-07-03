@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
+import mysql2 from 'mysql2';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ if (process.env.NODE_ENV === 'production') {
         host: dbHost,
         port: dbPort,
         dialect: 'mysql',
+        dialectModule: mysql2,
         logging: false,
         pool: {
           max: 10,
@@ -48,6 +50,7 @@ if (process.env.NODE_ENV === 'production') {
           host: dbHost,
           port: dbPort,
           dialect: 'mysql',
+          dialectModule: mysql2,
           logging: (msg) => console.log(`[Sequelize] ${msg.substring(0, 150)}...`),
           pool: {
             max: 10,
