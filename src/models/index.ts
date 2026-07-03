@@ -1,11 +1,6 @@
-import { Model as ModelType, DataTypes as DataTypesType } from 'sequelize';
+import { Model, DataTypes } from 'sequelize';
 import type { Optional } from 'sequelize';
 import sequelize from '../config/database';
-
-const SqRaw = require('sequelize');
-const Sq = SqRaw.default || SqRaw;
-const Model = Sq.Model as typeof ModelType;
-const DataTypes = Sq.DataTypes as typeof DataTypesType;
 
 
 // ----------------------------------------------------
