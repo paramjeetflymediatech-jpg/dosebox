@@ -32,9 +32,27 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'PhonePe'>('COD');
   const [useRewardPoints, setUseRewardPoints] = useState(false);
+  const [pointsInput, setPointsInput] = useState('');
   
-  const pointsUsed = useRewardPoints && user?.rewardPoints ? Math.min(user.rewardPoints, totalAmount) : 0;
+  const parsedPoints = parseInt(pointsInput) || 0;
+  const pointsError = useRewardPoints && parsedPoints > (user?.rewardPoints || 0) 
+    ? `You only have ${user?.rewardPoints || 0} points available.`
+    : useRewardPoints && parsedPoints > Math.floor(totalAmount)
+    ? `You can only apply up to ${Math.floor(totalAmount)} points.`
+    : null;
+
+  const pointsUsed = useRewardPoints && !pointsError ? parsedPoints : 0;
   const finalPayable = Math.max(0, totalAmount - pointsUsed);
+
+  const handleToggleRewardPoints = (checked: boolean) => {
+    setUseRewardPoints(checked);
+    if (checked) {
+      const max = user?.rewardPoints ? Math.min(user.rewardPoints, Math.floor(totalAmount)) : 0;
+      setPointsInput(max.toString());
+    } else {
+      setPointsInput('');
+    }
+  };
   
   // Inline address creation fields
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -233,6 +251,10 @@ export default function CheckoutPage() {
       alert('Please select or add a shipping address.');
       return;
     }
+    if (pointsError) {
+      alert(pointsError);
+      return;
+    }
 
     setProcessing(true);
     try {
@@ -252,7 +274,8 @@ export default function CheckoutPage() {
         shippingAddress: selectedAddrObj,
         paymentMethod,
         prescriptionId,
-        useRewardPoints
+        useRewardPoints: useRewardPoints && !pointsError,
+        rewardPointsToUse: pointsUsed
       };
 
       const res = await api.post('/orders', orderData);
@@ -649,16 +672,32 @@ export default function CheckoutPage() {
                     <input 
                       type="checkbox" 
                       checked={useRewardPoints}
-                      onChange={(e) => setUseRewardPoints(e.target.checked)}
+                      onChange={(e) => handleToggleRewardPoints(e.target.checked)}
                       className="w-4 h-4 text-brand-600 border-amber-300 rounded focus:ring-brand-500 bg-white" 
                     />
                     <span className="text-sm font-semibold text-amber-800">Use points for this order</span>
                   </label>
                   
                   {useRewardPoints && (
-                    <div className="flex justify-between text-sm font-bold text-amber-600 mt-3 pt-3 border-t border-amber-200/50">
-                      <span>Points Applied</span>
-                      <span>- ₹{pointsUsed.toFixed(2)}</span>
+                    <div className="mt-3 pt-3 border-t border-amber-200/50">
+                      <div className="flex flex-col gap-2 mb-3">
+                        <label className="text-xs text-amber-700 font-semibold">Points to Apply</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={pointsInput}
+                          onChange={(e) => setPointsInput(e.target.value)}
+                          className={`w-full sm:w-1/2 p-2 border ${pointsError ? 'border-red-400 bg-red-50' : 'border-amber-300'} rounded-lg text-sm`}
+                        />
+                        {pointsError && <span className="text-xs text-red-500 font-bold">{pointsError}</span>}
+                      </div>
+                      
+                      {!pointsError && (
+                        <div className="flex justify-between text-sm font-bold text-amber-600">
+                          <span>Points Applied</span>
+                          <span>- ₹{pointsUsed.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -671,7 +710,7 @@ export default function CheckoutPage() {
 
               <button
                 onClick={handlePlaceOrder}
-                disabled={processing}
+                disabled={processing || !!pointsError}
                 className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 text-sm shadow-lg shadow-brand-500/20 transition-all text-center disabled:opacity-50 mt-4"
               >
                 {processing ? (

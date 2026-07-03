@@ -25,7 +25,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
     await prescription.update({
       status: status || prescription.status,
-      notes: adminNotes !== undefined ? adminNotes : prescription.notes
+      pharmacistNotes: adminNotes !== undefined ? adminNotes : prescription.pharmacistNotes
     });
 
     // Notify user if status changed

@@ -34,8 +34,14 @@ export interface UserAttributes {
   rewardPoints?: number;
   roleId: number;
   status: string; // 'active' | 'inactive'
+  age?: number;
+  gender?: string;
+  bloodGroup?: string;
+  height?: string;
+  weight?: string;
+  address?: string;
 }
-export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'rewardPoints' | 'status'>> implements UserAttributes {
+export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'rewardPoints' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address'>> implements UserAttributes {
   declare id: number;
   declare name: string;
   declare email: string;
@@ -46,6 +52,12 @@ export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 
   declare rewardPoints?: number;
   declare roleId: number;
   declare status: string;
+  declare age?: number;
+  declare gender?: string;
+  declare bloodGroup?: string;
+  declare height?: string;
+  declare weight?: string;
+  declare address?: string;
   declare role?: Role;
 }
 User.init(
@@ -60,6 +72,12 @@ User.init(
     rewardPoints: { type: DataTypes.INTEGER, defaultValue: 0 },
     roleId: { type: DataTypes.INTEGER, allowNull: false },
     status: { type: DataTypes.STRING, defaultValue: 'active' },
+    age: { type: DataTypes.INTEGER, allowNull: true },
+    gender: { type: DataTypes.STRING, allowNull: true },
+    bloodGroup: { type: DataTypes.STRING, allowNull: true },
+    height: { type: DataTypes.STRING, allowNull: true },
+    weight: { type: DataTypes.STRING, allowNull: true },
+    address: { type: DataTypes.TEXT, allowNull: true },
   },
   { sequelize, modelName: 'User', tableName: 'users', timestamps: true }
 );
@@ -180,6 +198,7 @@ export interface MedicineAttributes {
   stock: number;
   images: string; // JSON array string
   categoryId: number;
+  supplierId?: number;
 }
 export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images'>> implements MedicineAttributes {
   declare id: number;
@@ -198,6 +217,7 @@ export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttribu
   declare stock: number;
   declare images: string;
   declare categoryId: number;
+  declare supplierId?: number;
 }
 Medicine.init(
   {
@@ -217,6 +237,7 @@ Medicine.init(
     stock: { type: DataTypes.INTEGER, defaultValue: 0 },
     images: { type: DataTypes.TEXT, defaultValue: '[]' },
     categoryId: { type: DataTypes.INTEGER, allowNull: false },
+    supplierId: { type: DataTypes.INTEGER, allowNull: true },
   },
   { sequelize, modelName: 'Medicine', tableName: 'medicines', timestamps: true }
 );
@@ -244,40 +265,6 @@ Inventory.init(
     locationInWarehouse: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: 'Inventory', tableName: 'inventory', timestamps: true }
-);
-
-// ----------------------------------------------------
-// 8. PRESCRIPTION
-// ----------------------------------------------------
-export interface PrescriptionAttributes {
-  id: number;
-  userId: number;
-  fileUrl: string;
-  fileType: string; // 'png' | 'jpg' | 'pdf'
-  status: string; // 'Pending' | 'Approved' | 'Rejected'
-  notes?: string;
-  verifiedById?: number;
-}
-export class Prescription extends Model<PrescriptionAttributes, Optional<PrescriptionAttributes, 'id' | 'status' | 'notes' | 'verifiedById'>> implements PrescriptionAttributes {
-  declare id: number;
-  declare userId: number;
-  declare fileUrl: string;
-  declare fileType: string;
-  declare status: string;
-  declare notes?: string;
-  declare verifiedById?: number;
-}
-Prescription.init(
-  {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    userId: { type: DataTypes.INTEGER, allowNull: false },
-    fileUrl: { type: DataTypes.STRING, allowNull: false },
-    fileType: { type: DataTypes.STRING, allowNull: false },
-    status: { type: DataTypes.STRING, defaultValue: 'Pending' },
-    notes: { type: DataTypes.TEXT, allowNull: true },
-    verifiedById: { type: DataTypes.INTEGER, allowNull: true },
-  },
-  { sequelize, modelName: 'Prescription', tableName: 'prescriptions', timestamps: true }
 );
 
 // ----------------------------------------------------
@@ -712,6 +699,10 @@ User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
 Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// User & Order
+User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
+Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // Category & Medicine
 Category.hasMany(Medicine, { foreignKey: 'categoryId', as: 'medicines' });
 Medicine.belongsTo(Category, { foreignKey: 'category', as: 'categoryDetail' });
@@ -724,21 +715,37 @@ Medicine.belongsTo(Brand, { foreignKey: 'brandId', as: 'brand' });
 Medicine.hasOne(Inventory, { foreignKey: 'medicineId', as: 'inventory' });
 Inventory.belongsTo(Medicine, { foreignKey: 'medicineId', as: 'medicine' });
 
-// User & Prescription
-User.hasMany(Prescription, { foreignKey: 'userId', as: 'prescriptions' });
-Prescription.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// ----------------------------------------------------
+// NEW: SUPPLIER
+// ----------------------------------------------------
+export interface SupplierAttributes {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address?: string;
+}
+export class Supplier extends Model<SupplierAttributes, Optional<SupplierAttributes, 'id' | 'address'>> implements SupplierAttributes {
+  declare id: number;
+  declare name: string;
+  declare email: string;
+  declare phone: string;
+  declare address?: string;
+}
+Supplier.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    name: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false },
+    phone: { type: DataTypes.STRING, allowNull: false },
+    address: { type: DataTypes.TEXT, allowNull: true },
+  },
+  { sequelize, modelName: 'Supplier', tableName: 'suppliers', timestamps: true }
+);
 
-// Pharmacist/Admin (User) & Prescription (Verification)
-User.hasMany(Prescription, { foreignKey: 'verifiedById', as: 'verifiedPrescriptions' });
-Prescription.belongsTo(User, { foreignKey: 'verifiedById', as: 'verifier' });
-
-// User & Order
-User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
-Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-// Prescription & Order
-Prescription.hasMany(Order, { foreignKey: 'prescriptionId', as: 'orders' });
-Order.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
+// Supplier & Medicine
+Supplier.hasMany(Medicine, { foreignKey: 'supplierId', as: 'medicines' });
+Medicine.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
 
 // Address & Order
 Address.hasMany(Order, { foreignKey: 'shippingAddressId', as: 'orders' });
@@ -784,6 +791,252 @@ Appointment.belongsTo(Doctor, { foreignKey: 'doctorId', as: 'doctor' });
 User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// ----------------------------------------------------
+// PRESCRIPTION
+// ----------------------------------------------------
+export interface PrescriptionAttributes {
+  id: number;
+  userId: number;
+  fileUrl: string;
+  status: string; // 'Processing', 'Pending', 'Approved', 'Rejected'
+  pharmacistNotes?: string;
+}
+export class Prescription extends Model<PrescriptionAttributes, Optional<PrescriptionAttributes, 'id' | 'status'>> implements PrescriptionAttributes {
+  declare id: number;
+  declare userId: number;
+  declare fileUrl: string;
+  declare status: string;
+  declare pharmacistNotes?: string;
+}
+Prescription.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    fileUrl: { type: DataTypes.STRING, allowNull: false },
+    status: { type: DataTypes.STRING, defaultValue: 'Processing' },
+    pharmacistNotes: { type: DataTypes.TEXT, allowNull: true }
+  },
+  { sequelize, modelName: 'Prescription', tableName: 'prescriptions' }
+);
+
+// ----------------------------------------------------
+// EXTRACTED MEDICINE
+// ----------------------------------------------------
+export interface ExtractedMedicineAttributes {
+  id: number;
+  prescriptionId: number;
+  medicineName: string;
+  strength?: string;
+  dosage?: string;
+  duration?: string;
+  quantity?: number;
+  confidence?: number;
+}
+
+
+export class ExtractedMedicine extends Model<ExtractedMedicineAttributes, Optional<ExtractedMedicineAttributes, 'id'>> implements ExtractedMedicineAttributes {
+  declare id: number;
+  declare prescriptionId: number;
+  declare medicineName: string;
+  declare strength?: string;
+  declare dosage?: string;
+  declare duration?: string;
+  declare quantity?: number;
+  declare confidence?: number;
+}
+ExtractedMedicine.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    prescriptionId: { type: DataTypes.INTEGER, allowNull: false },
+    medicineName: { type: DataTypes.STRING, allowNull: false },
+    strength: { type: DataTypes.STRING, allowNull: true },
+    dosage: { type: DataTypes.STRING, allowNull: true },
+    duration: { type: DataTypes.STRING, allowNull: true },
+    quantity: { type: DataTypes.INTEGER, allowNull: true },
+    confidence: { type: DataTypes.FLOAT, allowNull: true }
+  },
+  { sequelize, modelName: 'ExtractedMedicine', tableName: 'extracted_medicines', timestamps: false }
+);
+
+// ----------------------------------------------------
+// MATCHED PRODUCT
+// ----------------------------------------------------
+export interface MatchedProductAttributes {
+  id: number;
+  prescriptionId: number;
+  extractedMedicineId: number;
+  productId?: number;
+  matchType: string; // 'Exact', 'Similar', 'None'
+  confidence?: number;
+}
+export class MatchedProduct extends Model<MatchedProductAttributes, Optional<MatchedProductAttributes, 'id'>> implements MatchedProductAttributes {
+  declare id: number;
+  declare prescriptionId: number;
+  declare extractedMedicineId: number;
+  declare productId?: number;
+  declare matchType: string;
+  declare confidence?: number;
+}
+MatchedProduct.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    prescriptionId: { type: DataTypes.INTEGER, allowNull: false },
+    extractedMedicineId: { type: DataTypes.INTEGER, allowNull: false },
+    productId: { type: DataTypes.INTEGER, allowNull: true },
+    matchType: { type: DataTypes.STRING, allowNull: false },
+    confidence: { type: DataTypes.FLOAT, allowNull: true }
+  },
+  { sequelize, modelName: 'MatchedProduct', tableName: 'matched_products', timestamps: false }
+);
+
+// ----------------------------------------------------
+// 23. DRAFT CART
+// ----------------------------------------------------
+export interface DraftCartAttributes {
+  id: number;
+  userId: number;
+  prescriptionId: number;
+  status: string; // 'draft', 'approved', 'converted', 'rejected'
+}
+export class DraftCart extends Model<DraftCartAttributes, Optional<DraftCartAttributes, 'id' | 'status'>> implements DraftCartAttributes {
+  declare id: number;
+  declare userId: number;
+  declare prescriptionId: number;
+  declare status: string;
+}
+DraftCart.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    prescriptionId: { type: DataTypes.INTEGER, allowNull: false },
+    status: { type: DataTypes.STRING, defaultValue: 'draft' }
+  },
+  { sequelize, modelName: 'DraftCart', tableName: 'draft_carts', timestamps: true }
+);
+
+// ----------------------------------------------------
+// 24. DRAFT CART ITEM
+// ----------------------------------------------------
+export interface DraftCartItemAttributes {
+  id: number;
+  draftCartId: number;
+  medicineId: number;
+  quantity: number;
+  price: number;
+  type: string; // 'exact', 'alternative'
+}
+export class DraftCartItem extends Model<DraftCartItemAttributes, Optional<DraftCartItemAttributes, 'id' | 'type'>> implements DraftCartItemAttributes {
+  declare id: number;
+  declare draftCartId: number;
+  declare medicineId: number;
+  declare quantity: number;
+  declare price: number;
+  declare type: string;
+}
+DraftCartItem.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    draftCartId: { type: DataTypes.INTEGER, allowNull: false },
+    medicineId: { type: DataTypes.INTEGER, allowNull: false },
+    quantity: { type: DataTypes.INTEGER, allowNull: false },
+    price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    type: { type: DataTypes.STRING, defaultValue: 'exact' }
+  },
+  { sequelize, modelName: 'DraftCartItem', tableName: 'draft_cart_items', timestamps: true }
+);
+
+// ----------------------------------------------------
+// 25. AUDIT LOG
+// ----------------------------------------------------
+export interface AuditLogAttributes {
+  id: number;
+  adminId: number;
+  prescriptionId: number;
+  action: string;
+  details: string; // JSON string
+}
+export class AuditLog extends Model<AuditLogAttributes, Optional<AuditLogAttributes, 'id'>> implements AuditLogAttributes {
+  declare id: number;
+  declare adminId: number;
+  declare prescriptionId: number;
+  declare action: string;
+  declare details: string;
+}
+AuditLog.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    adminId: { type: DataTypes.INTEGER, allowNull: false },
+    prescriptionId: { type: DataTypes.INTEGER, allowNull: false },
+    action: { type: DataTypes.STRING, allowNull: false },
+    details: { type: DataTypes.TEXT, allowNull: false }
+  },
+  { sequelize, modelName: 'AuditLog', tableName: 'audit_logs', timestamps: true }
+);
+
+// ----------------------------------------------------
+// 26. REWARD TRANSACTION
+// ----------------------------------------------------
+export interface RewardTransactionAttributes {
+  id: number;
+  userId: number;
+  points: number;
+  type: 'Earned' | 'Redeemed' | 'Refund' | 'Bonus';
+  description: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+export class RewardTransaction extends Model<RewardTransactionAttributes, Optional<RewardTransactionAttributes, 'id'>> implements RewardTransactionAttributes {
+  declare id: number;
+  declare userId: number;
+  declare points: number;
+  declare type: 'Earned' | 'Redeemed' | 'Refund' | 'Bonus';
+  declare description: string;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+}
+RewardTransaction.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    points: { type: DataTypes.INTEGER, allowNull: false },
+    type: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.STRING, allowNull: false }
+  },
+  { sequelize, modelName: 'RewardTransaction', tableName: 'reward_transactions', timestamps: true }
+);
+
+// Relations
+Prescription.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Prescription, { foreignKey: 'userId', as: 'prescriptions' });
+
+RewardTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(RewardTransaction, { foreignKey: 'userId', as: 'rewardTransactions' });
+
+// Prescription & Order
+Prescription.hasMany(Order, { foreignKey: 'prescriptionId', as: 'orders' });
+Order.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
+
+DraftCart.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
+Prescription.hasOne(DraftCart, { foreignKey: 'prescriptionId', as: 'draftCart' });
+DraftCart.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+DraftCart.hasMany(DraftCartItem, { foreignKey: 'draftCartId', as: 'items' });
+DraftCartItem.belongsTo(DraftCart, { foreignKey: 'draftCartId', as: 'draftCart' });
+DraftCartItem.belongsTo(Medicine, { foreignKey: 'medicineId', as: 'medicine' });
+
+ExtractedMedicine.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
+Prescription.hasMany(ExtractedMedicine, { foreignKey: 'prescriptionId', as: 'extractedMedicines' });
+
+MatchedProduct.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
+Prescription.hasMany(MatchedProduct, { foreignKey: 'prescriptionId', as: 'matchedProducts' });
+
+MatchedProduct.belongsTo(ExtractedMedicine, { foreignKey: 'extractedMedicineId', as: 'extractedMedicine' });
+ExtractedMedicine.hasOne(MatchedProduct, { foreignKey: 'extractedMedicineId', as: 'matchedProduct' });
+
+MatchedProduct.belongsTo(Medicine, { foreignKey: 'productId', as: 'product' });
+Medicine.hasMany(MatchedProduct, { foreignKey: 'productId', as: 'matchedIn' });
+
+
+// ----------------------------------------------------
 export default {
   Role,
   User,
@@ -792,7 +1045,6 @@ export default {
   Brand,
   Medicine,
   Inventory,
-  Prescription,
   Order,
   OrderItem,
   Payment,
@@ -805,4 +1057,11 @@ export default {
   Setting,
   Banner,
   PageMeta,
+  Prescription,
+  ExtractedMedicine,
+  MatchedProduct,
+  DraftCart,
+  DraftCartItem,
+  AuditLog,
+  Supplier
 };

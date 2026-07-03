@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import NotificationBell from '../components/NotificationBell';
 import './globals.css';
 import api from '../lib/api';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -148,19 +149,25 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return <main className="min-h-screen bg-[#080b11]">{children}</main>;
   }
 
+  const hideHeaderFooter = pathname?.startsWith('/account');
+
   return (
     <>
       <ScriptInjector html={globalSettings['global_head_scripts'] || ''} target="head" />
       <ScriptInjector html={globalSettings['global_footer_scripts'] || ''} target="body" />
+      
       {/* TOP ANNOUNCEMENT BANNER */}
-      <div className="bg-brand-700 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2">
-        <span className="text-accent-light">⚡</span>
-        Government-Compliant Indian Specialty Drugs. Swapping branded oncology & kidney medications saves up to 85% under Special Patient Assistance programs!
-      </div>
+      {!hideHeaderFooter && (
+        <div className="bg-brand-700 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2">
+          <span className="text-accent-light">⚡</span>
+          Government-Compliant Indian Specialty Drugs. Swapping branded oncology & kidney medications saves up to 85% under Special Patient Assistance programs!
+        </div>
+      )}
 
       {/* HEADER SECTION */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-border shadow-sm">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[88px] flex items-center justify-between gap-6">
+      {!hideHeaderFooter && (
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-border shadow-sm">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[88px] flex items-center justify-between gap-6">
 
           {/* LOGO & LOCATION */}
           <div className="flex items-center gap-8 flex-shrink-0">
@@ -198,17 +205,19 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
           {/* NAVIGATION BUTTONS */}
           <nav className="flex items-center gap-4 text-sm font-semibold">
+            {/* Upload Rx */}
+            <Link href="/upload-prescription" className="hidden lg:flex items-center gap-2  text-white px-4 py-2.5 rounded-full  border border-brand-200 bg-[#E68A85]">
+              <Clipboard className="w-4 h-4" />
+              <span>Upload Rx</span>
+            </Link>
+
             {/* WhatsApp Buy */}
             <a href="https://wa.me/911140003000" target="_blank" rel="noopener noreferrer" className="hidden xl:flex items-center gap-2 bg-[#E8F8F5] text-[#059669] px-4 py-2.5 rounded-full hover:bg-[#D1F2EB] transition-colors border border-[#A3E4D7]">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
               <span>WhatsApp Buy</span>
             </a>
 
-            {/* Upload Rx */}
-            <Link href="/upload-prescription" className="hidden lg:flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-full hover:bg-accent-dark transition-colors shadow-sm shadow-accent/20 border border-accent-dark/50">
-              <Upload className="w-4 h-4" />
-              <span>Upload Rx</span>
-            </Link>
+
 
             {/* Admin / Pharmacist Dashboards */}
             {user && (isAdmin || isPharmacist) && (
@@ -226,8 +235,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {/* Cart */}
+            {/* Cart & Notifications */}
             <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
+              {user && <NotificationBell />}
+              
               <Link href="/cart" className="relative p-2 text-slate-600 hover:text-brand-600 transition-colors">
                 <ShoppingBag className="w-6 h-6" />
                 {cartItems.length > 0 && (
@@ -239,17 +250,33 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               
               {/* User Login/Logout */}
               {user ? (
-                <Link
-                  href="/account"
-                  className="flex items-center gap-2 text-slate-600 hover:text-brand-600 transition-colors bg-slate-50 px-4 py-2.5 rounded-full hover:bg-brand-50"
-                >
-                  {(user as any)?.avatar ? (
-                    <img src={(user as any).avatar} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
-                  ) : (
-                    <User className="w-4 h-4" />
-                  )}
-                  <span className="truncate max-w-[100px]">{user.name?.split(' ')[0] || 'Account'}</span>
-                </Link>
+                <div className="relative group">
+                  <Link
+                    href="/account"
+                    className="flex items-center gap-2 text-slate-600 hover:text-brand-600 transition-colors bg-slate-50 px-4 py-2.5 rounded-full hover:bg-brand-50"
+                  >
+                    {(user as any)?.avatar ? (
+                      <img src={(user as any).avatar} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                    <span className="truncate max-w-[100px]">{user.name?.split(' ')[0] || 'Account'}</span>
+                  </Link>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 top-full w-48 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div className="bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col py-2">
+                      <Link href="/account" className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2">
+                        <LayoutDashboard className="w-4 h-4" />
+                        Dashboard
+                      </Link>
+                      <button onClick={() => logout()} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors">
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
@@ -264,6 +291,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </header>
+      )}
 
       {/* MAIN CONTAINER */}
       <main className="flex-1 bg-white">
@@ -271,8 +299,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* DOSEBOX FOOTER */}
-      <footer className="bg-slate-900 text-slate-400">
-        {/* Trust Badges Strip */}
+      {!hideHeaderFooter && (
+        <footer className="bg-slate-900 text-slate-400">
+          {/* Trust Badges Strip */}
         <div className="border-b border-slate-800 bg-slate-900/50">
           <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-slate-800">
             <div className="flex flex-col items-center gap-3">
@@ -379,6 +408,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
+      )}
 
       {/* COMPREHENSIVE INLINE AUTH MODAL */}
       {showAuthModal && (

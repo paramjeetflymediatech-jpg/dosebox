@@ -129,7 +129,7 @@ export default function BlogsPage() {
               <Sparkles className="w-4 h-4" />
               Medical Research & Articles
             </span>
-            <h1 className="text-2xl sm:text-4xl font-extrabold mt-3">MrMed Health Library</h1>
+            <h1 className="text-2xl sm:text-4xl font-extrabold mt-3">DoseBox Health Library</h1>
             <p className="text-slate-400 text-xs sm:text-sm mt-3 leading-relaxed">
               Read verified articles, health management guides, and wellness tips reviewed by certified pharmacists.
             </p>

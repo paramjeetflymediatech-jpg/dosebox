@@ -21,6 +21,8 @@ export default function AdminMedicinesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [uploadingCsv, setUploadingCsv] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -57,18 +59,52 @@ export default function AdminMedicinesPage() {
     m.genericName.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingCsv(true);
+    try {
+      const res = await api.post('/medicines/upload-csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data?.success) {
+        alert(res.data.message);
+        setIsCsvModalOpen(false);
+        loadMedicines();
+      }
+    } catch (err: any) {
+      console.error('Failed to upload CSV', err);
+      alert(err.response?.data?.message || 'Failed to process CSV file.');
+    } finally {
+      setUploadingCsv(false);
+      e.target.value = ''; // reset input
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
           <Pill className="w-8 h-8 text-brand-600" /> Medicines Catalog
         </h1>
-        <Link 
-          href="/dashboard/admin/medicines/new"
-          className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4" /> Add New Medicine
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsCsvModalOpen(true)}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            Bulk Import (CSV / Excel)
+          </button>
+          <Link 
+            href="/dashboard/admin/medicines/new"
+            className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" /> Add New Medicine
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
@@ -166,6 +202,49 @@ export default function AdminMedicinesPage() {
           </div>
         )}
       </div>
+
+      {/* CSV Upload Modal */}
+      {isCsvModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-slate-800">Bulk Import (CSV / Excel)</h3>
+              <button onClick={() => setIsCsvModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                &times;
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm text-blue-800">
+                <p className="font-bold mb-2">Supported Formats: CSV &amp; Excel (.xlsx/.xls)</p>
+                <p className="mb-2">Your file must include these column headers in the first row:</p>
+                <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
+                  name, genericName, price, stock, categoryId, brandId, supplierId, images
+                </code>
+                <p className="text-xs opacity-80">* supplierId and images are optional. All other fields are required.</p>
+                <p className="text-xs opacity-80 mt-1">For Excel: use the same column headers in row 1. The first sheet will be imported.</p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-slate-700 text-sm">Select CSV or Excel File</label>
+                <input 
+                  type="file" 
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleCsvUpload}
+                  disabled={uploadingCsv}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 w-full border border-slate-200 rounded-xl p-2"
+                />
+                {uploadingCsv && <p className="text-xs text-brand-600 font-semibold mt-2 animate-pulse">Processing file, please wait...</p>}
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsCsvModalOpen(false)} className="px-5 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

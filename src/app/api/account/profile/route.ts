@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const user = await User.findByPk(userAuth.id, {
-      attributes: ['id', 'name', 'email', 'phone', 'avatar', 'rewardPoints']
+      attributes: ['id', 'name', 'email', 'phone', 'avatar', 'rewardPoints', 'age', 'gender', 'bloodGroup', 'height', 'weight', 'address']
     });
 
     if (!user) {
@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const body = await req.json();
-    const { name, phone, currentPassword, newPassword } = body;
+    const { name, phone, currentPassword, newPassword, age, gender, bloodGroup, height, weight, address } = body;
 
     const user = await User.findByPk(userAuth.id);
     if (!user) {
@@ -36,8 +36,14 @@ export async function PUT(req: NextRequest) {
     }
 
     const updates: any = {};
-    if (name) updates.name = name;
-    if (phone) updates.phone = phone;
+    if (name !== undefined) updates.name = name;
+    if (phone !== undefined) updates.phone = phone;
+    if (age !== undefined) updates.age = age ? parseInt(age) : null;
+    if (gender !== undefined) updates.gender = gender;
+    if (bloodGroup !== undefined) updates.bloodGroup = bloodGroup;
+    if (height !== undefined) updates.height = height;
+    if (weight !== undefined) updates.weight = weight;
+    if (address !== undefined) updates.address = address;
 
     if (currentPassword && newPassword) {
       if (!user.password) {

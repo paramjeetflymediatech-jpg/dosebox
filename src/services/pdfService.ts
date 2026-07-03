@@ -1,5 +1,4 @@
 import PDFDocument from 'pdfkit';
-import { Response } from 'express';
 
 interface InvoiceData {
   orderId: number;
@@ -23,7 +22,7 @@ interface InvoiceData {
 }
 
 export class PdfService {
-  public static generateInvoicePDF(res: Response, data: InvoiceData) {
+  public static generateInvoicePDF(res: any, data: InvoiceData) {
     const doc = new PDFDocument({ margin: 50 });
 
     // Set Response headers

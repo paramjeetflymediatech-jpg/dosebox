@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X
+import {
+  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../lib/api';
@@ -52,11 +52,21 @@ export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  
+
+  // Shelf search & filter state
+  const [shelfSearch, setShelfSearch] = useState('');
+  const [shelfFilter, setShelfFilter] = useState<'all' | 'otc' | 'rx' | 'discounted'>('all');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+
+
   // Calculator state
   const [showCalculator, setShowCalculator] = useState(false);
   const [calcExpense, setCalcExpense] = useState<number>(3000);
-  
+
+  // Quick View state
+  const [quickViewMed, setQuickViewMed] = useState<any>(null);
+  const [qty, setQty] = useState(1);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const featuresRef = useRef<HTMLElement>(null);
@@ -177,7 +187,7 @@ export default function HomePage() {
           api.get('/medicines/categories'),
           api.get('/medicines?limit=4')
         ]);
-        
+
         if (banRes.data?.success) setBanners(banRes.data.data);
         if (catRes.data?.success) setCategories(catRes.data.data);
         if (medRes.data?.success) setTrending(medRes.data.data);
@@ -215,13 +225,13 @@ export default function HomePage() {
     }
   };
 
-  const handleAddToCart = (med: Medicine) => {
+  const handleAddToCart = (med: Medicine, customQty?: number) => {
     let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
     try {
       if (med.images) {
         imagesArr = JSON.parse(med.images);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     addToCart({
       id: med.id,
@@ -229,9 +239,15 @@ export default function HomePage() {
       price: Number(med.price),
       discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
       prescriptionRequired: med.prescriptionRequired,
-      image: imagesArr[0]
+      image: imagesArr[0],
+      quantity: customQty || 1
     });
     toast.success(`${med.name} added to cart!`);
+
+    if (quickViewMed) {
+      setQuickViewMed(null);
+    }
+    setQty(1);
   };
 
   const faqs = [
@@ -243,36 +259,38 @@ export default function HomePage() {
 
   return (
     <div className="relative" ref={containerRef}>
-      
+
       {/* 1. HERO SECTION */}
       <section ref={heroRef} className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 flex flex-col lg:flex-row items-center justify-between gap-12">
         <div className="lg:w-1/2 flex flex-col items-start text-left">
           <div className="bg-brand-50 text-brand-700 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 py-1.5 rounded-full flex items-center gap-2 mb-6 border border-brand-100 shadow-sm">
             <Activity className="w-3.5 h-3.5" /> DoseBox Specialty Smart Pharmacy
           </div>
-          
+
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mb-6">
             Specialty Medicines, <span className="text-brand-600">Up To 85% Off.</span>
           </h1>
-          
+
           <p className="text-slate-500 text-base sm:text-lg max-w-lg leading-relaxed mb-8 font-medium">
             DoseBox is India's digital super-specialty pharmacy. Find life-saving oncology, kidney, and transplant medications with absolute cold-chain logistics, certified WHO-GMP distribution logs, and deep price transparency.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-10 text-xs font-bold text-slate-600">
             <div className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-brand-500" /> 100% Bioequivalence</div>
             <div className="flex items-center gap-1.5"><ThermometerSnowflake className="w-4 h-4 text-accent" /> Cold Chain Validated</div>
             <div className="flex items-center gap-1.5"><FileCheck className="w-4 h-4 text-emerald-500" /> Patient Assistance (PAP)</div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <Link href="/upload-prescription" className="w-full sm:w-auto bg-accent hover:bg-accent-dark text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-accent/20 transition-all flex items-center justify-center gap-2 border border-accent-dark/50">
-              <FileText className="w-4 h-4" />
-              Upload Rx & Order Specialty Drugs
+            <Link href="/upload-prescription" className="w-full sm:w-auto bg-brand-600  text-white font-bold py-3.5 px-8 rounded-full  transition-all flex items-center justify-center gap-2 bg-[#E68A85]">
+              <Clipboard className="w-5 h-5" /> Upload Rx & Order Specialty Drugs
             </Link>
-            <Link href="/medicines" className="w-full sm:w-auto bg-[#E8F8F5] hover:bg-[#D1F2EB] text-brand-700 font-bold py-3.5 px-8 rounded-full border border-brand-200 transition-all flex items-center justify-center gap-2">
-              Browse Specialties <ArrowRight className="w-4 h-4" />
+
+            <Link href="/medicines" className="w-full sm:w-auto bg-[#E8F8F5] hover:bg-[#D1F2EB] text-brand-700 font-bold py-3.5 px-8 rounded-full border border-brand-200 transition-all flex items-center justify-center gap-2 shadow-sm">
+              <Pill className="w-5 h-5" /> Browse Specialties
             </Link>
+
+
           </div>
         </div>
 
@@ -280,7 +298,7 @@ export default function HomePage() {
         <div className="lg:w-[45%] w-full">
           <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
-            
+
             <div className="relative z-10">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Savings Simulator</div>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
@@ -358,75 +376,83 @@ export default function HomePage() {
       </section>
 
       {/* 3. SHOP BY CHRONIC CATEGORY */}
-      <section ref={categoriesRef} className="py-20 bg-white">
+      <section ref={categoriesRef} className="py-16 bg-white">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 text-center sm:text-left">
-            <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Your Health Journey</span>
+          <div className="mb-10">
+            <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Target Specific Ailments</span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Chronic Category</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {/* Hardcoded based on image: Oncology, Kidney, Liver, Rheumatology, Specialty Nutrients, Critical Devices */}
-            <Link href="/medicines?category=oncology" className="category-card group rounded-2xl border border-slate-100 p-5 hover:border-brand-500 hover:shadow-lg transition-all flex flex-col items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-brand-50 flex items-center justify-center text-slate-600 group-hover:text-brand-600 transition-colors border border-slate-100">
-                <ActivitySquare className="w-4 h-4" />
+
+            {/* 1. Oncology */}
+            <Link href="/medicines?category=oncology" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #4f87c5, #6fa3e0)' }}>
+                <FileText className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm leading-tight">Oncology (Cancer)</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1">Targeted therapies & supportive care</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Anti-cancer medicines &amp; supportive therapies.</p>
               </div>
             </Link>
 
-            <Link href="/medicines?category=kidney" className="category-card group rounded-2xl border border-slate-100 p-5 hover:border-accent hover:shadow-lg transition-all flex flex-col items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-rose-50 flex items-center justify-center text-slate-600 group-hover:text-accent transition-colors border border-slate-100">
-                <Droplets className="w-4 h-4" />
+            {/* 2. Kidney */}
+            <Link href="/medicines?category=kidney" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #0c888d, #29b5bb)' }}>
+                <Activity className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm leading-tight">Kidney (Nephrology)</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1">CKD & dialysis care formulations</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Dialysis support, alpha-ketoanologues &amp; chronic kidney care.</p>
               </div>
             </Link>
 
-            <Link href="/medicines?category=liver" className="category-card group rounded-2xl border border-slate-100 p-5 hover:border-amber-500 hover:shadow-lg transition-all flex flex-col items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-amber-50 flex items-center justify-center text-slate-600 group-hover:text-amber-500 transition-colors border border-slate-100">
-                <Beaker className="w-4 h-4" />
+            {/* 3. Liver */}
+            <Link href="/medicines?category=liver" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #e8783a, #f0974e)' }}>
+                <Heart className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm leading-tight">Liver (Hepatology)</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1">Hepatitis care & chronic liver function</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Hepatitis control &amp; chronic liver disease management.</p>
               </div>
             </Link>
 
-            <Link href="/medicines?category=rheumatology" className="category-card group rounded-2xl border border-slate-100 p-5 hover:border-blue-500 hover:shadow-lg transition-all flex flex-col items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-blue-50 flex items-center justify-center text-slate-600 group-hover:text-blue-500 transition-colors border border-slate-100">
-                <Activity className="w-4 h-4" />
+            {/* 4. Immunology & Transplant */}
+            <Link href="/medicines?category=rheumatology" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #7c6fc4, #a494e0)' }}>
+                <ActivitySquare className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Rheumatology & Transplant</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1">Immunosuppressants, Rheumatoid arthritis</p>
+                <h4 className="font-bold text-slate-900 text-sm leading-tight">Immunology &amp; Transplant</h4>
+                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Immunosuppressants, rheumatoid arthritis &amp; transplant compounds.</p>
               </div>
             </Link>
 
-            <Link href="/medicines?category=nutrients" className="category-card group rounded-2xl border border-slate-100 p-5 hover:border-emerald-500 hover:shadow-lg transition-all flex flex-col items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-emerald-50 flex items-center justify-center text-slate-600 group-hover:text-emerald-500 transition-colors border border-slate-100">
-                <Heart className="w-4 h-4" />
+            {/* 5. Specialty Nutrients */}
+            <Link href="/medicines?category=nutrients" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #3ea8b0, #5dc8d0)' }}>
+                <Beaker className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm leading-tight">Specialty Nutrients</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1">Renal nutrition, peptide-based diets</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Onco-wellness, specialized recovery vitamins &amp; immunity mineral blends.</p>
               </div>
             </Link>
 
-            <Link href="/medicines?category=devices" className="category-card group rounded-2xl border border-slate-100 p-5 hover:border-indigo-500 hover:shadow-lg transition-all flex flex-col items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-indigo-50 flex items-center justify-center text-slate-600 group-hover:text-indigo-500 transition-colors border border-slate-100">
-                <Stethoscope className="w-4 h-4" />
+            {/* 6. Clinical Devices */}
+            <Link href="/medicines?category=devices" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #6b6b6b, #8c8c8c)' }}>
+                <Award className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm leading-tight">Clinical Devices</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1">Glucometers, BP monitors, & critical disposables</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Cold chain shipping digital trackers &amp; critical monitors.</p>
               </div>
             </Link>
+
           </div>
+
         </div>
       </section>
 
@@ -435,138 +461,251 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
           <div>
             <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Digital Specialty Shelf</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Substitute & Save Instantly</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Substitute &amp; Save Instantly</h2>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="relative">
-              <input type="text" placeholder="Search generics..." className="bg-slate-50 border border-slate-200 text-slate-800 rounded-full py-2 pl-4 pr-10 focus:outline-none focus:border-brand-500 text-sm w-48 shadow-inner" />
+              <input
+                type="text"
+                placeholder="Search generics..."
+                value={shelfSearch}
+                onChange={e => setShelfSearch(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-slate-800 rounded-full py-2 pl-4 pr-10 focus:outline-none focus:border-brand-500 text-sm w-48 shadow-inner"
+              />
               <Search className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
             </div>
-            <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-              <Filter className="w-4 h-4" /> Filter
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowFilterMenu(v => !v)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors shadow-sm border ${shelfFilter !== 'all'
+                    ? 'bg-brand-600 border-brand-600 text-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+              >
+                <Filter className="w-4 h-4" />
+                {shelfFilter === 'all' ? 'Filter' : shelfFilter === 'otc' ? 'OTC Only' : shelfFilter === 'rx' ? 'Rx Only' : 'On Sale'}
+              </button>
+              {showFilterMenu && (
+                <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 min-w-[150px] overflow-hidden">
+                  {([
+                    { value: 'all', label: 'All Medicines' },
+                    { value: 'otc', label: 'OTC Only' },
+                    { value: 'rx', label: 'Rx Only' },
+                    { value: 'discounted', label: 'On Sale' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setShelfFilter(opt.value); setShowFilterMenu(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${shelfFilter === opt.value
+                          ? 'bg-brand-50 text-brand-700 font-semibold'
+                          : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {trending.length > 0 ? (
-            trending.map((med) => {
+          {(() => {
+            const filtered = trending.filter(med => {
+              const matchesSearch = shelfSearch === '' ||
+                med.name.toLowerCase().includes(shelfSearch.toLowerCase()) ||
+                (med.genericName || '').toLowerCase().includes(shelfSearch.toLowerCase());
+              const matchesFilter =
+                shelfFilter === 'all' ? true :
+                  shelfFilter === 'otc' ? !med.prescriptionRequired :
+                    shelfFilter === 'rx' ? med.prescriptionRequired :
+                      shelfFilter === 'discounted' ? !!med.discountPrice : true;
+              return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0 && trending.length > 0) {
+              return (
+                <div className="col-span-4 text-center py-12 text-slate-500">
+                  <Search className="w-8 h-8 mx-auto mb-3 text-slate-300" />
+                  <p className="font-semibold">No medicines match your search or filter.</p>
+                  <button onClick={() => { setShelfSearch(''); setShelfFilter('all'); }} className="mt-3 text-brand-600 text-sm font-bold hover:underline">Clear filters</button>
+                </div>
+              );
+            }
+
+            if (filtered.length === 0) {
+              return [1, 2, 3, 4].map(idx => (
+                <div key={idx} className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm h-96 animate-pulse" />
+              ));
+            }
+
+            return filtered.map((med) => {
               let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
               try {
                 if (med.images) imagesArr = JSON.parse(med.images);
-              } catch(e) {}
-              
+              } catch (e) { }
+
               const discPrice = med.discountPrice ? Number(med.discountPrice) : null;
               const price = Number(med.price);
               const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
-              
+
               return (
-                <div 
-                  key={med.id} 
-                  className="medicine-card bg-white rounded-3xl border border-slate-100 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex flex-col justify-between group relative overflow-hidden"
+                <div
+                  key={med.id}
+                  className="bg-white rounded-2xl border border-[#1b8d91]/60 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
                 >
-                  {savings > 0 && (
-                    <div className="absolute top-4 right-4 bg-emerald-50 text-emerald-600 font-black text-xs px-2.5 py-1 rounded-lg border border-emerald-100 z-10 shadow-sm">
-                      {savings}% OFF
-                    </div>
-                  )}
-                  {med.prescriptionRequired && (
-                    <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white font-bold text-[9px] uppercase tracking-wider px-2 py-1 rounded z-10 flex items-center gap-1 shadow-sm">
-                      <AlertCircle className="w-3 h-3 text-brand-400" /> Rx
-                    </div>
-                  )}
+                  <div className="flex justify-between items-start absolute top-4 left-4 right-4 z-10 pointer-events-none">
+                    {med.prescriptionRequired ? (
+                      <div className="bg-[#f0ecec] border border-[#e6dfdf] text-[#786c6c] font-bold text-[8px] uppercase tracking-wide px-2 py-0.5 rounded-sm pointer-events-auto">
+                        RX REQUIRED
+                      </div>
+                    ) : (
+                      <div />
+                    )}
+                    {savings > 0 && (
+                      <div className="bg-[#e68a7f] text-white font-bold text-[9px] px-2.5 py-0.5 rounded-full shadow-sm pointer-events-auto">
+                        Save {savings}%
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 mb-4 relative z-0">
+                    <Link href={`/medicines/detail?id=${med.id}`} className="block h-32 flex items-center justify-center">
+                      <img
+                        src={imagesArr[0]}
+                        alt={med.name}
+                        className="object-cover h-32 w-32 rounded-2xl mix-blend-multiply drop-shadow-sm transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </Link>
+                  </div>
 
                   <div>
-                    <div className="h-44 rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden  relative group-hover:bg-brand-50/50 transition-colors duration-500 border border-slate-100">
-                      <img 
-                        src={imagesArr[0]} 
-                        alt={med.name} 
-                        className="object-cover mix-blend-multiply drop-shadow-sm  transition-transform duration-500"
-                      />
+                    <div className="flex items-center gap-1 text-[8px] text-[#8c8c8c] font-semibold uppercase mb-1">
+                      <span>Strip of 10 Tablets</span>
+                      <span>&bull;</span>
+                      <span className="truncate">{med.brand?.name || 'DoseBox Speciality Generics'}</span>
                     </div>
-                    
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{med.brand?.name || 'GENERIC'}</span>
-                    <h3 className="font-bold text-slate-900 text-base mt-1 line-clamp-1 group-hover:text-brand-600 transition-colors">
+
+                    <h3 className="font-bold text-[#2d3748] text-xs leading-snug line-clamp-2 min-h-[34px]">
                       <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-1">{med.genericName}</p>
-                    
-                    <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Branded MRP:</span>
-                        <span className="text-slate-400 line-through font-semibold">₹{price.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm mt-1">
-                        <span className="text-brand-700 font-bold">DoseBox Price:</span>
-                        <span className="text-brand-700 font-black">₹{discPrice ? discPrice.toFixed(2) : price.toFixed(2)}</span>
-                      </div>
+
+                    <div className="flex items-center gap-1 mt-1 text-[10px] text-[#9b9b9b] font-semibold mb-6">
+                      <Star className="w-3 h-3 text-[#f6a041] fill-[#f6a041]" /> 4.8 (42)
                     </div>
                   </div>
 
-                  <div className="mt-5">
-                    <button 
-                      onClick={() => handleAddToCart(med)}
-                      className="w-full bg-slate-900 hover:bg-brand-600 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md hover:shadow-brand-500/20"
-                    >
-                      Add Equivalent Generic
-                    </button>
+                  <div className="flex items-end justify-between mt-auto">
+                    <div>
+                      <div className="flex items-center gap-1 text-[8px] mb-0.5 font-semibold">
+                        <span className="line-through text-[#9b9b9b]">₹{price.toFixed(0)}</span>
+                        {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
+                      </div>
+                      <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
+                        ₹{discPrice ? discPrice.toFixed(0) : price.toFixed(0)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => { setQuickViewMed(med); setQty(1); }}
+                        className="w-7 h-7 rounded-full border border-[#0c888d]/30 text-[#0c888d] hover:bg-[#0c888d]/10 flex items-center justify-center transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleAddToCart(med)}
+                        className="w-7 h-7 rounded-full bg-[#0c888d] text-white flex items-center justify-center hover:bg-[#0a7378] hover:scale-105 transition-all shadow-sm"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
-            })
-          ) : (
-            // Static loading cards
-            [1,2,3,4].map(idx => (
-              <div key={idx} className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm h-96 animate-pulse" />
-            ))
-          )}
+            });
+          })()}
         </div>
       </section>
 
       {/* 5. PERSONAL CARE ROUTINE */}
-      <section className="py-20 bg-slate-950 text-white relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/4 w-[800px] h-[800px] bg-brand-600/10 rounded-full blur-[120px] -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[100px] translate-y-1/4 translate-x-1/4 pointer-events-none" />
-        
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="mb-12 text-center">
-            <span className="text-[10px] text-brand-400 font-bold uppercase tracking-widest">Wellness Modules</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2">Find Your Personal Care Routine</h2>
-          </div>
+      <section className="py-20">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Single contained dark card */}
+          <div className="relative rounded-3xl overflow-hidden bg-[#0f1623] p-8 sm:p-12 shadow-2xl">
+            {/* Subtle gradient blobs */}
+            <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[80px] translate-y-1/3 pointer-events-none" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-3xl p-8 hover:bg-slate-800/50 transition-colors group cursor-pointer">
-              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                <Activity className="w-7 h-7" />
+            <div className="relative z-10 flex flex-col lg:flex-row gap-10 lg:gap-16">
+              {/* Left: header */}
+              <div className="lg:w-72 flex-shrink-0">
+                <span className="inline-flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-brand-400 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
+                  <Sparkles className="w-3 h-3" /> Specialty Health Sorter
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-4">
+                  Find Your Personal Care Routine
+                </h2>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Struggling to find the right vitamins, specialty nutrients, or natural palliative remedies? Check your support goal to see matched recommendations.
+                </p>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Daily Immunity & Stamina</h3>
-              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                Fortify your body's natural defense mechanism. Explore our curated selection of high-absorption Multivitamins, Ashwagandha extracts, and essential Zinc supplements.
-              </p>
-              <Link href="/medicines?category=immunity" className="inline-flex items-center gap-2 text-emerald-400 font-bold text-sm hover:text-emerald-300 transition-colors">
-                Shop Immunity Pack <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
 
-            <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-3xl p-8 hover:bg-slate-800/50 transition-colors group cursor-pointer">
-              <div className="w-14 h-14 bg-accent/10 text-accent rounded-2xl flex items-center justify-center mb-6 border border-accent/20 group-hover:scale-110 transition-transform">
-                <ActivitySquare className="w-7 h-7" />
+              {/* Right: 2x2 compact cards */}
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Card 1 */}
+                <Link href="/medicines?category=immunity" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-sm leading-snug">Daily Immunity &amp; Stamina</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Build strong defenses, eliminate fatigue, and support general health.</p>
+                  </div>
+                </Link>
+
+                {/* Card 2 */}
+                <Link href="/medicines?category=bone-health" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <ActivitySquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-sm leading-snug">Joint Health &amp; Bone Density</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Target knee pain, calcium depletion, and joint cartilage damage.</p>
+                  </div>
+                </Link>
+
+                {/* Card 3 */}
+                <Link href="/medicines?category=sleep-stress" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Droplets className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-sm leading-snug">Stress Relief &amp; Restful Sleep</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Reduce elevated cortisol levels, promote relaxation, and rest well.</p>
+                  </div>
+                </Link>
+
+                {/* Card 4 */}
+                <Link href="/medicines?category=cold-flu" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <ThermometerSnowflake className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-sm leading-snug">Seasonal First-Aid Support</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Fight cold congestion, respiratory blockages, or minor headaches.</p>
+                  </div>
+                </Link>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Joint Health & Bone Density</h3>
-              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                Maintain mobility and comfort with clinical-grade formulations. Discover precise dosing for Calcium Citrate, Vitamin D3 (60K IU), and Glucosamine compounds.
-              </p>
-              <Link href="/medicines?category=bone-health" className="inline-flex items-center gap-2 text-accent font-bold text-sm hover:text-accent-light transition-colors">
-                Shop Bone Health <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* 6. CHRONIC & SPECIALTY CARE INSIGHTS */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-20 ">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-10">
             <div>
@@ -652,8 +791,8 @@ export default function HomePage() {
             </div>
 
             <div className="mt-10">
-              <Link 
-                href="/consultations" 
+              <Link
+                href="/consultations"
                 className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-brand-500/20 text-sm tracking-wide transition-all inline-flex items-center gap-2"
               >
                 Book Consultation Now
@@ -666,7 +805,7 @@ export default function HomePage() {
             <div className="absolute top-4 left-4 bg-brand-500/20 text-brand-400 text-xxs font-bold uppercase tracking-wider py-1 px-3 rounded-full border border-brand-500/30">
               Live clinic slots
             </div>
-            
+
             <div className="space-y-4 mt-6">
               <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -699,7 +838,7 @@ export default function HomePage() {
       </section>
 
       {/* 7. CUSTOMER TESTIMONIALS */}
-      <section ref={testimonialsRef} className="bg-slate-50 py-20">
+      <section ref={testimonialsRef} className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10">
           <span className="text-xs text-brand-600 font-bold uppercase tracking-wider">Patient Stories</span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">What Our Customers Say</h2>
@@ -757,8 +896,8 @@ export default function HomePage() {
 
           <div className="space-y-4">
             {faqs.map((faq, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="border border-slate-200/80 rounded-xl overflow-hidden transition-all"
               >
                 <button
@@ -768,7 +907,7 @@ export default function HomePage() {
                   <span>{faq.q}</span>
                   <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${expandedFaq === idx ? 'transform rotate-180' : ''}`} />
                 </button>
-                
+
                 {expandedFaq === idx && (
                   <div className="p-5 border-t border-slate-100 bg-white text-slate-500 text-sm leading-relaxed">
                     {faq.a}
@@ -785,12 +924,12 @@ export default function HomePage() {
       <AnimatePresence>
         {showCalculator && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
               onClick={() => setShowCalculator(false)}
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -808,16 +947,16 @@ export default function HomePage() {
                 </div>
                 <p className="text-brand-200 text-sm">See how much you can save yearly with MrMed's up to 85% discounts.</p>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Current Monthly Medicine Expense: <span className="text-brand-600 text-lg">₹{calcExpense.toLocaleString()}</span>
                   </label>
-                  <input 
-                    type="range" 
-                    min="500" 
-                    max="50000" 
+                  <input
+                    type="range"
+                    min="500"
+                    max="50000"
                     step="500"
                     value={calcExpense}
                     onChange={(e) => setCalcExpense(Number(e.target.value))}
@@ -845,14 +984,155 @@ export default function HomePage() {
                   *Calculation based on average 65% discount across our specialty catalog. Actual savings may vary.
                 </div>
               </div>
-              
+
               <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button 
+                <button
                   onClick={() => setShowCalculator(false)}
                   className="px-6 py-2.5 w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-colors shadow-sm"
                 >
                   Got it
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* QUICK VIEW MODAL */}
+      <AnimatePresence>
+        {quickViewMed && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setQuickViewMed(null)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-[2rem] w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col md:flex-row z-10 max-h-[90vh] md:max-h-[600px]"
+            >
+              {/* Left Side - Image Panel */}
+              <div className="md:w-[45%] bg-slate-50/50 p-8 flex flex-col justify-center relative border-r border-slate-100">
+                {quickViewMed.prescriptionRequired && (
+                  <div className="absolute top-6 left-6 bg-rose-50 text-rose-600 font-bold text-[10px] px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-rose-100">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    RX MEDICINE
+                  </div>
+                )}
+
+                <div className="bg-white rounded-3xl p-8 flex items-center justify-center aspect-square shadow-sm border border-slate-100 mt-6">
+                  <img
+                    src={(() => {
+                      try { return JSON.parse(quickViewMed.images)[0]; } catch (e) { return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'; }
+                    })()}
+                    alt={quickViewMed.name}
+                    className="object-contain max-h-full"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 mt-6">
+                  <div className="flex-1 bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm">
+                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PACK DETAILS</span>
+                    <span className="block text-xs font-bold text-slate-800">Strip of 10 Tablets</span>
+                  </div>
+                  <div className="flex-1 bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm">
+                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">MANUFACTURER</span>
+                    <span className="block text-xs font-bold text-slate-800 truncate px-1">{quickViewMed.brand?.name || 'DoseBox Speciality Gen...'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side - Info Panel */}
+              <div className="md:w-[55%] bg-white p-8 sm:p-10 flex flex-col relative overflow-y-auto custom-scrollbar">
+                <button
+                  onClick={() => setQuickViewMed(null)}
+                  className="absolute top-6 right-6 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 p-2 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="mt-2 mb-6">
+                  <span className="inline-block bg-slate-100 text-slate-500 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                    {quickViewMed.categoryDetail?.name || 'ONCOLOGY FORMULATION'}
+                  </span>
+
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+                    {quickViewMed.name}
+                  </h2>
+                  <p className="text-sm font-semibold text-slate-500 mt-2">
+                    Active API: <span className="text-brand-600">{quickViewMed.composition}</span>
+                  </p>
+                </div>
+
+                <div className="flex items-end gap-3 mb-8">
+                  <span className="text-3xl font-extrabold text-brand-600">
+                    ₹{quickViewMed.discountPrice ? Number(quickViewMed.discountPrice).toFixed(0) : Number(quickViewMed.price).toFixed(0)}
+                  </span>
+                  {quickViewMed.discountPrice && (
+                    <>
+                      <span className="text-sm text-slate-400 font-semibold line-through mb-1.5">
+                        ₹{Number(quickViewMed.price).toFixed(0)}
+                      </span>
+                      <span className="bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[11px] px-2.5 py-1 rounded-full mb-1.5">
+                        Save {Math.round(((Number(quickViewMed.price) - Number(quickViewMed.discountPrice)) / Number(quickViewMed.price)) * 100)}%
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="space-y-2 mb-6">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CLINICAL DESCRIPTION:</h4>
+                  <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                    An advanced formulation used primarily in the treatment of related chronic conditions. Please consult your physician before initiating this therapy.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-4">
+                    <div className="flex items-center gap-1.5 text-brand-600 font-bold text-xs mb-2">
+                      <Shield className="w-4 h-4" /> Dosage Guideline
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      1 tablet daily at least 1 hour before or 2 hours after food.
+                    </p>
+                  </div>
+                  <div className="bg-rose-50/30 border border-rose-100 shadow-sm rounded-2xl p-4">
+                    <div className="flex items-center gap-1.5 text-rose-600 font-bold text-xs mb-2">
+                      <ShieldAlert className="w-4 h-4" /> Precaution Check
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Skin lesions, loss of appetite, breathlessness.
+                    </p>
+                  </div>
+                </div>
+
+                {quickViewMed.prescriptionRequired && (
+                  <div className="bg-amber-50 border border-amber-200/50 rounded-xl p-4 flex gap-3 mb-6">
+                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <p className="text-[11px] text-amber-700/80 font-medium leading-relaxed">
+                      This medicine is classified under Schedule H. It cannot be sold without a verified prescription. Our customer pharmacy representatives will ring you to validate your details.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-auto flex items-center gap-4 pt-4 border-t border-slate-100">
+                  <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2 w-32 shadow-sm">
+                    <button onClick={() => setQty(Math.max(1, qty - 1))} className="text-slate-400 hover:text-slate-900 pb-1">—</button>
+                    <span className="font-bold text-slate-900 text-sm">{qty}</span>
+                    <button onClick={() => setQty(qty + 1)} className="text-slate-400 hover:text-slate-900 font-bold">+</button>
+                  </div>
+                  <button
+                    onClick={() => handleAddToCart(quickViewMed, qty)}
+                    className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    Add to Basket • ₹{(qty * (quickViewMed.discountPrice ? Number(quickViewMed.discountPrice) : Number(quickViewMed.price))).toFixed(0)}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

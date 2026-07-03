@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../middleware/auth';
-import { 
-  Order, OrderItem, Medicine, Coupon, Address, Prescription, User, Notification 
-} from '../../../models';
+import { Order, OrderItem, Medicine, Coupon, Address, User, Notification, Prescription, Supplier, RewardTransaction } from '../../../models';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +9,7 @@ export async function POST(req: NextRequest) {
 
     const userId = userAuth.id;
     const body = await req.json().catch(() => ({}));
-    const { items, couponCode, shippingAddressId, shippingAddress, paymentMethod, prescriptionId, useRewardPoints } = body;
+    const { items, couponCode, shippingAddressId, shippingAddress, paymentMethod, prescriptionId, useRewardPoints, rewardPointsToUse } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, message: 'Shopping cart items are required' }, { status: 400 });
@@ -97,7 +95,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, message: 'Invalid prescription selected' }, { status: 400 });
       }
 
-      if (prescription.status === 'Pending') {
+      if (prescription.status === 'Pending' || prescription.status === 'Processing') {
         orderStatus = 'Prescription Review';
       } else if (prescription.status === 'Rejected') {
         return NextResponse.json({ 
@@ -106,7 +104,6 @@ export async function POST(req: NextRequest) {
         }, { status: 400 });
       }
     }
-
     let couponDiscount = 0;
     let couponObj: any = null;
     if (couponCode) {
@@ -134,7 +131,11 @@ export async function POST(req: NextRequest) {
     let pointsUsed = 0;
     const userRecord = await User.findByPk(userId);
     if (useRewardPoints && userRecord && (userRecord.rewardPoints || 0) > 0) {
-      pointsUsed = Math.min(userRecord.rewardPoints || 0, finalAmount);
+      if (rewardPointsToUse !== undefined) {
+         pointsUsed = Math.min(Number(rewardPointsToUse), userRecord.rewardPoints || 0, finalAmount);
+      } else {
+         pointsUsed = Math.min(userRecord.rewardPoints || 0, finalAmount);
+      }
       finalAmount -= pointsUsed;
     }
 
@@ -166,14 +167,52 @@ export async function POST(req: NextRequest) {
         price: entry.billingPrice
       });
 
+      const newStock = entry.medicine.stock - entry.quantity;
       await entry.medicine.update({
-        stock: entry.medicine.stock - entry.quantity
+        stock: newStock
       });
+
+      // OUT OF STOCK NOTIFICATION LOGIC
+      if (newStock <= 0) {
+        if (entry.medicine.supplierId) {
+          const supplier = await Supplier.findByPk(entry.medicine.supplierId);
+          if (supplier) {
+            // Log the simulated email to console
+            console.log(`\n======================================================`);
+            console.log(`[AUTOMATIC SUPPLIER NOTIFICATION] - OUT OF STOCK ALERT`);
+            console.log(`To: ${supplier.email} (${supplier.name})`);
+            console.log(`Subject: Urgent: Restock Request for ${entry.medicine.name}`);
+            console.log(`Message: Dear ${supplier.name}, the medicine "${entry.medicine.name}" has gone out of stock. Please supply more inventory. Current stock: ${newStock}.`);
+            console.log(`======================================================\n`);
+            
+            // Optionally create an admin notification in system
+            await Notification.create({
+              userId: 1, // Assumes Admin user ID is 1 (or can be broadcast to admins)
+              title: 'Supplier Notification Sent',
+              message: `Automated out of stock request sent to supplier ${supplier.name} for ${entry.medicine.name}.`
+            });
+          }
+        } else {
+           // Admin notification if no supplier is linked
+           await Notification.create({
+            userId: 1,
+            title: 'Out of Stock (No Supplier)',
+            message: `${entry.medicine.name} is out of stock but has no linked supplier.`
+          });
+        }
+      }
     }
 
     if (pointsUsed > 0 && userRecord) {
       await userRecord.update({
         rewardPoints: (userRecord.rewardPoints || 0) - pointsUsed
+      });
+
+      await RewardTransaction.create({
+        userId: userRecord.id,
+        points: -pointsUsed,
+        type: 'Redeemed',
+        description: `Redeemed for Order #${order.id}`
       });
     }
 

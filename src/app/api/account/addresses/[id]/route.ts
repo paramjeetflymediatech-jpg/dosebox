@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT } from '../../../../../middleware/auth';
 import { Address } from '../../../../../models';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const addressId = params.id;
+    const { id: addressId } = await params;
     const body = await req.json();
     const { title, street, city, state, zipCode, country, isDefault } = body;
 
@@ -36,12 +36,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const addressId = params.id;
+    const { id: addressId } = await params;
 
     const address = await Address.findOne({ where: { id: addressId, userId: userAuth.id } });
     if (!address) {

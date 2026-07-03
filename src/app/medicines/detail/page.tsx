@@ -130,14 +130,14 @@ function MedicineDetailsContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-sm">
           
           {/* Left: Product Images */}
-          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 relative min-h-[350px]">
+          <div className="relative bg-slate-50 rounded-2xl overflow-hidden min-h-[350px]">
             <img 
               src={imagesArr[0]} 
               alt={medicine.name} 
-              className="object-contain max-h-[300px] mix-blend-multiply transition-transform hover:scale-105 duration-300"
+              className="absolute inset-0 w-full h-full object-cover mix-blend-multiply transition-transform hover:scale-105 duration-300"
             />
             {medicine.prescriptionRequired && (
-              <div className="absolute top-4 left-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-sm">
+              <div className="absolute top-4 left-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-sm z-10">
                 <AlertTriangle className="w-4 h-4" />
                 Doctor Prescription Required (Rx)
               </div>

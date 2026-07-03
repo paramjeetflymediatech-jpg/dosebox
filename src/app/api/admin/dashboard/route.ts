@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
 import { Op, col } from 'sequelize';
-import { Order, User, Medicine, Prescription, Category, Inventory } from '../../../../models';
+import { Order, User, Medicine, Category, Inventory } from '../../../../models';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const totalCustomers = await User.count({ where: { roleId: 3 } });
     const activeUsers = await User.count({ where: { status: 'active' } });
     
-    const prescriptionRequests = await Prescription.count({ where: { status: 'Pending' } });
+    const prescriptionRequests = 0;
 
     const inventoryAlerts = await Medicine.count({
       include: [{
