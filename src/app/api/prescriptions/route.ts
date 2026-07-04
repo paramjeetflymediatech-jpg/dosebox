@@ -1,333 +1,792 @@
-export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticateJWT } from '../../../middleware/auth';
-import { Prescription, ExtractedMedicine, MatchedProduct, Medicine, User } from '../../../models';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import fs from 'fs';
-import path from 'path';
-import { Op } from 'sequelize';
-import { calculateSimilarity } from '../../../utils/fuzzyMatch';
+export const dynamic = "force-dynamic";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateJWT } from "../../../middleware/auth";
+import {
+ Prescription,
+ ExtractedMedicine,
+ MatchedProduct,
+ Medicine,
+ User,
+} from "../../../models";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import fs from "fs";
+import path from "path";
+import { calculateSimilarity } from "../../../utils/fuzzyMatch";
 
-// Gemini API will be initialized dynamically per request
+
+function delay(ms: number) {
+ return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function generateWithRetry(
+ model: any,
+ content: any[],
+ retries = 3
+) {
+ let lastError;
+
+
+
+
+ for (let i = 0; i < retries; i++) {
+   try {
+     return await model.generateContent(content);
+   } catch (error) {
+     lastError = error;
+     console.log(`Gemini Retry ${i + 1}/${retries}`);
+     if (i < retries - 1) {
+       await delay(1500 * (i + 1));
+     }
+   }
+ }
+ throw lastError;
+}
+function normalizeMedicineName(name: string) {
+ return name
+   .toLowerCase()
+   .replace(/\b(tab|tablet|cap|capsule|inj|injection|syrup|cream|gel)\b/g, "")
+   .replace(/[^\w]/g, "")
+   .trim();
+}
+function getBestSimilarity(
+ extractedName: string,
+ medicine: any
+) {
+ const query = normalizeMedicineName(extractedName);
+ const values = [
+   medicine.name,
+   medicine.genericName,
+   medicine.brandName,
+ ].filter(Boolean);
+
+
+ let bestScore = 0;
+
+
+ for (const value of values) {
+   const score = calculateSimilarity(
+     query,
+     normalizeMedicineName(value)
+   );
+
+
+   if (score > bestScore) {
+     bestScore = score;
+   }
+ }
+ return bestScore;
+}
+
+
+
 
 export async function POST(req: NextRequest) {
-  try {
-    const userAuth = await authenticateJWT(req);
-    if (userAuth instanceof NextResponse) return userAuth; // Return unauthorized response
-    const userId = userAuth.id;
+ try {
+   // ============================
+   // Authenticate User
+   // ============================
+   const userAuth = await authenticateJWT(req);
+   if (userAuth instanceof NextResponse) {
+     return userAuth;
+   }
+   const userId = userAuth.id;
+   const dbUser = await User.findByPk(userId);
+   const accountName = dbUser?.name || "";
+   const accountAge = dbUser?.age
+     ? `${dbUser.age} yrs`
+     : "";
 
-    const dbUser = await User.findByPk(userId);
-    const accountName = dbUser?.name || '';
-    const accountAge = dbUser?.age ? `${dbUser.age} yrs` : '';
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    
-    if (!file) {
-      return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
-    }
+   // ============================
+   // Read Form Data
+   // ============================
 
-    // 1. Validate File Size & Format
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/heic', 'image/webp', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ success: false, message: 'Invalid file type. Only JPG, PNG, WEBP, HEIC, and PDF are allowed.' }, { status: 400 });
-    }
-    
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ success: false, message: 'File size must be less than 5MB.' }, { status: 400 });
-    }
 
-    // 2. Store File Securely in public/uploads/prescriptions
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'prescriptions');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+   const formData = await req.formData();
+   const file = formData.get("file") as File;
 
-    const ext = file.name.split('.').pop() || 'jpg';
-    const fileName = `rx_${userId}_${Date.now()}.${ext}`;
-    const filePath = path.join(uploadDir, fileName);
-    
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    fs.writeFileSync(filePath, buffer);
-    
-    const fileUrl = `/uploads/prescriptions/${fileName}`;
 
-    // 3. Create initial Prescription record
-    const prescription = await Prescription.create({
-      userId,
-      fileUrl,
-      status: 'Processing'
-    });
+   if (!file) {
+     return NextResponse.json(
+       {
+         success: false,
+         message: "No prescription uploaded.",
+       },
+       {
+         status: 400,
+       }
+     );
+   }
 
-    // 4. OCR + AI Prescription Reading (Gemini)
-    // if (!process.env.GEMINI_API_KEY || process.env.USE_MOCK_AI === 'true') {
-    //   console.log('GEMINI_API_KEY is missing or USE_MOCK_AI is true. Using mock extraction data for testing.');
-      
-    //   // Mock data representing a successful AI extraction and DB match
-    //   const mockMedicines = [
-    //     {
-    //       extracted: { medicineName: "Novamox 500", strength: "500mg", dosage: "1-0-1", duration: "5 days", quantity: 10, confidence: 0.95 },
-    //       match: { matchType: "Exact", confidenceScore: 1.0 },
-    //       product: {
-    //         id: 1,
-    //         name: "Gefitinib 250mg (Geftinat)",
-    //         genericName: "Amoxicillin Trihydrate",
-    //         price: 1420.00,
-    //         discountPrice: 245.00,
-    //         images: ["/medicines/geftinat.jpg"],
-    //         requiresPrescription: true
-    //       }
-    //     },
-    //     {
-    //       extracted: { medicineName: "Montair LC", strength: "", dosage: "0-0-1", duration: "10 days", quantity: 10, confidence: 0.90 },
-    //       match: { matchType: "Exact", confidenceScore: 1.0 },
-    //       product: {
-    //         id: 2,
-    //         name: "Mycophenolate Mofetil 500mg",
-    //         genericName: "Montelukast 10mg + Levocetirizine 5mg",
-    //         price: 180.00,
-    //         discountPrice: 58.00,
-    //         images: ["/medicines/mycophenolate.jpg"],
-    //         requiresPrescription: true
-    //       }
-    //     }
-    //   ];
 
-    //   return NextResponse.json({ 
-    //     success: true, 
-    //     message: 'Mock extraction used (AI disabled).',
-    //     data: { 
-    //       prescription,
-    //       metadata: {
-    //         patientName: accountName || "Ramesh Kumar",
-    //         patientAge: accountAge || "42 yrs",
-    //         doctorName: "Dr. Sameer Verma, MD",
-    //         doctorSpecialty: "Pulmonologist"
-    //       },
-    //       medicines: mockMedicines
-    //     }
-    //   }, { status: 200 });
-    // }
+   // ============================
+   // Validate File Type
+   // ============================
+   const allowedMimeTypes = [
+     "image/jpeg",
+     "image/png",
+     "image/webp",
+     "image/heic",
+     "image/heif",
+     "application/pdf",
+   ];
 
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5" });
-      
-      const prompt = `
-        You are a pharmacy prescription analyzer.
 
-        Extract:
-        - medicine_name
-        - strength
-        - dosage_form
-        - frequency
-        - duration
+   if (!allowedMimeTypes.includes(file.type)) {
+     return NextResponse.json(
+       {
+         success: false,
+         message:
+           "Only JPG, PNG, WEBP, HEIC and PDF are allowed.",
+       },
+       {
+         status: 400,
+       }
+     );
+   }
 
-        Rules:
-        1. Ignore handwriting style if text is clearly readable.
-        2. Match generic and brand names.
-        3. Return the closest medicine in the catalog.
-        4. Use fuzzy matching.
-        5. If medicine exists with >90% confidence, status = matched.
-        You are a highly accurate pharmacy prescription analyzer. 
-        Extract the following information from the provided prescription image.
-        If the doctor's name or patient's name is not explicitly visible, you can infer them if they appear in typical locations, otherwise set them to null.
-        
-        Return the result STRICTLY as a JSON object with this exact structure (no markdown, no formatting):
-        {
-          "patientName": "e.g., Ramesh Kumar",
-          "patientAge": "e.g., 42 yrs",
-          "doctorName": "e.g., Dr. Sameer Verma, MD",
-          "doctorSpecialty": "e.g., Pulmonologist",
-          "medicines": [
-            {
-              "name": "Medicine Name",
-              "strength": "e.g., 500mg, 10ml",
-              "dosage": "e.g., 1-0-1, twice a day",
-              "duration": "e.g., 5 days",
-              "quantity": 10,
-              "confidence": 0.95
-            }
-          ]
-        }
-        
-        If a field is unreadable or not present, omit it or set it to null. Estimate the 'confidence' score between 0.0 to 1.0 on how sure you are about the extracted medicine name. If the handwriting is legible, return 0.9 or 1.0.
-      `;
 
-      const mimeType = file.type === 'application/pdf' ? 'application/pdf' : (file.type === 'image/webp' ? 'image/webp' : 'image/jpeg');
-      
-      const imageParts = [
-        {
-          inlineData: {
-            data: buffer.toString("base64"),
-            mimeType
-          },
-        },
-      ];
+   // ============================
+   // Validate File Size
+   // ============================
 
-      const result = await model.generateContent([prompt, ...imageParts]);
-      const responseText = result.response.text().trim();
-      
-      // Clean potential markdown blocks
-      let jsonString = responseText;
-      if (jsonString.startsWith('\`\`\`')) {
-        jsonString = jsonString.replace(/^\`\`\`(json)?/, '').replace(/\`\`\`$/, '').trim();
-      }
 
-      let extractedData: any = {};
-      try {
-        extractedData = JSON.parse(jsonString);
-      } catch (parseError) {
-        console.error('Failed to parse Gemini output:', responseText);
-        throw new Error('AI returned invalid JSON format');
-      }
+   const MAX_SIZE = 5 * 1024 * 1024;
 
-      const medicinesList = Array.isArray(extractedData) ? extractedData : (extractedData.medicines || []);
-      let parsedPatient = extractedData.patientName;
-      if (!parsedPatient || parsedPatient.toLowerCase().includes('unknown')) {
-        parsedPatient = accountName || 'Unknown Patient';
-      }
 
-      const metadata = {
-        patientName: parsedPatient,
-        patientAge: extractedData.patientAge || accountAge || '',
-        doctorName: extractedData.doctorName || 'Unknown Doctor',
-        doctorSpecialty: extractedData.doctorSpecialty || ''
-      };
+   if (file.size > MAX_SIZE) {
+     return NextResponse.json(
+       {
+         success: false,
+         message: "Maximum upload size is 5MB.",
+       },
+       {
+         status: 400,
+       }
+     );
+   }
+   // ============================
+   // Create Upload Directory
+   // ============================
 
-      let overallConfidence = 1.0;
-      let hasLowConfidence = false;
 
-      // 5. Match Medicines with Product Database
-      const matchedResults = [];
+   const uploadDir = path.join(
+     process.cwd(),
+     "public",
+     "uploads",
+     "prescriptions"
+   );
+   if (!fs.existsSync(uploadDir)) {
+     fs.mkdirSync(uploadDir, {
+       recursive: true,
+     });
+   }
 
-      for (const item of medicinesList) {
-        if (!item.name) continue;
 
-        // Save extracted item
-        const extractedMed = await ExtractedMedicine.create({
-          prescriptionId: prescription.id,
-          medicineName: item.name,
-          strength: item.strength || null,
-          dosage: item.dosage || null,
-          duration: item.duration || null,
-          quantity: item.quantity ? parseInt(item.quantity) : undefined,
-          confidence: item.confidence ? parseFloat(item.confidence) : undefined
-        });
+   // ============================
+   // Generate File Name
+   // ============================
 
-        const conf = item.confidence ? parseFloat(item.confidence) : 1.0;
-        if (conf < 0.4) hasLowConfidence = true;
-        overallConfidence = Math.min(overallConfidence, conf);
 
-        // Matching Logic
-        let matchType = 'None';
-        let matchedProductId: number | undefined = undefined;
-        let matchedMedicineObj = null;
-        let matchedConfidence = 0;
-        let variants: any[] = [];
+   const extension =
+     file.name.split(".").pop()?.toLowerCase() ||
+     (file.type === "application/pdf"
+       ? "pdf"
+       : "jpg");
 
-        // 1. Get Candidates
-        // Since the DB is small, fetching all ensures the fuzzy matcher finds the absolute best match
-        // and doesn't get tricked by prefixes like "Tab " or "Cap "
-        let candidates = await Medicine.findAll();
 
-        // 2. Score Candidates
-        const scoredCandidates = candidates.map(candidate => ({
-          product: candidate,
-          score: calculateSimilarity(item.name, candidate.name)
-        })).sort((a, b) => b.score - a.score);
+   const fileName = `rx_${userId}_${Date.now()}.${extension}`;
+   const filePath = path.join(
+     uploadDir,
+     fileName
+   );
 
-        if (scoredCandidates.length > 0) {
-          const topMatch = scoredCandidates[0];
-          
-          if (topMatch.score >= 0.85) {
-            matchType = 'Exact';
-            matchedProductId = topMatch.product.id;
-            matchedMedicineObj = topMatch.product;
-            matchedConfidence = topMatch.score;
-          } else if (topMatch.score >= 0.70) {
-            matchType = 'Similar'; // Action Required status
-            // Return top 3 variants
-            variants = scoredCandidates.filter(c => c.score >= 0.70).slice(0, 3);
-            matchedConfidence = topMatch.score;
-          }
-        }
 
-        const matchedRecord = await MatchedProduct.create({
-          prescriptionId: prescription.id,
-          extractedMedicineId: extractedMed.id,
-          productId: matchedProductId || undefined,
-          matchType,
-          confidence: matchedConfidence
-        });
+   // ============================
+   // Save File
+   // ============================
 
-        matchedResults.push({
-          extracted: extractedMed,
-          match: matchedRecord,
-          product: matchedMedicineObj,
-          variants: variants.map(v => v.product)
-        });
-      }
 
-      // 3. Mandatory Pharmacist Review for all prescriptions
-      await prescription.update({
-        status: 'Pending'
-      });
+   const arrayBuffer = await file.arrayBuffer();
+   const buffer = Buffer.from(arrayBuffer);
+   await fs.promises.writeFile(
+     filePath,
+     buffer
+   );
+   const fileUrl = `/uploads/prescriptions/${fileName}`;
 
-      return NextResponse.json({
-        success: true,
-        message: 'Prescription processed successfully. Awaiting pharmacist review.',
-        data: {
-          prescription,
-          status: 'Pending Pharmacist Review',
-          metadata,
-          medicines: matchedResults
-        }
-      }, { status: 200 });
 
-    } catch (aiError: any) {
-      console.error('AI Extraction Error:', aiError);
-      // Fallback: Save as Pending for manual review
-      await prescription.update({ status: 'Pending' });
-      return NextResponse.json({
-        success: true,
-        message: 'Prescription uploaded but AI extraction failed. Added to manual review queue.',
-        data: { prescription }
-      }, { status: 200 });
-    }
+   // ============================
+   // Create Prescription Record
+   // ============================
 
-  } catch (error: any) {
-    console.error('Upload Error:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+
+   const prescription =
+     await Prescription.create({
+       userId,
+       fileUrl,
+       status: "Processing",
+     });
+   const isPDF =
+     file.type === "application/pdf";
+
+
+   try {
+
+
+     // ============================
+     // Gemini
+     // ============================
+
+
+     const genAI =
+       new GoogleGenerativeAI(
+         process.env.GEMINI_API_KEY!
+       );
+     const model =
+       genAI.getGenerativeModel({
+         model: "gemini-2.5-flash",
+         generationConfig: {
+           temperature: 0.1,
+           topP: 0.8,
+           topK: 20,
+           maxOutputTokens: 4096,
+           responseMimeType:
+             "application/json",
+           responseSchema: {
+             type: SchemaType.OBJECT,
+             properties: {
+               patientName: {
+                 type: SchemaType.STRING,
+                 nullable: true,
+               },
+               patientAge: {
+                 type: SchemaType.STRING,
+                 nullable: true,
+               },
+               doctorName: {
+                 type: SchemaType.STRING,
+                 nullable: true,
+               },
+               doctorSpecialty: {
+                 type: SchemaType.STRING,
+                 nullable: true,
+               },
+               medicines: {
+                 type: SchemaType.ARRAY,
+                 items: {
+                   type: SchemaType.OBJECT,
+                   properties: {
+                     name: {
+                       type: SchemaType.STRING,
+                     },
+                     strength: {
+                       type: SchemaType.STRING,
+                       nullable: true,
+                     },
+                     dosage: {
+                       type: SchemaType.STRING,
+                       nullable: true,
+                     },
+                     duration: {
+                       type: SchemaType.STRING,
+                       nullable: true,
+                     },
+                     quantity: {
+                       type: SchemaType.NUMBER,
+                       nullable: true,
+                     },
+                     confidence: {
+                       type: SchemaType.NUMBER,
+                     },
+                   },
+                   required: [
+                     "name",
+                     "confidence",
+                   ],
+                 },
+               },
+             },
+             required: [
+               "medicines",
+             ],
+           },
+         },
+       });
+
+
+
+
+     const prompt = `
+You are an expert pharmacist and prescription OCR assistant.
+
+
+
+
+Read the uploaded prescription carefully.
+
+
+
+
+Rules:
+
+
+
+
+- Read every medicine.
+- Ignore handwriting quality.
+- Never invent medicine names.
+- Correct only obvious OCR mistakes.
+- Return NULL if unreadable.
+- Preserve medicine names.
+- Extract patient name.
+- Extract patient age.
+- Extract doctor name.
+- Extract doctor specialty.
+
+
+
+
+For every medicine return:
+
+
+
+
+- name
+- strength
+- dosage
+- duration
+- quantity
+- confidence
+
+
+
+
+Confidence:
+
+
+
+
+1.0 = perfectly readable
+
+
+
+
+0.95 = very clear
+
+
+
+
+0.85 = readable
+
+
+
+
+0.70 = partially readable
+
+
+
+
+0.50 = difficult
+
+
+
+
+Never output markdown.
+
+
+
+
+Return ONLY JSON.
+`;
+     const imagePart = {
+       inlineData: {
+         mimeType: isPDF
+           ? "application/pdf"
+           : file.type,
+         data: buffer.toString("base64"),
+       },
+     };
+
+
+     const result =
+       await generateWithRetry(
+         model,
+         [
+           prompt,
+           imagePart,
+         ]
+       );
+
+
+     const responseText = result.response.text();
+     let extractedData: any;
+     try {
+       extractedData = JSON.parse(responseText);
+     } catch (err) {
+       console.error(responseText);
+       throw new Error(
+         "Gemini returned invalid JSON."
+       );
+     }
+     // ============================================
+     // Parse AI Response
+     // ============================================
+
+
+
+
+     const medicinesList = Array.isArray(extractedData)
+       ? extractedData
+       : extractedData.medicines || [];
+     let patientName = extractedData.patientName;
+     if (
+       !patientName ||
+       patientName.toLowerCase().includes("unknown")
+     ) {
+       patientName = accountName || "Unknown Patient";
+     }
+
+
+     const metadata = {
+       patientName,
+       patientAge:
+         extractedData.patientAge ||
+         accountAge ||
+         null,
+       doctorName:
+         extractedData.doctorName ||
+         null,
+       doctorSpecialty:
+         extractedData.doctorSpecialty ||
+         null,
+     };
+
+
+     // ============================================
+     // Fetch Medicine Catalog Once
+     // ============================================
+
+
+     const medicineCatalog = await Medicine.findAll();
+     const matchedResults = [];
+     let overallConfidence = 1;
+     let hasLowConfidence = false;
+     // ============================================
+     // Process Each Medicine
+     // ============================================
+
+
+
+
+     for (const item of medicinesList) {
+       if (!item.name) continue;
+       const confidence =
+         Number(item.confidence || 0.5);
+       overallConfidence = Math.min(
+         overallConfidence,
+         confidence
+       );
+       if (confidence < 0.40) {
+         hasLowConfidence = true;
+       }
+
+
+       // ==========================================
+       // Save Extracted Medicine
+       // ==========================================
+
+
+       const extractedMedicine =
+         await ExtractedMedicine.create({
+           prescriptionId:
+             prescription.id,
+           medicineName:
+             item.name,
+           strength:
+             item.strength || null,
+           dosage:
+             item.dosage || null,
+           duration:
+             item.duration || null,
+           quantity:
+             item.quantity
+               ? Number(item.quantity)
+               : undefined,
+           confidence,
+         });
+
+
+       // ==========================================
+       // Find Best Matches
+       // ==========================================
+
+
+       const rankedMatches =
+         medicineCatalog
+           .map((medicine: any) => {
+             const scores = [];
+             if (medicine.name) {
+               scores.push(
+                 calculateSimilarity(
+                   normalizeMedicineName(
+                     item.name
+                   ),
+                   normalizeMedicineName(
+                     medicine.name
+                   )
+                 )
+               );
+             }
+             if (medicine.genericName) {
+               scores.push(
+                 calculateSimilarity(
+                   normalizeMedicineName(
+                     item.name
+                   ),
+                   normalizeMedicineName(
+                     medicine.genericName
+                   )
+                 )
+               );
+             }
+             if (medicine.brandName) {
+               scores.push(
+                 calculateSimilarity(
+                   normalizeMedicineName(
+                     item.name
+                   ),
+                   normalizeMedicineName(
+                     medicine.brandName
+                   )
+                 )
+               );
+             }
+             if (medicine.composition) {
+               scores.push(
+                 calculateSimilarity(
+                   normalizeMedicineName(
+                     item.name
+                   ),
+                   normalizeMedicineName(
+                     medicine.composition
+                   )
+                 )
+               );
+             }
+             if (medicine.manufacturer) {
+               scores.push(
+                 calculateSimilarity(
+                   normalizeMedicineName(
+                     item.name
+                   ),
+                   normalizeMedicineName(
+                     medicine.manufacturer
+                   )
+                 )
+               );
+             }
+             return {
+               medicine,
+               score: Math.max(...scores),
+             };
+           })
+           .sort(
+             (a, b) => b.score - a.score
+           );
+
+
+       const best =
+         rankedMatches[0];
+       let matchType = "None";
+       let matchedMedicine = null;
+       let matchedProductId:
+         number | undefined;
+       let matchedConfidence = 0;
+       let variants: any[] = [];
+       // ==========================================
+       // Exact Match
+       // ==========================================
+
+
+       if (
+         best &&
+         best.score >= 0.92
+       ) {
+         matchType = "Exact";
+         matchedMedicine =
+           best.medicine;
+         matchedProductId =
+           best.medicine.id;
+         matchedConfidence =
+           best.score;
+       }
+       // ==========================================
+       // Similar Match
+       // ==========================================
+
+
+       else if (
+         best &&
+         best.score >= 0.75
+       ) {
+         matchType = "Similar";
+         matchedConfidence =
+           best.score;
+         variants =
+           rankedMatches
+             .slice(0, 5)
+             .map((x) => x.medicine);
+       }
+       // ==========================================
+       // Save Matched Product
+       // ==========================================
+
+
+       const matchedRecord =
+         await MatchedProduct.create({
+           prescriptionId:
+             prescription.id,
+           extractedMedicineId:
+             extractedMedicine.id,
+           productId:
+             matchedProductId,
+           matchType,
+           confidence:
+             matchedConfidence,
+         });
+
+
+       matchedResults.push({
+         extracted:
+           extractedMedicine,
+         match:
+           matchedRecord,
+         product:
+           matchedMedicine,
+         variants,
+       });
+
+
+     }      // ==========================================
+     // Decide Final Prescription Status
+     // ==========================================
+     let prescriptionStatus = "Pending";
+     if (
+       matchedResults.length > 0 &&
+       !hasLowConfidence &&
+       overallConfidence >= 0.90
+     ) {
+       prescriptionStatus = "Verified";
+     }
+     if (hasLowConfidence) {
+       prescriptionStatus = "Manual Review";
+     }
+     await prescription.update({
+       status: prescriptionStatus,
+     });
+
+
+     // ==========================================
+     // Response
+     // ==========================================
+
+
+     return NextResponse.json(
+       {
+         success: true,
+         message:
+           prescriptionStatus === "Verified"
+             ? "Prescription processed successfully."
+             : prescriptionStatus === "Manual Review"
+               ? "Prescription uploaded. Manual pharmacist review required."
+               : "Prescription uploaded successfully.",
+         data: {
+           prescription,
+           status: prescriptionStatus,
+           metadata,
+           overallConfidence,
+           medicines: matchedResults,
+         },
+       },
+       {
+         status: 200,
+       }
+     );
+   } catch (aiError: any) {
+     console.error(
+       "Gemini Extraction Error:",
+       aiError
+     );
+     await prescription.update({
+       status: "Manual Review",
+     });
+
+
+     return NextResponse.json(
+       {
+         success: true,
+         message:
+           "Prescription uploaded successfully but AI extraction failed. Added to pharmacist review queue.",
+         data: {
+           prescription,
+           status: "Manual Review",
+         },
+       },
+       {
+         status: 200,
+       }
+     );
+   }
+ } catch (error: any) {
+   console.error(
+     "Prescription Upload Error:",
+     error
+   );
+   return NextResponse.json(
+     {
+       success: false,
+       message:
+         error.message ||
+         "Internal Server Error",
+     },
+     {
+       status: 500,
+     }
+   );
+ }
 }
+
 
 export async function GET(req: NextRequest) {
-  try {
-    const userAuth = await authenticateJWT(req);
-    if (userAuth instanceof NextResponse) return userAuth;
+ try {
+   const userAuth = await authenticateJWT(req);
+   if (userAuth instanceof NextResponse) return userAuth;
 
-    const prescriptions = await Prescription.findAll({
-      where: { userId: userAuth.id },
-      include: [
-        {
-          model: ExtractedMedicine,
-          as: 'extractedMedicines',
-          include: [
-            {
-              model: MatchedProduct,
-              as: 'matchedProduct',
-              include: [{ model: Medicine, as: 'product' }]
-            }
-          ]
-        }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
 
-    return NextResponse.json({ success: true, data: prescriptions }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+   const prescriptions = await Prescription.findAll({
+     where: { userId: userAuth.id },
+     include: [
+       {
+         model: ExtractedMedicine,
+         as: 'extractedMedicines',
+         include: [
+           {
+             model: MatchedProduct,
+             as: 'matchedProduct',
+             include: [{ model: Medicine, as: 'product' }]
+           }
+         ]
+       }
+     ],
+     order: [['createdAt', 'DESC']]
+   });
+
+
+   return NextResponse.json({ success: true, data: prescriptions }, { status: 200 });
+ } catch (error: any) {
+   return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+ }
 }
+
+
+
