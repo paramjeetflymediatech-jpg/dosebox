@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import NotificationBell from '../components/NotificationBell';
+
 import './globals.css';
 import api from '../lib/api';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -237,7 +237,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Cart & Notifications */}
             <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
-              {user && <NotificationBell />}
+
               
               <Link href="/cart" className="relative p-2 text-slate-600 hover:text-brand-600 transition-colors">
                 <ShoppingBag className="w-6 h-6" />

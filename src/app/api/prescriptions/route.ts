@@ -61,58 +61,58 @@ export async function POST(req: NextRequest) {
     });
 
     // 4. OCR + AI Prescription Reading (Gemini)
-    if (!process.env.GEMINI_API_KEY || process.env.USE_MOCK_AI === 'true') {
-      console.log('GEMINI_API_KEY is missing or USE_MOCK_AI is true. Using mock extraction data for testing.');
+    // if (!process.env.GEMINI_API_KEY || process.env.USE_MOCK_AI === 'true') {
+    //   console.log('GEMINI_API_KEY is missing or USE_MOCK_AI is true. Using mock extraction data for testing.');
       
-      // Mock data representing a successful AI extraction and DB match
-      const mockMedicines = [
-        {
-          extracted: { medicineName: "Novamox 500", strength: "500mg", dosage: "1-0-1", duration: "5 days", quantity: 10, confidence: 0.95 },
-          match: { matchType: "Exact", confidenceScore: 1.0 },
-          product: {
-            id: 1,
-            name: "Gefitinib 250mg (Geftinat)",
-            genericName: "Amoxicillin Trihydrate",
-            price: 1420.00,
-            discountPrice: 245.00,
-            images: ["/medicines/geftinat.jpg"],
-            requiresPrescription: true
-          }
-        },
-        {
-          extracted: { medicineName: "Montair LC", strength: "", dosage: "0-0-1", duration: "10 days", quantity: 10, confidence: 0.90 },
-          match: { matchType: "Exact", confidenceScore: 1.0 },
-          product: {
-            id: 2,
-            name: "Mycophenolate Mofetil 500mg",
-            genericName: "Montelukast 10mg + Levocetirizine 5mg",
-            price: 180.00,
-            discountPrice: 58.00,
-            images: ["/medicines/mycophenolate.jpg"],
-            requiresPrescription: true
-          }
-        }
-      ];
+    //   // Mock data representing a successful AI extraction and DB match
+    //   const mockMedicines = [
+    //     {
+    //       extracted: { medicineName: "Novamox 500", strength: "500mg", dosage: "1-0-1", duration: "5 days", quantity: 10, confidence: 0.95 },
+    //       match: { matchType: "Exact", confidenceScore: 1.0 },
+    //       product: {
+    //         id: 1,
+    //         name: "Gefitinib 250mg (Geftinat)",
+    //         genericName: "Amoxicillin Trihydrate",
+    //         price: 1420.00,
+    //         discountPrice: 245.00,
+    //         images: ["/medicines/geftinat.jpg"],
+    //         requiresPrescription: true
+    //       }
+    //     },
+    //     {
+    //       extracted: { medicineName: "Montair LC", strength: "", dosage: "0-0-1", duration: "10 days", quantity: 10, confidence: 0.90 },
+    //       match: { matchType: "Exact", confidenceScore: 1.0 },
+    //       product: {
+    //         id: 2,
+    //         name: "Mycophenolate Mofetil 500mg",
+    //         genericName: "Montelukast 10mg + Levocetirizine 5mg",
+    //         price: 180.00,
+    //         discountPrice: 58.00,
+    //         images: ["/medicines/mycophenolate.jpg"],
+    //         requiresPrescription: true
+    //       }
+    //     }
+    //   ];
 
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Mock extraction used (AI disabled).',
-        data: { 
-          prescription,
-          metadata: {
-            patientName: accountName || "Ramesh Kumar",
-            patientAge: accountAge || "42 yrs",
-            doctorName: "Dr. Sameer Verma, MD",
-            doctorSpecialty: "Pulmonologist"
-          },
-          medicines: mockMedicines
-        }
-      }, { status: 200 });
-    }
+    //   return NextResponse.json({ 
+    //     success: true, 
+    //     message: 'Mock extraction used (AI disabled).',
+    //     data: { 
+    //       prescription,
+    //       metadata: {
+    //         patientName: accountName || "Ramesh Kumar",
+    //         patientAge: accountAge || "42 yrs",
+    //         doctorName: "Dr. Sameer Verma, MD",
+    //         doctorSpecialty: "Pulmonologist"
+    //       },
+    //       medicines: mockMedicines
+    //     }
+    //   }, { status: 200 });
+    // }
 
     try {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5" });
       
       const prompt = `
         You are a pharmacy prescription analyzer.

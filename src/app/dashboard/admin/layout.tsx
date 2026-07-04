@@ -33,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Orders', href: '/dashboard/admin/orders', icon: ShoppingBag },
     { name: 'Transactions', href: '/dashboard/admin/transactions', icon: FileText },
     { name: 'Medicines', href: '/dashboard/admin/medicines', icon: Pill },
+    { name: 'Categories', href: '/dashboard/admin/categories', icon: Tag },
     { name: 'Suppliers', href: '/dashboard/admin/suppliers', icon: Truck },
     { name: 'Prescriptions', href: '/dashboard/admin/prescriptions', icon: FileText },
     { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText },
