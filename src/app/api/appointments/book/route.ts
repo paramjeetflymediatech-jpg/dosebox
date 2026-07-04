@@ -9,19 +9,19 @@ export async function POST(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const body = await req.json().catch(() => ({}));
-    const { doctorId, appointmentDate, appointmentTime, reason } = body;
+    const { doctorId, dateTime, type, notes } = body;
 
-    if (!doctorId || !appointmentDate || !appointmentTime) {
+    if (!doctorId || !dateTime) {
       return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
     }
 
     const appointment = await Appointment.create({
       userId: userAuth.id,
       doctorId,
-      dateTime: new Date(`${appointmentDate}T${appointmentTime}:00Z`),
-      type: 'Video',
+      dateTime: new Date(dateTime),
+      type: type || 'Video',
       status: 'Scheduled',
-      notes: reason
+      notes: notes || ''
     });
 
     return NextResponse.json({ success: true, message: 'Appointment booked successfully', data: appointment }, { status: 201 });

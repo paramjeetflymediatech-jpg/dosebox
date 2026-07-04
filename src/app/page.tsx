@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert
+  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert, Baby, Bone, Brain, Thermometer, Tag
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import Link from 'next/link';
 import api from '../lib/api';
 import { useCart } from '../context/CartContext';
@@ -41,6 +42,7 @@ interface Category {
   id: number;
   name: string;
   slug: string;
+  description?: string;
   image: string;
 }
 
@@ -382,77 +384,43 @@ export default function HomePage() {
             <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Target Specific Ailments</span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Chronic Category</h2>
           </div>
-
+          
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-
-            {/* 1. Oncology */}
-            <Link href="/medicines?category=oncology" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #4f87c5, #6fa3e0)' }}>
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Oncology (Cancer)</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Anti-cancer medicines &amp; supportive therapies.</p>
-              </div>
-            </Link>
-
-            {/* 2. Kidney */}
-            <Link href="/medicines?category=kidney" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #0c888d, #29b5bb)' }}>
-                <Activity className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Kidney (Nephrology)</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Dialysis support, alpha-ketoanologues &amp; chronic kidney care.</p>
-              </div>
-            </Link>
-
-            {/* 3. Liver */}
-            <Link href="/medicines?category=liver" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #e8783a, #f0974e)' }}>
-                <Heart className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Liver (Hepatology)</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Hepatitis control &amp; chronic liver disease management.</p>
-              </div>
-            </Link>
-
-            {/* 4. Immunology & Transplant */}
-            <Link href="/medicines?category=rheumatology" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #7c6fc4, #a494e0)' }}>
-                <ActivitySquare className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Immunology &amp; Transplant</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Immunosuppressants, rheumatoid arthritis &amp; transplant compounds.</p>
-              </div>
-            </Link>
-
-            {/* 5. Specialty Nutrients */}
-            <Link href="/medicines?category=nutrients" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #3ea8b0, #5dc8d0)' }}>
-                <Beaker className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Specialty Nutrients</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Onco-wellness, specialized recovery vitamins &amp; immunity mineral blends.</p>
-              </div>
-            </Link>
-
-            {/* 6. Clinical Devices */}
-            <Link href="/medicines?category=devices" className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #6b6b6b, #8c8c8c)' }}>
-                <Award className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm leading-tight">Clinical Devices</h4>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">Cold chain shipping digital trackers &amp; critical monitors.</p>
-              </div>
-            </Link>
-
+            {(() => {
+              const CATEGORY_GRADIENTS = [
+                'linear-gradient(135deg, #4f87c5, #6fa3e0)',
+                'linear-gradient(135deg, #0c888d, #29b5bb)',
+                'linear-gradient(135deg, #e8783a, #f0974e)',
+                'linear-gradient(135deg, #7c6fc4, #a494e0)',
+                'linear-gradient(135deg, #3ea8b0, #5dc8d0)',
+                'linear-gradient(135deg, #6b6b6b, #8c8c8c)'
+              ];
+              if (categories.length === 0) {
+                return (
+                  <div className="col-span-full py-8 text-center text-slate-500 font-medium bg-slate-50 rounded-2xl border border-slate-100">
+                    Loading Categories...
+                  </div>
+                );
+              }
+              
+              return categories.map((cat, idx) => {
+                const IconComp = (LucideIcons as any)[cat.image] || LucideIcons.FileText;
+                const gradient = CATEGORY_GRADIENTS[idx % CATEGORY_GRADIENTS.length];
+                
+                return (
+                  <Link key={cat.id} href={`/medicines?category=${cat.slug}`} className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: gradient }}>
+                      <IconComp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm leading-tight">{cat.name}</h4>
+                      <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed line-clamp-2">{cat.description || 'View products in this category'}</p>
+                    </div>
+                  </Link>
+                );
+              });
+            })()}
           </div>
-
         </div>
       </section>
 
@@ -1088,7 +1056,7 @@ export default function HomePage() {
                 <div className="space-y-2 mb-6">
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CLINICAL DESCRIPTION:</h4>
                   <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                    An advanced formulation used primarily in the treatment of related chronic conditions. Please consult your physician before initiating this therapy.
+                    {quickViewMed.description || 'An advanced formulation used primarily in the treatment of related chronic conditions. Please consult your physician before initiating this therapy.'}
                   </p>
                 </div>
 

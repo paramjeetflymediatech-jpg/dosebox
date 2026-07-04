@@ -545,8 +545,9 @@ export interface AppointmentAttributes {
   type: string; // 'Video' | 'Chat'
   status: string; // 'Scheduled' | 'Completed' | 'Cancelled'
   notes?: string;
+  meetLink?: string;
 }
-export class Appointment extends Model<AppointmentAttributes, Optional<AppointmentAttributes, 'id' | 'type' | 'status' | 'notes'>> implements AppointmentAttributes {
+export class Appointment extends Model<AppointmentAttributes, Optional<AppointmentAttributes, 'id' | 'type' | 'status' | 'notes' | 'meetLink'>> implements AppointmentAttributes {
   declare id: number;
   declare userId: number;
   declare doctorId: number;
@@ -554,6 +555,7 @@ export class Appointment extends Model<AppointmentAttributes, Optional<Appointme
   declare type: string;
   declare status: string;
   declare notes?: string;
+  declare meetLink?: string;
 }
 Appointment.init(
   {
@@ -564,6 +566,7 @@ Appointment.init(
     type: { type: DataTypes.STRING, defaultValue: 'Video' },
     status: { type: DataTypes.STRING, defaultValue: 'Scheduled' },
     notes: { type: DataTypes.TEXT, allowNull: true },
+    meetLink: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: 'Appointment', tableName: 'appointments', timestamps: true }
 );
@@ -1013,6 +1016,12 @@ User.hasMany(Prescription, { foreignKey: 'userId', as: 'prescriptions' });
 
 RewardTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(RewardTransaction, { foreignKey: 'userId', as: 'rewardTransactions' });
+
+// Appointments
+Appointment.belongsTo(User, { foreignKey: 'userId', as: 'patient' });
+User.hasMany(Appointment, { foreignKey: 'userId', as: 'patientAppointments' });
+Appointment.belongsTo(Doctor, { foreignKey: 'doctorId', as: 'consultingDoctor' });
+Doctor.hasMany(Appointment, { foreignKey: 'doctorId', as: 'doctorAppointments' });
 
 // Prescription & Order
 Prescription.hasMany(Order, { foreignKey: 'prescriptionId', as: 'orders' });

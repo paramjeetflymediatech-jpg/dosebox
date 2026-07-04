@@ -1,51 +1,11 @@
-name,genericName,price,stock,categoryId,brandId,supplierId,images
-Paracetamol 500mg,Paracetamol,15.50,100,1,1,1,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Ibuprofen 400mg,Ibuprofen,22.00,80,1,2,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Amoxicillin 250mg,Amoxicillin,45.00,200,2,1,1,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Cough Syrup 100ml,Dextromethorphan,85.00,30,3,2,2,"[""https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600""]"
-Azithromycin 500mg,Azithromycin,120.00,60,2,3,1,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Cetirizine 10mg,Cetirizine,18.00,150,1,2,2,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Metformin 500mg,Metformin,35.00,180,4,1,1,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Amlodipine 5mg,Amlodipine,42.00,90,4,3,2,"[""https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=80&w=600""]"
-Losartan 50mg,Losartan,65.00,120,4,2,1,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Atorvastatin 10mg,Atorvastatin,95.00,75,4,1,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Pantoprazole 40mg,Pantoprazole,55.00,110,5,3,2,"[""https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600""]"
-Omeprazole 20mg,Omeprazole,48.00,95,5,2,1,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Levocetirizine 5mg,Levocetirizine,28.00,130,1,2,2,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Diclofenac 50mg,Diclofenac,32.00,85,1,3,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Aceclofenac 100mg,Aceclofenac,58.00,70,1,1,2,"[""https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=80&w=600""]"
-Vitamin C 500mg,Ascorbic Acid,25.00,200,6,2,2,"[""https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=600""]"
-Vitamin D3 60000 IU,Cholecalciferol,95.00,90,6,3,1,"[""https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600""]"
-Calcium Tablets,Calcium Carbonate,80.00,100,6,1,2,"[""https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=600""]"
-Zinc Tablets,Zinc Sulphate,45.00,120,6,2,1,"[""https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600""]"
-ORS Powder,Oral Rehydration Salts,20.00,250,7,3,2,"[""https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600""]"
-Insulin Regular,Human Insulin,350.00,40,4,1,1,"[""https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=600""]"
-Glimepiride 2mg,Glimepiride,48.00,100,4,2,2,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Telmisartan 40mg,Telmisartan,75.00,80,4,3,1,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Hydrochlorothiazide 25mg,Hydrochlorothiazide,30.00,90,4,1,2,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Doxycycline 100mg,Doxycycline,70.00,60,2,2,1,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Ciprofloxacin 500mg,Ciprofloxacin,85.00,70,2,3,2,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Levofloxacin 500mg,Levofloxacin,110.00,65,2,1,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Clindamycin 300mg,Clindamycin,95.00,55,2,2,2,"[""https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600""]"
-Fluconazole 150mg,Fluconazole,65.00,100,2,3,1,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Albendazole 400mg,Albendazole,28.00,150,2,1,2,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Montelukast 10mg,Montelukast,78.00,85,3,2,1,"[""https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=80&w=600""]"
-Salbutamol Tablets,Salbutamol,42.00,95,3,3,2,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Ambroxol Syrup 100ml,Ambroxol,72.00,45,3,1,1,"[""https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600""]"
-Loratadine 10mg,Loratadine,26.00,130,3,2,2,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Domperidone 10mg,Domperidone,38.00,110,5,3,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Ondansetron 4mg,Ondansetron,65.00,100,5,1,2,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Loperamide 2mg,Loperamide,22.00,120,5,2,1,"[""https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600""]"
-Ranitidine 150mg,Ranitidine,35.00,90,5,3,2,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Multivitamin Capsules,Multivitamin,90.00,140,6,1,1,"[""https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=600""]"
-Iron Tablets,Ferrous Sulphate,55.00,115,6,2,2,"[""https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600""]"
-Folic Acid 5mg,Folic Acid,18.00,180,6,3,1,"[""https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=600""]"
-Aspirin 75mg,Aspirin,20.00,160,1,1,2,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Clopidogrel 75mg,Clopidogrel,105.00,75,4,2,1,"[""https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=80&w=600""]"
-Nitroglycerin 2.6mg,Nitroglycerin,150.00,40,4,3,2,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Mefenamic Acid 500mg,Mefenamic Acid,42.00,90,1,1,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Naproxen 250mg,Naproxen,48.00,80,1,2,2,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
-Tramadol 50mg,Tramadol,95.00,50,1,3,1,"[""https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=80&w=600""]"
-Gabapentin 300mg,Gabapentin,135.00,60,4,1,2,"[""https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600""]"
-Pregabalin 75mg,Pregabalin,165.00,55,4,2,1,"[""https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600""]"
-Thyroxine 50mcg,Levothyroxine Sodium,62.00,100,4,3,2,"[""https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600""]"
+name,genericName,image,manufacturer,composition,dosage,description,sideEffects,storageInstructions,prescriptionRequired,price,discountPrice,stock,categoryId,brandId,minStockAlertThreshold
+"Crocin Pain Relief","Paracetamol","https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600","GSK","Paracetamol IP 650mg","1 tablet twice a day","Effective pain relief and fever reduction.","Nausea, liver damage in high doses","Store in a cool dry place",false,15.50,14.00,100,1,1,10
+"Brufen 400","Ibuprofen","https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600","Abbott","Ibuprofen IP 400mg","1 tablet after food","Used to reduce fever and treat pain or inflammation.","Upset stomach, mild heartburn","Store below 25°C",false,22.00,20.00,80,1,2,15
+"Amoxil 500mg","Amoxicillin","https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600","Sun Pharma","Amoxicillin Trihydrate IP 500mg","1 capsule three times a day","Penicillin antibiotic used to treat bacterial infections.","Nausea, vomiting, diarrhea","Store in a cool dry place away from sunlight",true,45.00,42.00,200,2,1,20
+"Benadryl Cough Syrup","Diphenhydramine","https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600","Johnson & Johnson","Diphenhydramine Hydrochloride 14mg","2 teaspoons every 4-6 hours","Relief from cough and cold symptoms.","Drowsiness, dry mouth","Keep bottle tightly closed",false,85.00,80.00,30,3,2,10
+"Zithromax 500","Azithromycin","https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600","Pfizer","Azithromycin Dihydrate IP 500mg","1 tablet daily for 3-5 days","Macrolide antibiotic for respiratory infections.","Stomach upset, diarrhea","Store below 30°C",true,120.00,110.00,60,2,3,10
+"Zyrtec 10mg","Cetirizine","https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600","Dr. Reddy's","Cetirizine Hydrochloride IP 10mg","1 tablet daily at night","Antihistamine used to relieve allergy symptoms.","Mild drowsiness, fatigue","Store in a dry place",false,18.00,16.50,150,1,2,20
+"Glycomet 500","Metformin","https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=600","USV Ltd","Metformin Hydrochloride IP 500mg","1 tablet with meals","Controls high blood sugar in type 2 diabetes.","Nausea, stomach upset","Store away from moisture",true,35.00,33.00,180,4,1,20
+"Amlokind 5mg","Amlodipine","https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=80&w=600","Mankind Pharma","Amlodipine Besylate IP 5mg","1 tablet daily","Calcium channel blocker for high blood pressure.","Swelling in ankles, dizziness","Store below 30°C",true,42.00,38.00,90,4,3,15
+"Lipitor 10mg","Atorvastatin","https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600","Pfizer","Atorvastatin Calcium IP 10mg","1 tablet daily at bedtime","Statin used to lower cholesterol levels.","Muscle pain, mild nausea","Store in original container",true,95.00,90.00,75,4,1,10
+"Pan 40","Pantoprazole","https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600","Alkem Labs","Pantoprazole Sodium IP 40mg","1 tablet before breakfast","Proton pump inhibitor for acid reflux.","Headache, mild diarrhea","Store below 25°C",true,55.00,50.00,110,5,3,25

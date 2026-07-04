@@ -14,6 +14,7 @@ import './globals.css';
 import api from '../lib/api';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
+import { toast, Toaster } from 'react-hot-toast';
 const queryClient = new QueryClient();
 
 function ScriptInjector({ html, target }: { html: string, target: 'head' | 'body' }) {
@@ -45,7 +46,7 @@ function ScriptInjector({ html, target }: { html: string, target: 'head' | 'body
   return null;
 }
 
-import { Toaster } from 'react-hot-toast';
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -84,6 +85,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { cartItems } = useCart();
   const [searchVal, setSearchVal] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [pincodeInput, setPincodeInput] = useState('');
+  const [deliveryLocation, setDeliveryLocation] = useState('New Delhi (110001)');
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [globalSettings, setGlobalSettings] = useState<Record<string, string>>({});
   const pathname = usePathname();
@@ -150,6 +155,66 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     setErrorMsg('');
   };
 
+  const handleApplyPincode = async () => {
+    if (pincodeInput.length !== 6) return;
+    setIsFetchingLocation(true);
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pincodeInput}`);
+      const data = await res.json();
+      if (data && data[0] && data[0].Status === 'Success') {
+        const areaName = data[0].PostOffice[0].Name;
+        const district = data[0].PostOffice[0].District;
+        const newLocation = `${district} (${pincodeInput})`;
+        setDeliveryLocation(newLocation);
+        setShowLocationModal(false);
+        toast.success(`Delivery available in ${newLocation}`);
+      } else {
+        alert('Invalid Pincode. Could not fetch details.');
+      }
+    } catch (err) {
+      alert('Error fetching pincode details. Please try again.');
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    setIsFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          
+          if (data && data.address) {
+            const city = data.address.city || data.address.town || data.address.county || data.address.state_district || 'Your Location';
+            const zip = data.address.postcode || '';
+            const newLocation = `${city} ${zip ? `(${zip})` : ''}`;
+            setDeliveryLocation(newLocation);
+            setShowLocationModal(false);
+            toast.success(`Delivery available in ${newLocation}`);
+          } else {
+            alert('Failed to detect precise address from coordinates.');
+          }
+        } catch (error) {
+          alert('Failed to fetch address details. Please try entering a pincode.');
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (error) => {
+        alert('Location access denied or unavailable. Please manually enter a pincode.');
+        setIsFetchingLocation(false);
+      }
+    );
+  };
+
   const isPlainLayout = pathname === '/pos' || pathname?.startsWith('/admin/login') || pathname?.startsWith('/dashboard/admin');
 
   if (isPlainLayout) {
@@ -182,13 +247,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <img src={globalSettings['logo_url'] || "/Media.jpg"} alt="Logo" className="h-16 w-auto rounded-lg object-contain" />
             </Link>
 
-            <div className="hidden lg:flex items-center gap-2 text-xs border-l border-slate-200 pl-8">
+            <div 
+              className="hidden lg:flex items-center gap-2 text-xs border-l border-slate-200 pl-8 cursor-pointer hover:bg-slate-50 transition-colors p-2 rounded-xl -ml-2"
+              onClick={() => setShowLocationModal(true)}
+            >
               <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
                 <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               </div>
               <div>
                 <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">DELIVERING TO</div>
-                <div className="font-bold text-slate-700">New Delhi (110001) <span className="text-brand-500 ml-1">▼</span></div>
+                <div className="font-bold text-slate-700 truncate max-w-[120px]">{deliveryLocation} <span className="text-brand-500 ml-1">▼</span></div>
               </div>
             </div>
           </div>
@@ -550,6 +618,83 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   </span>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* LOCATION MODAL */}
+      {showLocationModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative border border-slate-100">
+            <button
+              onClick={() => setShowLocationModal(false)}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="p-8 pb-10">
+              <h3 className="text-xl font-black text-slate-900 mb-1">Where do you want the delivery?</h3>
+              <p className="text-xs text-slate-500 mb-6 font-medium">Get access to your Addresses, and Orders</p>
+
+              {!user && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex items-center justify-between mb-8">
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-800">Please login first</h4>
+                  </div>
+                  <button onClick={() => { setShowLocationModal(false); setShowAuthModal(true); }} className="bg-white border border-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs hover:bg-slate-50 transition-colors whitespace-nowrap ml-4">
+                    Login
+                  </button>
+                </div>
+              )}
+
+              {user && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 max-h-40 overflow-y-auto custom-scrollbar">
+                  <h4 className="font-bold text-xs text-slate-500 uppercase tracking-widest mb-3">Saved Addresses</h4>
+                  <div className="space-y-3">
+                    <button onClick={() => { setDeliveryLocation('Noida (201301)'); setShowLocationModal(false); }} className="w-full text-left bg-white border border-slate-200 p-3 rounded-xl hover:border-brand-500 transition-colors">
+                      <div className="font-bold text-slate-800 text-sm">Home Address</div>
+                      <div className="text-xs text-slate-500 truncate mt-1">45, Emerald Residency, Sector 62, Noida - 201301</div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-px bg-slate-200 flex-1"></div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Or Enter Pincode</span>
+                <div className="h-px bg-slate-200 flex-1"></div>
+              </div>
+              
+              <p className="text-xs text-slate-500 mb-3 font-medium text-center">Select pincode to see product availability</p>
+
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  placeholder="Enter Pincode"
+                  value={pincodeInput}
+                  onChange={(e) => setPincodeInput(e.target.value.replace(/\D/g, ''))}
+                  className="flex-1 bg-white border-2 border-slate-200 text-slate-800 text-sm rounded-xl p-3 focus:outline-none focus:border-brand-500 font-bold tracking-widest text-center"
+                />
+                <button 
+                  onClick={handleApplyPincode}
+                  disabled={isFetchingLocation || pincodeInput.length !== 6}
+                  className="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold px-6 rounded-xl transition-colors"
+                >
+                  {isFetchingLocation ? '...' : 'Apply'}
+                </button>
+              </div>
+              
+              <button 
+                onClick={handleDetectLocation}
+                disabled={isFetchingLocation}
+                className="w-full flex items-center justify-center gap-2 mt-4 text-brand-600 font-bold hover:bg-brand-50 py-3 rounded-xl transition-colors border border-transparent hover:border-brand-200 disabled:opacity-50"
+              >
+                <Search className="w-4 h-4" />
+                {isFetchingLocation ? 'Detecting...' : 'or detect my location'}
+              </button>
+
             </div>
           </div>
         </div>

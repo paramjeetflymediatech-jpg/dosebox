@@ -244,7 +244,7 @@ export default function ConsultationsPage() {
                     <button
                       type="button"
                       onClick={() => setConsultationType('Video')}
-                      className={`py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${consultationType === 'Video' ? 'bg-brand-550 border-brand-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
+                      className={`py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${consultationType === 'Video' ? 'bg-brand-550 border-brand-600  shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 '}`}
                     >
                       <Video className="w-4 h-4" />
                       Video Call
@@ -252,7 +252,7 @@ export default function ConsultationsPage() {
                     <button
                       type="button"
                       onClick={() => setConsultationType('Chat')}
-                      className={`py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${consultationType === 'Chat' ? 'bg-brand-550 border-brand-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
+                      className={`py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${consultationType === 'Chat' ? 'bg-brand-550 border-brand-600  shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
                     >
                       <MessageSquare className="w-4 h-4" />
                       Private Chat
@@ -263,17 +263,19 @@ export default function ConsultationsPage() {
                 {/* Slots grid */}
                 <div>
                   <label className="block text-xxs font-bold uppercase tracking-wider text-slate-400 mb-2">Available Slots (Tomorrow)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {JSON.parse(selectedDoctor.availability || '[]').map((slot: string) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`py-2 rounded-xl text-xxs font-bold transition-all border ${selectedSlot === slot ? 'bg-brand-600 border-brand-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100'}`}
-                      >
-                        {slot}
-                      </button>
-                    ))}
+                  <div className="max-h-60 overflow-y-auto pr-2 -mr-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pb-1">
+                      {JSON.parse(selectedDoctor.availability || '[]').map((slot: string) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`py-2 px-1 rounded-xl text-xs font-bold transition-all border ${selectedSlot === slot ? 'bg-brand-600 border-brand-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'}`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

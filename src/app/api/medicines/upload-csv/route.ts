@@ -83,19 +83,31 @@ export async function POST(req: NextRequest) {
     for (const rowData of rows) {
       if (!rowData.name) continue;
       try {
+        let imagesArr = '[]';
+        if (rowData.images) {
+          imagesArr = rowData.images;
+        } else if (rowData.image) {
+          imagesArr = JSON.stringify([rowData.image]);
+        }
+
         await Medicine.create({
           name: rowData.name,
           genericName: rowData.genericname,
           manufacturer: rowData.manufacturer || 'Unknown',
           composition: rowData.composition || 'Unknown',
           dosage: rowData.dosage || 'Unknown',
+          description: rowData.description || undefined,
+          sideEffects: rowData.sideeffects || undefined,
+          storageInstructions: rowData.storageinstructions || undefined,
           price: parseFloat(rowData.price || '0'),
+          discountPrice: rowData.discountprice ? parseFloat(rowData.discountprice) : undefined,
           stock: parseInt(rowData.stock || '0', 10),
+          minStockAlertThreshold: parseInt(rowData.minstockalertthreshold || '10', 10),
           categoryId: parseInt(rowData.categoryid, 10),
           brandId: parseInt(rowData.brandid, 10),
           supplierId: rowData.supplierid ? parseInt(rowData.supplierid, 10) : undefined,
-          images: rowData.images ? rowData.images : '[]',
-          prescriptionRequired: false
+          images: imagesArr,
+          prescriptionRequired: rowData.prescriptionrequired?.toLowerCase() === 'true'
         });
         successCount++;
       } catch (err) {

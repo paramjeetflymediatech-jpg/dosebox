@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  ShoppingBag, MapPin, FileText, LogOut, ChevronRight, User as UserIcon, LayoutDashboard, Sparkles, Home
+  ShoppingBag, MapPin, FileText, LogOut, ChevronRight, User as UserIcon, LayoutDashboard, Sparkles, Home, Stethoscope, Menu, X
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
 
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -24,6 +25,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       router.push('/');
     }
   }, [user, authLoading, isMounted, router]);
+
+  // Close mobile menu when pathname changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   if (!isMounted || authLoading) {
     return (
@@ -38,71 +44,92 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const tabs = [
     { id: '/account', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { id: '/account/prescriptions', label: 'My Prescriptions', icon: FileText },
+    { id: '/account/consultations', label: 'My Consultations', icon: Stethoscope },
     { id: '/account/rewards', label: 'Reward Points', icon: Sparkles },
     { id: '/account/addresses', label: 'Manage Addresses', icon: MapPin },
     { id: '/account/orders', label: 'My Orders', icon: ShoppingBag },
     { id: '/account/profile', label: 'Personal Information', icon: UserIcon },
-
   ] as const;
 
   return (
-    <div className="bg-slate-50 h-screen overflow-hidden flex flex-col lg:flex-row">
-      {/* Sidebar */}
-      <div className="lg:w-80 flex-shrink-0 bg-white border-r border-slate-200 h-full overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center gap-4 mb-8">
-            {(user as any)?.avatar ? (
-              <img src={(user as any).avatar} alt="Profile" className="w-14 h-14 rounded-full border border-slate-200 shadow-sm object-cover flex-shrink-0" />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xl flex-shrink-0">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0">
-              <h2 className="font-extrabold text-slate-900 line-clamp-1">{user?.name}</h2>
-              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-            </div>
-          </div>
-
-          <nav className="space-y-1">
-            {tabs.map(tab => {
-              const Icon = tab.icon;
-              const isActive = (tab as any).exact ? pathname === tab.id : pathname.startsWith(tab.id);
-              return (
-                <Link
-                  key={tab.id}
-                  href={tab.id}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
-                  {tab.label}
-                  <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isActive ? 'translate-x-1 text-brand-600' : 'opacity-0'}`} />
-                </Link>
-              );
-            })}
-            <hr className="my-4 border-slate-100" />
-            <Link
-              href="/"
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all mb-2"
-            >
-              <Home className="w-5 h-5 text-slate-400" />
-              Back to Website
-            </Link>
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all"
-            >
-              <LogOut className="w-5 h-5 opacity-80" />
-              Sign Out
-            </button>
-          </nav>
-        </div>
+    <div className="bg-slate-50 h-screen overflow-hidden flex flex-col">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between z-20 relative">
+        <div className="font-extrabold text-slate-900 text-lg">My Account</div>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 -mr-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0 p-6 sm:p-10 lg:p-12 h-full overflow-y-auto">
-        {children}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Sidebar Overlay (Mobile) */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black/20 z-20 lg:hidden" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div className={`absolute lg:static inset-y-0 left-0 w-72 lg:w-80 flex-shrink-0 bg-white border-r border-slate-200 h-full overflow-y-auto transform transition-transform duration-300 ease-in-out z-30 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-8">
+              {(user as any)?.avatar ? (
+                <img src={(user as any).avatar} alt="Profile" className="w-14 h-14 rounded-full border border-slate-200 shadow-sm object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xl flex-shrink-0">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <h2 className="font-extrabold text-slate-900 line-clamp-1">{user?.name}</h2>
+                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+              </div>
+            </div>
+
+            <nav className="space-y-1">
+              {tabs.map(tab => {
+                const Icon = tab.icon;
+                const isActive = (tab as any).exact ? pathname === tab.id : pathname.startsWith(tab.id);
+                return (
+                  <Link
+                    key={tab.id}
+                    href={tab.id}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                  >
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
+                    {tab.label}
+                    <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isActive ? 'translate-x-1 text-brand-600' : 'opacity-0'}`} />
+                  </Link>
+                );
+              })}
+              <hr className="my-4 border-slate-100" />
+              <Link
+                href="/"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all mb-2"
+              >
+                <Home className="w-5 h-5 text-slate-400" />
+                Back to Website
+              </Link>
+              <button
+                onClick={logout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all"
+              >
+                <LogOut className="w-5 h-5 opacity-80" />
+                Sign Out
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-12 h-full overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

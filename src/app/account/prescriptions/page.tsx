@@ -19,6 +19,8 @@ export default function PrescriptionsPage() {
   const { addToCart } = useCart();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -26,13 +28,18 @@ export default function PrescriptionsPage() {
   const [showScanResults, setShowScanResults] = useState(false);
 
   useEffect(() => {
-    loadPrescriptions();
-  }, []);
+    loadPrescriptions(currentPage);
+  }, [currentPage]);
 
-  async function loadPrescriptions() {
+  async function loadPrescriptions(page: number) {
     try {
-      const res = await api.get('/prescriptions/customer');
-      if (res.data?.success) setPrescriptions(res.data.data);
+      const res = await api.get(`/prescriptions/customer?page=${page}&limit=5`);
+      if (res.data?.success) {
+        setPrescriptions(res.data.data);
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.totalPages);
+        }
+      }
     } catch (err) {
       console.error('Failed to load prescriptions', err);
     } finally {
@@ -53,7 +60,7 @@ export default function PrescriptionsPage() {
       
       if (res.data?.success) {
         toast.success('Prescription scanned successfully');
-        loadPrescriptions();
+        loadPrescriptions(1);
 
         if (res.data.extractedMedicines?.length > 0) {
           setScanResults(res.data.extractedMedicines);
@@ -134,7 +141,8 @@ export default function PrescriptionsPage() {
           </h3>
           
           {prescriptions.length > 0 ? (
-            <div className="overflow-x-auto bg-white rounded-xl border border-slate-100 shadow-sm">
+            <>
+              <div className="overflow-x-auto bg-white rounded-xl border border-slate-100 shadow-sm">
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
@@ -179,7 +187,31 @@ export default function PrescriptionsPage() {
                 </tbody>
               </table>
             </div>
-          ) : (
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm font-semibold text-slate-600 px-4">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+            </>
+        ) : (
             <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
               <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
               <p className="text-slate-500 text-sm">No prescriptions uploaded yet.</p>

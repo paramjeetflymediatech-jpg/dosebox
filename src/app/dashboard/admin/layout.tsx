@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Brands', href: '/dashboard/admin/brands', icon: Shield },
     { name: 'Suppliers', href: '/dashboard/admin/suppliers', icon: Truck },
     { name: 'Prescriptions', href: '/dashboard/admin/prescriptions', icon: FileText },
+    { name: 'Doctors', href: '/dashboard/admin/doctors', icon: Stethoscope },
+    { name: 'Appointments', href: '/dashboard/admin/appointments', icon: Calendar },
     { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText },
     { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings },
     { name: 'Coupons', href: '/dashboard/admin/coupons', icon: Tag },
@@ -47,9 +49,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col z-10">
-        <div className="p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800">Admin Control</h2>
-          <p className="text-sm text-slate-500">Manage your store</p>
+        <div className="p-6 border-b border-slate-100 flex flex-col items-center justify-center text-center">
+          <img src="/Media.jpg" alt="Logo" className="w-30 h-30 object-contain" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 leading-tight">Admin Control</h2>
+            <p className="text-xs text-slate-500">Manage your store</p>
+          </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
           {navItems.map((item) => {

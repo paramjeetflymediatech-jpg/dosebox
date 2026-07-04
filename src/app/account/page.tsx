@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, FileText, Sparkles, User as UserIcon } from 'lucide-react';
+import { ShoppingBag, FileText, Sparkles, User as UserIcon, Stethoscope } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../lib/api';
 
@@ -12,23 +12,26 @@ export default function AccountDashboardPage() {
   const [stats, setStats] = useState({
     orders: 0,
     prescriptions: 0,
-    addresses: 0
+    addresses: 0,
+    consultations: 0
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [ordersRes, prescRes, addrRes] = await Promise.all([
+        const [ordersRes, prescRes, addrRes, consultRes] = await Promise.all([
           api.get('/orders').catch(() => ({ data: { success: false } })),
           api.get('/prescriptions/customer').catch(() => ({ data: { success: false } })),
-          api.get('/account/addresses').catch(() => ({ data: { success: false } }))
+          api.get('/account/addresses').catch(() => ({ data: { success: false } })),
+          api.get('/account/appointments').catch(() => ({ data: { success: false } }))
         ]);
         
         setStats({
           orders: ordersRes.data?.success ? ordersRes.data.data.length : 0,
           prescriptions: prescRes.data?.success ? prescRes.data.data.length : 0,
-          addresses: addrRes.data?.success ? addrRes.data.data.length : 0
+          addresses: addrRes.data?.success ? addrRes.data.data.length : 0,
+          consultations: consultRes.data?.success ? consultRes.data.data.length : 0
         });
       } catch (err) {
         console.error(err);
@@ -71,6 +74,14 @@ export default function AccountDashboardPage() {
             </div>
             <h3 className="font-bold text-slate-900">Prescriptions</h3>
             <p className="text-3xl font-black text-emerald-600 mt-2">{stats.prescriptions}</p>
+          </Link>
+
+          <Link href="/account/consultations" className="block bg-slate-50 hover:bg-slate-100 border border-slate-100 p-6 rounded-2xl transition-all">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm mb-4">
+              <Stethoscope className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="font-bold text-slate-900">Consultations</h3>
+            <p className="text-3xl font-black text-blue-600 mt-2">{stats.consultations}</p>
           </Link>
           
           <Link href="/account/rewards" className="block bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl transition-all hover:shadow-lg shadow-amber-500/20 text-white">
