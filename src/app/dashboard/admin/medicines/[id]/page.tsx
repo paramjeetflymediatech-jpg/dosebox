@@ -50,9 +50,15 @@ export default function EditMedicinePage() {
         
         if (medRes.data?.success) {
           const m = medRes.data.data;
+          let currentImage = '';
+          try {
+            const parsedImages = m.images ? JSON.parse(m.images) : [];
+            if (parsedImages.length > 0) currentImage = parsedImages[0];
+          } catch(e) {}
+
           setFormData({
             name: m.name || '',
-            image: m.image || '',
+            image: currentImage,
             genericName: m.genericName || '',
             manufacturer: m.manufacturer || '',
             composition: m.composition || '',
@@ -125,6 +131,7 @@ export default function EditMedicinePage() {
     try {
       const payload = {
         ...formData,
+        images: JSON.stringify(formData.image ? [formData.image] : []),
         price: Number(formData.price),
         discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
         stock: Number(formData.stock),

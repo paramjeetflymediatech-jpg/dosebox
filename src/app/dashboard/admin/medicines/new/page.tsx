@@ -90,6 +90,7 @@ export default function NewMedicinePage() {
     try {
       const payload = {
         ...formData,
+        images: JSON.stringify(formData.image ? [formData.image] : []),
         price: Number(formData.price),
         discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
         stock: Number(formData.stock),

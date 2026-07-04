@@ -8,7 +8,7 @@ import {
   ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import './globals.css';
 import api from '../lib/api';
@@ -87,6 +87,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [globalSettings, setGlobalSettings] = useState<Record<string, string>>({});
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSearch = () => {
+    if (searchVal.trim()) {
+      router.push(`/medicines?search=${encodeURIComponent(searchVal.trim())}`);
+    }
+  };
 
   // Form fields
   const [name, setName] = useState('');
@@ -194,13 +201,18 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchVal.trim()) {
-                  window.location.href = `/medicines?search=${encodeURIComponent(searchVal)}`;
+                if (e.key === 'Enter') {
+                  handleSearch();
                 }
               }}
               className="w-full bg-slate-50/50 border-2 border-slate-100 text-slate-800 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-sm font-medium shadow-inner"
             />
-            <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+            <button 
+              onClick={handleSearch}
+              className="absolute left-3 top-2.5 p-1 hover:bg-slate-200 rounded-full transition-colors"
+            >
+              <Search className="w-5 h-5 text-slate-400 hover:text-brand-600" />
+            </button>
           </div>
 
           {/* NAVIGATION BUTTONS */}

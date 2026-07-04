@@ -572,11 +572,11 @@ export default function HomePage() {
                   </div>
 
                   <div className="mt-6 mb-4 relative z-0">
-                    <Link href={`/medicines/detail?id=${med.id}`} className="block h-32 flex items-center justify-center">
+                    <Link href={`/medicines/detail?id=${med.id}`} className="block h-40 flex items-center justify-center overflow-hidden">
                       <img
                         src={imagesArr[0]}
                         alt={med.name}
-                        className="object-cover h-32 w-32 rounded-2xl mix-blend-multiply drop-shadow-sm transition-transform duration-500 group-hover:scale-105"
+                        className="object-contain w-full h-full mix-blend-multiply transition-transform duration-500 "
                       />
                     </Link>
                   </div>

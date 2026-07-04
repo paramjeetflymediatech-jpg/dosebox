@@ -3,11 +3,11 @@ import fs from 'fs';
 import { writeFile } from 'fs/promises';
 
 export const saveUploadFile = async (file: File): Promise<string> => {
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.webp', '.heic', '.heif'];
   const ext = path.extname(file.name).toLowerCase();
 
   if (!allowedExtensions.includes(ext)) {
-    throw new Error('Only JPG, PNG, and PDF files are allowed!');
+    throw new Error('Only JPG, PNG, WEBP, HEIC, and PDF files are allowed!');
   }
 
   if (file.size > 5 * 1024 * 1024) {

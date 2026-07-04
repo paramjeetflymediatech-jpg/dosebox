@@ -707,7 +707,7 @@ Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Category & Medicine
 Category.hasMany(Medicine, { foreignKey: 'categoryId', as: 'medicines' });
-Medicine.belongsTo(Category, { foreignKey: 'category', as: 'categoryDetail' });
+Medicine.belongsTo(Category, { foreignKey: 'categoryId', as: 'categoryDetail' });
 
 // Brand & Medicine
 Brand.hasMany(Medicine, { foreignKey: 'brandId', as: 'medicines' });

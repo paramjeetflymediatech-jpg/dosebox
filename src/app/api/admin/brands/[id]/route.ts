@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { Category } from '../../../../../models';
+import { Brand } from '../../../../../models';
 import { authenticateJWT } from '../../../../../middleware/auth';
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
@@ -13,17 +13,17 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     const { id } = await params;
-    const categoryId = parseInt(id);
-    const category = await Category.findByPk(categoryId);
+    const brandId = parseInt(id);
+    const brand = await Brand.findByPk(brandId);
     
-    if (!category) {
-      return NextResponse.json({ success: false, message: 'Category not found' }, { status: 404 });
+    if (!brand) {
+      return NextResponse.json({ success: false, message: 'Brand not found' }, { status: 404 });
     }
 
-    await category.destroy();
-    return NextResponse.json({ success: true, message: 'Category deleted' }, { status: 200 });
+    await brand.destroy();
+    return NextResponse.json({ success: true, message: 'Brand deleted' }, { status: 200 });
   } catch (error: any) {
-    console.error('Error deleting category:', error);
+    console.error('Error deleting brand:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
@@ -38,18 +38,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const { id } = await params;
-    const categoryId = parseInt(id);
-    const category = await Category.findByPk(categoryId);
+    const brandId = parseInt(id);
+    const brand = await Brand.findByPk(brandId);
     
-    if (!category) {
-      return NextResponse.json({ success: false, message: 'Category not found' }, { status: 404 });
+    if (!brand) {
+      return NextResponse.json({ success: false, message: 'Brand not found' }, { status: 404 });
     }
 
     const body = await req.json();
-    await category.update(body);
-    return NextResponse.json({ success: true, data: category }, { status: 200 });
+    await brand.update(body);
+    return NextResponse.json({ success: true, data: brand }, { status: 200 });
   } catch (error: any) {
-    console.error('Error updating category:', error);
+    console.error('Error updating brand:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }

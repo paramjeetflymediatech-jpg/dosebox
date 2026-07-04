@@ -1,16 +1,16 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { Category } from '../../../../models';
+import { Brand } from '../../../../models';
 import { authenticateJWT } from '../../../../middleware/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const categories = await Category.findAll({
+    const brands = await Brand.findAll({
       order: [['name', 'ASC']]
     });
-    return NextResponse.json({ success: true, data: categories }, { status: 200 });
+    return NextResponse.json({ success: true, data: brands }, { status: 200 });
   } catch (error: any) {
-    console.error('Error fetching categories:', error);
+    console.error('Error fetching brands:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
@@ -25,16 +25,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, slug, description, image } = body;
+    const { name, slug, description, logo } = body;
 
     if (!name || !slug) {
       return NextResponse.json({ success: false, message: 'Name and slug are required' }, { status: 400 });
     }
 
-    const category = await Category.create({ name, slug, description, image });
-    return NextResponse.json({ success: true, data: category }, { status: 201 });
+    const brand = await Brand.create({ name, slug, description, logo });
+    return NextResponse.json({ success: true, data: brand }, { status: 201 });
   } catch (error: any) {
-    console.error('Error creating category:', error);
+    console.error('Error creating brand:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
