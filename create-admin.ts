@@ -1,5 +1,4 @@
 import sequelize from './src/config/database';
-import { User, Role } from './src/models/index';
 import bcrypt from 'bcryptjs';
 
 async function createAdmin() {
@@ -12,35 +11,35 @@ async function createAdmin() {
 
   try {
     // 1. Ensure SuperAdmin role exists (id: 1)
-    await Role.findOrCreate({ 
-      where: { id: 1 }, 
-      defaults: { id: 1, name: 'SuperAdmin' } 
-    });
+    const [roles] = await sequelize.query(`SELECT id FROM roles WHERE id = 1`) as any[];
+    if (!roles || roles.length === 0) {
+      await sequelize.query(`INSERT INTO roles (id, name) VALUES (1, 'SuperAdmin')`);
+    }
 
     // 2. Check if user already exists
-    const existingAdmin = await User.findOne({ where: { email } });
+    const [existingUsers] = await sequelize.query(
+      `SELECT id FROM users WHERE email = :email LIMIT 1`,
+      { replacements: { email } }
+    ) as any[];
     
-    if (existingAdmin) {
+    if (existingUsers && existingUsers.length > 0) {
       console.log(`[Info] User with email ${email} already exists.`);
       process.exit(0);
     }
 
     // 3. Hash password and create user
     const hashedPassword = await bcrypt.hash(password, 10);
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
-    const admin = await User.create({
-      name,
-      email,
-      phone: '1234567890',
-      password: hashedPassword,
-      roleId: 1, // SuperAdmin
-      status: 'active'
-    });
+    await sequelize.query(
+      `INSERT INTO users (name, email, phone, password, roleId, status, createdAt, updatedAt) 
+       VALUES (:name, :email, '1234567890', :password, 1, 'active', :now, :now)`,
+      { replacements: { name, email, password: hashedPassword, now } }
+    );
 
     console.log(`\n✅ Successfully created admin user!`);
-    console.log(`ID: ${admin.id}`);
-    console.log(`Name: ${admin.name}`);
-    console.log(`Email: ${admin.email}`);
+    console.log(`Name: ${name}`);
+    console.log(`Email: ${email}`);
     console.log(`Password: ${password}`);
     console.log(`Role: SuperAdmin (roleId: 1)`);
     
