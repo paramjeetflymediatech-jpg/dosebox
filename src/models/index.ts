@@ -2,14 +2,6 @@ import { Model, DataTypes } from 'sequelize';
 import type { Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-if (Model && typeof Model.init !== 'function') {
-  console.log('[Sequelize Mock] Mocking Model methods for Next.js build');
-  (Model as any).init = function() {};
-  (Model as any).hasMany = function() {};
-  (Model as any).belongsTo = function() {};
-  (Model as any).hasOne = function() {};
-  (Model as any).belongsToMany = function() {};
-}
 
 // ----------------------------------------------------
 // 1. ROLE
