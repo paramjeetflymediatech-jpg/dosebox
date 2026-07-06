@@ -119,13 +119,13 @@ export default function PrescriptionsPage() {
 
         {showScanResults && scanResults.length > 0 && (
           <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5 mb-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <h4 className="font-extrabold text-emerald-900 text-sm flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-emerald-600" /> AI Matched Medicines</h4>
               <button onClick={addAllScannedToCart} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-4 rounded-lg transition-all">Add All to Cart</button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {scanResults.map(med => (
-                <div key={med.id} className="bg-white border border-emerald-100 p-3 rounded-lg flex items-center justify-between">
+                <div key={med.id} className="bg-white border border-emerald-100 p-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <span className="font-bold text-sm text-slate-800">{med.name} <span className="text-xs text-slate-400 block font-normal">₹{Number(med.price).toFixed(2)}</span></span>
                   <button onClick={() => addToCart({ id: med.id, name: med.name, price: Number(med.price), prescriptionRequired: med.prescriptionRequired, image: '' })} className="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100">Add</button>
                 </div>

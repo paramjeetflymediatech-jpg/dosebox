@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -13,8 +13,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { user, isAdmin, loading, logout } = useAuth();
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  React.useEffect(() => {
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     if (!loading && !isAdmin) {
       router.push('/');
     }
@@ -47,9 +53,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col z-10">
-        <div className="p-6 border-b border-slate-100 flex flex-col items-center justify-center text-center">
+      <aside className={`fixed md:static inset-y-0 left-0 w-64 bg-white border-r border-slate-200 flex-col z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 flex' : '-translate-x-full md:flex'}`}>
+        <div className="p-6 border-b border-slate-100 flex flex-col items-center justify-center text-center relative">
+          <button 
+            className="md:hidden absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
           <img src="/Media.jpg" alt="Logo" className="w-30 h-30 object-contain" />
           <div>
             <h2 className="text-lg font-bold text-slate-800 leading-tight">Admin Control</h2>
@@ -87,9 +107,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-slate-50/50">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile Header */}
+        <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-30">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <h1 className="font-bold text-slate-800 text-lg">Admin Control</h1>
+          </div>
+          <img src="/Media.jpg" alt="Logo" className="w-8 h-8 object-contain" />
+        </header>
+
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 relative">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

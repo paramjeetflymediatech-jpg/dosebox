@@ -979,7 +979,59 @@ AuditLog.init(
 );
 
 // ----------------------------------------------------
-// 26. REWARD TRANSACTION
+// 26. USER ACTIVITY (ANALYTICS)
+// ----------------------------------------------------
+export interface UserActivityAttributes {
+  id: number;
+  userId?: number;
+  sessionId: string;
+  action: string;
+  path: string;
+  details?: string;
+  userAgent?: string;
+  ipAddress?: string;
+  deviceType?: string;
+  screenResolution?: string;
+  language?: string;
+  timezone?: string;
+  referrer?: string;
+}
+export class UserActivity extends Model<UserActivityAttributes, Optional<UserActivityAttributes, 'id'>> implements UserActivityAttributes {
+  declare id: number;
+  declare userId?: number;
+  declare sessionId: string;
+  declare action: string;
+  declare path: string;
+  declare details?: string;
+  declare userAgent?: string;
+  declare ipAddress?: string;
+  declare deviceType?: string;
+  declare screenResolution?: string;
+  declare language?: string;
+  declare timezone?: string;
+  declare referrer?: string;
+}
+UserActivity.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: true },
+    sessionId: { type: DataTypes.STRING, allowNull: false },
+    action: { type: DataTypes.STRING, allowNull: false },
+    path: { type: DataTypes.STRING, allowNull: false },
+    details: { type: DataTypes.TEXT, allowNull: true },
+    userAgent: { type: DataTypes.STRING, allowNull: true },
+    ipAddress: { type: DataTypes.STRING, allowNull: true },
+    deviceType: { type: DataTypes.STRING, allowNull: true },
+    screenResolution: { type: DataTypes.STRING, allowNull: true },
+    language: { type: DataTypes.STRING, allowNull: true },
+    timezone: { type: DataTypes.STRING, allowNull: true },
+    referrer: { type: DataTypes.STRING, allowNull: true }
+  },
+  { sequelize, modelName: 'UserActivity', tableName: 'user_activities', timestamps: true }
+);
+
+// ----------------------------------------------------
+// 27. REWARD TRANSACTION
 // ----------------------------------------------------
 export interface RewardTransactionAttributes {
   id: number;
@@ -1016,6 +1068,9 @@ User.hasMany(Prescription, { foreignKey: 'userId', as: 'prescriptions' });
 
 RewardTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(RewardTransaction, { foreignKey: 'userId', as: 'rewardTransactions' });
+
+UserActivity.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(UserActivity, { foreignKey: 'userId', as: 'activities' });
 
 // Appointments
 Appointment.belongsTo(User, { foreignKey: 'userId', as: 'patient' });
@@ -1074,5 +1129,6 @@ export default {
   DraftCart,
   DraftCartItem,
   AuditLog,
-  Supplier
+  Supplier,
+  UserActivity
 };

@@ -51,6 +51,7 @@ export default function HomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [trending, setTrending] = useState<Medicine[]>([]);
+  const [recommendations, setRecommendations] = useState<Medicine[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -77,6 +78,49 @@ export default function HomePage() {
   const ctaRef = useRef<HTMLElement>(null);
   const testimonialsRef = useRef<HTMLElement>(null);
   const faqRef = useRef<HTMLElement>(null);
+  const categoriesScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logic for categories
+  useEffect(() => {
+    const container = categoriesScrollRef.current;
+    if (!container || categories.length === 0) return;
+
+    let intervalId: NodeJS.Timeout;
+
+    const startAutoScroll = () => {
+      intervalId = setInterval(() => {
+        if (container) {
+          // If scrolled near the end, reset to start smoothly or instantly
+          if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+          } else {
+            // Scroll by approximately one card width + gap
+            const cardWidth = 220; // estimate based on w-52 (13rem=208px) + gap
+            container.scrollBy({ left: cardWidth, behavior: 'smooth' });
+          }
+        }
+      }, 3000); // Scroll every 3 seconds
+    };
+
+    startAutoScroll();
+
+    // Pause on hover or touch
+    const handlePause = () => clearInterval(intervalId);
+    const handleResume = () => startAutoScroll();
+
+    container.addEventListener('mouseenter', handlePause);
+    container.addEventListener('mouseleave', handleResume);
+    container.addEventListener('touchstart', handlePause, { passive: true });
+    container.addEventListener('touchend', handleResume, { passive: true });
+
+    return () => {
+      clearInterval(intervalId);
+      container.removeEventListener('mouseenter', handlePause);
+      container.removeEventListener('mouseleave', handleResume);
+      container.removeEventListener('touchstart', handlePause);
+      container.removeEventListener('touchend', handleResume);
+    };
+  }, [categories]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -209,6 +253,20 @@ export default function HomePage() {
       }
     }
     loadData();
+  }, []);
+
+  useEffect(() => {
+    async function loadRecommendations() {
+      try {
+        const res = await api.get('/medicines/recommendations');
+        if (res.data?.success) {
+          setRecommendations(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load recommendations', err);
+      }
+    }
+    loadRecommendations();
   }, []);
 
   // Slide loop interval
@@ -380,12 +438,20 @@ export default function HomePage() {
       {/* 3. SHOP BY CHRONIC CATEGORY */}
       <section ref={categoriesRef} className="py-16 bg-white">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-10">
-            <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Target Specific Ailments</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Chronic Category</h2>
+          <div className="mb-8 flex items-end justify-between gap-4">
+            <div>
+              <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Target Specific Ailments</span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Chronic Category</h2>
+            </div>
+            <Link href="/condition" className="text-sm font-bold text-brand-600 hover:text-brand-700 hover:underline whitespace-nowrap flex items-center gap-1">
+              View All <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div 
+            ref={categoriesScrollRef}
+            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          >
             {(() => {
               const CATEGORY_GRADIENTS = [
                 'linear-gradient(135deg, #4f87c5, #6fa3e0)',
@@ -404,14 +470,21 @@ export default function HomePage() {
               }
               
               return categories.map((cat, idx) => {
-                const IconComp = (LucideIcons as any)[cat.image] || LucideIcons.FileText;
                 const gradient = CATEGORY_GRADIENTS[idx % CATEGORY_GRADIENTS.length];
+                const isImageFile = cat.image && cat.image.includes('.');
+                const IconComp = !isImageFile ? ((LucideIcons as any)[cat.image] || LucideIcons.FileText) : null;
                 
                 return (
-                  <Link key={cat.id} href={`/medicines?category=${cat.slug}`} className="category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white" style={{ background: gradient }}>
-                      <IconComp className="w-5 h-5" />
-                    </div>
+                  <Link key={cat.id} href={`/medicines?category=${cat.slug}`} className="snap-start flex-shrink-0 w-40 sm:w-48 lg:w-52 category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
+                    {isImageFile ? (
+                      <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-slate-50 border border-slate-100 shadow-inner overflow-hidden">
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-contain p-2" />
+                      </div>
+                    ) : (
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: gradient }}>
+                        {IconComp && <IconComp className="w-5 h-5" />}
+                      </div>
+                    )}
                     <div>
                       <h4 className="font-bold text-slate-900 text-sm leading-tight">{cat.name}</h4>
                       <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed line-clamp-2">{cat.description || 'View products in this category'}</p>
@@ -423,6 +496,113 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* RECOMMENDED FOR YOU (Dynamic Personalization) */}
+      {recommendations.length > 0 && (
+        <section className="bg-slate-50 py-16 border-t border-slate-100">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center gap-1.5 bg-brand-100 text-brand-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
+                  <Sparkles className="w-3.5 h-3.5" /> For You
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">Recommended for You</h2>
+                <p className="text-sm text-slate-500 mt-2 font-medium max-w-lg">
+                  Based on your recent browsing history, we've curated these specific matches to help you find exactly what you need.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recommendations.map((med) => {
+                let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
+                try {
+                  if (med.images) imagesArr = JSON.parse(med.images);
+                } catch (e) { }
+
+                const discPrice = med.discountPrice ? Number(med.discountPrice) : null;
+                const price = Number(med.price);
+                const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
+
+                return (
+                  <div
+                    key={med.id}
+                    className="bg-white rounded-2xl border border-[#1b8d91]/60 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
+                  >
+                    <div className="flex justify-between items-start absolute top-4 left-4 right-4 z-10 pointer-events-none">
+                      {med.prescriptionRequired ? (
+                        <div className="bg-[#f0ecec] border border-[#e6dfdf] text-[#786c6c] font-bold text-[8px] uppercase tracking-wide px-2 py-0.5 rounded-sm pointer-events-auto">
+                          RX REQUIRED
+                        </div>
+                      ) : (
+                        <div />
+                      )}
+                      {savings > 0 && (
+                        <div className="bg-[#e68a7f] text-white font-bold text-[9px] px-2.5 py-0.5 rounded-full shadow-sm pointer-events-auto">
+                          Save {savings}%
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-6 mb-4 relative z-0">
+                      <Link href={`/medicines/detail?id=${med.id}`} className="block h-40 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={imagesArr[0]}
+                          alt={med.name}
+                          className="object-contain w-full h-full mix-blend-multiply transition-transform duration-500 "
+                        />
+                      </Link>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-1 text-[8px] text-[#8c8c8c] font-semibold uppercase mb-1">
+                        <span>Strip of 10 Tablets</span>
+                        <span>&bull;</span>
+                        <span className="truncate">{med.brand?.name || 'DoseBox Speciality Generics'}</span>
+                      </div>
+
+                      <h3 className="font-bold text-[#2d3748] text-xs leading-snug line-clamp-2 min-h-[34px]">
+                        <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
+                      </h3>
+
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-[#9b9b9b] font-semibold mb-6">
+                        <Star className="w-3 h-3 text-[#f6a041] fill-[#f6a041]" /> 4.8 (42)
+                      </div>
+                    </div>
+
+                    <div className="flex items-end justify-between mt-auto">
+                      <div>
+                        <div className="flex items-center gap-1 text-[8px] mb-0.5 font-semibold">
+                          <span className="line-through text-[#9b9b9b]">₹{price.toFixed(0)}</span>
+                          {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
+                        </div>
+                        <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
+                          ₹{discPrice ? discPrice.toFixed(0) : price.toFixed(0)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => { setQuickViewMed(med); setQty(1); }}
+                          className="w-7 h-7 rounded-full border border-[#0c888d]/30 text-[#0c888d] hover:bg-[#0c888d]/10 flex items-center justify-center transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleAddToCart(med)}
+                          className="w-7 h-7 rounded-full bg-[#0c888d] text-white flex items-center justify-center hover:bg-[#0a7378] hover:scale-105 transition-all shadow-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 4. DIGITAL SPECIALTY SHELF */}
       <section ref={trendingRef} className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-20">

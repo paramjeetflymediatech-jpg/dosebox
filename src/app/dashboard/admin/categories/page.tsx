@@ -24,7 +24,8 @@ export default function AdminCategoriesPage() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('FileText');
+  const [icon, setIcon] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   const fetchCategories = async () => {
@@ -49,7 +50,8 @@ export default function AdminCategoriesPage() {
     setName('');
     setSlug('');
     setDescription('');
-    setIcon('FileText');
+    setIcon('');
+    setImageFile(null);
     setShowModal(true);
   };
 
@@ -58,7 +60,8 @@ export default function AdminCategoriesPage() {
     setName(cat.name);
     setSlug(cat.slug);
     setDescription(cat.description || '');
-    setIcon(cat.image || 'FileText');
+    setIcon(cat.image || '');
+    setImageFile(null);
     setShowModal(true);
   };
 
@@ -77,12 +80,26 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { name, slug, description, image: icon };
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('slug', slug);
+      formData.append('description', description);
+      
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (icon) {
+        formData.append('image', icon);
+      }
+
       if (editCategory) {
-        await api.put(`/admin/categories/${editCategory.id}`, payload);
+        await api.put(`/admin/categories/${editCategory.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Category updated');
       } else {
-        await api.post('/admin/categories', payload);
+        await api.post('/admin/categories', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Category created');
       }
       setShowModal(false);
@@ -105,7 +122,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
           <Tag className="w-8 h-8 text-brand-600" /> Manage Categories
         </h1>
@@ -119,12 +136,15 @@ export default function AdminCategoriesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {categories.map(cat => {
-          const IconComp = (LucideIcons as any)[cat.image] || Tag;
           return (
             <div key={cat.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group p-5 flex flex-col gap-4 hover:shadow-md hover:border-brand-300 transition-all">
               <div className="flex justify-between items-start">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-brand-500 to-brand-700 shadow-inner">
-                  <IconComp className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-50 shadow-inner overflow-hidden">
+                  {cat.image && cat.image.includes('.') ? (
+                    <img src={cat.image} alt={cat.name} className="w-full h-full object-contain p-2" />
+                  ) : (
+                    <Tag className="w-6 h-6 text-slate-400" />
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button 
@@ -191,21 +211,33 @@ export default function AdminCategoriesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Icon Name (Lucide)</label>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 flex-shrink-0 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600 border border-brand-100 shadow-inner">
-                    {React.createElement((LucideIcons as any)[icon] || LucideIcons.HelpCircle, { className: 'w-7 h-7' })}
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Category Icon / Image</label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200 overflow-hidden">
+                      {imageFile ? (
+                        <img src={URL.createObjectURL(imageFile)} alt="preview" className="w-full h-full object-contain p-2" />
+                      ) : icon && icon.includes('.') ? (
+                        <img src={icon} alt="preview" className="w-full h-full object-contain p-2" />
+                      ) : (
+                        <Tag className="w-6 h-6 text-slate-300" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/svg+xml,image/png,image/jpeg"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setImageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 transition-colors cursor-pointer"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    value={icon}
-                    onChange={(e) => setIcon(e.target.value)}
-                    placeholder="e.g. Stethoscope, Pill, Heart..."
-                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm font-semibold rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
-                    required
-                  />
+                  <p className="text-xs text-slate-400 font-medium">Upload a custom SVG or PNG flat icon (like the ones from Flaticon).</p>
                 </div>
-                <p className="text-xs text-slate-400 mt-2 font-medium">Type any valid Lucide React icon name (e.g., Activity, Shield, Cross). The preview will update automatically.</p>
               </div>
 
               <div>

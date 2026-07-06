@@ -48,7 +48,7 @@ export default function AdminBlogsPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
           <FileText className="w-8 h-8 text-brand-600" /> Manage Blogs
         </h1>

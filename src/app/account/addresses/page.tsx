@@ -213,7 +213,7 @@ export default function AddressesPage() {
   return (
     <>
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
             <MapPin className="w-6 h-6 text-brand-600" /> Saved Addresses
           </h3>

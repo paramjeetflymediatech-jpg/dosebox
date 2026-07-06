@@ -56,6 +56,7 @@ function MedicinesCatalogContent() {
   const [sortBy, setSortBy] = useState('nameAsc');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   // Load static configurations
   useEffect(() => {
@@ -151,9 +152,29 @@ function MedicinesCatalogContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           
-          {/* 1. STICKY MINIMAL SIDEBAR FILTERS */}
-          <div className="lg:sticky lg:top-28 self-start space-y-8">
-            <div className="flex items-center justify-between">
+          {/* Filter Overlay (Mobile) */}
+          {isFilterDrawerOpen && (
+            <div 
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden" 
+              onClick={() => setIsFilterDrawerOpen(false)}
+            />
+          )}
+
+          {/* 1. FILTERS (Drawer on Mobile, Sticky Sidebar on Desktop) */}
+          <div className={`fixed inset-y-0 left-0 lg:bottom-auto lg:left-auto w-[280px] lg:w-auto bg-white lg:bg-transparent shadow-2xl lg:shadow-none p-6 lg:p-0 z-50 lg:z-auto overflow-y-auto lg:overflow-visible transform transition-transform duration-300 lg:transform-none lg:sticky lg:top-28 self-start space-y-8 ${isFilterDrawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+            
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between lg:hidden pb-4 border-b border-slate-100">
+              <span className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-brand-600" />
+                Filters
+              </span>
+              <button onClick={() => setIsFilterDrawerOpen(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="hidden lg:flex items-center justify-between">
               <span className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
                 <SlidersHorizontal className="w-5 h-5 text-brand-600" />
                 Filters
@@ -228,8 +249,16 @@ function MedicinesCatalogContent() {
             
             {/* Top Bar Sort and Counters */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="text-slate-500 text-sm font-semibold">
-                Showing page <span className="text-slate-900 font-extrabold">{currentPage}</span> of <span className="text-slate-900 font-extrabold">{totalPages}</span>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setIsFilterDrawerOpen(true)}
+                  className="lg:hidden flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-brand-600" /> Filters
+                </button>
+                <div className="text-sm font-bold text-slate-500">
+                  Showing {medicines.length} results
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
