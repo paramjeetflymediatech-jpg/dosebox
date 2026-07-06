@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export default function TrackingProvider({ children }: { children: React.ReactNode }) {
+function Tracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
@@ -50,5 +50,16 @@ export default function TrackingProvider({ children }: { children: React.ReactNo
     trackPageView();
   }, [pathname, searchParams]);
 
-  return <>{children}</>;
+  return null;
+}
+
+export default function TrackingProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <Tracker />
+      </Suspense>
+      {children}
+    </>
+  );
 }
