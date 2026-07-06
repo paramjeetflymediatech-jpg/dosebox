@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
-import { Medicine } from '../../../../models';
+import { Medicine, Brand, Category } from '../../../../models';
 import * as XLSX from 'xlsx';
 
 export async function POST(req: NextRequest) {
@@ -114,21 +114,44 @@ export async function POST(req: NextRequest) {
       }
       
       // Defaults for missing required fields in client format
-      if (!normalizedRow['stock']) normalizedRow['stock'] = '100'; 
-      if (!normalizedRow['categoryid']) normalizedRow['categoryid'] = '1'; 
-      if (!normalizedRow['brandid']) normalizedRow['brandid'] = '1'; 
-      
+      if (!normalizedRow['stock']) normalizedRow['stock'] = '100';
       return normalizedRow;
     });
 
-    const expectedHeaders = ['name', 'genericname', 'price', 'stock', 'categoryid', 'brandid'];
+    // --- Helper to slugify text ---
+    const slugify = (text: string) => text.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'general';
+
+    // --- Pre-resolve Brand IDs (findOrCreate by manufacturer name) ---
+    const brandCache: Record<string, number> = {};
+    const getBrandId = async (manufacturerName: string): Promise<number> => {
+      const key = manufacturerName.trim().toLowerCase();
+      if (brandCache[key]) return brandCache[key];
+      const name = manufacturerName.trim() || 'General';
+      const slug = slugify(name);
+      const [brand] = await (Brand as any).findOrCreate({ where: { slug }, defaults: { name, slug } });
+      brandCache[key] = brand.id;
+      return brand.id;
+    };
+
+    // --- Pre-resolve Category IDs (findOrCreate by category name) ---
+    const categoryCache: Record<string, number> = {};
+    const getCategoryId = async (categoryName: string): Promise<number> => {
+      const key = categoryName.trim().toLowerCase();
+      if (categoryCache[key]) return categoryCache[key];
+      const name = categoryName.trim() || 'General';
+      const slug = slugify(name);
+      const [category] = await (Category as any).findOrCreate({ where: { slug }, defaults: { name, slug } });
+      categoryCache[key] = category.id;
+      return category.id;
+    };
+
+    // Validation: only require name and price
     if (rows.length > 0) {
       const firstRowKeys = Object.keys(rows[0]);
-      const isMissingHeaders = expectedHeaders.some(eh => !firstRowKeys.includes(eh));
-      if (isMissingHeaders) {
+      if (!firstRowKeys.includes('name') || !firstRowKeys.includes('price')) {
         return NextResponse.json({
           success: false,
-          message: `File is missing required columns. Expected: name (BRAND NAME), genericName (COMPOSITION/SALT NAME), price (MRP).`
+          message: `File is missing required columns. Expected: name (BRAND NAME) and price (MRP).`
         }, { status: 400 });
       }
     }
@@ -146,20 +169,38 @@ export async function POST(req: NextRequest) {
           imagesArr = JSON.stringify([rowData.image]);
         }
 
+        // Resolve brandId: prefer explicit column, else use manufacturer name
+        let brandId: number;
+        if (rowData.brandid && !isNaN(parseInt(rowData.brandid, 10))) {
+          brandId = parseInt(rowData.brandid, 10);
+        } else {
+          const brandName = rowData.manufacturer || rowData.name.split(' ')[0] || 'General';
+          brandId = await getBrandId(brandName);
+        }
+
+        // Resolve categoryId: prefer explicit column, else use category column or default
+        let categoryId: number;
+        if (rowData.categoryid && !isNaN(parseInt(rowData.categoryid, 10))) {
+          categoryId = parseInt(rowData.categoryid, 10);
+        } else {
+          const catName = rowData.category || rowData['category (by speciality)'] || 'General';
+          categoryId = await getCategoryId(catName);
+        }
+
         await Medicine.create({
           name: rowData.name,
-          genericName: rowData.genericname,
+          genericName: rowData.genericname || rowData.name,
           manufacturer: rowData.manufacturer || 'Unknown',
-          composition: rowData.composition || 'Unknown',
+          composition: rowData.composition || rowData.genericname || 'Unknown',
           dosage: rowData.dosage || 'Unknown',
           description: rowData.description || undefined,
           sideEffects: rowData.sideeffects || undefined,
           storageInstructions: rowData.storageinstructions || undefined,
           price: parseFloat(rowData.price || '0'),
           discountPrice: rowData.discountprice ? parseFloat(rowData.discountprice) : undefined,
-          stock: parseInt(rowData.stock || '0', 10),
-          categoryId: parseInt(rowData.categoryid, 10),
-          brandId: parseInt(rowData.brandid, 10),
+          stock: parseInt(rowData.stock || '100', 10),
+          categoryId,
+          brandId,
           supplierId: rowData.supplierid ? parseInt(rowData.supplierid, 10) : undefined,
           images: imagesArr,
           prescriptionRequired: rowData.prescriptionrequired?.toLowerCase() === 'true'
@@ -167,7 +208,7 @@ export async function POST(req: NextRequest) {
         successCount++;
       } catch (err) {
         errorCount++;
-        console.error('Row failed:', rowData, err);
+        console.error('Row failed:', rowData.name, err);
       }
     }
 
