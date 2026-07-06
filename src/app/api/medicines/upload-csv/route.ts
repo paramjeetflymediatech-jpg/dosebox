@@ -28,31 +28,56 @@ export async function POST(req: NextRequest) {
 
     let rows: Record<string, string>[] = [];
 
+    // --- Helper: extract category name from a "CATEGORY (...)" row ---
+    const extractCategoryFromRow = (rowStr: string): string | null => {
+      const lower = rowStr.toLowerCase();
+      if (!lower.includes('category (by speciality)') && !lower.includes('category (by condition)')) return null;
+      // Extract condition part: "BY (CONDITION) ANTI BACTERIALS"
+      const condMatch = rowStr.match(/BY\s*\(CONDITION\)\s*(.+?)(?:$|\t|\r|\n)/i);
+      const specMatch = rowStr.match(/CATEGORY\s*\(BY SPECIALITY\)\s*(.+?)(?:\/\/|$|\t|\r|\n)/i);
+      if (condMatch) return condMatch[1].trim();
+      if (specMatch) return specMatch[1].trim();
+      return null;
+    };
+
+    // --- Helper: is a row a medicine data row (first cell is a number S.No) ---
+    const isMedicineRow = (firstCell: string) => /^\d+$/.test(firstCell.trim());
+
+    // --- Helper: is this row the column-header row ---
+    const isHeaderRow = (rowStr: string) => rowStr.toLowerCase().includes('brand name');
+
     if (isExcel) {
-      // Parse Excel using SheetJS
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const rawData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-      
-      // Find header row dynamically (look for "brand name" or "name")
-      let headerRowIndex = 0;
-      for (let i = 0; i < rawData.length; i++) {
-        const rowString = rawData[i].join(' ').toLowerCase();
-        if (rowString.includes('brand name') || (rowString.includes('name') && rowString.includes('price'))) {
-          headerRowIndex = i;
-          break;
-        }
-      }
 
-      const headers = rawData[headerRowIndex].map(h => String(h).trim().toLowerCase());
-      for (let i = headerRowIndex + 1; i < rawData.length; i++) {
+      let currentHeaders: string[] = [];
+      let currentCategory = 'General';
+
+      for (let i = 0; i < rawData.length; i++) {
         const row = rawData[i];
-        // skip completely empty rows
-        if (row.every(cell => !cell)) continue;
-        const rowDataObj: Record<string, string> = {};
-        headers.forEach((h, index) => {
+        const rowStr = row.map(c => String(c ?? '')).join('\t');
+
+        // Detect category context rows
+        const detectedCat = extractCategoryFromRow(rowStr);
+        if (detectedCat) { currentCategory = detectedCat; continue; }
+
+        // Detect header rows (re-usable across sections)
+        if (isHeaderRow(rowStr)) {
+          currentHeaders = row.map(h => String(h).trim().toLowerCase());
+          continue;
+        }
+
+        // Skip rows with no headers yet or completely empty
+        if (currentHeaders.length === 0 || row.every(c => !c)) continue;
+
+        // Only process rows whose first cell is a number (S.No)
+        if (!isMedicineRow(String(row[0]))) continue;
+
+        const rowDataObj: Record<string, string> = { _category: currentCategory };
+        currentHeaders.forEach((h, index) => {
           rowDataObj[h] = String(row[index] ?? '').trim();
         });
         rows.push(rowDataObj);
@@ -60,31 +85,33 @@ export async function POST(req: NextRequest) {
     } else {
       // Parse CSV
       const text = await file.text();
-      const lines = text.split(/\r?\n/).filter(line => line.trim());
-      if (lines.length < 2) {
-        return NextResponse.json({ success: false, message: 'Invalid CSV format or empty file' }, { status: 400 });
-      }
+      const lines = text.split(/\r?\n/);
 
-      // Find header row dynamically
-      let headerRowIndex = 0;
+      let currentHeaders: string[] = [];
+      let currentCategory = 'General';
+
       for (let i = 0; i < lines.length; i++) {
-         const lineLower = lines[i].toLowerCase();
-         if (lineLower.includes('brand name') || (lineLower.includes('name') && lineLower.includes('price'))) {
-            headerRowIndex = i;
-            break;
-         }
-      }
+        const line = lines[i];
+        if (!line.trim()) continue;
 
-      const headers = lines[headerRowIndex].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
-      rows = [];
-      for (let i = headerRowIndex + 1; i < lines.length; i++) {
-        const currentLine = lines[i];
-        if (!currentLine) continue;
-        const row = currentLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
-        const rowData: Record<string, string> = {};
-        headers.forEach((h, index) => {
-          rowData[h] = row[index] || '';
-        });
+        // Detect category context rows
+        const detectedCat = extractCategoryFromRow(line);
+        if (detectedCat) { currentCategory = detectedCat; continue; }
+
+        const splitLine = (l: string) => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+        const cells = splitLine(line);
+
+        // Detect header rows
+        if (isHeaderRow(line)) {
+          currentHeaders = cells.map(h => h.toLowerCase());
+          continue;
+        }
+
+        if (currentHeaders.length === 0) continue;
+        if (!isMedicineRow(cells[0])) continue;
+
+        const rowData: Record<string, string> = { _category: currentCategory };
+        currentHeaders.forEach((h, index) => { rowData[h] = cells[index] || ''; });
         rows.push(rowData);
       }
     }
@@ -178,12 +205,12 @@ export async function POST(req: NextRequest) {
           brandId = await getBrandId(brandName);
         }
 
-        // Resolve categoryId: prefer explicit column, else use category column or default
+        // Resolve categoryId: prefer explicit column, then _category (from sheet header row), then 'General'
         let categoryId: number;
         if (rowData.categoryid && !isNaN(parseInt(rowData.categoryid, 10))) {
           categoryId = parseInt(rowData.categoryid, 10);
         } else {
-          const catName = rowData.category || rowData['category (by speciality)'] || 'General';
+          const catName = rowData._category || rowData.category || 'General';
           categoryId = await getCategoryId(catName);
         }
 
