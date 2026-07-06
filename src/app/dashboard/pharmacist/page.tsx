@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 interface Prescription {
   id: number;
@@ -71,9 +72,9 @@ export default function PharmacistDashboardPage() {
     if (!selectedPresc) return;
     setVerifying(true);
     try {
-      const res = await api.post(`/prescriptions/${selectedPresc.id}/verify`, {
+      const res = await api.put(`/prescriptions/${selectedPresc.id}`, {
         status,
-        notes: verificationNotes || `Verified by pharmacist ${user?.name}`
+        adminNotes: verificationNotes || `Verified by pharmacist ${user?.name}`
       });
 
       if (res.data?.success) {
@@ -92,9 +93,9 @@ export default function PharmacistDashboardPage() {
   const handleApproveOrder = async (orderId: number) => {
     if (!confirm(`Are you sure you want to approve Order #${orderId}?`)) return;
     try {
-      const res = await api.put(`/orders/${orderId}/status`, {
+      const res = await api.put(`/orders/${orderId}`, {
         status: 'Confirmed',
-        remarks: `Prescription verified and signed. Order approved for packing by ${user?.name}`
+        trackingMessage: `Prescription verified and signed. Order approved for packing by ${user?.name}`
       });
 
       if (res.data?.success) {
@@ -103,6 +104,24 @@ export default function PharmacistDashboardPage() {
       }
     } catch (err) {
       alert('Failed to approve order.');
+    }
+  };
+
+  const handleRejectOrder = async (orderId: number) => {
+    const reason = prompt(`Please enter a reason for rejecting Order #${orderId}:`);
+    if (reason === null) return;
+    try {
+      const res = await api.put(`/orders/${orderId}`, {
+        status: 'Cancelled',
+        trackingMessage: `Order rejected by pharmacist ${user?.name}. Reason: ${reason}`
+      });
+
+      if (res.data?.success) {
+        alert(`Order #${orderId} rejected successfully.`);
+        loadQueues();
+      }
+    } catch (err) {
+      alert('Failed to reject order.');
     }
   };
 
@@ -275,7 +294,7 @@ export default function PharmacistDashboardPage() {
 
                     <div className="text-xs space-y-1 text-slate-400">
                       <div>Customer: <strong className="text-slate-700">{order.user?.name} ({order.user?.email})</strong></div>
-                      <div>Amount: <strong className="text-slate-700">₹{Number(order.finalAmount).toFixed(2)}</strong></div>
+                      <div>Amount: <strong className="text-slate-700">₹{formatCurrency(Number(order.finalAmount))}</strong></div>
                       <div>Attached Prescription: 
                         {order.prescription ? (
                           <a 
@@ -293,7 +312,14 @@ export default function PharmacistDashboardPage() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="flex items-center gap-2 mt-4 md:mt-0">
+                    <button
+                      onClick={() => handleRejectOrder(order.id)}
+                      className="bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold text-xs py-2 px-4 rounded-full transition-all shadow-sm flex items-center gap-1.5"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Reject
+                    </button>
                     <button
                       onClick={() => handleApproveOrder(order.id)}
                       className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs py-2 px-5 rounded-full transition-all shadow flex items-center gap-1.5"

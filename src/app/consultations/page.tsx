@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 interface Doctor {
   id: number;
@@ -204,7 +205,7 @@ export default function ConsultationsPage() {
                     <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-0 pt-4 sm:pt-0">
                       <div className="sm:text-right">
                         <span className="text-xxs text-slate-400 font-semibold uppercase tracking-wider block">Fees</span>
-                        <span className="font-black text-slate-800 text-sm sm:text-base">₹{Number(doc.fees).toFixed(0)}</span>
+                        <span className="font-black text-slate-800 text-sm sm:text-base">₹{formatCurrency(Number(doc.fees))}</span>
                       </div>
                       <button className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs py-2 px-5 rounded-full shadow-md shadow-brand-500/10 transition-colors">
                         Select Slot
@@ -292,8 +293,8 @@ export default function ConsultationsPage() {
 
                 {/* Verify details */}
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xxs space-y-1">
-                  <div className="flex justify-between text-slate-400"><span className="font-semibold">Consulting Fees:</span> <strong className="text-slate-800">₹{Number(selectedDoctor.fees).toFixed(0)}</strong></div>
-                  <div className="flex justify-between text-slate-400"><span className="font-semibold">GST (18% inclusive):</span> <strong className="text-slate-800">₹{(Number(selectedDoctor.fees) * 0.18).toFixed(0)}</strong></div>
+                  <div className="flex justify-between text-slate-400"><span className="font-semibold">Consulting Fees:</span> <strong className="text-slate-800">₹{formatCurrency(Number(selectedDoctor.fees))}</strong></div>
+                  <div className="flex justify-between text-slate-400"><span className="font-semibold">GST (18% inclusive):</span> <strong className="text-slate-800">₹{formatCurrency((Number(selectedDoctor.fees) * 0.18))}</strong></div>
                 </div>
 
                 <button

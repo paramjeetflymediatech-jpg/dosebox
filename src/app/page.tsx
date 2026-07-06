@@ -13,6 +13,7 @@ import { toast } from 'react-hot-toast';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
+import { formatCurrency } from '@/lib/utils';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -573,11 +574,11 @@ export default function HomePage() {
                     <div className="flex items-end justify-between mt-auto">
                       <div>
                         <div className="flex items-center gap-1 text-[8px] mb-0.5 font-semibold">
-                          <span className="line-through text-[#9b9b9b]">₹{price.toFixed(0)}</span>
+                          <span className="line-through text-[#9b9b9b]">₹{formatCurrency(price)}</span>
                           {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
                         </div>
                         <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
-                          ₹{discPrice ? discPrice.toFixed(0) : price.toFixed(0)}
+                          ₹{formatCurrency(discPrice ? discPrice.toFixed(0) : price)}
                         </div>
                       </div>
 
@@ -748,11 +749,11 @@ export default function HomePage() {
                   <div className="flex items-end justify-between mt-auto">
                     <div>
                       <div className="flex items-center gap-1 text-[8px] mb-0.5 font-semibold">
-                        <span className="line-through text-[#9b9b9b]">₹{price.toFixed(0)}</span>
+                        <span className="line-through text-[#9b9b9b]">₹{formatCurrency(price)}</span>
                         {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
                       </div>
                       <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
-                        ₹{discPrice ? discPrice.toFixed(0) : price.toFixed(0)}
+                        ₹{formatCurrency(discPrice ? discPrice.toFixed(0) : price)}
                       </div>
                     </div>
 
@@ -1099,7 +1100,7 @@ export default function HomePage() {
               <div className="p-6 space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Current Monthly Medicine Expense: <span className="text-brand-600 text-lg">₹{calcExpense.toLocaleString()}</span>
+                    Current Monthly Medicine Expense: <span className="text-brand-600 text-lg">₹{formatCurrency(calcExpense)}</span>
                   </label>
                   <input
                     type="range"
@@ -1219,12 +1220,12 @@ export default function HomePage() {
 
                 <div className="flex items-end gap-3 mb-8">
                   <span className="text-3xl font-extrabold text-brand-600">
-                    ₹{quickViewMed.discountPrice ? Number(quickViewMed.discountPrice).toFixed(0) : Number(quickViewMed.price).toFixed(0)}
+                    ₹{formatCurrency(quickViewMed.discountPrice ? Number(quickViewMed.discountPrice).toFixed(0) : Number(quickViewMed.price))}
                   </span>
                   {quickViewMed.discountPrice && (
                     <>
                       <span className="text-sm text-slate-400 font-semibold line-through mb-1.5">
-                        ₹{Number(quickViewMed.price).toFixed(0)}
+                        ₹{formatCurrency(Number(quickViewMed.price))}
                       </span>
                       <span className="bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[11px] px-2.5 py-1 rounded-full mb-1.5">
                         Save {Math.round(((Number(quickViewMed.price) - Number(quickViewMed.discountPrice)) / Number(quickViewMed.price)) * 100)}%
@@ -1278,7 +1279,7 @@ export default function HomePage() {
                     onClick={() => handleAddToCart(quickViewMed, qty)}
                     className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
                   >
-                    Add to Basket • ₹{(qty * (quickViewMed.discountPrice ? Number(quickViewMed.discountPrice) : Number(quickViewMed.price))).toFixed(0)}
+                    Add to Basket • ₹{formatCurrency((qty * (quickViewMed.discountPrice ? Number(quickViewMed.discountPrice) : Number(quickViewMed.price))))}
                   </button>
                 </div>
               </div>

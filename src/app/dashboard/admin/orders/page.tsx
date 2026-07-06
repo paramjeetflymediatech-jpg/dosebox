@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Eye, Edit2, Search, Filter, CheckCircle2, XCircle } from 'lucide-react';
 import api from '../../../../lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -127,7 +128,7 @@ export default function AdminOrdersPage() {
                       <p className="text-xs text-slate-500">{order.user?.phone}</p>
                     </td>
                     <td className="p-4 text-sm text-slate-600 font-medium">{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td className="p-4 font-extrabold text-slate-900">₹{Number(order.finalAmount).toFixed(2)}</td>
+                    <td className="p-4 font-extrabold text-slate-900">₹{formatCurrency(Number(order.finalAmount))}</td>
                     <td className="p-4">
                       <span className={`text-xxs font-bold px-2.5 py-1 rounded-full ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                         {order.status}

@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { formatCurrency } from '@/lib/utils';
 
 export default function UploadPrescriptionPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -297,13 +298,13 @@ export default function UploadPrescriptionPage() {
                           <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-8 bg-slate-50 px-4 sm:px-6 py-4 rounded-xl border border-slate-100 w-full md:w-auto overflow-hidden">
                             <div className="text-right flex-1 sm:flex-none">
                               <p className="text-[10px] uppercase font-bold text-slate-400">DoseBox Price</p>
-                              <p className="text-lg font-bold text-slate-800">₹{doseboxPrice.toFixed(2)} <span className="text-xs font-normal text-slate-500">/ Tablet</span></p>
-                              <p className="text-xs font-bold text-teal-600 mt-1">₹{(doseboxPrice * 10).toFixed(0)} <span className="text-slate-400 font-normal">(10 Units)</span></p>
+                              <p className="text-lg font-bold text-slate-800">₹{formatCurrency(doseboxPrice)} <span className="text-xs font-normal text-slate-500">/ Tablet</span></p>
+                              <p className="text-xs font-bold text-teal-600 mt-1">₹{formatCurrency((doseboxPrice * 10))} <span className="text-slate-400 font-normal">(10 Units)</span></p>
                             </div>
                             <div className="w-px h-12 bg-slate-200 hidden sm:block"></div>
                             <div className="text-right flex-1 sm:flex-none">
                               <p className="text-[10px] uppercase font-bold text-slate-400">Market Brand Price</p>
-                              <p className="text-sm font-medium text-slate-400 line-through mt-0.5">₹{marketPrice.toFixed(2)}</p>
+                              <p className="text-sm font-medium text-slate-400 line-through mt-0.5">₹{formatCurrency(marketPrice)}</p>
                               <p className="text-xs font-bold text-rose-500 mt-2 tracking-wide bg-rose-50 px-2 py-0.5 rounded-full inline-block">Save {savedPct}%</p>
                             </div>
                           </div>
@@ -323,12 +324,12 @@ export default function UploadPrescriptionPage() {
                     </div>
                     <div>
                       <h4 className="text-teal-800 font-bold">Overall Generic Savings: {savings.percentage}%</h4>
-                      <p className="text-sm text-teal-600 mt-0.5">By swapping to DoseBox specialty generics, you save ₹{savings.savedAmount.toFixed(0)} on this order!</p>
+                      <p className="text-sm text-teal-600 mt-0.5">By swapping to DoseBox specialty generics, you save ₹{formatCurrency(savings.savedAmount)} on this order!</p>
                     </div>
                   </div>
                   <div className="text-left sm:text-right shrink-0 sm:ml-4">
-                    <p className="text-sm text-slate-400 line-through">₹{savings.totalMarket.toFixed(0)}</p>
-                    <p className="text-2xl font-black text-teal-600">₹{savings.totalDosebox.toFixed(0)}</p>
+                    <p className="text-sm text-slate-400 line-through">₹{formatCurrency(savings.totalMarket)}</p>
+                    <p className="text-2xl font-black text-teal-600">₹{formatCurrency(savings.totalDosebox)}</p>
                   </div>
                 </div>
               )}

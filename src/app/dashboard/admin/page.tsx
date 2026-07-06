@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, ShoppingBag, Users, AlertTriangle 
@@ -79,7 +80,7 @@ export default function AdminDashboardPage() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
           <div>
             <p className="text-sm font-semibold text-slate-500 mb-1">Total Revenue</p>
-            <h3 className="text-2xl font-black text-slate-800">₹{kpis?.totalRevenue.toLocaleString()}</h3>
+            <h3 className="text-2xl font-black text-slate-800">₹{formatCurrency(kpis?.totalRevenue)}</h3>
           </div>
           <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <DollarSign className="w-6 h-6 text-emerald-600" />

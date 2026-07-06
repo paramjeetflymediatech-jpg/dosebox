@@ -7,6 +7,7 @@ import { Loader2, FileText, CheckCircle2, Clock, AlertCircle, ArrowRight, Shoppi
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/utils';
 
 export default function CustomerPrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
@@ -140,7 +141,7 @@ export default function CustomerPrescriptionsPage() {
                                 <p className="text-xs text-slate-500">{item.medicine?.genericName}</p>
                               </div>
                               <div className="text-right">
-                                <div className="text-sm font-bold text-brand-600">₹{Number(item.price).toFixed(2)} x {item.quantity}</div>
+                                <div className="text-sm font-bold text-brand-600">₹{formatCurrency(Number(item.price))} x {item.quantity}</div>
                                 {item.type === 'alternative' && (
                                   <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full inline-block mt-1">Generic Alternative</span>
                                 )}

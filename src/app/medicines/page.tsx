@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
 import { useCart } from '../../context/CartContext';
+import { formatCurrency } from '@/lib/utils';
 
 interface Medicine {
   id: number;
@@ -351,11 +352,11 @@ function MedicinesCatalogContent() {
                           <div>
                             {discPrice ? (
                               <div className="flex flex-col">
-                                <span className="text-base font-extrabold text-slate-900 leading-none mb-1">₹{discPrice.toFixed(2)}</span>
-                                <span className="text-[11px] text-slate-400 line-through leading-none">₹{price.toFixed(2)}</span>
+                                <span className="text-base font-extrabold text-slate-900 leading-none mb-1">₹{formatCurrency(discPrice)}</span>
+                                <span className="text-[11px] text-slate-400 line-through leading-none">₹{formatCurrency(price)}</span>
                               </div>
                             ) : (
-                              <span className="text-base font-extrabold text-slate-900 leading-none">₹{price.toFixed(2)}</span>
+                              <span className="text-base font-extrabold text-slate-900 leading-none">₹{formatCurrency(price)}</span>
                             )}
                           </div>
                           
@@ -483,12 +484,12 @@ function MedicinesCatalogContent() {
 
                 <div className="flex items-end gap-3 mb-8">
                   <span className="text-3xl font-extrabold text-brand-600">
-                    ₹{quickViewMed.discountPrice ? Number(quickViewMed.discountPrice).toFixed(0) : Number(quickViewMed.price).toFixed(0)}
+                    ₹{formatCurrency(quickViewMed.discountPrice ? Number(quickViewMed.discountPrice).toFixed(0) : Number(quickViewMed.price))}
                   </span>
                   {quickViewMed.discountPrice && (
                     <>
                       <span className="text-sm text-slate-400 font-semibold line-through mb-1.5">
-                        ₹{Number(quickViewMed.price).toFixed(0)}
+                        ₹{formatCurrency(Number(quickViewMed.price))}
                       </span>
                       <span className="bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[11px] px-2.5 py-1 rounded-full mb-1.5">
                         Save {Math.round(((Number(quickViewMed.price) - Number(quickViewMed.discountPrice)) / Number(quickViewMed.price)) * 100)}%
@@ -542,7 +543,7 @@ function MedicinesCatalogContent() {
                     onClick={() => handleAddToCart(quickViewMed, qty)}
                     className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
                   >
-                    Add to Basket • ₹{(qty * (quickViewMed.discountPrice ? Number(quickViewMed.discountPrice) : Number(quickViewMed.price))).toFixed(0)}
+                    Add to Basket • ₹{formatCurrency((qty * (quickViewMed.discountPrice ? Number(quickViewMed.discountPrice) : Number(quickViewMed.price))))}
                   </button>
                 </div>
               </div>

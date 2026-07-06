@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { formatCurrency } from '@/lib/utils';
 
 interface Medicine {
   id: number;
@@ -539,15 +540,15 @@ export default function POSPage() {
                         {med.discountPrice ? (
                           <div className="flex items-baseline gap-1.5">
                             <span className="text-sm font-extrabold text-teal-400">
-                              ₹{Number(med.discountPrice).toFixed(2)}
+                              ₹{formatCurrency(Number(med.discountPrice))}
                             </span>
                             <span className="text-[10px] text-slate-500 line-through">
-                              ₹{Number(med.price).toFixed(2)}
+                              ₹{formatCurrency(Number(med.price))}
                             </span>
                           </div>
                         ) : (
                           <span className="text-sm font-extrabold text-teal-400">
-                            ₹{Number(med.price).toFixed(2)}
+                            ₹{formatCurrency(Number(med.price))}
                           </span>
                         )}
                         <p className="text-[9px] text-slate-500 mt-0.5">Stock: {med.stock}</p>
@@ -646,7 +647,7 @@ export default function POSPage() {
 
                 <div className="flex items-center justify-between pt-1 border-t border-[#1e293b]/30">
                   <span className="text-[11.5px] font-extrabold text-teal-400">
-                    ₹{item.billingPrice.toFixed(2)}
+                    ₹{formatCurrency(item.billingPrice)}
                   </span>
                   
                   {/* Quantity Stepper */}
@@ -678,16 +679,16 @@ export default function POSPage() {
           <div className="space-y-1.5 text-xs text-slate-400">
             <div className="flex justify-between">
               <span>Items Total</span>
-              <span className="font-semibold text-slate-200">₹{subtotal.toFixed(2)}</span>
+              <span className="font-semibold text-slate-200">₹{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between">
               <span>GST (18% inclusive)</span>
-              <span className="font-semibold text-slate-300">₹{gst.toFixed(2)}</span>
+              <span className="font-semibold text-slate-300">₹{formatCurrency(gst)}</span>
             </div>
             <div className="border-t border-[#1e293b]/40 my-1"></div>
             <div className="flex justify-between text-sm font-bold text-white">
               <span>Payable Amount</span>
-              <span className="text-teal-400">₹{total.toFixed(2)}</span>
+              <span className="text-teal-400">₹{formatCurrency(total)}</span>
             </div>
           </div>
 
@@ -814,7 +815,7 @@ export default function POSPage() {
                     >
                       <span>{opt.label}</span>
                       <span className={`text-[10px] font-black ${selectedSize === opt.value ? 'text-teal-400' : 'text-slate-500'}`}>
-                        ₹{((customizingMed.discountPrice ? Number(customizingMed.discountPrice) : Number(customizingMed.price)) * opt.multiplier).toFixed(2)}
+                        ₹{formatCurrency(((customizingMed.discountPrice ? Number(customizingMed.discountPrice) : Number(customizingMed.price)) * opt.multiplier))}
                       </span>
                     </button>
                   ))}
@@ -894,7 +895,7 @@ export default function POSPage() {
                 onClick={handleAddCustomToCart}
                 className="w-2/3 rounded-xl bg-teal-500 hover:bg-teal-400 py-3 text-xs font-black text-slate-950 shadow-md shadow-teal-500/10 transition-colors"
               >
-                Add to Cart • ₹{((customizingMed.discountPrice ? Number(customizingMed.discountPrice) : Number(customizingMed.price)) * selectedMultiplier * customQuantity).toFixed(2)}
+                Add to Cart • ₹{formatCurrency(((customizingMed.discountPrice ? Number(customizingMed.discountPrice) : Number(customizingMed.price)) * selectedMultiplier * customQuantity))}
               </button>
             </div>
 
@@ -940,8 +941,8 @@ export default function POSPage() {
                       {item.notes && <div className="text-[9px] text-slate-500 italic">*{item.notes}</div>}
                     </div>
                     <div className="text-right">
-                      <div>{item.displayQty} x ₹{item.billingPrice.toFixed(2)}</div>
-                      <div className="font-bold">₹{(item.billingPrice * item.displayQty).toFixed(2)}</div>
+                      <div>{item.displayQty} x ₹{formatCurrency(item.billingPrice)}</div>
+                      <div className="font-bold">₹{formatCurrency((item.billingPrice * item.displayQty))}</div>
                     </div>
                   </div>
                 ))}
@@ -952,15 +953,15 @@ export default function POSPage() {
               <div className="space-y-1 text-right">
                 <div className="flex justify-between">
                   <span>SUBTOTAL:</span>
-                  <span>₹{recentOrder.subtotal.toFixed(2)}</span>
+                  <span>₹{formatCurrency(recentOrder.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>GST (18% incl):</span>
-                  <span>₹{recentOrder.gst.toFixed(2)}</span>
+                  <span>₹{formatCurrency(recentOrder.gst)}</span>
                 </div>
                 <div className="flex justify-between font-extrabold text-sm border-t border-dashed border-slate-300 pt-1.5">
                   <span>GRAND TOTAL:</span>
-                  <span>₹{recentOrder.total.toFixed(2)}</span>
+                  <span>₹{formatCurrency(recentOrder.total)}</span>
                 </div>
                 {recentOrder.rewardPoints > 0 && (
                   <div className="flex justify-between text-xs font-bold text-amber-600 mt-1 pt-1 border-t border-dashed border-slate-300">

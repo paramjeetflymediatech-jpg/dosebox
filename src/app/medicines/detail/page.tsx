@@ -9,6 +9,7 @@ import Link from 'next/link';
 import api from '../../../lib/api';
 import { useCart } from '../../../context/CartContext';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '@/lib/utils';
 
 interface Review {
   id: number;
@@ -175,14 +176,14 @@ function MedicineDetailsContent() {
                 <div className="flex items-baseline gap-3 mt-1">
                   {discPrice ? (
                     <>
-                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{discPrice.toFixed(2)}</span>
-                      <span className="text-slate-400 line-through text-sm">₹{price.toFixed(2)}</span>
+                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{formatCurrency(discPrice)}</span>
+                      <span className="text-slate-400 line-through text-sm">₹{formatCurrency(price)}</span>
                       <span className="text-emerald-600 text-xs font-bold bg-emerald-50 py-0.5 px-2 rounded-lg border border-emerald-100">
                         Save {Math.round(((price - discPrice) / price) * 100)}%
                       </span>
                     </>
                   ) : (
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{price.toFixed(2)}</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{formatCurrency(price)}</span>
                   )}
                 </div>
                 <p className="text-xxs text-slate-400 mt-1">Tax inclusive (GST included in prices)</p>

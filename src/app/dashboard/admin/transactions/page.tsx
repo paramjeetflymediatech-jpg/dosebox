@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Search, CreditCard, Wallet, AlertCircle } from 'lucide-react';
 import api from '../../../../lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AdminTransactionsPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -116,7 +117,7 @@ export default function AdminTransactionsPage() {
                       </div>
                     </td>
                     <td className="p-4 font-extrabold text-slate-900 text-sm">
-                      ₹{Number(order.finalAmount).toFixed(2)}
+                      ₹{formatCurrency(Number(order.finalAmount))}
                       {order.paymentMethod === 'Points' && <span className="block text-xs text-amber-500">(Fully Paid with Points)</span>}
                     </td>
                     <td className="p-4">

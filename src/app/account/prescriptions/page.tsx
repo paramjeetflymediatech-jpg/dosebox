@@ -6,6 +6,7 @@ import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../../../context/CartContext';
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/utils';
 
 interface Prescription {
   id: number;
@@ -126,7 +127,7 @@ export default function PrescriptionsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {scanResults.map(med => (
                 <div key={med.id} className="bg-white border border-emerald-100 p-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <span className="font-bold text-sm text-slate-800">{med.name} <span className="text-xs text-slate-400 block font-normal">₹{Number(med.price).toFixed(2)}</span></span>
+                  <span className="font-bold text-sm text-slate-800">{med.name} <span className="text-xs text-slate-400 block font-normal">₹{formatCurrency(Number(med.price))}</span></span>
                   <button onClick={() => addToCart({ id: med.id, name: med.name, price: Number(med.price), prescriptionRequired: med.prescriptionRequired, image: '' })} className="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100">Add</button>
                 </div>
               ))}

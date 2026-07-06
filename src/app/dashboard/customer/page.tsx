@@ -9,6 +9,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '@/lib/utils';
 
 interface OrderItem {
   id: number;
@@ -266,7 +267,7 @@ export default function CustomerDashboardPage() {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <span className="text-xxs text-slate-400 font-semibold uppercase tracking-wider block">Final Amount</span>
-                          <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{Number(order.finalAmount).toFixed(2)}</span>
+                          <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{formatCurrency(Number(order.finalAmount))}</span>
                         </div>
 
                         <div className="flex gap-2">
@@ -313,10 +314,10 @@ export default function CustomerDashboardPage() {
                                     </div>
                                     <div>
                                       <h5 className="font-bold text-slate-800 text-xs line-clamp-1">{item.medicine?.name || 'Unknown medicine'}</h5>
-                                      <span className="text-xxs text-slate-400 block mt-0.5">Qty: {item.quantity} • Unit: ₹{Number(item.price).toFixed(2)}</span>
+                                      <span className="text-xxs text-slate-400 block mt-0.5">Qty: {item.quantity} • Unit: ₹{formatCurrency(Number(item.price))}</span>
                                     </div>
                                   </div>
-                                  <span className="text-xs font-bold text-slate-800">₹{(Number(item.price) * item.quantity).toFixed(2)}</span>
+                                  <span className="text-xs font-bold text-slate-800">₹{formatCurrency((Number(item.price) * item.quantity))}</span>
                                 </div>
                               );
                             })}
@@ -437,7 +438,7 @@ export default function CustomerDashboardPage() {
                               </div>
                               <div className="min-w-0">
                                 <h5 className="font-bold text-slate-800 text-xxs truncate">{med.name}</h5>
-                                <span className="text-slate-400 text-xxs block">₹{Number(med.price).toFixed(2)}</span>
+                                <span className="text-slate-400 text-xxs block">₹{formatCurrency(Number(med.price))}</span>
                               </div>
                             </div>
                             

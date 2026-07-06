@@ -216,12 +216,15 @@ export default function AdminMedicinesPage() {
             <div className="p-6 space-y-4">
               <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm text-blue-800">
                 <p className="font-bold mb-2">Supported Formats: CSV &amp; Excel (.xlsx/.xls)</p>
-                <p className="mb-2">Your file must include these column headers in the first row:</p>
+                <p className="mb-2">Your file must include either our standard headers or the Client format headers.</p>
                 <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
-                  name, genericName, price, stock, categoryId, brandId, supplierId, images
+                  Client Format: BRAND NAME, COMPOSITION/SALT NAME, MARKETED BY, DOSEBOX RATE, MRP, PACK SIZE, STORAGE REQUIREMENT
                 </code>
-                <p className="text-xs opacity-80">* supplierId and images are optional. All other fields are required.</p>
-                <p className="text-xs opacity-80 mt-1">For Excel: use the same column headers in row 1. The first sheet will be imported.</p>
+                <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
+                  Standard Format: name, genericName, price, stock, categoryId, brandId, supplierId, images
+                </code>
+                <p className="text-xs opacity-80">* For Client format, missing required fields like stock, categoryId, and brandId will be assigned defaults automatically.</p>
+                <p className="text-xs opacity-80 mt-1">For Excel: use the column headers in row 1. The first sheet will be imported.</p>
               </div>
 
               <div className="flex flex-col gap-2">

@@ -10,6 +10,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '@/lib/utils';
 
 export default function CartPage() {
   const { 
@@ -199,7 +200,7 @@ export default function CartPage() {
                               </span>
                             )}
                             <span className="text-xs font-semibold text-slate-400">
-                              Unit: ₹{(discPrice || price).toFixed(2)}
+                              Unit: ₹{formatCurrency((discPrice || price))}
                             </span>
                           </div>
                         </div>
@@ -216,7 +217,7 @@ export default function CartPage() {
                         {/* Total */}
                         <div className="text-right min-w-[70px]">
                           <span className="font-extrabold text-slate-900 text-lg tracking-tight">
-                            ₹{((discPrice || price) * item.quantity).toFixed(2)}
+                            ₹{formatCurrency(((discPrice || price) * item.quantity))}
                           </span>
                         </div>
 
@@ -323,7 +324,7 @@ export default function CartPage() {
                               </div>
                               <div className="min-w-0">
                                 <h5 className="font-bold text-slate-900 text-xs truncate">{med.name}</h5>
-                                <span className="text-slate-500 text-xs font-semibold block">₹{Number(med.price).toFixed(2)}</span>
+                                <span className="text-slate-500 text-xs font-semibold block">₹{formatCurrency(Number(med.price))}</span>
                               </div>
                             </div>
                             
@@ -390,15 +391,15 @@ export default function CartPage() {
                 <div className="space-y-3 text-sm font-semibold text-slate-500">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span className="text-slate-900">₹{subtotal.toFixed(2)}</span>
+                    <span className="text-slate-900">₹{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-emerald-600">
                     <span>Discount</span>
-                    <span>- ₹{savings.toFixed(2)}</span>
+                    <span>- ₹{formatCurrency(savings)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Estimated GST (18%)</span>
-                    <span className="text-slate-900">₹{gstAmount.toFixed(2)}</span>
+                    <span className="text-slate-900">₹{formatCurrency(gstAmount)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
@@ -408,7 +409,7 @@ export default function CartPage() {
 
                 <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-baseline">
                   <span className="font-extrabold text-slate-900 text-lg">Total</span>
-                  <span className="font-black text-slate-900 text-2xl tracking-tight">₹{totalAmount.toFixed(2)}</span>
+                  <span className="font-black text-slate-900 text-2xl tracking-tight">₹{formatCurrency(totalAmount)}</span>
                 </div>
               </div>
 

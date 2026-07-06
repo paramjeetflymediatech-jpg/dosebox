@@ -5,6 +5,7 @@ import { ShoppingBag, Eye, Download, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '@/lib/utils';
 
 interface OrderItem {
   id: number;
@@ -105,7 +106,7 @@ export default function OrdersPage() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Total</span>
-                      <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{Number(order.finalAmount).toFixed(2)}</span>
+                      <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{formatCurrency(Number(order.finalAmount))}</span>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} className="p-2 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-lg transition-all" title="View details">
@@ -136,10 +137,10 @@ export default function OrdersPage() {
                                 </div>
                                 <div className="min-w-0">
                                   <h5 className="font-bold text-slate-800 text-xs truncate">{item.medicine?.name || 'Unknown item'}</h5>
-                                  <span className="text-xs text-slate-400 block mt-0.5">Qty: {item.quantity} • ₹{Number(item.price).toFixed(2)}</span>
+                                  <span className="text-xs text-slate-400 block mt-0.5">Qty: {item.quantity} • ₹{formatCurrency(Number(item.price))}</span>
                                 </div>
                               </div>
-                              <span className="text-xs font-bold text-slate-800 flex-shrink-0">₹{(Number(item.price) * item.quantity).toFixed(2)}</span>
+                              <span className="text-xs font-bold text-slate-800 flex-shrink-0">₹{formatCurrency((Number(item.price) * item.quantity))}</span>
                             </div>
                           );
                         })}

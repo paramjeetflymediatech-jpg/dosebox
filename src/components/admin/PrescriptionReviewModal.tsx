@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, Search, AlertCircle, Trash2, Edit2, Plus, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '@/lib/utils';
 
 export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx: any, onClose: () => void, onSuccess: () => void }) {
   const [items, setItems] = useState<any[]>([]);
@@ -252,7 +253,7 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
                                 <div className="text-xs text-slate-500">{res.genericName}</div>
                               </div>
                               <div className="text-right">
-                                <div className="text-sm font-bold text-brand-600">₹{(res.discountPrice || res.price).toFixed(2)}</div>
+                                <div className="text-sm font-bold text-brand-600">₹{formatCurrency((res.discountPrice || res.price))}</div>
                                 <div className={`text-[10px] ${res.stock > 0 ? 'text-emerald-600' : 'text-red-500'}`}>Stock: {res.stock}</div>
                               </div>
                             </div>

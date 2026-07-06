@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 interface Address {
   id: number;
@@ -630,7 +631,7 @@ export default function CheckoutPage() {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex justify-between items-start text-sm">
                     <span className="text-slate-600 font-medium pr-4 leading-tight">{item.name} <span className="text-slate-400">x{item.quantity}</span></span>
-                    <span className="font-bold text-slate-900">₹{((item.discountPrice || item.price) * item.quantity).toFixed(2)}</span>
+                    <span className="font-bold text-slate-900">₹{formatCurrency(((item.discountPrice || item.price) * item.quantity))}</span>
                   </div>
                 ))}
               </div>
@@ -638,15 +639,15 @@ export default function CheckoutPage() {
               <div className="border-t border-slate-100 pt-6 space-y-4 text-sm font-semibold text-slate-500">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="text-slate-900">₹{subtotal.toFixed(2)}</span>
+                  <span className="text-slate-900">₹{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-emerald-600">
                   <span>Discount</span>
-                  <span>- ₹{savings.toFixed(2)}</span>
+                  <span>- ₹{formatCurrency(savings)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Estimated GST</span>
-                  <span className="text-slate-900">₹{gstAmount.toFixed(2)}</span>
+                  <span className="text-slate-900">₹{formatCurrency(gstAmount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
@@ -656,7 +657,7 @@ export default function CheckoutPage() {
 
               <div className="border-t border-slate-100 pt-6 flex justify-between items-baseline">
                 <span className="font-extrabold text-slate-900 text-lg">Total</span>
-                <span className="font-black text-slate-900 text-lg tracking-tight">₹{totalAmount.toFixed(2)}</span>
+                <span className="font-black text-slate-900 text-lg tracking-tight">₹{formatCurrency(totalAmount)}</span>
               </div>
               
               {user && (user.rewardPoints || 0) > 0 && (
@@ -695,7 +696,7 @@ export default function CheckoutPage() {
                       {!pointsError && (
                         <div className="flex justify-between text-sm font-bold text-amber-600">
                           <span>Points Applied</span>
-                          <span>- ₹{pointsUsed.toFixed(2)}</span>
+                          <span>- ₹{formatCurrency(pointsUsed)}</span>
                         </div>
                       )}
                     </div>
@@ -705,7 +706,7 @@ export default function CheckoutPage() {
 
               <div className="border-t border-slate-100 mt-4 pt-4 flex justify-between items-baseline">
                 <span className="font-extrabold text-slate-900 text-lg">Payable</span>
-                <span className="font-black text-brand-600 text-2xl tracking-tight">₹{finalPayable.toFixed(2)}</span>
+                <span className="font-black text-brand-600 text-2xl tracking-tight">₹{formatCurrency(finalPayable)}</span>
               </div>
 
               <button
