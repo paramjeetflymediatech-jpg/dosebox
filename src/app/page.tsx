@@ -75,6 +75,38 @@ export default function HomePage() {
   // Quick View state
   const [quickViewMed, setQuickViewMed] = useState<any>(null);
   const [qty, setQty] = useState(1);
+  const [googleReviews, setGoogleReviews] = useState<any[]>([]);
+  const [dynamicFaqs, setDynamicFaqs] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchReviews() {
+      try {
+        const res = await fetch('/api/reviews');
+        const data = await res.json();
+        if (data.success && data.reviews && data.reviews.length > 0) {
+          setGoogleReviews(data.reviews.slice(0, 3));
+        }
+      } catch (err) {
+        console.error('Failed to load Google Reviews', err);
+      }
+    }
+    fetchReviews();
+  }, []);
+
+  useEffect(() => {
+    async function fetchFaqs() {
+      try {
+        const res = await fetch('/api/faqs');
+        const data = await res.json();
+        if (data.success) {
+          setDynamicFaqs(data.faqs);
+        }
+      } catch (err) {
+        console.error('Failed to load FAQs', err);
+      }
+    }
+    fetchFaqs();
+  }, []);
 
   // Force scroll to top on mount
   useEffect(() => {
@@ -335,13 +367,6 @@ export default function HomePage() {
     }
     setQty(1);
   };
-
-  const faqs = [
-    { q: 'How do I upload my doctor prescription?', a: 'You can upload your prescription in JPG, PNG, or PDF format directly from your shopping cart page or the Prescription Module inside your Customer Dashboard. Our certified pharmacist will review and verify it in under 15 minutes.' },
-    { q: 'Are the medicines sold on MrMed genuine?', a: 'Yes. We source all medications directly from certified global and national pharmaceutical manufacturers (e.g. Cipla, Abbott, Sun Pharma). Every order is verified by a licensed pharmacist before dispatch.' },
-    { q: 'How does the Doctor consultation booking work?', a: 'Simply head over to the Doctor Clinic section, select your doctor specialized in your field, pick a date & time slot, and submit booking. You will be able to start a video or chat consultation directly from your dashboard.' },
-    { q: 'What are the charges for shipping and GST?', a: 'GST is calculated at 18% on applicable items and is already inclusive in the listed price. Shipping is FREE for orders above ₹500, else a nominal fee of ₹50 is added at checkout.' }
-  ];
 
   return (
     <div className="relative" ref={containerRef}>
@@ -1011,86 +1036,146 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7. CUSTOMER TESTIMONIALS */}
+      {/* 7. CUSTOMER TESTIMONIALS (Dynamic Google Reviews) */}
       <section ref={testimonialsRef} className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10">
           <span className="text-xs text-brand-600 font-bold uppercase tracking-wider">Patient Stories</span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">What Our Customers Say</h2>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <span className="text-sm font-bold text-slate-700">Excellent 4.9</span>
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-4 h-4 text-[#fbbc05] fill-[#fbbc05]" />)}
+            </div>
+            <span className="text-sm text-slate-500 font-medium">on Google</span>
+          </div>
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex flex-col justify-between group">
-            <p className="text-slate-600 text-sm italic leading-relaxed group-hover:text-slate-900 transition-colors">
-              "Ordering chronic care diabetes drugs on MrMed has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly."
-            </p>
-            <div className="flex items-center gap-3 mt-6">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700">R</div>
-              <div>
-                <h5 className="font-bold text-slate-950 text-xs">Rajesh Sharma</h5>
-                <span className="text-xxs text-slate-400">Verified Customer • Delhi</span>
-              </div>
-            </div>
-          </div>
+          {(googleReviews.length > 0 ? googleReviews : [
+            { author_name: "Rajesh Sharma", rating: 5, relative_time_description: "2 days ago", text: "Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly." },
+            { author_name: "Priyanka Sen", rating: 5, relative_time_description: "1 week ago", text: "The video consultation slot booking is extremely clean. I booked a skin specialist at 10 AM, had session at 10:15 AM, and had my medicines shipped by afternoon!" },
+            { author_name: "Amit Verma", rating: 5, relative_time_description: "2 weeks ago", text: "Extremely impressed by the GST compliance invoice layout. I need this to file company medical reimbursement. The PDF matches physical enterprise standards." }
+          ]).slice(0, 3).map((review, idx) => {
+            const colors = ["bg-blue-100 text-blue-700", "bg-emerald-100 text-emerald-700", "bg-purple-100 text-purple-700"];
+            const bgClass = colors[idx % colors.length];
+            const initial = review.author_name ? review.author_name.charAt(0).toUpperCase() : 'U';
 
-          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex flex-col justify-between group">
-            <p className="text-slate-600 text-sm italic leading-relaxed group-hover:text-slate-900 transition-colors">
-              "The video consultation slot booking is extremely clean. I booked a skin specialist at 10 AM, had session at 10:15 AM, and had my medicines shipped by afternoon!"
-            </p>
-            <div className="flex items-center gap-3 mt-6">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700">P</div>
-              <div>
-                <h5 className="font-bold text-slate-950 text-xs">Priyanka Sen</h5>
-                <span className="text-xxs text-slate-400">Verified Patient • Kolkata</span>
+            return (
+              <div key={idx} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-1">
+                      {[...Array(review.rating || 5)].map((_, i) => <Star key={i} className="w-4 h-4 text-[#fbbc05] fill-[#fbbc05]" />)}
+                    </div>
+                    <svg className="w-6 h-6 opacity-80" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                  </div>
+                  <p className="text-slate-700 text-sm leading-relaxed font-medium line-clamp-6">
+                    "{review.text}"
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 mt-6">
+                  {review.profile_photo_url ? (
+                    <img src={review.profile_photo_url} alt={review.author_name} className="w-10 h-10 rounded-full" />
+                  ) : (
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${bgClass}`}>
+                      {initial}
+                    </div>
+                  )}
+                  <div>
+                    <h5 className="font-bold text-slate-900 text-sm">{review.author_name}</h5>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{review.relative_time_description}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all flex flex-col justify-between group">
-            <p className="text-slate-600 text-sm italic leading-relaxed group-hover:text-slate-900 transition-colors">
-              "Extremely impressed by the GST compliance invoice layout. I need this to file company medical reimbursement. The PDF matches physical enterprise standards."
-            </p>
-            <div className="flex items-center gap-3 mt-6">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700">A</div>
-              <div>
-                <h5 className="font-bold text-slate-950 text-xs">Amit Verma</h5>
-                <span className="text-xxs text-slate-400">Verified Customer • Mumbai</span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </section>
 
       {/* 8. FAQ ACCORDION SECTION */}
-      <section ref={faqRef} className="bg-white py-20 border-t border-slate-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section ref={faqRef} className="bg-white py-20 border-t border-slate-100 relative">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-50 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12">
-            <span className="text-xs text-brand-600 font-bold uppercase tracking-wider">Common Questions</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Frequently Asked FAQs</h2>
+            <span className="text-xs text-brand-600 font-bold uppercase tracking-wider bg-brand-50 px-3 py-1 rounded-full">Common Questions</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-4">Frequently Asked FAQs</h2>
+            <p className="text-slate-500 mt-3 max-w-2xl mx-auto">Everything you need to know about our products, delivery, and services.</p>
           </div>
 
           <div className="space-y-4">
-            {faqs.map((faq, idx) => (
-              <div
-                key={idx}
-                className="border border-slate-200/80 rounded-xl overflow-hidden transition-all"
-              >
-                <button
-                  onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
-                  className="w-full text-left p-5 bg-slate-50/50 hover:bg-slate-50 flex items-center justify-between font-bold text-slate-800 text-sm sm:text-base focus:outline-none"
-                >
-                  <span>{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${expandedFaq === idx ? 'transform rotate-180' : ''}`} />
-                </button>
+            {dynamicFaqs.length === 0 ? (
+              <div className="text-center text-slate-400 py-10">Loading FAQs...</div>
+            ) : (
+              dynamicFaqs.map((faq, idx) => {
+                const isOpen = expandedFaq === idx;
+                return (
+                  <div
+                    key={faq.id}
+                    className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? 'border-brand-200 bg-brand-50/30 shadow-sm' : 'border-slate-200/80 bg-white hover:border-brand-200'}`}
+                  >
+                    <button
+                      onClick={() => setExpandedFaq(isOpen ? null : idx)}
+                      className="w-full text-left p-6 flex items-start sm:items-center justify-between focus:outline-none group"
+                    >
+                      <span className={`font-bold text-base sm:text-lg pr-8 transition-colors ${isOpen ? 'text-brand-700' : 'text-slate-800 group-hover:text-brand-600'}`}>
+                        {faq.question}
+                      </span>
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-brand-100 group-hover:text-brand-600'}`}>
+                        {isOpen ? <LucideIcons.Minus className="w-4 h-4" /> : <LucideIcons.Plus className="w-4 h-4" />}
+                      </div>
+                    </button>
 
-                {expandedFaq === idx && (
-                  <div className="p-5 border-t border-slate-100 bg-white text-slate-500 text-sm leading-relaxed">
-                    {faq.a}
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <div className="px-6 pb-6 text-slate-600 leading-relaxed">
+                            {faq.answer}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                )}
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         </div>
+
+        {/* JSON-LD Schema Injection */}
+        {dynamicFaqs.length > 0 && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": dynamicFaqs.map(faq => ({
+                  "@type": "Question",
+                  "name": faq.question,
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": faq.answer
+                  }
+                }))
+              })
+            }}
+          />
+        )}
       </section>
 
 

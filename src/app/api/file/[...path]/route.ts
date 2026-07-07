@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
 
-export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   try {
-    const filename = params.path.join('/');
+    const resolvedParams = await params;
+    const filename = resolvedParams.path.join('/');
     const filepath = path.join(process.cwd(), 'public/uploads', filename);
 
     if (!fs.existsSync(filepath)) {

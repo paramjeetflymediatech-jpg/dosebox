@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Op, col } from 'sequelize';
-import { Medicine, Category, Brand, Inventory } from '../../../models';
+import { Medicine, Category, Brand, Inventory, MedicineSection } from '../../../models';
 import redisClient from '../../../config/redis';
 
 async function clearMedicinesCache() {
@@ -146,6 +146,17 @@ export async function POST(req: NextRequest) {
       minStockAlertThreshold: body.minStockAlertThreshold || 10,
       locationInWarehouse: body.locationInWarehouse || 'Unassigned'
     });
+
+    if (body.sections && Array.isArray(body.sections)) {
+      for (const section of body.sections) {
+        await MedicineSection.create({
+          medicineId: medicine.id,
+          title: section.title,
+          content: section.content,
+          sortOrder: section.sortOrder
+        });
+      }
+    }
 
     await clearMedicinesCache();
 

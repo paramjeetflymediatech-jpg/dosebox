@@ -32,7 +32,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
 
   const loadBlog = async (id: string) => {
     try {
-      const res = await api.get(`/admin/blogs/id/${id}`);
+      const res = await api.get(`/admin/blogs/${id}`);
       if (res.data.success) {
         setBlog({
           title: res.data.data.title || '',
@@ -78,7 +78,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <form onSubmit={handleUpdateBlog} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input required type="text" placeholder="Title" value={blog.title} onChange={e => setBlog({ ...blog, title: e.target.value })} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
           <input required type="text" placeholder="Slug (e.g. healthy-eating)" value={blog.slug} onChange={e => setBlog({ ...blog, slug: e.target.value })} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
 
@@ -110,11 +110,11 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
           </div>
 
           <div className="md:col-span-2 mt-4 flex justify-end">
-            <button type="submit" disabled={saving} className="px-8 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50">
+            <button type="button" onClick={handleUpdateBlog} disabled={saving} className="px-8 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50">
               <Save className="w-5 h-5" /> {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pill, ArrowLeft, Save } from 'lucide-react';
+import { Pill, ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import api from '@/lib/api';
+import dynamic from 'next/dynamic';
+
+const CustomEditor = dynamic(() => import('@/components/CustomEditor'), { ssr: false });
 
 export default function NewMedicinePage() {
   const router = useRouter();
@@ -31,7 +34,8 @@ export default function NewMedicinePage() {
     categoryId: '',
     brandId: '',
     minStockAlertThreshold: '10',
-    locationInWarehouse: ''
+    locationInWarehouse: '',
+    sections: [] as { title: string; content: string; sortOrder: number }[]
   });
 
   useEffect(() => {
@@ -67,33 +71,89 @@ export default function NewMedicinePage() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploadingImage(true);
-    const fd = new FormData();
-    fd.append('file', file);
+    const uploadedUrls: string[] = [];
 
     try {
       const token = localStorage.getItem('accessToken');
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: fd
-      });
-      const data = await res.json();
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fd = new FormData();
+        fd.append('file', file);
 
-      if (res.ok && data.success) {
-        setFormData({ ...formData, images: [...formData.images, data.fileUrl] });
-      } else {
-        alert(data.message || 'Upload failed');
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: fd
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          uploadedUrls.push(data.fileUrl);
+        } else {
+          alert(`Upload failed for ${file.name}: ${data.message || 'Unknown error'}`);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormData(prev => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
       }
     } catch (err) {
       console.error('Image upload failed', err);
-      alert('Failed to upload image');
+      alert('Failed to upload image(s)');
     } finally {
       setUploadingImage(false);
+      e.target.value = ''; // Reset input
     }
+  };
+
+  const addSection = () => {
+    setFormData(prev => ({
+      ...prev,
+      sections: [...prev.sections, { title: '', content: '', sortOrder: prev.sections.length }]
+    }));
+  };
+
+  const removeSection = (index: number) => {
+    setFormData(prev => {
+      const newSections = [...prev.sections];
+      newSections.splice(index, 1);
+      return { ...prev, sections: newSections };
+    });
+  };
+
+  const moveSectionUp = (index: number) => {
+    if (index === 0) return;
+    setFormData(prev => {
+      const newSections = [...prev.sections];
+      const temp = newSections[index - 1];
+      newSections[index - 1] = newSections[index];
+      newSections[index] = temp;
+      return { ...prev, sections: newSections };
+    });
+  };
+
+  const moveSectionDown = (index: number) => {
+    if (index === formData.sections.length - 1) return;
+    setFormData(prev => {
+      const newSections = [...prev.sections];
+      const temp = newSections[index + 1];
+      newSections[index + 1] = newSections[index];
+      newSections[index] = temp;
+      return { ...prev, sections: newSections };
+    });
+  };
+
+  const updateSection = (index: number, field: string, value: string) => {
+    setFormData(prev => {
+      const newSections = [...prev.sections];
+      newSections[index] = { ...newSections[index], [field]: value };
+      return { ...prev, sections: newSections };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,7 +172,8 @@ export default function NewMedicinePage() {
         stock: Number(formData.stock),
         categoryId: Number(formData.categoryId),
         brandId: Number(formData.brandId),
-        minStockAlertThreshold: Number(formData.minStockAlertThreshold)
+        minStockAlertThreshold: Number(formData.minStockAlertThreshold),
+        sections: formData.sections.map((s, i) => ({ ...s, sortOrder: i }))
       };
 
       await api.post('/medicines', payload);
@@ -137,7 +198,7 @@ export default function NewMedicinePage() {
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Basic Info */}
@@ -179,12 +240,13 @@ export default function NewMedicinePage() {
                     <input 
                       type="file" 
                       accept="image/*"
+                      multiple
                       onChange={handleImageUpload}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       disabled={uploadingImage}
                     />
                     <div className="px-6 py-2.5 bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center pointer-events-none">
-                      {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                      {uploadingImage ? 'Uploading...' : 'Upload Images'}
                     </div>
                   </div>
                 </div>
@@ -273,12 +335,22 @@ export default function NewMedicinePage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Medicine description..."></textarea>
+                <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500">
+                  <CustomEditor 
+                    value={formData.description} 
+                    onChange={data => setFormData({...formData, description: data})} 
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Side Effects</label>
-                  <textarea value={formData.sideEffects} onChange={e => setFormData({...formData, sideEffects: e.target.value})} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="List common side effects..."></textarea>
+                  <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500">
+                    <CustomEditor 
+                      value={formData.sideEffects} 
+                      onChange={data => setFormData({...formData, sideEffects: data})} 
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Storage Instructions</label>
@@ -305,16 +377,76 @@ export default function NewMedicinePage() {
             
           </div>
 
-          <div className="pt-6 border-t border-slate-100 flex justify-end">
+          {/* Dynamic Sections */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-lg font-bold text-slate-800">Dynamic Page Sections</h3>
+              <button type="button" onClick={addSection} className="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 text-sm font-semibold rounded-lg flex items-center gap-1.5 transition-colors">
+                <Plus className="w-4 h-4" /> Add Section
+              </button>
+            </div>
+            
+            {formData.sections.length === 0 ? (
+              <div className="text-center py-6 bg-slate-50 border border-slate-200 border-dashed rounded-xl">
+                <p className="text-slate-500 text-sm">No dynamic sections added yet. Click &quot;Add Section&quot; to create layout blocks like &quot;Fact Box&quot; or &quot;Safety Advices&quot;.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {formData.sections.map((sec, idx) => (
+                  <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4 relative group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 w-full sm:w-1/2">
+                        <span className="flex items-center justify-center w-6 h-6 bg-slate-200 text-slate-600 rounded-full text-xs font-bold shrink-0">{idx + 1}</span>
+                        <input
+                          type="text"
+                          value={sec.title}
+                          onChange={(e) => updateSection(idx, 'title', e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 font-semibold text-slate-800"
+                          placeholder="Section Title (e.g., Introduction)"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => moveSectionUp(idx)} disabled={idx === 0} className="p-1.5 bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-md border border-slate-200 disabled:opacity-50 transition-colors">
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button type="button" onClick={() => moveSectionDown(idx)} disabled={idx === formData.sections.length - 1} className="p-1.5 bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-md border border-slate-200 disabled:opacity-50 transition-colors">
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                        <button type="button" onClick={() => removeSection(idx)} className="p-1.5 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 rounded-md transition-colors ml-2">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Content</label>
+                      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500">
+                        <CustomEditor
+                          value={sec.content}
+                          onChange={(data) => updateSection(idx, 'content', data)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
+            <Link href="/dashboard/admin/medicines" className="px-6 py-2.5 text-slate-600 font-semibold hover:bg-slate-50 rounded-xl transition-colors">
+              Cancel
+            </Link>
             <button 
-              type="submit" 
+              type="button" 
+              onClick={handleSubmit}
               disabled={saving}
-              className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md shadow-brand-500/20 disabled:opacity-70 flex items-center gap-2"
+              className="px-8 py-2.5 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : <><Save className="w-5 h-5" /> Save Medicine</>}
+              <Save className="w-5 h-5" /> {saving ? 'Saving...' : 'Save Medicine'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

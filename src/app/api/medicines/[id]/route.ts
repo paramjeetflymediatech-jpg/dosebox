@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { Medicine, Category, Brand, Inventory, Review, User } from '../../../../models';
+import { Medicine, Category, Brand, Inventory, Review, User, MedicineSection } from '../../../../models';
 import redisClient from '../../../../config/redis';
 
 async function clearMedicinesCache() {
@@ -27,7 +27,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           model: Review, 
           as: 'reviews',
           include: [{ model: User, as: 'user', attributes: ['id', 'name'] }]
-        }
+        },
+        { model: MedicineSection, as: 'sections' }
+      ],
+      order: [
+        [{ model: MedicineSection, as: 'sections' }, 'sortOrder', 'ASC']
       ]
     });
 
@@ -60,6 +64,41 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           minStockAlertThreshold: body.minStockAlertThreshold ?? inv.minStockAlertThreshold,
           locationInWarehouse: body.locationInWarehouse ?? inv.locationInWarehouse
         });
+      }
+    }
+
+    if (body.sections && Array.isArray(body.sections)) {
+      // Get existing sections
+      const existingSections = await MedicineSection.findAll({ where: { medicineId: id } });
+      const existingIds = existingSections.map(s => s.id);
+      
+      const updatedIds: number[] = [];
+      
+      for (const section of body.sections) {
+        if (section.id && existingIds.includes(section.id)) {
+          // Update existing
+          await MedicineSection.update({
+            title: section.title,
+            content: section.content,
+            sortOrder: section.sortOrder
+          }, { where: { id: section.id } });
+          updatedIds.push(section.id);
+        } else {
+          // Create new
+          const newSec = await MedicineSection.create({
+            medicineId: Number(id),
+            title: section.title,
+            content: section.content,
+            sortOrder: section.sortOrder
+          });
+          updatedIds.push(newSec.id);
+        }
+      }
+      
+      // Delete removed sections
+      const toDelete = existingIds.filter(id => !updatedIds.includes(id));
+      if (toDelete.length > 0) {
+        await MedicineSection.destroy({ where: { id: toDelete } });
       }
     }
 

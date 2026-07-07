@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { Blog } from '../../../../models';
+import { Blog, User } from '../../../../models';
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,12 +14,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    
+    // Find a valid user ID to use as author
+    const fallbackUser = await User.findOne();
+    const validAuthorId = fallbackUser?.id || 1;
+
     const blog = await Blog.create({
       ...body,
-      authorId: 1 // default Admin
+      authorId: validAuthorId
     });
     return NextResponse.json({ success: true, message: 'Article created', data: blog }, { status: 201 });
   } catch (error: any) {
+    console.error('Blog creation error:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }

@@ -251,6 +251,34 @@ Medicine.init(
 );
 
 // ----------------------------------------------------
+// 6.1. MEDICINE SECTION (Dynamic Sections)
+// ----------------------------------------------------
+export interface MedicineSectionAttributes {
+  id: number;
+  medicineId: number;
+  title: string;
+  content: string;
+  sortOrder: number;
+}
+export class MedicineSection extends Model<MedicineSectionAttributes, Optional<MedicineSectionAttributes, 'id' | 'sortOrder'>> implements MedicineSectionAttributes {
+  declare id: number;
+  declare medicineId: number;
+  declare title: string;
+  declare content: string;
+  declare sortOrder: number;
+}
+MedicineSection.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    medicineId: { type: DataTypes.INTEGER, allowNull: false },
+    title: { type: DataTypes.STRING, allowNull: false },
+    content: { type: DataTypes.TEXT, allowNull: false },
+    sortOrder: { type: DataTypes.INTEGER, defaultValue: 0 },
+  },
+  { sequelize, modelName: 'MedicineSection', tableName: 'medicine_sections', timestamps: true }
+);
+
+// ----------------------------------------------------
 // 7. INVENTORY
 // ----------------------------------------------------
 export interface InventoryAttributes {
@@ -726,6 +754,10 @@ Medicine.belongsTo(Brand, { foreignKey: 'brandId', as: 'brand' });
 Medicine.hasOne(Inventory, { foreignKey: 'medicineId', as: 'inventory' });
 Inventory.belongsTo(Medicine, { foreignKey: 'medicineId', as: 'medicine' });
 
+// Medicine & MedicineSection
+Medicine.hasMany(MedicineSection, { foreignKey: 'medicineId', as: 'sections', onDelete: 'CASCADE' });
+MedicineSection.belongsTo(Medicine, { foreignKey: 'medicineId', as: 'medicine' });
+
 // ----------------------------------------------------
 // NEW: SUPPLIER
 // ----------------------------------------------------
@@ -1109,6 +1141,34 @@ Medicine.hasMany(MatchedProduct, { foreignKey: 'productId', as: 'matchedIn' });
 
 
 // ----------------------------------------------------
+// 21. FAQ
+// ----------------------------------------------------
+export interface FaqAttributes {
+  id: number;
+  question: string;
+  answer: string;
+  isActive: boolean;
+  displayOrder: number;
+}
+export class Faq extends Model<FaqAttributes, Optional<FaqAttributes, 'id' | 'isActive' | 'displayOrder'>> implements FaqAttributes {
+  declare id: number;
+  declare question: string;
+  declare answer: string;
+  declare isActive: boolean;
+  declare displayOrder: number;
+}
+Faq.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    question: { type: DataTypes.STRING, allowNull: false },
+    answer: { type: DataTypes.TEXT, allowNull: false },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+    displayOrder: { type: DataTypes.INTEGER, defaultValue: 0 },
+  },
+  { sequelize, modelName: 'Faq', tableName: 'faqs', timestamps: true }
+);
+
+// ----------------------------------------------------
 export default {
   Role,
   User,
@@ -1136,5 +1196,6 @@ export default {
   DraftCartItem,
   AuditLog,
   Supplier,
-  UserActivity
+  UserActivity,
+  Faq
 };
