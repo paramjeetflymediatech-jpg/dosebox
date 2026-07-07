@@ -1,11 +1,12 @@
+require('dotenv').config();
 const mysql = require('mysql2/promise');
 
 async function alterTable() {
   const connection = await mysql.createConnection({
-    host: '127.0.0.1',
-    user: 'root',
-    password: 'root',
-    database: 'mrmed_db'
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASS || 'root',
+    database: process.env.DB_NAME || 'mrmed_db'
   });
   
   try {
