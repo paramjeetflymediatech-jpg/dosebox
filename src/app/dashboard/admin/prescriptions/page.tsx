@@ -5,6 +5,7 @@ import { Eye, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import PrescriptionReviewModal from '../../../../components/admin/PrescriptionReviewModal';
+import Pagination from '../../../../components/admin/Pagination';
 
 export default function AdminPrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
@@ -12,6 +13,9 @@ export default function AdminPrescriptionsPage() {
   const [selectedRx, setSelectedRx] = useState<any>(null);
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchPrescriptions();
@@ -65,6 +69,12 @@ export default function AdminPrescriptionsPage() {
     }
   };
 
+  const totalPages = Math.ceil(prescriptions.length / itemsPerPage);
+  const currentItems = prescriptions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   if (loading) {
     return <div className="flex justify-center items-center h-96"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>;
   }
@@ -89,7 +99,7 @@ export default function AdminPrescriptionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {prescriptions.map((rx) => (
+              {currentItems.map((rx) => (
                 <tr key={rx.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-slate-800">#{rx.id}</div>
@@ -133,6 +143,14 @@ export default function AdminPrescriptionsPage() {
             </tbody>
           </table>
         </div>
+        
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={prescriptions.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Review Modal */}

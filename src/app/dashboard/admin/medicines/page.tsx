@@ -32,7 +32,7 @@ export default function AdminMedicinesPage() {
   const loadMedicines = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/medicines?limit=100'); // Load top 100 for admin
+      const res = await api.get('/medicines?limit=10000&sortBy=nameAsc'); // Load all for admin to enable full client search & sort alphabetically
       if (res.data?.success) {
         setMedicines(res.data.data);
       }
@@ -54,15 +54,15 @@ export default function AdminMedicinesPage() {
     }
   };
 
-  const filteredMedicines = medicines.filter(m => 
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.genericName.toLowerCase().includes(search.toLowerCase())
+  const filteredMedicines = medicines.filter(m =>
+    (m.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (m.genericName || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
-    
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -85,6 +85,7 @@ export default function AdminMedicinesPage() {
     }
   };
 
+  
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -98,7 +99,7 @@ export default function AdminMedicinesPage() {
           >
             Bulk Import (CSV / Excel)
           </button>
-          <Link 
+          <Link
             href="/dashboard/admin/medicines/new"
             className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
           >
@@ -159,22 +160,21 @@ export default function AdminMedicinesPage() {
                       ₹{med.price}
                     </td>
                     <td className="py-4 px-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                        med.stock > 20 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                      }`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${med.stock > 20 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                        }`}>
                         {med.stock} units
                       </span>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link 
+                        <Link
                           href={`/dashboard/admin/medicines/${med.id}`}
                           className="p-2 text-slate-400 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </Link>
-                        <button 
+                        <button
                           onClick={() => handleDelete(med.id, med.name)}
                           className="p-2 text-slate-400 rounded-lg transition-colors"
                           title="Delete"
@@ -218,10 +218,10 @@ export default function AdminMedicinesPage() {
                 <p className="font-bold mb-2">Supported Formats: CSV &amp; Excel (.xlsx/.xls)</p>
                 <p className="mb-2">Your file must include either our standard headers or the Client format headers.</p>
                 <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
-                  Client Format: BRAND NAME, COMPOSITION/SALT NAME, MARKETED BY, DOSEBOX RATE, MRP, PACK SIZE, STORAGE REQUIREMENT
+                  Client Format: BRAND NAME, COMPOSITION/SALT NAME, MARKETED BY, DOSEBOX RATE, MRP, PACK SIZE, PAP OFFER, STORAGE REQUIREMENT
                 </code>
                 <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
-                  Standard Format: name, genericName, price, stock, categoryId, brandId, supplierId, images
+                  Standard Format: name, genericName, price, packSize, papOffer, stock, categoryId, brandId, supplierId, images
                 </code>
                 <p className="text-xs opacity-80">* For Client format, missing required fields like stock, categoryId, and brandId will be assigned defaults automatically.</p>
                 <p className="text-xs opacity-80 mt-1">For Excel: use the column headers in row 1. The first sheet will be imported.</p>
@@ -229,8 +229,8 @@ export default function AdminMedicinesPage() {
 
               <div className="flex flex-col gap-2">
                 <label className="font-semibold text-slate-700 text-sm">Select CSV or Excel File</label>
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept=".csv,.xlsx,.xls"
                   onChange={handleCsvUpload}
                   disabled={uploadingCsv}

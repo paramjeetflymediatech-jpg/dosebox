@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Search, Edit, X, Video, MessageSquare } from 'lucide-react';
 import api from '../../../../lib/api';
+import Pagination from '../../../../components/admin/Pagination';
 
 export default function AdminAppointmentsPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -70,6 +73,16 @@ export default function AdminAppointmentsPage() {
     appt.status.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const currentItems = filteredAppointments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -118,7 +131,7 @@ export default function AdminAppointmentsPage() {
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No appointments found.</td>
                 </tr>
               ) : (
-                filteredAppointments.map(appt => (
+                currentItems.map(appt => (
                   <tr key={appt.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900">
                       {appt.patient?.name || 'Unknown'}
@@ -161,6 +174,15 @@ export default function AdminAppointmentsPage() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="-mx-px -mb-px">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredAppointments.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

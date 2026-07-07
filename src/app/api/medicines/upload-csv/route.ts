@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
         else if (lowerKey === 'marketed by') mappedKey = 'manufacturer';
         else if (lowerKey === 'dosebox rate') mappedKey = 'discountprice';
         else if (lowerKey === 'mrp') mappedKey = 'price';
-        else if (lowerKey === 'pack size') mappedKey = 'dosage';
+        else if (lowerKey === 'pack size') mappedKey = 'packsize';
         else if (lowerKey === 'storage requirement') mappedKey = 'storageinstructions';
         else if (lowerKey === 'pap offer') mappedKey = 'papoffer';
         
@@ -185,6 +185,7 @@ export async function POST(req: NextRequest) {
 
     let successCount = 0;
     let errorCount = 0;
+    
 
     for (const rowData of rows) {
       if (!rowData.name) continue;
@@ -223,6 +224,8 @@ export async function POST(req: NextRequest) {
           description: rowData.description || undefined,
           sideEffects: rowData.sideeffects || undefined,
           storageInstructions: rowData.storageinstructions || undefined,
+          papOffer: rowData.papoffer || undefined,
+          packSize: rowData.packsize || undefined,
           price: parseFloat(rowData.price || '0'),
           discountPrice: rowData.discountprice ? parseFloat(rowData.discountprice) : undefined,
           stock: parseInt(rowData.stock || '100', 10),

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Truck, Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import Pagination from '@/components/admin/Pagination';
 
 interface Supplier {
   id: number;
@@ -19,6 +20,9 @@ export default function AdminSuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
     id: 0,
@@ -95,6 +99,16 @@ export default function AdminSuppliersPage() {
     s.phone.includes(search)
   );
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+  const currentItems = filteredSuppliers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -140,7 +154,7 @@ export default function AdminSuppliersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSuppliers.map((supplier) => (
+                {currentItems.map((supplier) => (
                   <tr key={supplier.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                     <td className="py-4 px-4 font-bold text-slate-800">{supplier.name}</td>
                     <td className="py-4 px-4">
@@ -174,6 +188,16 @@ export default function AdminSuppliersPage() {
             </table>
           </div>
         )}
+        
+        <div className="-mx-6 -mb-6 mt-6">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredSuppliers.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
       {/* Modal */}

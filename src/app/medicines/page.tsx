@@ -18,10 +18,15 @@ interface Medicine {
   composition: string;
   price: number;
   discountPrice?: number;
+  papOffer?: string;
+  packSize?: string;
   prescriptionRequired: boolean;
   images: string;
   brand?: { name: string };
   categoryDetail?: { name: string };
+  description?: string;
+  dosage?: string;
+  sideEffects?: string;
 }
 
 interface Category {
@@ -142,7 +147,7 @@ function MedicinesCatalogContent() {
 
   return (
     <div className="bg-slate-50/50 min-h-screen py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumbs */}
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">
@@ -151,129 +156,66 @@ function MedicinesCatalogContent() {
           <span className="text-slate-900">Pharmacy Store</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+        <div className="w-full space-y-8">
           
-          {/* Filter Overlay (Mobile) */}
-          {isFilterDrawerOpen && (
-            <div 
-              className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden" 
-              onClick={() => setIsFilterDrawerOpen(false)}
-            />
-          )}
-
-          {/* 1. FILTERS (Drawer on Mobile, Sticky Sidebar on Desktop) */}
-          <div className={`fixed inset-y-0 left-0 lg:bottom-auto lg:left-auto w-[280px] lg:w-auto bg-white lg:bg-transparent shadow-2xl lg:shadow-none p-6 lg:p-0 z-50 lg:z-auto overflow-y-auto lg:overflow-visible transform transition-transform duration-300 lg:transform-none lg:sticky lg:top-28 self-start space-y-8 ${isFilterDrawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-            
-            {/* Mobile Header */}
-            <div className="flex items-center justify-between lg:hidden pb-4 border-b border-slate-100">
-              <span className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-brand-600" />
-                Filters
-              </span>
-              <button onClick={() => setIsFilterDrawerOpen(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-lg">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="hidden lg:flex items-center justify-between">
-              <span className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-brand-600" />
-                Filters
-              </span>
-              <button 
-                onClick={handleResetFilters}
-                className="text-xs font-bold text-slate-400 hover:text-brand-600 transition-colors"
+          {/* CATEGORIES NAVIGATION */}
+          <div className="flex overflow-x-auto scrollbar-hide pb-2 gap-3 -mx-4 px-4 md:mx-0 md:px-0">
+            <button
+              onClick={() => { setSelectedCategory(''); setCurrentPage(1); }}
+              className={`flex-shrink-0 px-6 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
+                !selectedCategory ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              All Medicines
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
+                className={`flex-shrink-0 px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
+                  selectedCategory === cat.slug ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
               >
-                Reset
+                {cat.name}
               </button>
-            </div>
-
-            {/* Keyword Search */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search generic or brand..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-100/80 border-none text-slate-900 text-sm font-semibold rounded-[1rem] p-3 pl-10 focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all placeholder:text-slate-400"
-              />
-              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-            </div>
-
-            {/* Categories */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Categories</label>
-              <div className="space-y-1 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                <button
-                  onClick={() => setSelectedCategory('')}
-                  className={`w-full text-left text-sm py-2 px-3 rounded-xl font-semibold transition-all flex items-center gap-2.5 ${!selectedCategory ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  All Categories
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
-                    className={`w-full text-left text-sm py-2 px-3 rounded-xl font-semibold transition-all flex items-center gap-2.5 ${selectedCategory === cat.slug ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Price range */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Price Range</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min ₹"
-                  value={minPrice}
-                  onChange={(e) => { setMinPrice(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-slate-100/80 border-none text-slate-900 text-sm font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all placeholder:text-slate-400"
-                />
-                <span className="text-slate-400 font-bold">-</span>
-                <input
-                  type="number"
-                  placeholder="Max ₹"
-                  value={maxPrice}
-                  onChange={(e) => { setMaxPrice(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-slate-100/80 border-none text-slate-900 text-sm font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all placeholder:text-slate-400"
-                />
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* 2. PRODUCT GRID */}
-          <div className="lg:col-span-3 space-y-8">
+          <div className="w-full space-y-8">
             
             {/* Top Bar Sort and Counters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setIsFilterDrawerOpen(true)}
-                  className="lg:hidden flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-                >
-                  <SlidersHorizontal className="w-4 h-4 text-brand-600" /> Filters
-                </button>
-                <div className="text-sm font-bold text-slate-500">
-                  Showing {medicines.length} results
-                </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              
+              {/* Search Bar */}
+              <div className="flex items-center gap-4 w-full md:w-auto flex-1 max-w-md relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search medicines by name or generic..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-slate-100/80 border-none text-slate-900 text-sm font-semibold rounded-full p-2.5 pl-10 focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all placeholder:text-slate-400"
+                />
               </div>
 
-              <div className="flex items-center gap-3">
-                <label className="text-slate-400 text-xs font-bold uppercase tracking-widest flex-shrink-0">Sort:</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-slate-100/80 border-none text-slate-700 text-sm font-bold rounded-full py-2 px-4 focus:ring-2 focus:ring-brand-500/20 cursor-pointer hover:bg-slate-200 transition-colors"
-                >
-                  <option value="nameAsc">A to Z</option>
-                  <option value="nameDesc">Z to A</option>
-                  <option value="priceAsc">Low to High</option>
-                  <option value="priceDesc">High to Low</option>
-                </select>
+              <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
+                <div className="text-sm font-bold text-slate-500 whitespace-nowrap hidden sm:block">
+                  Showing {medicines.length} results
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-slate-400 text-xs font-bold uppercase tracking-widest flex-shrink-0">Sort:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="bg-slate-100/80 border-none text-slate-700 text-sm font-bold rounded-full py-2 px-4 focus:ring-2 focus:ring-brand-500/20 cursor-pointer hover:bg-slate-200 transition-colors"
+                  >
+                    <option value="nameAsc">A to Z</option>
+                    <option value="nameDesc">Z to A</option>
+                    <option value="priceAsc">Low to High</option>
+                    <option value="priceDesc">High to Low</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -281,7 +223,7 @@ function MedicinesCatalogContent() {
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1,2,3,4,5,6].map((i) => (
-                  <div key={i} className="bg-slate-100 rounded-[2rem] h-[340px] animate-pulse" />
+                  <div key={i} className="bg-slate-100 rounded-[2rem] h-[380px] animate-pulse" />
                 ))}
               </div>
             ) : medicines.length === 0 ? (
@@ -334,11 +276,16 @@ function MedicinesCatalogContent() {
                             {Math.round(((price - discPrice) / price) * 100)}% OFF
                           </div>
                         )}
+                        {med.papOffer && (
+                          <div className="absolute bottom-4 left-4 z-10 bg-amber-500 text-white font-bold text-[9px] px-2 py-1 rounded-full shadow-sm max-w-[calc(100%-2rem)] truncate">
+                            🎁 PAP Offer
+                          </div>
+                        )}
 
                         <div>
                           <Link href={`/medicines/detail?id=${med.id}`}>
-                            <div className="h-40 rounded-2xl bg-white flex items-center justify-center overflow-hidden mb-5 relative mix-blend-multiply border border-slate-100/50">
-                              <img src={imagesArr[0]} alt={med.name} className="object-contain group-hover:scale-110 transition-transform duration-500 ease-out " />
+                            <div className="h-52 rounded-2xl bg-white flex items-center justify-center overflow-hidden mb-5 relative mix-blend-multiply border border-slate-100/50 p-3">
+                              <img src={imagesArr[0]} alt={med.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out" />
                             </div>
                           </Link>
                           
@@ -427,10 +374,17 @@ function MedicinesCatalogContent() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[2rem] w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col md:flex-row z-10 max-h-[90vh] md:max-h-[600px]"
+              className="relative bg-white rounded-[2rem] w-[95%] sm:w-full max-w-4xl shadow-2xl flex flex-col md:flex-row z-10 max-h-[90vh] md:max-h-[600px] overflow-y-auto md:overflow-hidden"
             >
+              <button 
+                onClick={() => setQuickViewMed(null)}
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 text-slate-500 hover:text-slate-900 bg-white/90 backdrop-blur-sm hover:bg-slate-100 p-2 rounded-full transition-colors z-50 shadow-sm border border-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
               {/* Left Side - Image Panel */}
-              <div className="md:w-[45%] bg-slate-50/50 p-8 flex flex-col justify-center relative border-r border-slate-100">
+              <div className="md:w-[45%] bg-slate-50/50 p-6 sm:p-8 flex flex-col justify-center relative border-b md:border-b-0 md:border-r border-slate-100 flex-shrink-0">
                 {quickViewMed.prescriptionRequired && (
                   <div className="absolute top-6 left-6 bg-rose-50 text-rose-600 font-bold text-[10px] px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-rose-100">
                     <AlertCircle className="w-3.5 h-3.5" />
@@ -448,28 +402,21 @@ function MedicinesCatalogContent() {
                   />
                 </div>
 
-                <div className="flex items-center gap-3 mt-6">
-                  <div className="flex-1 bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PACK DETAILS</span>
-                    <span className="block text-xs font-bold text-slate-800">Strip of 10 Tablets</span>
+                <div className="flex flex-col gap-2 mt-6">
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pack Details</span>
+                    <span className="text-xs font-bold text-slate-800 text-right w-1/2 line-clamp-2">{quickViewMed.packSize || 'Strip of 10 Tablets'}</span>
                   </div>
-                  <div className="flex-1 bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">MANUFACTURER</span>
-                    <span className="block text-xs font-bold text-slate-800 truncate px-1">{quickViewMed.brand?.name || 'DoseBox Speciality Gen...'}</span>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Manufacturer</span>
+                    <span className="text-xs font-bold text-slate-800 text-right w-1/2 line-clamp-2">{quickViewMed.brand?.name || 'DoseBox Speciality Generics'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Right Side - Info Panel */}
-              <div className="md:w-[55%] bg-white p-8 sm:p-10 flex flex-col relative overflow-y-auto custom-scrollbar">
-                <button 
-                  onClick={() => setQuickViewMed(null)}
-                  className="absolute top-6 right-6 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 p-2 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                <div className="mt-2 mb-6">
+              <div className="md:w-[55%] bg-white p-6 sm:p-10 flex flex-col relative md:overflow-y-auto custom-scrollbar flex-1">
+                <div className="mt-2 md:mt-0 mb-6">
                   <span className="inline-block bg-slate-100 text-slate-500 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
                     {quickViewMed.categoryDetail?.name || 'ONCOLOGY FORMULATION'}
                   </span>
@@ -501,25 +448,25 @@ function MedicinesCatalogContent() {
                 <div className="space-y-2 mb-6">
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CLINICAL DESCRIPTION:</h4>
                   <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                    An advanced formulation used primarily in the treatment of related chronic conditions. Please consult your physician before initiating this therapy.
+                    {quickViewMed.description || 'An advanced formulation used primarily in the treatment of related conditions. Please consult your physician before initiating this therapy.'}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-4">
                     <div className="flex items-center gap-1.5 text-brand-600 font-bold text-xs mb-2">
                       <Shield className="w-4 h-4" /> Dosage Guideline
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      1 tablet daily at least 1 hour before or 2 hours after food.
+                      {quickViewMed.dosage || 'Please follow your physician\'s instructions strictly regarding the dosage and duration of this medication.'}
                     </p>
                   </div>
                   <div className="bg-rose-50/30 border border-rose-100 shadow-sm rounded-2xl p-4">
                     <div className="flex items-center gap-1.5 text-rose-600 font-bold text-xs mb-2">
                       <ShieldAlert className="w-4 h-4" /> Precaution Check
                     </div>
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      Skin lesions, loss of appetite, breathlessness.
+                    <p className="text-[11px] text-slate-500 font-medium line-clamp-3">
+                      {quickViewMed.sideEffects || 'Consult your doctor before taking if you have underlying conditions or are taking other medications.'}
                     </p>
                   </div>
                 </div>
@@ -530,6 +477,16 @@ function MedicinesCatalogContent() {
                     <p className="text-[11px] text-amber-700/80 font-medium leading-relaxed">
                       This medicine is classified under Schedule H. It cannot be sold without a verified prescription. Our customer pharmacy representatives will ring you to validate your details.
                     </p>
+                  </div>
+                )}
+
+                {quickViewMed.papOffer && (
+                  <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 mb-6">
+                    <span className="text-amber-500 mt-0.5 text-base">🎁</span>
+                    <div>
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest text-amber-600 block mb-0.5">PAP Offer Available</span>
+                      <p className="text-[11px] font-semibold text-amber-800 leading-snug">{quickViewMed.papOffer}</p>
+                    </div>
                   </div>
                 )}
 

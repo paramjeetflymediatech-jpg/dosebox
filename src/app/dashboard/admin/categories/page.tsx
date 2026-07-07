@@ -5,6 +5,7 @@ import * as LucideIcons from 'lucide-react';
 import { Tag, Plus, Edit, Trash2, X } from 'lucide-react';
 import api from '../../../../lib/api';
 import toast from 'react-hot-toast';
+import Pagination from '../../../../components/admin/Pagination';
 
 interface Category {
   id: number;
@@ -27,6 +28,9 @@ export default function AdminCategoriesPage() {
   const [icon, setIcon] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const fetchCategories = async () => {
     try {
@@ -118,6 +122,12 @@ export default function AdminCategoriesPage() {
     }
   };
 
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const currentItems = categories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   if (loading) return <div className="p-6 text-slate-500 font-medium">Loading Categories...</div>;
 
   return (
@@ -135,7 +145,7 @@ export default function AdminCategoriesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {categories.map(cat => {
+        {currentItems.map(cat => {
           return (
             <div key={cat.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group p-5 flex flex-col gap-4 hover:shadow-md hover:border-brand-300 transition-all">
               <div className="flex justify-between items-start">
@@ -175,6 +185,16 @@ export default function AdminCategoriesPage() {
             No categories found. Create your first category!
           </div>
         )}
+      </div>
+
+      <div className="mt-8 -mx-4 md:-mx-8">
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={categories.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {showModal && (

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
-  ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, Calendar
+  ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
@@ -29,6 +29,8 @@ interface MedicineDetails {
   description?: string;
   sideEffects?: string;
   storageInstructions?: string;
+  papOffer?: string;
+  packSize?: string;
   prescriptionRequired: boolean;
   price: number;
   discountPrice?: number;
@@ -48,6 +50,8 @@ function MedicineDetailsContent() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'info' | 'sideEffects' | 'reviews'>('info');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -106,7 +110,7 @@ function MedicineDetailsContent() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
         <h3 className="text-xl font-bold text-slate-800">Medicine details not found.</h3>
-        <p className="text-slate-400 mt-2">The medication item may have been deleted or doesn\'t exist.</p>
+        <p className="text-slate-400 mt-2">The medication item may have been deleted or doesn&apos;t exist.</p>
         <Link href="/medicines" className="mt-6 inline-block bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-6 rounded-full transition-all">
           Back to Store
         </Link>
@@ -131,16 +135,51 @@ function MedicineDetailsContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-sm">
           
           {/* Left: Product Images */}
-          <div className="relative bg-slate-50 rounded-2xl overflow-hidden min-h-[350px]">
-            <img 
-              src={imagesArr[0]} 
-              alt={medicine.name} 
-              className="absolute inset-0 w-full h-full object-cover mix-blend-multiply transition-transform hover:scale-105 duration-300"
-            />
-            {medicine.prescriptionRequired && (
-              <div className="absolute top-4 left-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-sm z-10">
-                <AlertTriangle className="w-4 h-4" />
-                Doctor Prescription Required (Rx)
+          <div className="flex flex-col gap-4">
+            <div className="relative bg-slate-50 rounded-2xl overflow-hidden min-h-[350px] group cursor-pointer" onClick={() => setIsLightboxOpen(true)}>
+              <img 
+                src={imagesArr[currentImageIndex]} 
+                alt={medicine.name} 
+                className="absolute inset-0 w-full h-full object-contain mix-blend-multiply transition-transform hover:scale-105 duration-300"
+              />
+              {medicine.prescriptionRequired && (
+                <div className="absolute top-4 left-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-sm z-10">
+                  <AlertTriangle className="w-4 h-4" />
+                  Doctor Prescription Required (Rx)
+                </div>
+              )}
+              
+              {/* Slider Arrows */}
+              {imagesArr.length > 1 && (
+                <>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev === 0 ? imagesArr.length - 1 : prev - 1)); }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white text-slate-700 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev === imagesArr.length - 1 ? 0 : prev + 1)); }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white text-slate-700 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {imagesArr.length > 1 && (
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                {imagesArr.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-brand-600 shadow-md' : 'border-transparent bg-slate-100 hover:border-slate-300'}`}
+                  >
+                    <img src={img} alt={`Thumbnail ${idx+1}`} className="w-full h-full object-contain mix-blend-multiply" />
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -148,27 +187,42 @@ function MedicineDetailsContent() {
           {/* Right: Product Meta & Adders */}
           <div className="flex flex-col justify-between">
             <div>
+            <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-brand-600 uppercase tracking-widest bg-brand-50 py-1 px-3.5 rounded-full w-max inline-block">
                 {medicine.brand?.name || 'CIpla'}
               </span>
+              {medicine.packSize && (
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-100 py-1 px-3.5 rounded-full w-max inline-block border border-slate-200">
+                  {medicine.packSize}
+                </span>
+              )}
+            </div>
               
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3">{medicine.name}</h1>
               <p className="text-sm font-semibold text-slate-500 italic mt-1">{medicine.genericName}</p>
               
-              <div className="flex items-center gap-6 mt-4 pb-4 border-b border-slate-100">
-                <div className="text-xs text-slate-400">
-                  Manufacturer: <strong className="text-slate-700">{medicine.manufacturer}</strong>
+              {/* Details Grid */}
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Manufacturer</h4>
+                  <p className="text-sm font-semibold text-slate-800 line-clamp-2">{medicine.manufacturer || medicine.brand?.name || 'Unknown'}</p>
                 </div>
-                <div className="text-xs text-slate-400">
-                  Category: <strong className="text-slate-700">{medicine.categoryDetail?.name || 'Otc'}</strong>
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage</h4>
+                  <p className="text-sm font-semibold text-slate-800">{medicine.storageInstructions || 'Store in dry condition.'}</p>
                 </div>
               </div>
 
-              {/* Composition */}
-              <div className="mt-5 space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Composition</h4>
-                <p className="text-sm font-semibold text-slate-800">{medicine.composition}</p>
-              </div>
+              {/* PAP Offer Banner */}
+              {medicine.papOffer && (
+                <div className="mt-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  <span className="text-amber-500 mt-0.5 text-base">🎁</span>
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 block mb-0.5">PAP Offer</span>
+                    <p className="text-sm font-semibold text-amber-800 leading-snug">{medicine.papOffer}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Price & Savings */}
               <div className="mt-6">
@@ -243,7 +297,7 @@ function MedicineDetailsContent() {
               onClick={() => setActiveTab('info')} 
               className={`pb-3 border-b-2 transition-all ${activeTab === 'info' ? 'border-brand-600 text-slate-900 font-bold' : 'border-transparent'}`}
             >
-              Dosage & Warnings
+              Dosage &amp; Warnings
             </button>
             <button 
               onClick={() => setActiveTab('sideEffects')} 
@@ -266,10 +320,7 @@ function MedicineDetailsContent() {
                   <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5"><Info className="w-4 h-4 text-brand-600" /> Usage Directions</h4>
                   <p className="mt-1.5 pl-6">{medicine.dosage || 'Please take as recommended by medical professional.'}</p>
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-brand-600" /> Storage Directives</h4>
-                  <p className="mt-1.5 pl-6">{medicine.storageInstructions || 'Store in dry condition away from sunlight.'}</p>
-                </div>
+
                 <div>
                   <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5"><HelpCircle className="w-4 h-4 text-brand-600" /> General Description</h4>
                   <p className="mt-1.5 pl-6">{medicine.description || 'Clinical formula targeted for chronic/OTC diagnostics.'}</p>
@@ -279,7 +330,7 @@ function MedicineDetailsContent() {
 
             {activeTab === 'sideEffects' && (
               <div>
-                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 text-rose-600"><AlertTriangle className="w-4 h-4 text-rose-500" /> Precautions & Possible Side Effects</h4>
+                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 text-rose-600"><AlertTriangle className="w-4 h-4 text-rose-500" /> Precautions &amp; Possible Side Effects</h4>
                 <p className="mt-2 pl-6">{medicine.sideEffects || 'Mild nausea, sleepiness, or stomach aches. Consult your physician if issues persist.'}</p>
               </div>
             )}
@@ -314,6 +365,51 @@ function MedicineDetailsContent() {
         </div>
 
       </div>
+
+      {/* Lightbox Modal */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center">
+          <button 
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <img 
+            src={imagesArr[currentImageIndex]} 
+            alt="Fullscreen view" 
+            className="max-w-[90vw] max-h-[85vh] object-contain select-none"
+          />
+
+          {imagesArr.length > 1 && (
+            <>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev === 0 ? imagesArr.length - 1 : prev - 1)); }}
+                className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev === imagesArr.length - 1 ? 0 : prev + 1)); }}
+                className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+              
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                {imagesArr.map((_, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${currentImageIndex === idx ? 'bg-white scale-125' : 'bg-white/30 hover:bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

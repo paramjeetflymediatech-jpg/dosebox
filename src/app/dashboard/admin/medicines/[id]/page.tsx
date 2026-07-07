@@ -10,22 +10,24 @@ export default function EditMedicinePage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
-  
-  const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
-  const [brands, setBrands] = useState<{id: number, name: string}[]>([]);
-  
+
+  const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
+  const [brands, setBrands] = useState<{ id: number, name: string }[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    image: '',
+    images: [] as string[],
     genericName: '',
     manufacturer: '',
     composition: '',
     dosage: '',
+    packSize: '',
     description: '',
     sideEffects: '',
     storageInstructions: '',
+    papOffer: '',
     prescriptionRequired: false,
     price: '',
     discountPrice: '',
@@ -44,28 +46,29 @@ export default function EditMedicinePage() {
           api.get('/medicines/brands'),
           api.get(`/medicines/${id}`)
         ]);
-        
+
         if (catRes.data?.success) setCategories(catRes.data.data);
         if (brandRes.data?.success) setBrands(brandRes.data.data);
-        
+
         if (medRes.data?.success) {
           const m = medRes.data.data;
-          let currentImage = '';
+          let parsedImages: string[] = [];
           try {
-            const parsedImages = m.images ? JSON.parse(m.images) : [];
-            if (parsedImages.length > 0) currentImage = parsedImages[0];
-          } catch(e) {}
+            parsedImages = m.images ? JSON.parse(m.images) : [];
+          } catch (e) { }
 
           setFormData({
             name: m.name || '',
-            image: currentImage,
+            images: parsedImages,
             genericName: m.genericName || '',
             manufacturer: m.manufacturer || '',
             composition: m.composition || '',
             dosage: m.dosage || '',
+            packSize: m.packSize || '',
             description: m.description || '',
             sideEffects: m.sideEffects || '',
             storageInstructions: m.storageInstructions || '',
+            papOffer: m.papOffer || '',
             prescriptionRequired: m.prescriptionRequired || false,
             price: m.price?.toString() || '',
             discountPrice: m.discountPrice?.toString() || '',
@@ -83,13 +86,27 @@ export default function EditMedicinePage() {
         setLoading(false);
       }
     }
-    
+
     if (id) {
       loadData();
     }
   }, [id]);
 
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState('');
+
+  const handleAddImageUrl = () => {
+    if (imageUrlInput.trim()) {
+      setFormData({ ...formData, images: [...formData.images, imageUrlInput.trim()] });
+      setImageUrlInput('');
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,9 +124,9 @@ export default function EditMedicinePage() {
         body: fd
       });
       const data = await res.json();
-      
+
       if (res.ok && data.success) {
-        setFormData({ ...formData, image: data.fileUrl });
+        setFormData({ ...formData, images: [...formData.images, data.fileUrl] });
       } else {
         alert(data.message || 'Upload failed');
       }
@@ -131,7 +148,7 @@ export default function EditMedicinePage() {
     try {
       const payload = {
         ...formData,
-        images: JSON.stringify(formData.image ? [formData.image] : []),
+        images: JSON.stringify(formData.images),
         price: Number(formData.price),
         discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
         stock: Number(formData.stock),
@@ -168,33 +185,40 @@ export default function EditMedicinePage() {
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Basic Info */}
             <div className="space-y-4 md:col-span-2">
               <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Medicine Name *</label>
-                  <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Crocin Pain Relief" />
+                  <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Crocin Pain Relief" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Generic Name *</label>
-                  <input type="text" value={formData.genericName} onChange={e => setFormData({...formData, genericName: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Paracetamol" />
+                  <input type="text" value={formData.genericName} onChange={e => setFormData({ ...formData, genericName: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Paracetamol" />
                 </div>
               </div>
 
               {/* Image Upload */}
               <div className="pt-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Medicine Image</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Medicine Images</label>
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                  <div className="flex-1 w-full relative">
+                  <div className="flex-1 w-full flex gap-2">
                     <input 
                       type="text" 
-                      value={formData.image} 
-                      onChange={e => setFormData({...formData, image: e.target.value})} 
+                      value={imageUrlInput} 
+                      onChange={e => setImageUrlInput(e.target.value)} 
                       placeholder="Paste image URL here..." 
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500"
                     />
+                    <button 
+                      type="button"
+                      onClick={handleAddImageUrl}
+                      className="px-4 py-2.5 bg-slate-800 text-white font-semibold rounded-xl hover:bg-slate-900 transition-colors shrink-0"
+                    >
+                      Add URL
+                    </button>
                   </div>
                   <div className="text-sm font-bold text-slate-400">OR</div>
                   <div className="relative flex-shrink-0">
@@ -210,9 +234,21 @@ export default function EditMedicinePage() {
                     </div>
                   </div>
                 </div>
-                {formData.image && (
-                  <div className="mt-4 p-2 border border-slate-100 rounded-xl inline-block bg-slate-50">
-                    <img src={formData.image} alt="Medicine preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+                
+                {formData.images.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-4">
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="relative group p-2 border border-slate-200 rounded-xl bg-slate-50">
+                        <img src={img} alt={`Preview ${idx+1}`} className="h-24 w-24 object-contain mix-blend-multiply" />
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -223,21 +259,21 @@ export default function EditMedicinePage() {
               <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Classification</h3>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Category *</label>
-                <select value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+                <select value={formData.categoryId} onChange={e => setFormData({ ...formData, categoryId: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
                   <option value="">Select Category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Brand *</label>
-                <select value={formData.brandId} onChange={e => setFormData({...formData, brandId: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+                <select value={formData.brandId} onChange={e => setFormData({ ...formData, brandId: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
                   <option value="">Select Brand</option>
                   {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Manufacturer *</label>
-                <input type="text" value={formData.manufacturer} onChange={e => setFormData({...formData, manufacturer: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Manufacturer Name" />
+                <input type="text" value={formData.manufacturer} onChange={e => setFormData({ ...formData, manufacturer: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Manufacturer Name" />
               </div>
             </div>
 
@@ -247,25 +283,25 @@ export default function EditMedicinePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">MRP Price (₹) *</label>
-                  <input type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="0.00" />
+                  <input type="number" step="0.01" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="0.00" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Discount Price (₹)</label>
-                  <input type="number" step="0.01" value={formData.discountPrice} onChange={e => setFormData({...formData, discountPrice: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Optional" />
+                  <input type="number" step="0.01" value={formData.discountPrice} onChange={e => setFormData({ ...formData, discountPrice: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Optional" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Current Stock *</label>
-                  <input type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" />
+                  <input type="number" value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Low Stock Alert at</label>
-                  <input type="number" value={formData.minStockAlertThreshold} onChange={e => setFormData({...formData, minStockAlertThreshold: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" />
+                  <input type="number" value={formData.minStockAlertThreshold} onChange={e => setFormData({ ...formData, minStockAlertThreshold: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" />
                 </div>
               </div>
               <div className="flex items-center gap-3 mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <input type="checkbox" id="rx" checked={formData.prescriptionRequired} onChange={e => setFormData({...formData, prescriptionRequired: e.target.checked})} className="w-5 h-5 text-brand-600 rounded border-slate-300 focus:ring-brand-500" />
+                <input type="checkbox" id="rx" checked={formData.prescriptionRequired} onChange={e => setFormData({ ...formData, prescriptionRequired: e.target.checked })} className="w-5 h-5 text-brand-600 rounded border-slate-300 focus:ring-brand-500" />
                 <label htmlFor="rx" className="text-sm font-bold text-slate-700 cursor-pointer">Doctor Prescription Required (Rx)</label>
               </div>
             </div>
@@ -275,33 +311,49 @@ export default function EditMedicinePage() {
               <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Clinical Details</h3>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Active Composition *</label>
-                <input type="text" value={formData.composition} onChange={e => setFormData({...formData, composition: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Paracetamol IP 650mg" />
+                <input type="text" value={formData.composition} onChange={e => setFormData({ ...formData, composition: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Paracetamol IP 650mg" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Dosage Guidelines *</label>
-                <input type="text" value={formData.dosage} onChange={e => setFormData({...formData, dosage: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 tablet twice a day" />
+                <input type="text" value={formData.dosage} onChange={e => setFormData({ ...formData, dosage: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 tablet twice a day" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Medicine description..."></textarea>
+                <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="Medicine description..."></textarea>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Side Effects</label>
-                  <textarea value={formData.sideEffects} onChange={e => setFormData({...formData, sideEffects: e.target.value})} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="List common side effects..."></textarea>
+                  <textarea value={formData.sideEffects} onChange={e => setFormData({ ...formData, sideEffects: e.target.value })} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="List common side effects..."></textarea>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Storage Instructions</label>
-                  <textarea value={formData.storageInstructions} onChange={e => setFormData({...formData, storageInstructions: e.target.value})} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Store in a cool dry place..."></textarea>
+                  <textarea value={formData.storageInstructions} onChange={e => setFormData({ ...formData, storageInstructions: e.target.value })} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Store in a cool dry place..."></textarea>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Pack Size</label>
+                  <input type="text" value={formData.packSize} onChange={e => setFormData({ ...formData, packSize: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 AMPOULE(s) OF 5ML" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">PAP Offer <span className="text-slate-400 font-normal text-xs">(Patient Assistance Program)</span></label>
+                  <input
+                    type="text"
+                    value={formData.papOffer}
+                    onChange={e => setFormData({ ...formData, papOffer: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl focus:outline-none focus:border-amber-400"
+                    placeholder="e.g. Buy 3, Get 1 Free. Contact us for latest updates."
+                  />
                 </div>
               </div>
             </div>
-            
+
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex justify-end">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={saving}
               className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md shadow-brand-500/20 disabled:opacity-70 flex items-center gap-2"
             >

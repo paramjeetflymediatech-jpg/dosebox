@@ -44,15 +44,15 @@ export default function ConditionsPage() {
     loadCategories();
   }, []);
 
-  const filteredCategories = categories.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredCategories = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.description || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="bg-slate-50/50 min-h-screen py-8">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        
+    // <div className="bg-slate-50/50 min-h-screen py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Breadcrumbs */}
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">
           <Link href="/" className="hover:text-brand-600 transition-colors">Home</Link>
@@ -77,7 +77,7 @@ export default function ConditionsPage() {
             <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
           </div>
         </div>
-        
+
         {loading ? (
           <div className="py-20 text-center text-slate-500 font-medium">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600 mx-auto mb-4" />
@@ -96,11 +96,11 @@ export default function ConditionsPage() {
               const gradient = CATEGORY_GRADIENTS[idx % CATEGORY_GRADIENTS.length];
               const isImageFile = cat.image && cat.image.includes('.');
               const IconComp = !isImageFile ? ((LucideIcons as any)[cat.image] || LucideIcons.FileText) : null;
-              
+
               return (
-                <Link 
-                  key={cat.id} 
-                  href={`/medicines?category=${cat.slug}`} 
+                <Link
+                  key={cat.id}
+                  href={`/medicines?category=${cat.slug}`}
                   className="group rounded-2xl border border-slate-200 p-5 hover:shadow-xl hover:border-brand-400 transition-all flex flex-col gap-4 bg-white"
                 >
                   {isImageFile ? (
@@ -124,6 +124,6 @@ export default function ConditionsPage() {
           </div>
         )}
       </div>
-    </div>
+    // </div>
   );
 }

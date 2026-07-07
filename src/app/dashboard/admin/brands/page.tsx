@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Trash2, Edit2 } from 'lucide-react';
 import api from '@/lib/api';
+import Pagination from '@/components/admin/Pagination';
 
 interface Brand {
   id: number;
@@ -18,6 +19,9 @@ export default function AdminBrandsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState<number | null>(null);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Form State
   const [name, setName] = useState('');
@@ -90,6 +94,12 @@ export default function AdminBrandsPage() {
     }
   };
 
+  const totalPages = Math.ceil(brands.length / itemsPerPage);
+  const currentItems = brands.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -125,7 +135,7 @@ export default function AdminBrandsPage() {
                   <td colSpan={4} className="p-8 text-center text-slate-500">No brands found.</td>
                 </tr>
               ) : (
-                brands.map((brand) => (
+                currentItems.map((brand) => (
                   <tr key={brand.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="p-4 font-medium text-slate-900">{brand.name}</td>
                     <td className="p-4 text-slate-600">{brand.slug}</td>
@@ -152,6 +162,14 @@ export default function AdminBrandsPage() {
             </tbody>
           </table>
         </div>
+        
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={brands.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {isModalOpen && (

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Search, CreditCard, Wallet, AlertCircle } from 'lucide-react';
 import api from '../../../../lib/api';
 import { formatCurrency } from '@/lib/utils';
+import Pagination from '../../../../components/admin/Pagination';
 
 export default function AdminTransactionsPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -44,6 +45,12 @@ export default function AdminTransactionsPage() {
     if (method === 'COD') return <Wallet className="w-4 h-4 text-amber-600" />;
     return <FileText className="w-4 h-4 text-slate-400" />;
   };
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const currentItems = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="p-4 md:p-8 space-y-6">
@@ -94,7 +101,7 @@ export default function AdminTransactionsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => (
+                currentItems.map((order) => (
                   <tr key={order.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                     <td className="p-4">
                       <p className="font-bold text-slate-900">#OD-{order.id}</p>
@@ -135,18 +142,15 @@ export default function AdminTransactionsPage() {
             </tbody>
           </table>
         </div>
-
-        {Math.ceil(filteredOrders.length / itemsPerPage) > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50 gap-4">
-            <span className="text-sm font-semibold text-slate-500">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} entries
-            </span>
-            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
-              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredOrders.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
-            </div>
-          </div>
-        )}
+        <div className="-mx-px -mb-px">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredOrders.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
     </div>
   );

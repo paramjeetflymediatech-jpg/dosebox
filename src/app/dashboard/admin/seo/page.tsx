@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Settings, Edit, Globe } from 'lucide-react';
 import api from '../../../../lib/api';
 import Link from 'next/link';
+import Pagination from '../../../../components/admin/Pagination';
 
 interface PageMeta {
   id: number;
@@ -121,18 +122,15 @@ export default function AdminSEOPage() {
             </tbody>
           </table>
         </div>
-
-        {Math.ceil(pageMetas.length / itemsPerPage) > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50 gap-4">
-            <span className="text-sm font-semibold text-slate-500">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, pageMetas.length)} of {pageMetas.length} entries
-            </span>
-            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
-              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(pageMetas.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(pageMetas.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
-            </div>
-          </div>
-        )}
+        <div className="-mx-px -mb-px">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={Math.ceil(pageMetas.length / itemsPerPage)}
+            totalItems={pageMetas.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
     </div>
   );

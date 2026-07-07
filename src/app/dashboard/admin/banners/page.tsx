@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Flag, Edit } from 'lucide-react';
 import api from '../../../../lib/api';
 import Link from 'next/link';
+import Pagination from '../../../../components/admin/Pagination';
 
 interface Banner {
   id: number;
@@ -101,17 +102,15 @@ export default function AdminBannersPage() {
         )}
       </div>
 
-      {Math.ceil(banners.length / itemsPerPage) > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 mt-6 border-t border-slate-100 gap-4">
-          <span className="text-sm font-semibold text-slate-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, banners.length)} of {banners.length} banners
-          </span>
-          <div className="flex gap-2">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
-            <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(banners.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(banners.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
-          </div>
-        </div>
-      )}
+      <div className="-mx-4 md:-mx-8">
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.ceil(banners.length / itemsPerPage)}
+          totalItems={banners.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
+      </div>
     </div>
   );
 }

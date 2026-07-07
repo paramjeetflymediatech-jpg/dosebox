@@ -15,13 +15,8 @@ export async function GET(req: NextRequest) {
     const sessionId = req.cookies.get('dosebox_session')?.value;
 
     if (!userId && !sessionId) {
-      // No tracking info, return random popular medicines
-      const fallbackMedicines = await Medicine.findAll({
-        where: { stock: { [Op.gt]: 0 } },
-        limit: 4,
-        order: [['discountPrice', 'DESC']]
-      });
-      return NextResponse.json({ success: true, data: fallbackMedicines });
+      // No tracking info, do not return random fallback medicines
+      return NextResponse.json({ success: true, data: [] });
     }
 
     const whereClause: any = {};
@@ -32,9 +27,9 @@ export async function GET(req: NextRequest) {
     }
     
     whereClause.action = 'page_view';
-    whereClause.path = { [Op.like]: '/medicines?category=%' };
+    whereClause.path = { [Op.like]: '/medicines?%' };
 
-    // 1. Fetch recent category views from UserActivity
+    // 1. Fetch recent category views and searches from UserActivity
     const recentActivities = await UserActivity.findAll({
       where: whereClause,
       order: [['createdAt', 'DESC']],
@@ -42,22 +37,22 @@ export async function GET(req: NextRequest) {
     });
 
     const categorySlugs = new Set<string>();
+    const searchTerms = new Set<string>();
     
     for (const activity of recentActivities) {
-      const match = activity.path.match(/category=([^&]+)/);
-      if (match && match[1]) {
-        categorySlugs.add(match[1]);
+      const catMatch = activity.path.match(/category=([^&]+)/);
+      if (catMatch && catMatch[1]) {
+        categorySlugs.add(catMatch[1]);
+      }
+      const searchMatch = activity.path.match(/search=([^&]+)/);
+      if (searchMatch && searchMatch[1]) {
+        searchTerms.add(decodeURIComponent(searchMatch[1]));
       }
     }
 
-    if (categorySlugs.size === 0) {
-      // Fallback if no specific categories were visited
-      const fallbackMedicines = await Medicine.findAll({
-        where: { stock: { [Op.gt]: 0 } },
-        limit: 4,
-        order: [['price', 'DESC']]
-      });
-      return NextResponse.json({ success: true, data: fallbackMedicines });
+    if (categorySlugs.size === 0 && searchTerms.size === 0) {
+      // No specific categories or searches were visited, do not return fallback medicines
+      return NextResponse.json({ success: true, data: [] });
     }
 
     // 2. Resolve category slugs to category IDs
@@ -67,32 +62,30 @@ export async function GET(req: NextRequest) {
 
     const categoryIds = categories.map(c => c.id);
 
-    // 3. Fetch up to 4 medicines matching these categories
-    let recommendedMedicines = await Medicine.findAll({
-      where: {
-        categoryId: { [Op.in]: categoryIds },
-        stock: { [Op.gt]: 0 }
-      },
-      limit: 4,
-      order: [Sequelize.fn('RAND')] // Randomize slightly so they aren't always the exact same
-    });
+    // 3. Build query for medicines matching categories OR search terms
+    const medicineWhereClause: any = {
+      stock: { [Op.gt]: 0 }
+    };
 
-    // 4. Fill with fallbacks if we didn't find enough
-    if (recommendedMedicines.length < 4) {
-      const remaining = 4 - recommendedMedicines.length;
-      const excludeIds = recommendedMedicines.map(m => m.id);
-      
-      const fillins = await Medicine.findAll({
-        where: {
-          id: { [Op.notIn]: excludeIds.length ? excludeIds : [0] },
-          stock: { [Op.gt]: 0 }
-        },
-        limit: remaining,
-        order: [['price', 'DESC']]
-      });
-      
-      recommendedMedicines = [...recommendedMedicines, ...fillins];
+    const orConditions: any[] = [];
+    if (categoryIds.length > 0) {
+      orConditions.push({ categoryId: { [Op.in]: categoryIds } });
     }
+    for (const term of searchTerms) {
+      orConditions.push({ name: { [Op.like]: `%${term}%` } });
+      orConditions.push({ genericName: { [Op.like]: `%${term}%` } }); // also check generic name
+    }
+
+    if (orConditions.length > 0) {
+      medicineWhereClause[Op.or] = orConditions;
+    }
+
+    // 4. Fetch up to 4 medicines matching these criteria
+    let recommendedMedicines = await Medicine.findAll({
+      where: medicineWhereClause,
+      limit: 4,
+      order: [Sequelize.fn('RAND')] // Randomize slightly
+    });
 
     return NextResponse.json({ success: true, data: recommendedMedicines });
 

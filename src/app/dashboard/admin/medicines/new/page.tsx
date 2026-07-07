@@ -14,14 +14,16 @@ export default function NewMedicinePage() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    image: '',
+    images: [] as string[],
     genericName: '',
     manufacturer: '',
     composition: '',
     dosage: '',
+    packSize: '',
     description: '',
     sideEffects: '',
     storageInstructions: '',
+    papOffer: '',
     prescriptionRequired: false,
     price: '',
     discountPrice: '',
@@ -49,6 +51,20 @@ export default function NewMedicinePage() {
   }, []);
 
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState('');
+
+  const handleAddImageUrl = () => {
+    if (imageUrlInput.trim()) {
+      setFormData({ ...formData, images: [...formData.images, imageUrlInput.trim()] });
+      setImageUrlInput('');
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,7 +84,7 @@ export default function NewMedicinePage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setFormData({ ...formData, image: data.fileUrl });
+        setFormData({ ...formData, images: [...formData.images, data.fileUrl] });
       } else {
         alert(data.message || 'Upload failed');
       }
@@ -90,7 +106,7 @@ export default function NewMedicinePage() {
     try {
       const payload = {
         ...formData,
-        images: JSON.stringify(formData.image ? [formData.image] : []),
+        images: JSON.stringify(formData.images),
         price: Number(formData.price),
         discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
         stock: Number(formData.stock),
@@ -140,16 +156,23 @@ export default function NewMedicinePage() {
 
               {/* Image Upload */}
               <div className="pt-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Medicine Image</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Medicine Images</label>
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                  <div className="flex-1 w-full relative">
+                  <div className="flex-1 w-full flex gap-2">
                     <input 
                       type="text" 
-                      value={formData.image} 
-                      onChange={e => setFormData({...formData, image: e.target.value})} 
+                      value={imageUrlInput} 
+                      onChange={e => setImageUrlInput(e.target.value)} 
                       placeholder="Paste image URL here..." 
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500"
                     />
+                    <button 
+                      type="button"
+                      onClick={handleAddImageUrl}
+                      className="px-4 py-2.5 bg-slate-800 text-white font-semibold rounded-xl hover:bg-slate-900 transition-colors shrink-0"
+                    >
+                      Add URL
+                    </button>
                   </div>
                   <div className="text-sm font-bold text-slate-400">OR</div>
                   <div className="relative flex-shrink-0">
@@ -165,9 +188,21 @@ export default function NewMedicinePage() {
                     </div>
                   </div>
                 </div>
-                {formData.image && (
-                  <div className="mt-4 p-2 border border-slate-100 rounded-xl inline-block bg-slate-50">
-                    <img src={formData.image} alt="Medicine preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+                
+                {formData.images.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-4">
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="relative group p-2 border border-slate-200 rounded-xl bg-slate-50">
+                        <img src={img} alt={`Preview ${idx+1}`} className="h-24 w-24 object-contain mix-blend-multiply" />
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -248,6 +283,22 @@ export default function NewMedicinePage() {
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Storage Instructions</label>
                   <textarea value={formData.storageInstructions} onChange={e => setFormData({...formData, storageInstructions: e.target.value})} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Store in a cool dry place..."></textarea>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Pack Size</label>
+                  <input type="text" value={formData.packSize} onChange={e => setFormData({...formData, packSize: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 AMPOULE(s) OF 5ML" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">PAP Offer <span className="text-slate-400 font-normal text-xs">(Patient Assistance Program)</span></label>
+                  <input
+                    type="text"
+                    value={formData.papOffer}
+                    onChange={e => setFormData({...formData, papOffer: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl focus:outline-none focus:border-amber-400"
+                    placeholder="e.g. Buy 3, Get 1 Free. Contact us for latest updates."
+                  />
                 </div>
               </div>
             </div>

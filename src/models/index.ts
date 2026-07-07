@@ -191,9 +191,11 @@ export interface MedicineAttributes {
   manufacturer: string;
   composition: string;
   dosage: string;
+  packSize?: string;
   description?: string;
   sideEffects?: string;
   storageInstructions?: string;
+  papOffer?: string;
   prescriptionRequired: boolean;
   price: number;
   discountPrice?: number;
@@ -202,7 +204,7 @@ export interface MedicineAttributes {
   categoryId: number;
   supplierId?: number;
 }
-export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images'>> implements MedicineAttributes {
+export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images'>> implements MedicineAttributes {
   declare id: number;
   declare name: string;
   declare genericName: string;
@@ -210,9 +212,11 @@ export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttribu
   declare manufacturer: string;
   declare composition: string;
   declare dosage: string;
+  declare packSize?: string;
   declare description?: string;
   declare sideEffects?: string;
   declare storageInstructions?: string;
+  declare papOffer?: string;
   declare prescriptionRequired: boolean;
   declare price: number;
   declare discountPrice?: number;
@@ -230,9 +234,11 @@ Medicine.init(
     manufacturer: { type: DataTypes.STRING, allowNull: false },
     composition: { type: DataTypes.STRING, allowNull: false },
     dosage: { type: DataTypes.STRING, allowNull: false },
+    packSize: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: true },
     sideEffects: { type: DataTypes.TEXT, allowNull: true },
     storageInstructions: { type: DataTypes.STRING, allowNull: true },
+    papOffer: { type: DataTypes.TEXT, allowNull: true },
     prescriptionRequired: { type: DataTypes.BOOLEAN, defaultValue: false },
     price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     discountPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: true },

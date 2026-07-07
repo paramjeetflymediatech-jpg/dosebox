@@ -17,6 +17,7 @@ import { formatCurrency } from '@/lib/utils';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
+  ScrollTrigger.clearScrollMemory("manual");
 }
 
 interface Banner {
@@ -35,7 +36,11 @@ interface Medicine {
   price: number;
   discountPrice?: number;
   images: string;
+  packSize?: string;
   prescriptionRequired: boolean;
+  description?: string;
+  dosage?: string;
+  sideEffects?: string;
   brand?: { name: string };
 }
 
@@ -71,6 +76,28 @@ export default function HomePage() {
   const [quickViewMed, setQuickViewMed] = useState<any>(null);
   const [qty, setQty] = useState(1);
 
+  // Force scroll to top on mount
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    // Immediate scroll
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
+    // Fallback for Next.js routing/rendering delays
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const featuresRef = useRef<HTMLElement>(null);
@@ -85,9 +112,7 @@ export default function HomePage() {
   useEffect(() => {
     const container = categoriesScrollRef.current;
     if (!container || categories.length === 0) return;
-
-    let intervalId: NodeJS.Timeout;
-
+    let intervalId: ReturnType<typeof setInterval>;
     const startAutoScroll = () => {
       intervalId = setInterval(() => {
         if (container) {
@@ -448,8 +473,8 @@ export default function HomePage() {
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          
-          <div 
+
+          <div
             ref={categoriesScrollRef}
             className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
@@ -469,12 +494,12 @@ export default function HomePage() {
                   </div>
                 );
               }
-              
+
               return categories.map((cat, idx) => {
                 const gradient = CATEGORY_GRADIENTS[idx % CATEGORY_GRADIENTS.length];
                 const isImageFile = cat.image && cat.image.includes('.');
                 const IconComp = !isImageFile ? ((LucideIcons as any)[cat.image] || LucideIcons.FileText) : null;
-                
+
                 return (
                   <Link key={cat.id} href={`/medicines?category=${cat.slug}`} className="snap-start flex-shrink-0 w-40 sm:w-48 lg:w-52 category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
                     {isImageFile ? (
@@ -557,7 +582,7 @@ export default function HomePage() {
 
                     <div>
                       <div className="flex items-center gap-1 text-[8px] text-[#8c8c8c] font-semibold uppercase mb-1">
-                        <span>Strip of 10 Tablets</span>
+                        <span>{med.packSize || 'Strip of 10 Tablets'}</span>
                         <span>&bull;</span>
                         <span className="truncate">{med.brand?.name || 'DoseBox Speciality Generics'}</span>
                       </div>
@@ -628,8 +653,8 @@ export default function HomePage() {
               <button
                 onClick={() => setShowFilterMenu(v => !v)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors shadow-sm border ${shelfFilter !== 'all'
-                    ? 'bg-brand-600 border-brand-600 text-white'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-brand-600 border-brand-600 text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
               >
                 <Filter className="w-4 h-4" />
@@ -647,8 +672,8 @@ export default function HomePage() {
                       key={opt.value}
                       onClick={() => { setShelfFilter(opt.value); setShowFilterMenu(false); }}
                       className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${shelfFilter === opt.value
-                          ? 'bg-brand-50 text-brand-700 font-semibold'
-                          : 'text-slate-700 hover:bg-slate-50'
+                        ? 'bg-brand-50 text-brand-700 font-semibold'
+                        : 'text-slate-700 hover:bg-slate-50'
                         }`}
                     >
                       {opt.label}
@@ -732,7 +757,7 @@ export default function HomePage() {
 
                   <div>
                     <div className="flex items-center gap-1 text-[8px] text-[#8c8c8c] font-semibold uppercase mb-1">
-                      <span>Strip of 10 Tablets</span>
+                      <span>{med.packSize || 'Strip of 10 Tablets'}</span>
                       <span>&bull;</span>
                       <span className="truncate">{med.brand?.name || 'DoseBox Speciality Generics'}</span>
                     </div>
@@ -1184,14 +1209,14 @@ export default function HomePage() {
                   />
                 </div>
 
-                <div className="flex items-center gap-3 mt-6">
-                  <div className="flex-1 bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PACK DETAILS</span>
-                    <span className="block text-xs font-bold text-slate-800">Strip of 10 Tablets</span>
+                <div className="flex flex-col gap-2 mt-6">
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pack Details</span>
+                    <span className="text-xs font-bold text-slate-800 text-right w-1/2 line-clamp-2">{quickViewMed.packSize || 'Strip of 10 Tablets'}</span>
                   </div>
-                  <div className="flex-1 bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">MANUFACTURER</span>
-                    <span className="block text-xs font-bold text-slate-800 truncate px-1">{quickViewMed.brand?.name || 'DoseBox Speciality Gen...'}</span>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Manufacturer</span>
+                    <span className="text-xs font-bold text-slate-800 text-right w-1/2 line-clamp-2">{quickViewMed.brand?.name || 'DoseBox Speciality Generics'}</span>
                   </div>
                 </div>
               </div>
@@ -1247,7 +1272,7 @@ export default function HomePage() {
                       <Shield className="w-4 h-4" /> Dosage Guideline
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      1 tablet daily at least 1 hour before or 2 hours after food.
+                      {quickViewMed.dosage || '1 tablet daily at least 1 hour before or 2 hours after food.'}
                     </p>
                   </div>
                   <div className="bg-rose-50/30 border border-rose-100 shadow-sm rounded-2xl p-4">
@@ -1255,7 +1280,7 @@ export default function HomePage() {
                       <ShieldAlert className="w-4 h-4" /> Precaution Check
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      Skin lesions, loss of appetite, breathlessness.
+                      {quickViewMed.sideEffects || 'Skin lesions, loss of appetite, breathlessness.'}
                     </p>
                   </div>
                 </div>
