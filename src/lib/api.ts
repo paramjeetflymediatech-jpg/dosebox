@@ -1,4 +1,8 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
+
+
 
 // Calculate the base API path. If running locally, check port 5000 or relative proxy path.
 const getBaseUrl = () => {
