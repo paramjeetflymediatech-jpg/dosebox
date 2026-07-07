@@ -29,5 +29,5 @@ export const saveUploadFile = async (file: File): Promise<string> => {
   await writeFile(filepath, buffer);
 
   // Return the public URL path
-  return `/uploads/${filename}`;
+  return `/api/file/${filename}`;
 };
