@@ -357,10 +357,10 @@ export async function runSeeder() {
 
     // 10. General settings
     const settingsData = [
-      { key: 'platform_name', value: 'MrMed Healthcare' },
-      { key: 'contact_email', value: 'support@mrmed.com' },
+      { key: 'platform_name', value: 'DoseBox Healthcare' },
+      { key: 'contact_email', value: 'support@dosebox.com' },
       { key: 'gst_rate_percent', value: '18' },
-      { key: 'shipping_fee', value: '50.00' }
+      { key: 'shipping_fee', value: '50' }
     ];
 
     for (const set of settingsData) {

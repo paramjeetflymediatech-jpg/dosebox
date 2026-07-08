@@ -101,7 +101,7 @@ export default function BlogDetailPage() {
           </div>
           <div>
             <p className="text-sm font-bold text-slate-900">Verified by Medical Team</p>
-            <p className="text-xs text-slate-500">MrMed Clinical Pharmacy</p>
+            <p className="text-xs text-slate-500">DoseBox Clinical Pharmacy</p>
           </div>
         </div>
 

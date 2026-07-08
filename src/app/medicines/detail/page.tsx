@@ -290,7 +290,7 @@ function MedicineDetailsContent() {
           </div>
         </div>
 
-        {/* MrMed-style Detail Breakdowns & Navigation */}
+        {/* DoseBox-style Detail Breakdowns & Navigation */}
         <MedicineScrollspy medicine={medicine} />
         
         {/* Related Products Carousel */}
@@ -514,3 +514,4 @@ export default function MedicineDetailsPage() {
     </Suspense>
   );
 }
+

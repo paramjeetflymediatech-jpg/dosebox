@@ -35,7 +35,7 @@ export class PdfService {
     doc
       .fillColor('#005c53')
       .fontSize(20)
-      .text('MrMed Healthcare', 50, 45)
+      .text('DoseBox Healthcare', 50, 45)
       .fontSize(10)
       .fillColor('#718096')
       .text('Enterprise Online Pharmacy & Diagnostics', 50, 68)
@@ -157,10 +157,11 @@ export class PdfService {
       .text('Terms & Conditions:', 50, 700)
       .text('1. This is a computer-generated tax invoice and requires no physical signature.', 50, 712)
       .text('2. Medicines once sold cannot be returned unless expired or damaged in transit.', 50, 722)
-      .text('3. For support or returns, write to support@mrmed.com.', 50, 732);
+      .text('3. For support or returns, write to support@dosebox.com.', 50, 732);
 
     doc.end();
   }
 }
 
 export default PdfService;
+

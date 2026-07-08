@@ -287,7 +287,7 @@ export default function CartPage() {
                   <div className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center space-y-3 relative overflow-hidden border border-brand-100">
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-100/0 via-brand-200/30 to-brand-100/0 w-[200%] animate-[shimmer_2s_infinite]" style={{ transform: 'translateX(-50%)' }} />
                     <Sparkles className="w-6 h-6 text-brand-500 animate-pulse relative z-10" />
-                    <span className="text-sm font-bold text-slate-700 relative z-10 animate-pulse">MrMed AI is extracting medicines...</span>
+                    <span className="text-sm font-bold text-slate-700 relative z-10 animate-pulse">DoseBox AI is extracting medicines...</span>
                   </div>
                 )}
 
@@ -448,3 +448,4 @@ export default function CartPage() {
     </div>
   );
 }
+

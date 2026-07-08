@@ -1204,7 +1204,7 @@ export default function HomePage() {
                   </div>
                   <h3 className="text-xl font-bold">Savings Calculator</h3>
                 </div>
-                <p className="text-brand-200 text-sm">See how much you can save yearly with MrMed's up to 85% discounts.</p>
+                <p className="text-brand-200 text-sm">See how much you can save yearly with DoseBox's up to 85% discounts.</p>
               </div>
 
               <div className="p-6 space-y-6">
@@ -1401,3 +1401,4 @@ export default function HomePage() {
     </div>
   );
 }
+

@@ -78,7 +78,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
           {/* Sidebar */}
           <div className={`fixed inset-y-0 left-0 w-72 lg:w-80 flex-shrink-0 bg-white shadow-2xl lg:shadow-none border-r border-slate-200 lg:border-none transform transition-transform duration-300 ease-in-out z-50 lg:z-auto lg:static lg:block lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-            <div className="lg:sticky lg:top-[120px] bg-white lg:rounded-2xl lg:shadow-sm lg:border lg:border-slate-200 overflow-hidden h-full lg:h-auto flex flex-col">
+            <div className="lg:sticky lg:top-[120px] bg-white overflow-hidden h-full lg:h-auto flex flex-col">
               
               {/* Sidebar Header (Mobile close button) */}
               <div className="lg:hidden p-4 border-b border-slate-100 flex items-center justify-between">

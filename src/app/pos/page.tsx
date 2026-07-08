@@ -420,7 +420,7 @@ export default function POSPage() {
         <header className="h-16 px-6 border-b border-[#1e293b]/60 flex items-center justify-between bg-[#0b0f19]/80 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-3">
             <h1 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="text-teal-400">MrMed</span> 
+              <span className="text-teal-400">DoseBox</span> 
               <span className="text-slate-500 font-light">|</span> 
               <span className="text-slate-300">Point of Sale Terminal</span>
             </h1>
@@ -977,7 +977,7 @@ export default function POSPage() {
                 <div className="font-bold flex items-center justify-center gap-1 text-emerald-600">
                   <CheckCircle className="w-3.5 h-3.5" /> Order Completed & Confirmed
                 </div>
-                <p>Thank you for shopping at MrMed!</p>
+                <p>Thank you for shopping at DoseBox!</p>
               </div>
 
             </div>
@@ -1011,3 +1011,4 @@ export default function POSPage() {
     </div>
   );
 }
+

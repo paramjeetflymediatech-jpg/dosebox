@@ -21,7 +21,7 @@ async function handleRedirect(req: NextRequest) {
     if (req.method === 'POST') {
       const formData = await req.formData().catch(() => null);
       if (formData) {
-        const entries = Object.fromEntries(formData.entries());
+        const entries = Object.fromEntries((formData as any).entries());
         console.log('Form Data:', entries);
         code = (entries.code as string) || code;
       }
@@ -40,9 +40,31 @@ async function handleRedirect(req: NextRequest) {
       code = 'PAYMENT_SUCCESS';
     }
 
+    const orderId = req.nextUrl.searchParams.get('orderId');
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (req.headers.get('origin') || `http://${req.headers.get('host')}`);
     
     if (code === 'PAYMENT_SUCCESS') {
+      if (orderId) {
+        try {
+          const { Order } = require('../../../../../models');
+          const order = await Order.findByPk(orderId);
+          if (order && order.paymentStatus !== 'Paid') {
+            const timeline = JSON.parse(order.trackingTimeline || '[]');
+            timeline.push({
+              status: 'Payment Received',
+              time: new Date().toISOString(),
+              desc: `Payment successful (Redirect Fallback).`
+            });
+            await order.update({
+              paymentStatus: 'Paid',
+              trackingTimeline: JSON.stringify(timeline)
+            });
+          }
+        } catch(e) {
+          console.error("Failed to update order on redirect fallback", e);
+        }
+      }
       return NextResponse.redirect(`${baseUrl}/checkout?status=success`);
     } else {
       return NextResponse.redirect(`${baseUrl}/checkout?status=failed`);

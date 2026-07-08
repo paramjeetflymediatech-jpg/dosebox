@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WelcomeScreen({ navigation }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -7,6 +8,7 @@ export default function WelcomeScreen({ navigation }: any) {
   const floatAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    console.log("🚀 WelcomeScreen mounted! If you see this, logs are working.");
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -42,37 +44,33 @@ export default function WelcomeScreen({ navigation }: any) {
         <View style={styles.content}>
           <Animated.View style={[styles.headerArea, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <Image 
-              source={require('../assets/images/Media.jpg')} 
+              source={require('../assets/images/mobile-uper.png')} 
               style={styles.logoImage} 
               resizeMode="contain" 
             />
           </Animated.View>
           
           <Animated.View style={[styles.mainArea, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <Animated.Text style={[styles.floatingIcon, { transform: [{ translateY: floatAnim }] }]}>💊</Animated.Text>
-            <Text style={styles.title}>Simplicity in healthcare.</Text>
+            {/* <Animated.Text style={[styles.floatingIcon, { transform: [{ translateY: floatAnim }] }]}>💊</Animated.Text> */}
+            {/* <Text style={styles.title}>Simplicity in healthcare.</Text>
             <Text style={styles.subtitle}>
               Manage your prescriptions and order medicines effortlessly.
-            </Text>
+            </Text> */}
+
+            <Image 
+              source={require('../assets/images/Media.jpg')} 
+              style={styles.heroImage} 
+              resizeMode="cover" 
+            />
+
+            <View style={styles.pointersContainer}>
+              <Text style={styles.pointerText}>✓ Genuine Medicines Guaranteed</Text>
+              <Text style={styles.pointerText}>✓ Consult with Top Doctors</Text>
+              <Text style={styles.pointerText}>✓ Fast & Secure Delivery</Text>
+            </View>
           </Animated.View>
           
-          <Animated.View style={[styles.footerArea, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <TouchableOpacity 
-              style={styles.primaryButton}
-              onPress={() => navigation.navigate('Login')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>Log In</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.secondaryButton}
-              onPress={() => navigation.navigate('Register')}
-              activeOpacity={0.6}
-            >
-              <Text style={styles.secondaryButtonText}>Create Account</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          
         </View>
       </View>
     </SafeAreaView>
@@ -101,8 +99,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoImage: {
-    width: 150,
-    height: 50,
+    width: 300,
+    height: 80,
+  },
+  heroImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 16,
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  pointersContainer: {
+    marginTop: 8,
+    gap: 10,
+  },
+  pointerText: {
+    fontSize: 15,
+    color: '#334155',
+    fontWeight: '600',
   },
   mainArea: {
     flex: 1,

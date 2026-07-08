@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Shield, Plus, Trash2, Edit2, Search } from 'lucide-react';
 import api from '@/lib/api';
 import Pagination from '@/components/admin/Pagination';
 
@@ -22,6 +22,7 @@ export default function AdminBrandsPage() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form State
   const [name, setName] = useState('');
@@ -94,8 +95,13 @@ export default function AdminBrandsPage() {
     }
   };
 
-  const totalPages = Math.ceil(brands.length / itemsPerPage);
-  const currentItems = brands.slice(
+  const filteredBrands = brands.filter(b => 
+    b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
+  const currentItems = filteredBrands.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -106,12 +112,27 @@ export default function AdminBrandsPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
           <Shield className="w-8 h-8 text-brand-600" /> Medicine Brands
         </h1>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-lg shadow-brand-500/30 flex items-center gap-2 text-sm whitespace-nowrap"
-        >
-          <Plus className="w-5 h-5" /> Add Brand
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search brands..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-lg shadow-brand-500/30 flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            <Plus className="w-5 h-5" /> Add Brand
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -166,7 +187,7 @@ export default function AdminBrandsPage() {
         <Pagination 
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={brands.length}
+          totalItems={filteredBrands.length}
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
         />

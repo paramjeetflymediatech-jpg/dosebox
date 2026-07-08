@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Pill, Plus, Search, Edit2, Trash2, ShieldAlert } from 'lucide-react';
+import { Pill, Plus, Search, Edit2, Trash2, ShieldAlert, Download } from 'lucide-react';
 import api from '@/lib/api';
 
 interface Medicine {
@@ -85,7 +85,35 @@ export default function AdminMedicinesPage() {
     }
   };
 
-  
+  const handleExportCsv = () => {
+    if (filteredMedicines.length === 0) {
+      alert('No data to export.');
+      return;
+    }
+    
+    const headers = ['ID', 'Name', 'Generic Name', 'Brand', 'Category', 'Price', 'Stock', 'Prescription Required'];
+    const rows = filteredMedicines.map(m => [
+      m.id,
+      `"${(m.name || '').replace(/"/g, '""')}"`,
+      `"${(m.genericName || '').replace(/"/g, '""')}"`,
+      `"${(m.brand?.name || '').replace(/"/g, '""')}"`,
+      `"${(m.categoryDetail?.name || '').replace(/"/g, '""')}"`,
+      m.price,
+      m.stock,
+      m.prescriptionRequired ? 'Yes' : 'No'
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `medicines_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -93,6 +121,12 @@ export default function AdminMedicinesPage() {
           <Pill className="w-8 h-8 text-brand-600" /> Medicines Catalog
         </h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCsv}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            <Download className="w-4 h-4" /> Export (CSV)
+          </button>
           <button
             onClick={() => setIsCsvModalOpen(true)}
             className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"

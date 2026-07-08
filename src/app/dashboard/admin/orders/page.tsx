@@ -187,7 +187,9 @@ export default function AdminOrdersPage() {
                     <option value="Pending">Pending</option>
                     <option value="Confirmed">Confirmed</option>
                     <option value="Prescription Review">Prescription Review</option>
+                    <option value="Packed">Packed</option>
                     <option value="Shipped">Shipped</option>
+                    <option value="Out For Delivery">Out For Delivery</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
@@ -206,11 +208,34 @@ export default function AdminOrdersPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">Add Tracking Event (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-2">Quick Timeline Updates</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {['Pharmacy Confirmed', 'Medicine Packed', 'Cold Chain Packed', 'Picked by Courier', 'Reached Hub', 'Out for Delivery'].map(step => (
+                    <button
+                      key={step}
+                      type="button"
+                      onClick={() => {
+                        setTrackingMessage(step);
+                        if (step === 'Pharmacy Confirmed') setUpdateStatus('Confirmed');
+                        if (step === 'Medicine Packed' || step === 'Cold Chain Packed') setUpdateStatus('Packed');
+                        if (step === 'Picked by Courier') setUpdateStatus('Shipped');
+                        if (step === 'Out for Delivery') setUpdateStatus('Out For Delivery');
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors border border-slate-200"
+                    >
+                      {step}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3 mb-3">
+                  <input type="text" placeholder="Courier Name (Optional)" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" onChange={e => setTrackingMessage(prev => prev ? `${prev} | Courier: ${e.target.value}` : `Courier: ${e.target.value}`)} />
+                  <input type="text" placeholder="Tracking No. (Optional)" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" onChange={e => setTrackingMessage(prev => prev ? `${prev} | AWB: ${e.target.value}` : `AWB: ${e.target.value}`)} />
+                </div>
+                <label className="block text-xs font-bold text-slate-700 mb-2">Tracking Message</label>
                 <textarea 
                   value={trackingMessage} onChange={(e) => setTrackingMessage(e.target.value)}
                   placeholder="e.g. Package has been dispatched from the warehouse..."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm min-h-[100px] resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm min-h-[80px] resize-none"
                 />
                 <p className="text-xs text-slate-400 mt-1">This message will be appended to the customer's tracking timeline.</p>
               </div>

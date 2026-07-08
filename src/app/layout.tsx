@@ -497,7 +497,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               </li>
               <li className="flex items-start gap-3">
                 <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
-                {globalSettings['contact_email'] || 'pharma.rx@dosebox.in'}
+                {globalSettings['contact_email'] || ''}
               </li>
             </ul>
             {/* Dynamic Social Links */}
@@ -523,8 +523,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div className="mt-8 pt-6 border-t border-slate-800">
                <h4 className="text-slate-600 font-bold text-[10px] mb-2 uppercase tracking-widest">Test Accounts (Dev)</h4>
                <div className="text-[10px] text-slate-500 space-y-1">
-                 <div>Admin: admin@mrmed.com</div>
-                 <div>Pharm: pharmacist@mrmed.com</div>
+                 <div>Admin: admin@dosebox.com</div>
+                 <div>Pharm: pharmacist@dosebox.com</div>
                </div>
             </div>
           </div>
@@ -559,7 +559,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div className="p-8">
               <div className="text-center mb-6">
                 <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal-50 text-brand-600 mb-3 font-extrabold text-2xl">M</span>
-                <h3 className="text-xl font-bold text-slate-900">{isSignUp ? 'Create your Account' : 'Welcome Back to MrMed'}</h3>
+                <h3 className="text-xl font-bold text-slate-900">{isSignUp ? 'Create your Account' : 'Welcome Back to DoseBox'}</h3>
                 <p className="text-xs text-slate-400 mt-1">
                   {isSignUp ? 'Sign up to upload prescriptions and purchase medications.' : 'Please sign in to continue shopping and consulting.'}
                 </p>
@@ -665,7 +665,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   </span>
                 ) : (
                   <span>
-                    New to MrMed?{' '}
+                    New to DoseBox?{' '}
                     <button onClick={() => { setIsSignUp(true); resetForm(); }} className="text-brand-600 font-bold hover:underline">
                       Create an Account
                     </button>
@@ -756,3 +756,4 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     </>
   );
 }
+

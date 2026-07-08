@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Eye, Download, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Eye, Download, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
@@ -24,6 +24,49 @@ interface Order {
   createdAt: string;
   items?: OrderItem[];
 }
+
+const getRichTimeline = (order: Order, timeline: any[]) => {
+  const steps = [
+    'Order Placed',
+    'Pharmacy Confirmed',
+    'Medicine Packed',
+    'Cold Chain Packed',
+    'Picked by Courier',
+    'Reached Hub',
+    'Out for Delivery',
+    'Delivered'
+  ];
+
+  let maxCompletedIndex = 0;
+  if (order.status === 'Confirmed') maxCompletedIndex = Math.max(maxCompletedIndex, 1);
+  if (order.status === 'Packed') maxCompletedIndex = Math.max(maxCompletedIndex, 3);
+  if (order.status === 'Shipped') maxCompletedIndex = Math.max(maxCompletedIndex, 4);
+  if (order.status === 'Out For Delivery') maxCompletedIndex = Math.max(maxCompletedIndex, 6);
+  if (order.status === 'Delivered') maxCompletedIndex = 7;
+
+  const timelineDescList = timeline.map(t => (t.desc + ' ' + t.status).toLowerCase());
+  if (timelineDescList.some(d => d.includes('cold chain packed'))) maxCompletedIndex = Math.max(maxCompletedIndex, 3);
+  if (timelineDescList.some(d => d.includes('picked by courier'))) maxCompletedIndex = Math.max(maxCompletedIndex, 4);
+  if (timelineDescList.some(d => d.includes('reached hub'))) maxCompletedIndex = Math.max(maxCompletedIndex, 5);
+  if (timelineDescList.some(d => d.includes('out for delivery'))) maxCompletedIndex = Math.max(maxCompletedIndex, 6);
+
+  return steps.map((step, index) => {
+    const explicitEvent = timeline.find(t => 
+       (t.desc && t.desc.toLowerCase().includes(step.toLowerCase())) || 
+       (t.status && t.status.toLowerCase().includes(step.toLowerCase()))
+    );
+
+    let isCompleted = index <= maxCompletedIndex || !!explicitEvent;
+    if (order.status === 'Cancelled') isCompleted = false;
+    let time = explicitEvent ? explicitEvent.time : null;
+    let desc = explicitEvent ? explicitEvent.desc : '';
+
+    if (index === 0 && !time) time = order.createdAt;
+    if (desc === step) desc = '';
+
+    return { step, isCompleted, time, desc, isActive: index === maxCompletedIndex && order.status !== 'Cancelled' };
+  });
+};
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -146,20 +189,53 @@ export default function OrdersPage() {
                         })}
                       </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-slate-950 text-xs uppercase tracking-wider mb-4">Tracking Timeline</h4>
-                      <div className="relative border-l-2 border-slate-100 ml-3 pl-6 space-y-5">
-                        {timeline.map((step: any, sIdx: number) => (
-                          <div key={sIdx} className="relative">
-                            <div className="absolute -left-[31px] top-1 w-4 h-4 bg-brand-600 text-white rounded-full flex items-center justify-center shadow-sm">
-                              <CheckCircle2 className="w-3 h-3" />
-                            </div>
-                            <span className="font-bold text-slate-800 text-xs block">{step.status}</span>
-                            <span className="text-xs text-slate-400 block">{new Date(step.time).toLocaleString('en-IN')}</span>
-                            <span className="text-xs text-slate-500 mt-1 block">{step.desc}</span>
-                          </div>
-                        ))}
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center justify-between mb-6">
+                        <h4 className="font-bold text-slate-950 text-xs uppercase tracking-wider">Tracking Timeline</h4>
+                        {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                          <span className="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-100 shadow-sm">
+                            Est. Arrival: {new Date(new Date(order.createdAt).getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
                       </div>
+
+                      {(() => {
+                        const richTimeline = getRichTimeline(order, timeline);
+                        const courierEvent = timeline.find((t: any) => t.desc && (t.desc.includes('Courier:') || t.desc.includes('AWB:')));
+                        return (
+                          <>
+                            {courierEvent && (
+                              <div className="mb-6 p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                                <p className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">Shipping Details</p>
+                                <p className="text-sm font-semibold text-slate-600">{courierEvent.desc}</p>
+                              </div>
+                            )}
+                            <div className="relative border-l-2 border-slate-100 ml-3 pl-6 space-y-6 flex-1">
+                              {richTimeline.map((item, idx) => {
+                                const cleanDesc = item.desc ? item.desc.split('|').filter((s: string) => !s.includes('Courier:') && !s.includes('AWB:')).join('|').trim() : '';
+                                return (
+                                  <div key={idx} className={`relative ${item.isCompleted || item.isActive ? 'opacity-100' : 'opacity-40'}`}>
+                                    <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${item.isActive ? 'bg-brand-600 text-white ring-4 ring-brand-100' : item.isCompleted ? 'bg-emerald-500 text-white' : 'bg-slate-200'}`}>
+                                      {item.isCompleted && <CheckCircle2 className="w-3 h-3" />}
+                                    </div>
+                                    <span className={`font-bold text-xs block ${item.isActive ? 'text-brand-700' : item.isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>{item.step}</span>
+                                    {item.time && <span className="text-xs text-slate-400 block mt-0.5">{new Date(item.time).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>}
+                                    {cleanDesc && <span className="text-xs text-slate-500 mt-2 block bg-white p-2.5 rounded-lg border border-slate-100 shadow-sm font-medium">{cleanDesc}</span>}
+                                  </div>
+                                );
+                              })}
+                              {order.status === 'Cancelled' && (
+                                <div className="relative opacity-100 mt-6">
+                                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm bg-rose-500 text-white ring-4 ring-rose-100">
+                                    <XCircle className="w-3 h-3" />
+                                  </div>
+                                  <span className="font-bold text-xs block text-rose-700">Order Cancelled</span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}

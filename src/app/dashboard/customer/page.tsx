@@ -397,7 +397,7 @@ export default function CustomerDashboardPage() {
                 {isScanning && (
                   <div className="bg-white border border-slate-200/60 rounded-xl p-4 flex flex-col items-center justify-center space-y-2 relative overflow-hidden animate-pulse">
                     <div className="w-6 h-6 rounded-full border-2 border-brand-600 border-t-transparent animate-spin" />
-                    <span className="text-xxs font-extrabold text-slate-700 animate-pulse">🤖 MrMed AI Scanner is reading your prescription...</span>
+                    <span className="text-xxs font-extrabold text-slate-700 animate-pulse">🤖 DoseBox AI Scanner is reading your prescription...</span>
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-secondary animate-bounce" />
                   </div>
                 )}
@@ -502,3 +502,4 @@ export default function CustomerDashboardPage() {
     </div>
   );
 }
+
