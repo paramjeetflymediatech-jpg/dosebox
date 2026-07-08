@@ -855,46 +855,46 @@ export default function HomePage() {
               {/* Right: 2x2 compact cards */}
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Card 1 */}
-                <Link href="/medicines?category=immunity" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=anti-bacterials" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <Activity className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">Daily Immunity &amp; Stamina</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Build strong defenses, eliminate fatigue, and support general health.</p>
+                    <h3 className="text-white font-bold text-sm leading-snug">ANTI BACTERIALS</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Combat bacterial infections, promote healing, and protect your body against harmful microbes.</p>
                   </div>
                 </Link>
 
                 {/* Card 2 */}
-                <Link href="/medicines?category=bone-health" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=anti-fungals" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <ActivitySquare className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">Joint Health &amp; Bone Density</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Target knee pain, calcium depletion, and joint cartilage damage.</p>
+                    <h3 className="text-white font-bold text-sm leading-snug">ANTI FUNGALS</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Treat fungal infections, relieve itching, and restore healthy skin and nails.</p>
                   </div>
                 </Link>
 
                 {/* Card 3 */}
-                <Link href="/medicines?category=sleep-stress" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=arthritis" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <Droplets className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">Stress Relief &amp; Restful Sleep</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Reduce elevated cortisol levels, promote relaxation, and rest well.</p>
+                    <h3 className="text-white font-bold text-sm leading-snug">ARTHRITIS</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Alleviate joint pain, reduce inflammation, and improve mobility for a better quality of life.</p>
                   </div>
                 </Link>
 
                 {/* Card 4 */}
-                <Link href="/medicines?category=cold-flu" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=oncology" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <ThermometerSnowflake className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">Seasonal First-Aid Support</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Fight cold congestion, respiratory blockages, or minor headaches.</p>
+                    <h3 className="text-white font-bold text-sm leading-snug">ONCOLOGY</h3>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Advanced care for cancer treatment, supporting recovery, and improving overall well-being.</p>
                   </div>
                 </Link>
               </div>

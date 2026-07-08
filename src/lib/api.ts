@@ -41,10 +41,10 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
@@ -53,7 +53,7 @@ api.interceptors.response.use(
           if (res.data?.success && res.data?.accessToken) {
             const newAccessToken = res.data.accessToken;
             localStorage.setItem('accessToken', newAccessToken);
-            
+
             // Retry original request
             originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
             return api(originalRequest);
@@ -69,7 +69,7 @@ api.interceptors.response.use(
         }
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

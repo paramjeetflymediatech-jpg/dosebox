@@ -4,11 +4,11 @@ import db from '@/models';
 // PUT update an FAQ
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
 
-    const faqId = params.id;
+    const { id: faqId } = await params;
     const body = await req.json();
     
     const faq = await db.Faq.findByPk(faqId);
@@ -28,11 +28,11 @@ export async function PUT(
 // DELETE an FAQ
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
 
-    const faqId = params.id;
+    const { id: faqId } = await params;
     
     const faq = await db.Faq.findByPk(faqId);
     if (!faq) {
