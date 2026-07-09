@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function UploadPrescriptionScreen({ navigation }: any) {
+export default function UploadPrescriptionScreen({ navigation }) {
   const [fileSelected, setFileSelected] = useState(false);
 
   return (
@@ -54,46 +61,38 @@ export default function UploadPrescriptionScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
+    backgroundColor: '#ffffff'},
   contentWrapper: {
     width: '100%',
     maxWidth: 600,
     alignSelf: 'center',
     flex: 1,
     paddingHorizontal: 32,
-    paddingVertical: 24,
-  },
+    paddingVertical: 24},
   headerContainer: {
     paddingTop: Platform.OS === 'android' ? 40 : 20,
-    marginBottom: 40,
-  },
+    marginBottom: 40},
   backButton: {
     marginBottom: 24,
-    alignSelf: 'flex-start',
-  },
+    alignSelf: 'flex-start'},
   backIcon: {
     color: '#0f172a',
     fontSize: 24,
-    fontWeight: '300',
-  },
+    fontWeight: '300'},
   title: {
     fontSize: 32,
     fontWeight: '300',
     color: '#0f172a',
     marginBottom: 8,
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5},
   subtitle: {
     fontSize: 16,
     color: '#64748b',
     fontWeight: '400',
-    lineHeight: 24,
-  },
+    lineHeight: 24},
   uploadArea: {
     flex: 1,
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   dropZone: {
     borderWidth: 2,
     borderColor: '#e2e8f0',
@@ -101,50 +100,40 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 40,
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
+    backgroundColor: '#f8fafc'},
   dropZoneSuccess: {
     borderColor: '#134E4A',
-    backgroundColor: '#f0fdf4',
-  },
+    backgroundColor: '#f0fdf4'},
   uploadIcon: {
     fontSize: 48,
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   uploadText: {
     fontSize: 16,
     color: '#475569',
     marginBottom: 24,
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   browseButton: {
     backgroundColor: '#ffffff',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-  },
+    borderColor: '#cbd5e1'},
   browseButtonText: {
     color: '#0f172a',
-    fontWeight: '500',
-  },
+    fontWeight: '500'},
   footerContainer: {
-    paddingBottom: 20,
-  },
+    paddingBottom: 20},
   primaryButton: {
     backgroundColor: '#134E4A',
     paddingVertical: 18,
     borderRadius: 8,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   disabledButton: {
-    backgroundColor: '#94a3b8',
-  },
+    backgroundColor: '#94a3b8'},
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-});
+    letterSpacing: 0.5}});
+

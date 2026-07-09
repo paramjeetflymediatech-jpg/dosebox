@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, ScrollView, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  TextInput,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MEDICINES = [
   { id: '1', name: 'Amoxicillin 500mg', desc: 'Antibiotic', price: '$12.00' },
@@ -8,7 +17,7 @@ const MEDICINES = [
   { id: '4', name: 'Metformin 500mg', desc: 'Diabetes', price: '$5.00' },
 ];
 
-export default function BrowseMedicinesScreen({ navigation }: any) {
+export default function BrowseMedicinesScreen({ navigation }) {
   const [search, setSearch] = useState('');
 
   return (
@@ -70,35 +79,29 @@ export default function BrowseMedicinesScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
+    backgroundColor: '#ffffff'},
   contentWrapper: {
     width: '100%',
     maxWidth: 600,
     alignSelf: 'center',
     flex: 1,
-    paddingHorizontal: 24,
-  },
+    paddingHorizontal: 24},
   headerContainer: {
     paddingTop: Platform.OS === 'android' ? 40 : 20,
-    marginBottom: 24,
-  },
+    marginBottom: 24},
   backButton: {
     marginBottom: 16,
-    alignSelf: 'flex-start',
-  },
+    alignSelf: 'flex-start'},
   backIcon: {
     color: '#0f172a',
     fontSize: 24,
-    fontWeight: '300',
-  },
+    fontWeight: '300'},
   title: {
     fontSize: 32,
     fontWeight: '300',
     color: '#0f172a',
     marginBottom: 20,
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5},
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -106,77 +109,62 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
+    borderColor: '#e2e8f0'},
   searchIcon: {
     fontSize: 16,
-    marginRight: 10,
-  },
+    marginRight: 10},
   searchInput: {
     flex: 1,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#0f172a',
-  },
+    color: '#0f172a'},
   listContainer: {
-    flex: 1,
-  },
+    flex: 1},
   medCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
+    borderBottomColor: '#f1f5f9'},
   medInfo: {
-    flex: 1,
-  },
+    flex: 1},
   medName: {
     fontSize: 16,
     fontWeight: '500',
     color: '#0f172a',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   medDesc: {
     fontSize: 14,
-    color: '#64748b',
-  },
+    color: '#64748b'},
   medAction: {
-    alignItems: 'flex-end',
-  },
+    alignItems: 'flex-end'},
   medPrice: {
     fontSize: 16,
     fontWeight: '600',
     color: '#134E4A',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   addButton: {
     backgroundColor: '#f1f5f9',
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   addButtonText: {
     fontSize: 18,
     color: '#0f172a',
-    fontWeight: '500',
-  },
+    fontWeight: '500'},
   footerContainer: {
-    paddingVertical: 20,
-  },
+    paddingVertical: 20},
   primaryButton: {
     backgroundColor: '#134E4A',
     paddingVertical: 18,
     borderRadius: 8,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-});
+    letterSpacing: 0.5}});
+

@@ -22,7 +22,7 @@ export default function UploadPrescriptionPage() {
 
   // Fake progress effect during upload
   React.useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isUploading) {
       setProgress(0);
       interval = setInterval(() => {

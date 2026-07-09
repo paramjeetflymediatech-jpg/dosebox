@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Eye, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import api from '@/lib/api';
 import PrescriptionReviewModal from '../../../../components/admin/PrescriptionReviewModal';
 import Pagination from '../../../../components/admin/Pagination';
 
@@ -23,8 +24,8 @@ export default function AdminPrescriptionsPage() {
 
   const fetchPrescriptions = async () => {
     try {
-      const res = await fetch('/api/admin/prescriptions');
-      const data = await res.json();
+      const res = await api.get('/admin/prescriptions');
+      const data = res.data;
       if (data.success) {
         setPrescriptions(data.data);
       }
@@ -38,12 +39,10 @@ export default function AdminPrescriptionsPage() {
   const updateStatus = async (id: number, status: string) => {
     setProcessing(true);
     try {
-      const res = await fetch('/api/admin/prescriptions', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status, pharmacistNotes: notes })
+      const res = await api.put('/admin/prescriptions', {
+        id, status, pharmacistNotes: notes
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.success) {
         toast.success(`Prescription ${status}`);
         setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, status, pharmacistNotes: notes } : p));

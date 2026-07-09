@@ -165,3 +165,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    await Medicine.destroy({ where: {} });
+    await clearMedicinesCache();
+    return NextResponse.json({ success: true, message: 'All medicines deleted successfully' }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}

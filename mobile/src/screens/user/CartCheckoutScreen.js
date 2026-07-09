@@ -1,7 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function CartCheckoutScreen({ navigation }: any) {
+export default function CartCheckoutScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentWrapper}>
@@ -65,37 +73,30 @@ export default function CartCheckoutScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
+    backgroundColor: '#ffffff'},
   contentWrapper: {
     width: '100%',
     maxWidth: 600,
     alignSelf: 'center',
     flex: 1,
-    paddingHorizontal: 24,
-  },
+    paddingHorizontal: 24},
   headerContainer: {
     paddingTop: Platform.OS === 'android' ? 40 : 20,
-    marginBottom: 24,
-  },
+    marginBottom: 24},
   backButton: {
     marginBottom: 16,
-    alignSelf: 'flex-start',
-  },
+    alignSelf: 'flex-start'},
   backIcon: {
     color: '#0f172a',
     fontSize: 24,
-    fontWeight: '300',
-  },
+    fontWeight: '300'},
   title: {
     fontSize: 32,
     fontWeight: '300',
     color: '#0f172a',
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5},
   listContainer: {
-    flex: 1,
-  },
+    flex: 1},
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
@@ -103,73 +104,59 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 16,
-    marginTop: 10,
-  },
+    marginTop: 10},
   cartItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
+    paddingVertical: 12},
   itemName: {
     fontSize: 16,
-    color: '#0f172a',
-  },
+    color: '#0f172a'},
   itemPrice: {
     fontSize: 16,
     color: '#0f172a',
-    fontWeight: '500',
-  },
+    fontWeight: '500'},
   divider: {
     height: 1,
     backgroundColor: '#e2e8f0',
-    marginVertical: 20,
-  },
+    marginVertical: 20},
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   summaryText: {
     fontSize: 14,
-    color: '#64748b',
-  },
+    color: '#64748b'},
   totalRow: {
     marginTop: 8,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
+    borderTopColor: '#e2e8f0'},
   totalText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#134E4A',
-  },
+    color: '#134E4A'},
   addressBox: {
     marginTop: 40,
     backgroundColor: '#f8fafc',
     padding: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
+    borderColor: '#f1f5f9'},
   addressText: {
     fontSize: 16,
     color: '#0f172a',
-    lineHeight: 24,
-  },
+    lineHeight: 24},
   footerContainer: {
-    paddingVertical: 20,
-  },
+    paddingVertical: 20},
   primaryButton: {
     backgroundColor: '#134E4A',
     paddingVertical: 18,
     borderRadius: 8,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-});
+    letterSpacing: 0.5}});
+

@@ -38,3 +38,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await authenticateJWT(req);
+    if (auth instanceof NextResponse) return auth;
+    if (auth.roleName !== 'Admin') {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
+    }
+
+    await Brand.destroy({ where: {} });
+    return NextResponse.json({ success: true, message: 'All brands deleted successfully' }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}

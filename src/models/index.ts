@@ -42,8 +42,10 @@ export interface UserAttributes {
   height?: string;
   weight?: string;
   address?: string;
+  resetOtp?: string | null;
+  resetOtpExpires?: Date | null;
 }
-export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'rewardPoints' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address'>> implements UserAttributes {
+export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'rewardPoints' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires'>> implements UserAttributes {
   declare id: number;
   declare name: string;
   declare email: string;
@@ -61,6 +63,8 @@ export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 
   declare weight?: string;
   declare address?: string;
   declare role?: Role;
+  declare resetOtp?: string | null;
+  declare resetOtpExpires?: Date | null;
 }
 User.init(
   {
@@ -80,6 +84,8 @@ User.init(
     height: { type: DataTypes.STRING, allowNull: true },
     weight: { type: DataTypes.STRING, allowNull: true },
     address: { type: DataTypes.TEXT, allowNull: true },
+    resetOtp: { type: DataTypes.STRING, allowNull: true },
+    resetOtpExpires: { type: DataTypes.DATE, allowNull: true },
   },
   { sequelize, modelName: 'User', tableName: 'users', timestamps: true }
 );
@@ -1169,6 +1175,73 @@ Faq.init(
 );
 
 // ----------------------------------------------------
+// 22. MobileAuthUser
+// ----------------------------------------------------
+export interface MobileAuthUserAttributes {
+  id: number;
+  userId?: number;
+  providerId?: number;
+  userType: 'customer' | 'provider' | 'admin';
+  refreshToken?: string;
+  refreshTokenExpires?: Date;
+  pushToken?: string;
+  pushTokenPlatform?: 'ios' | 'android' | 'web';
+  pushTokenUpdatedAt?: Date;
+  deviceId?: string;
+  deviceName?: string;
+  devicePlatform?: 'ios' | 'android' | 'web';
+  osVersion?: string;
+  appVersion?: string;
+  isActive?: boolean;
+  lastLogin?: Date;
+  loggedOutAt?: Date;
+}
+export class MobileAuthUser extends Model<MobileAuthUserAttributes, Optional<MobileAuthUserAttributes, 'id' | 'isActive'>> implements MobileAuthUserAttributes {
+  declare id: number;
+  declare userId?: number;
+  declare providerId?: number;
+  declare userType: 'customer' | 'provider' | 'admin';
+  declare refreshToken?: string;
+  declare refreshTokenExpires?: Date;
+  declare pushToken?: string;
+  declare pushTokenPlatform?: 'ios' | 'android' | 'web';
+  declare pushTokenUpdatedAt?: Date;
+  declare deviceId?: string;
+  declare deviceName?: string;
+  declare devicePlatform?: 'ios' | 'android' | 'web';
+  declare osVersion?: string;
+  declare appVersion?: string;
+  declare isActive?: boolean;
+  declare lastLogin?: Date;
+  declare loggedOutAt?: Date;
+}
+MobileAuthUser.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: true, field: 'user_id' },
+    providerId: { type: DataTypes.INTEGER, allowNull: true, field: 'provider_id' },
+    userType: { type: DataTypes.ENUM('customer', 'provider', 'admin'), allowNull: false, field: 'user_type' },
+    refreshToken: { type: DataTypes.STRING(512), allowNull: true, field: 'refresh_token' },
+    refreshTokenExpires: { type: DataTypes.DATE, allowNull: true, field: 'refresh_token_expires' },
+    pushToken: { type: DataTypes.TEXT, allowNull: true, field: 'push_token' },
+    pushTokenPlatform: { type: DataTypes.ENUM('ios', 'android', 'web'), allowNull: true, field: 'push_token_platform' },
+    pushTokenUpdatedAt: { type: DataTypes.DATE, allowNull: true, field: 'push_token_updated_at' },
+    deviceId: { type: DataTypes.STRING(255), allowNull: true, field: 'device_id' },
+    deviceName: { type: DataTypes.STRING(255), allowNull: true, field: 'device_name' },
+    devicePlatform: { type: DataTypes.ENUM('ios', 'android', 'web'), allowNull: true, field: 'device_platform' },
+    osVersion: { type: DataTypes.STRING(50), allowNull: true, field: 'os_version' },
+    appVersion: { type: DataTypes.STRING(50), allowNull: true, field: 'app_version' },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true, field: 'is_active' },
+    lastLogin: { type: DataTypes.DATE, allowNull: true, field: 'last_login' },
+    loggedOutAt: { type: DataTypes.DATE, allowNull: true, field: 'logged_out_at' },
+  },
+  { sequelize, modelName: 'MobileAuthUser', tableName: 'mobile_auth_users', timestamps: true, underscored: true }
+);
+
+MobileAuthUser.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(MobileAuthUser, { foreignKey: 'userId', as: 'mobileDevices' });
+
+// ----------------------------------------------------
 export default {
   Role,
   User,
@@ -1197,5 +1270,7 @@ export default {
   AuditLog,
   Supplier,
   UserActivity,
-  Faq
+  Faq,
+  MobileAuthUser
 };
+

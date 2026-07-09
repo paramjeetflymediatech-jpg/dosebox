@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Upload, ShieldCheck, Eye, History, ArrowRight } from 'lucide-react';
+import { FileText, Upload, ShieldCheck, Eye, History, ArrowRight, Trash2 } from 'lucide-react';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../../../context/CartContext';
@@ -47,6 +47,21 @@ export default function PrescriptionsPage() {
       setLoading(false);
     }
   }
+
+  const handleDeletePrescription = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this prescription?')) return;
+    try {
+      const res = await api.delete(`/prescriptions/${id}`);
+      if (res.data?.success) {
+        toast.success('Prescription deleted successfully');
+        loadPrescriptions(currentPage);
+      } else {
+        toast.error('Failed to delete prescription');
+      }
+    } catch (err: any) {
+      toast.error('Delete error: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   const handlePrescriptionUpload = async () => {
     if (!prescriptionFile) {
@@ -173,15 +188,24 @@ export default function PrescriptionsPage() {
                         {presc.pharmacistNotes ? presc.pharmacistNotes : <span className="text-slate-400 italic">No notes</span>}
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <a 
-                          href={presc.fileUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          View
-                        </a>
+                        <div className="flex items-center justify-end gap-2">
+                          <a 
+                            href={presc.fileUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            View
+                          </a>
+                          <button
+                            onClick={() => handleDeletePrescription(presc.id)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

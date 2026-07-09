@@ -18,7 +18,7 @@ export default function CustomerPrescriptionsPage() {
   useEffect(() => {
     const fetchRx = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('accessToken');
         const res = await fetch('/api/customer/prescriptions', {
           headers: {
             'Authorization': `Bearer ${token}`

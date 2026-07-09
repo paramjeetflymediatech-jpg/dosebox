@@ -114,6 +114,25 @@ export default function AdminMedicinesPage() {
     document.body.removeChild(link);
   };
 
+  const handleDeleteAll = async () => {
+    if (!confirm('Are you absolutely sure you want to delete ALL medicines? This action cannot be undone.')) return;
+    try {
+      setLoading(true);
+      const res = await api.delete('/medicines');
+      if (res.data?.success) {
+        setMedicines([]);
+        alert('All medicines deleted successfully.');
+      } else {
+        alert(res.data?.message || 'Failed to delete all medicines.');
+      }
+    } catch (err: any) {
+      console.error('Failed to delete all medicines', err);
+      alert(err.response?.data?.message || 'Failed to delete all medicines. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -121,6 +140,12 @@ export default function AdminMedicinesPage() {
           <Pill className="w-8 h-8 text-brand-600" /> Medicines Catalog
         </h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleDeleteAll}
+            className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            <Trash2 className="w-4 h-4" /> Delete All
+          </button>
           <button
             onClick={handleExportCsv}
             className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"

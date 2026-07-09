@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, Role } from '../../../../models';
+import models from '../../../../models';
+
+const { User, Role, MobileAuthUser } = models;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkeyforauth';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecretrefreshjwtkeyforauth';
@@ -47,6 +49,44 @@ export async function POST(req: NextRequest) {
       JWT_REFRESH_SECRET,
       { expiresIn: (process.env.JWT_REFRESH_EXPIRE || '7d') as any }
     );
+
+    // Track mobile auth device
+    if (body.device_id || body.device_platform) {
+      console.log('Mobile login detected!', { device_id: body.device_id, device_platform: body.device_platform });
+      try {
+        const existingDevice = await MobileAuthUser.findOne({
+          where: { userId: user.id, deviceId: body.device_id || 'unknown' }
+        });
+
+        const deviceData = {
+          refreshToken,
+          refreshTokenExpires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          pushToken: body.push_token,
+          pushTokenPlatform: body.device_platform,
+          deviceName: body.device_name,
+          devicePlatform: body.device_platform,
+          osVersion: body.os_version,
+          appVersion: body.app_version,
+          lastLogin: new Date()
+        };
+
+        if (existingDevice) {
+          console.log('Updating existing mobile device record...');
+          await existingDevice.update(deviceData);
+        } else {
+          console.log('Creating new mobile device record...');
+          await MobileAuthUser.create({
+            userId: user.id,
+            userType: 'customer',
+            deviceId: body.device_id || 'unknown',
+            ...deviceData
+          });
+        }
+        console.log('Mobile auth tracked successfully!');
+      } catch (err) {
+        console.error('Error tracking mobile auth user:', err);
+      }
+    }
 
     return NextResponse.json({
       success: true,

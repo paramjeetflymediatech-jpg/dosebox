@@ -1,7 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function OrderTrackingScreen({ route, navigation }: any) {
+export default function OrderTrackingScreen({ route, navigation }) {
   // Default status or passed via route params
   const status = route?.params?.status || 'Pending Pharmacist Approval';
   const orderId = '#ORD-9824';
@@ -61,80 +69,66 @@ export default function OrderTrackingScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
+    backgroundColor: '#ffffff'},
   contentWrapper: {
     width: '100%',
     maxWidth: 600,
     alignSelf: 'center',
     flex: 1,
     paddingHorizontal: 32,
-    paddingVertical: 24,
-  },
+    paddingVertical: 24},
   headerContainer: {
     paddingTop: Platform.OS === 'android' ? 40 : 20,
     marginBottom: 40,
-    alignItems: 'flex-end',
-  },
+    alignItems: 'flex-end'},
   backButton: {
-    padding: 8,
-  },
+    padding: 8},
   backIcon: {
     color: '#0f172a',
     fontSize: 24,
-    fontWeight: '300',
-  },
+    fontWeight: '300'},
   statusArea: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -80,
-  },
+    marginTop: -80},
   icon: {
     fontSize: 64,
-    marginBottom: 24,
-  },
+    marginBottom: 24},
   title: {
     fontSize: 32,
     fontWeight: '300',
     color: '#0f172a',
     marginBottom: 16,
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5},
   statusBadge: {
     backgroundColor: '#fef3c7',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    marginBottom: 24,
-  },
+    marginBottom: 24},
   statusText: {
     color: '#d97706',
     fontWeight: '600',
-    fontSize: 14,
-  },
+    fontSize: 14},
   description: {
     fontSize: 16,
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 24,
-    paddingHorizontal: 20,
-  },
+    paddingHorizontal: 20},
   footerContainer: {
-    paddingBottom: 20,
-  },
+    paddingBottom: 20},
   primaryButton: {
     backgroundColor: '#f8fafc',
     paddingVertical: 18,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
+    borderColor: '#e2e8f0'},
   primaryButtonText: {
     color: '#0f172a',
     fontSize: 16,
     fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-});
+    letterSpacing: 0.5}});
+

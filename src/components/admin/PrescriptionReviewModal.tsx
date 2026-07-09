@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, Search, AlertCircle, Trash2, Edit2, Plus, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 
 export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx: any, onClose: () => void, onSuccess: () => void }) {
@@ -37,8 +38,8 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
     if (searchQuery.length < 2) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/admin/medicines/search?q=${encodeURIComponent(searchQuery)}`);
-      const data = await res.json();
+      const res = await api.get(`/admin/medicines/search?q=${encodeURIComponent(searchQuery)}`);
+      const data = res.data;
       if (data.success) {
         setSearchResults(data.data);
       }
@@ -90,22 +91,18 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
 
     setProcessing(true);
     try {
-      const res = await fetch('/api/admin/prescriptions/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prescriptionId: rx.id,
-          userId: rx.userId,
-          notes,
-          items: items.map(i => ({
-            medicineId: i.product.id,
-            quantity: i.requestedQuantity,
-            price: i.product.discountPrice || i.product.price,
-            type: i.matchType
-          }))
-        })
+      const res = await api.post('/admin/prescriptions/approve', {
+        prescriptionId: rx.id,
+        userId: rx.userId,
+        notes,
+        items: items.map(i => ({
+          medicineId: i.product.id,
+          quantity: i.requestedQuantity,
+          price: i.product.discountPrice || i.product.price,
+          type: i.matchType
+        }))
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.success) {
         toast.success('Prescription approved & Draft Cart created!');
         onSuccess();
@@ -122,12 +119,12 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
   const handleReject = async () => {
     setProcessing(true);
     try {
-      const res = await fetch('/api/admin/prescriptions', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: rx.id, status: 'Rejected', pharmacistNotes: notes })
+      const res = await api.put('/admin/prescriptions', { 
+        id: rx.id, 
+        status: 'Rejected', 
+        pharmacistNotes: notes 
       });
-      if (res.ok) {
+      if (res.status === 200 || res.data?.success) {
         toast.success('Prescription rejected');
         onSuccess();
       }

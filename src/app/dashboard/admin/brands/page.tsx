@@ -106,6 +106,25 @@ export default function AdminBrandsPage() {
     currentPage * itemsPerPage
   );
 
+  const handleDeleteAll = async () => {
+    if (!confirm('Are you absolutely sure you want to delete ALL brands? This action cannot be undone.')) return;
+    try {
+      setLoading(true);
+      const res = await api.delete('/admin/brands');
+      if (res.data?.success) {
+        setBrands([]);
+        alert('All brands deleted successfully.');
+      } else {
+        alert(res.data?.message || 'Failed to delete all brands.');
+      }
+    } catch (err: any) {
+      console.error('Failed to delete all brands', err);
+      alert(err.response?.data?.message || 'Failed to delete all brands. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -126,6 +145,12 @@ export default function AdminBrandsPage() {
               className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             />
           </div>
+          <button
+            onClick={handleDeleteAll}
+            className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            <Trash2 className="w-4 h-4" /> Delete All
+          </button>
           <button
             onClick={() => handleOpenModal()}
             className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-lg shadow-brand-500/30 flex items-center gap-2 text-sm whitespace-nowrap"

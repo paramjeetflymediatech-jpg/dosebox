@@ -231,7 +231,7 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm text-slate-500">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {new Date(user.createdAt).toLocaleString()}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">

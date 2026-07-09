@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
           categoryId = await getCategoryId(catName);
         }
 
-        await Medicine.create({
+        const medicineData = {
           name: rowData.name,
           genericName: rowData.genericname || rowData.name,
           manufacturer: rowData.manufacturer || 'Unknown',
@@ -234,7 +234,14 @@ export async function POST(req: NextRequest) {
           supplierId: rowData.supplierid ? parseInt(rowData.supplierid, 10) : undefined,
           images: imagesArr,
           prescriptionRequired: rowData.prescriptionrequired?.toLowerCase() === 'true'
-        });
+        };
+
+        const existingMed = await (Medicine as any).findOne({ where: { name: rowData.name } });
+        if (existingMed) {
+          await existingMed.update(medicineData);
+        } else {
+          await Medicine.create(medicineData);
+        }
         successCount++;
       } catch (err) {
         errorCount++;
