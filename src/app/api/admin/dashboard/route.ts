@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     });
     const totalRevenue = orders.reduce((acc: number, order: any) => acc + Number(order.finalAmount), 0);
 
-    const totalCustomers = await User.count({ where: { roleId: 3 } });
+    const totalCustomers = await User.count({ where: { roleId: 2 } });
     const activeUsers = await User.count({ where: { status: 'active' } });
     
     const prescriptionRequests = 0;
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
       return { month: m.monthName, revenue, orders: monthOrders.length };
     });
 
-    const allCustomers = await User.findAll({ where: { roleId: 3 } });
+    const allCustomers = await User.findAll({ where: { roleId: 2 } });
     const customerGrowthChart = last6Months.map(m => {
       const cumulativeCustomers = allCustomers.filter((u: any) => {
         const ud = new Date(u.createdAt);

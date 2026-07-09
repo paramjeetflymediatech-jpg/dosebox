@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, Lock } from 'lucide-react';
+import { User as UserIcon, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
@@ -15,6 +15,8 @@ export default function ProfilePage() {
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -163,17 +165,27 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-2">Current Password</label>
-                  <input
-                    type="password" value={profileData.currentPassword} onChange={e => setProfileData({ ...profileData, currentPassword: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"} value={profileData.currentPassword} onChange={e => setProfileData({ ...profileData, currentPassword: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm pr-10"
+                    />
+                    <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-2">New Password</label>
-                  <input
-                    type="password" value={profileData.newPassword} onChange={e => setProfileData({ ...profileData, newPassword: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"} value={profileData.newPassword} onChange={e => setProfileData({ ...profileData, newPassword: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm pr-10"
+                    />
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

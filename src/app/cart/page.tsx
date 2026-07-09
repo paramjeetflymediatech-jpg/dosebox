@@ -89,12 +89,12 @@ export default function CartPage() {
 
   const handlePrescriptionUpload = async () => {
     if (!prescriptionFile) {
-      alert('Please choose a file to upload first.');
+      toast.error('Please choose a file to upload first.');
       return;
     }
 
     if (!user) {
-      alert('Authentication Required: Please sign in to upload prescriptions.');
+      toast.error('Authentication Required: Please sign in to upload prescriptions.');
       return;
     }
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X, Stethoscope } from 'lucide-react';
 import api from '../../../../lib/api';
+import Swal from 'sweetalert2';
 
 export default function AdminDoctorsPage() {
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -85,7 +86,16 @@ export default function AdminDoctorsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this doctor?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this doctor?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/doctors/${id}`);
       fetchDoctors();

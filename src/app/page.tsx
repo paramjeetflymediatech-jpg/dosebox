@@ -77,6 +77,23 @@ export default function HomePage() {
   const [qty, setQty] = useState(1);
   const [googleReviews, setGoogleReviews] = useState<any[]>([]);
   const [dynamicFaqs, setDynamicFaqs] = useState<any[]>([]);
+  const [expandedReviews, setExpandedReviews] = useState<number[]>([]);
+  const reviewSliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollReviews = (dir: 'left' | 'right') => {
+    if (reviewSliderRef.current) {
+      const scrollAmount = 350;
+      reviewSliderRef.current.scrollBy({ left: dir === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const toggleReview = (idx: number) => {
+    if (expandedReviews.includes(idx)) {
+      setExpandedReviews(expandedReviews.filter(i => i !== idx));
+    } else {
+      setExpandedReviews([...expandedReviews, idx]);
+    }
+  };
 
   useEffect(() => {
     async function fetchReviews() {
@@ -84,7 +101,7 @@ export default function HomePage() {
         const res = await fetch('/api/reviews');
         const data = await res.json();
         if (data.success && data.reviews && data.reviews.length > 0) {
-          setGoogleReviews(data.reviews.slice(0, 3));
+          setGoogleReviews(data.reviews);
         }
       } catch (err) {
         console.error('Failed to load Google Reviews', err);
@@ -1037,7 +1054,7 @@ export default function HomePage() {
       </section>
 
       {/* 7. CUSTOMER TESTIMONIALS (Dynamic Google Reviews) */}
-      <section ref={testimonialsRef} className="py-20">
+      <section ref={testimonialsRef} className="py-20 bg-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10">
           <span className="text-xs text-brand-600 font-bold uppercase tracking-wider">Patient Stories</span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">What Our Customers Say</h2>
@@ -1050,50 +1067,70 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(googleReviews.length > 0 ? googleReviews : [
-            { author_name: "Rajesh Sharma", rating: 5, relative_time_description: "2 days ago", text: "Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly." },
-            { author_name: "Priyanka Sen", rating: 5, relative_time_description: "1 week ago", text: "The video consultation slot booking is extremely clean. I booked a skin specialist at 10 AM, had session at 10:15 AM, and had my medicines shipped by afternoon!" },
-            { author_name: "Amit Verma", rating: 5, relative_time_description: "2 weeks ago", text: "Extremely impressed by the GST compliance invoice layout. I need this to file company medical reimbursement. The PDF matches physical enterprise standards." }
-          ]).slice(0, 3).map((review, idx) => {
-            const colors = ["bg-blue-100 text-blue-700", "bg-emerald-100 text-emerald-700", "bg-purple-100 text-purple-700"];
-            const bgClass = colors[idx % colors.length];
-            const initial = review.author_name ? review.author_name.charAt(0).toUpperCase() : 'U';
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative group">
+          {/* Controls */}
+          <button onClick={() => scrollReviews('left')} className="absolute -left-2 md:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg border border-slate-100 items-center justify-center text-slate-400 hover:text-brand-600 hover:scale-110 transition-all z-10 hidden sm:flex opacity-0 group-hover:opacity-100">
+            <LucideIcons.ChevronLeft className="w-6 h-6" />
+          </button>
+          
+          <div ref={reviewSliderRef} className="flex overflow-x-auto gap-6 snap-x snap-mandatory hide-scrollbar pb-6 pt-2">
+            {(googleReviews.length > 0 ? googleReviews : [
+              { author_name: "Rajesh Sharma", rating: 5, relative_time_description: "2 days ago", text: "Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly. Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly" },
+              { author_name: "Priyanka Sen", rating: 5, relative_time_description: "1 week ago", text: "The video consultation slot booking is extremely clean. I booked a skin specialist at 10 AM, had session at 10:15 AM, and had my medicines shipped by afternoon!" },
+              { author_name: "Amit Verma", rating: 5, relative_time_description: "2 weeks ago", text: "Extremely impressed by the GST compliance invoice layout. I need this to file company medical reimbursement. The PDF matches physical enterprise standards." }
+            ]).map((review, idx) => {
+              const colors = ["bg-blue-100 text-blue-700", "bg-emerald-100 text-emerald-700", "bg-purple-100 text-purple-700"];
+              const bgClass = colors[idx % colors.length];
+              const initial = review.author_name ? review.author_name.charAt(0).toUpperCase() : 'U';
+              
+              const isExpanded = expandedReviews.includes(idx);
+              const text = review.text || '';
+              const isLong = text.length > 150;
 
-            return (
-              <div key={idx} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-1">
-                      {[...Array(review.rating || 5)].map((_, i) => <Star key={i} className="w-4 h-4 text-[#fbbc05] fill-[#fbbc05]" />)}
-                    </div>
-                    <svg className="w-6 h-6 opacity-80" viewBox="0 0 24 24">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                  </div>
-                  <p className="text-slate-700 text-sm leading-relaxed font-medium line-clamp-6">
-                    "{review.text}"
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 mt-6">
-                  {review.profile_photo_url ? (
-                    <img src={review.profile_photo_url} alt={review.author_name} className="w-10 h-10 rounded-full" />
-                  ) : (
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${bgClass}`}>
-                      {initial}
-                    </div>
-                  )}
+              return (
+                <div key={idx} className="w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] flex-shrink-0 snap-start bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group/card">
                   <div>
-                    <h5 className="font-bold text-slate-900 text-sm">{review.author_name}</h5>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{review.relative_time_description}</span>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-1">
+                        {[...Array(review.rating || 5)].map((_, i) => <Star key={i} className="w-4 h-4 text-[#fbbc05] fill-[#fbbc05]" />)}
+                      </div>
+                      <svg className="w-6 h-6 opacity-80" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                      </svg>
+                    </div>
+                    <p className={`text-slate-700 text-sm leading-relaxed font-medium transition-all ${!isExpanded ? 'line-clamp-6' : ''}`}>
+                      "{isExpanded ? text : (isLong ? text.substring(0, 150) + '...' : text)}"
+                    </p>
+                    {isLong && (
+                      <button onClick={() => toggleReview(idx)} className="text-brand-600 font-bold text-xs mt-3 hover:underline flex items-center gap-1">
+                        {isExpanded ? 'Read less' : 'Read more'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-6">
+                    {review.profile_photo_url ? (
+                      <img src={review.profile_photo_url} alt={review.author_name} className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${bgClass}`}>
+                        {initial}
+                      </div>
+                    )}
+                    <div>
+                      <h5 className="font-bold text-slate-900 text-sm">{review.author_name}</h5>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{review.relative_time_description}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <button onClick={() => scrollReviews('right')} className="absolute -right-2 md:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg border border-slate-100 items-center justify-center text-slate-400 hover:text-brand-600 hover:scale-110 transition-all z-10 hidden sm:flex opacity-0 group-hover:opacity-100">
+            <LucideIcons.ChevronRight className="w-6 h-6" />
+          </button>
         </div>
       </section>
 

@@ -8,7 +8,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
-  role: 'Admin' | 'Pharmacist' | 'Customer';
+  role: 'Admin' | 'Customer';
   rewardPoints?: number;
 }
 
@@ -19,7 +19,7 @@ interface AuthContextType {
   googleLogin: (googleId: string, email: string, name: string, avatar: string) => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
-  isPharmacist: boolean;
+
   isCustomer: boolean;
 }
 
@@ -46,6 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Listen to token refresh expiry logout event
       const handleLogoutEvent = () => {
         setUser(null);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        // Trigger login modal if one exists
+        window.dispatchEvent(new CustomEvent('auth_login_required'));
       };
       window.addEventListener('auth_logout', handleLogoutEvent);
       return () => window.removeEventListener('auth_logout', handleLogoutEvent);
@@ -99,7 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAdmin = user?.role === 'Admin';
-  const isPharmacist = user?.role === 'Pharmacist';
   const isCustomer = user?.role === 'Customer';
 
   return (
@@ -110,7 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       googleLogin,
       logout,
       isAdmin,
-      isPharmacist,
       isCustomer
     }}>
       {children}

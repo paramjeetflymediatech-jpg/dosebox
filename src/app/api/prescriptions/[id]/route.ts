@@ -9,7 +9,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    if (!['Admin', 'Pharmacist'].includes(userAuth.roleName)) {
+    if (!['Admin'].includes(userAuth.roleName)) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 

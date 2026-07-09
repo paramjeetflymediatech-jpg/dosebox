@@ -21,8 +21,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
 
-    // Only allow Admin/Pharmacist or the order owner to view the invoice
-    if (order.userId !== userAuth.id && userAuth.roleName !== 'Admin' && userAuth.roleName !== 'Pharmacist') {
+    // Only allow Admin or the order owner to view the invoice
+    if (order.userId !== userAuth.id && userAuth.roleName !== 'Admin') {
       return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     }
 

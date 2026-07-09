@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Pill, Plus, Search, Edit2, Trash2, ShieldAlert, Download } from 'lucide-react';
 import api from '@/lib/api';
+import Swal from 'sweetalert2';
 
 interface Medicine {
   id: number;
@@ -44,7 +45,16 @@ export default function AdminMedicinesPage() {
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Are you sure you want to delete ${name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/medicines/${id}`);
       setMedicines(medicines.filter(m => m.id !== id));
@@ -115,7 +125,16 @@ export default function AdminMedicinesPage() {
   };
 
   const handleDeleteAll = async () => {
-    if (!confirm('Are you absolutely sure you want to delete ALL medicines? This action cannot be undone.')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you absolutely sure you want to delete ALL medicines? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       setLoading(true);
       const res = await api.delete('/medicines');

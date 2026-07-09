@@ -6,6 +6,7 @@ import { Tag, Plus, Edit, Trash2, X } from 'lucide-react';
 import api from '../../../../lib/api';
 import toast from 'react-hot-toast';
 import Pagination from '../../../../components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface Category {
   id: number;
@@ -70,7 +71,16 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this category?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/categories/${id}`);
       toast.success('Category deleted');

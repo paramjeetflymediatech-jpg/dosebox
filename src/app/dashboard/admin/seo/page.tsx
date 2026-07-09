@@ -5,6 +5,7 @@ import { Plus, Trash2, Settings, Edit, Globe } from 'lucide-react';
 import api from '../../../../lib/api';
 import Link from 'next/link';
 import Pagination from '../../../../components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface PageMeta {
   id: number;
@@ -35,7 +36,16 @@ export default function AdminSEOPage() {
   }, []);
 
   const handleDeletePageMeta = async (id: number) => {
-    if(!confirm('Are you sure you want to delete this SEO rule?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this SEO rule?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/page-meta/${id}`);
       loadPageMetas();

@@ -8,11 +8,12 @@ export async function GET(req: NextRequest) {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'Admin', 'Pharmacist');
+    const authCheck = authorizeRoles(userAuth, 'Admin');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
+
     const filter: any = {};
     if (status) {
       filter.status = status;
@@ -48,7 +49,7 @@ export async function PUT(req: NextRequest) {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'Admin', 'Pharmacist');
+    const authCheck = authorizeRoles(userAuth, 'Admin');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const body = await req.json();

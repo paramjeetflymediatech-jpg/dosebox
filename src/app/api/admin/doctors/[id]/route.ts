@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Doctor } from '../../../../../models';
 import { authenticateJWT, authorizeRoles } from '../../../../../middleware/auth';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userAuth = await authenticateJWT(req);
   if (userAuth instanceof NextResponse) return userAuth;
   const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin');
   if (authError) return authError;
 
   try {
-    const doctorId = parseInt(params.id);
+    const resolvedParams = await params;
+    const doctorId = parseInt(resolvedParams.id);
     const doctor = await Doctor.findByPk(doctorId);
     if (!doctor) {
       return NextResponse.json({ success: false, message: 'Doctor not found' }, { status: 404 });
@@ -40,17 +41,26 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userAuth = await authenticateJWT(req);
   if (userAuth instanceof NextResponse) return userAuth;
   const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin');
   if (authError) return authError;
 
   try {
-    const doctorId = parseInt(params.id);
+    const resolvedParams = await params;
+    const doctorId = parseInt(resolvedParams.id);
     const doctor = await Doctor.findByPk(doctorId);
     if (!doctor) {
       return NextResponse.json({ success: false, message: 'Doctor not found' }, { status: 404 });
+    }
+
+    // Safely delete related appointments to avoid foreign key constraints
+    const { Appointment } = require('../../../../../models').default || require('../../../../../models');
+    if (Appointment) {
+      try {
+        await Appointment.destroy({ where: { doctorId } });
+      } catch (e) {}
     }
 
     await doctor.destroy();

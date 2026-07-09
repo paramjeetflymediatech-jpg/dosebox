@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Trash2, Edit2, Search } from 'lucide-react';
 import api from '@/lib/api';
 import Pagination from '@/components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface Brand {
   id: number;
@@ -85,7 +86,16 @@ export default function AdminBrandsPage() {
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete brand "${name}"?`)) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Are you sure you want to delete brand "${name}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/brands/${id}`);
       setBrands(brands.filter(b => b.id !== id));
@@ -107,7 +117,16 @@ export default function AdminBrandsPage() {
   );
 
   const handleDeleteAll = async () => {
-    if (!confirm('Are you absolutely sure you want to delete ALL brands? This action cannot be undone.')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you absolutely sure you want to delete ALL brands? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       setLoading(true);
       const res = await api.delete('/admin/brands');

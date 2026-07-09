@@ -10,12 +10,10 @@ export async function GET() {
   try {
     console.log('Starting seed via Next.js API...');
 
-    // 1. Seed Roles
+    // 1. Seed Roles — Admin (1) and Customer (2) only
     const roles = [
-      { id: 1, name: 'SuperAdmin' },
-      { id: 2, name: 'Admin' },
-      { id: 3, name: 'Pharmacist' },
-      { id: 4, name: 'Customer' },
+      { id: 1, name: 'Admin' },
+      { id: 2, name: 'Customer' },
     ];
     for (const r of roles) {
       await Role.findOrCreate({ where: { id: r.id }, defaults: r });

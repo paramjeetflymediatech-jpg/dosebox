@@ -1180,8 +1180,7 @@ Faq.init(
 export interface MobileAuthUserAttributes {
   id: number;
   userId?: number;
-  providerId?: number;
-  userType: 'customer' | 'provider' | 'admin';
+  userType: 'customer' | 'admin';
   refreshToken?: string;
   refreshTokenExpires?: Date;
   pushToken?: string;
@@ -1199,8 +1198,7 @@ export interface MobileAuthUserAttributes {
 export class MobileAuthUser extends Model<MobileAuthUserAttributes, Optional<MobileAuthUserAttributes, 'id' | 'isActive'>> implements MobileAuthUserAttributes {
   declare id: number;
   declare userId?: number;
-  declare providerId?: number;
-  declare userType: 'customer' | 'provider' | 'admin';
+  declare userType: 'customer' | 'admin';
   declare refreshToken?: string;
   declare refreshTokenExpires?: Date;
   declare pushToken?: string;
@@ -1219,8 +1217,7 @@ MobileAuthUser.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     userId: { type: DataTypes.INTEGER, allowNull: true, field: 'user_id' },
-    providerId: { type: DataTypes.INTEGER, allowNull: true, field: 'provider_id' },
-    userType: { type: DataTypes.ENUM('customer', 'provider', 'admin'), allowNull: false, field: 'user_type' },
+    userType: { type: DataTypes.ENUM('customer', 'admin'), allowNull: false, field: 'user_type' },
     refreshToken: { type: DataTypes.STRING(512), allowNull: true, field: 'refresh_token' },
     refreshTokenExpires: { type: DataTypes.DATE, allowNull: true, field: 'refresh_token_expires' },
     pushToken: { type: DataTypes.TEXT, allowNull: true, field: 'push_token' },
@@ -1243,6 +1240,7 @@ User.hasMany(MobileAuthUser, { foreignKey: 'userId', as: 'mobileDevices' });
 
 // ----------------------------------------------------
 export default {
+  sequelize,
   Role,
   User,
   Address,
@@ -1273,4 +1271,3 @@ export default {
   Faq,
   MobileAuthUser
 };
-

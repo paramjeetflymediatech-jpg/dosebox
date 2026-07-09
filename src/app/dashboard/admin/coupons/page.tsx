@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Tag, Edit } from 'lucide-react';
 import api from '../../../../lib/api';
 import Link from 'next/link';
+import Swal from 'sweetalert2';
 
 interface Coupon {
   id: number;
@@ -36,7 +37,16 @@ export default function AdminCouponsPage() {
   }, []);
 
   const handleDeleteCoupon = async (id: number) => {
-    if(!confirm('Are you sure you want to delete this coupon?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this coupon?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/coupons/${id}`);
       loadCoupons();

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       email,
       password: hashedPassword,
       phone,
-      roleId: 3, // Customer
+      roleId: 2, // Customer
       status: 'active'
     });
 

@@ -7,11 +7,10 @@ export async function runSeeder() {
   try {
     console.log('[Seeder] Starting database seeding check...');
 
-    // 1. Roles
+    // 1. Roles — Admin (id:1) and Customer (id:2) only
     try {
       await Role.findOrCreate({ where: { id: 1 }, defaults: { name: 'Admin' } });
-      await Role.findOrCreate({ where: { id: 2 }, defaults: { name: 'Pharmacist' } });
-      await Role.findOrCreate({ where: { id: 3 }, defaults: { name: 'Customer' } });
+      await Role.findOrCreate({ where: { id: 2 }, defaults: { name: 'Customer' } });
       console.log('[Seeder] Roles verified.');
     } catch (e) {
       console.warn('[Seeder Warning] Roles verification issue:', e);
@@ -35,25 +34,12 @@ export async function runSeeder() {
 
     try {
       await User.findOrCreate({
-        where: { email: 'pharmacist@mrmed.com' },
-        defaults: {
-          name: 'Senior Pharmacist',
-          email: 'pharmacist@mrmed.com',
-          password: hashedPassword,
-          roleId: 2,
-          status: 'active'
-        }
-      });
-    } catch (e) {}
-
-    try {
-      await User.findOrCreate({
         where: { email: 'customer@mrmed.com' },
         defaults: {
           name: 'Regular Customer',
           email: 'customer@mrmed.com',
           password: hashedPassword,
-          roleId: 3,
+          roleId: 2,
           status: 'active',
           phone: '9876543210'
         }

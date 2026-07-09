@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         email,
         googleId,
         avatar,
-        roleId: 3, // Customer
+        roleId: 2, // Customer
         status: 'active'
       });
       

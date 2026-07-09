@@ -9,7 +9,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'Admin', 'Pharmacist');
+    const authCheck = authorizeRoles(userAuth, 'Admin');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const body = await req.json();

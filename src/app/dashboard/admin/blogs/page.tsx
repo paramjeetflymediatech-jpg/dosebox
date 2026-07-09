@@ -5,6 +5,7 @@ import { Plus, Trash2, Calendar, FileText, Edit, Search } from 'lucide-react';
 import api from '../../../../lib/api';
 import Link from 'next/link';
 import Pagination from '../../../../components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface Blog {
   id: number;
@@ -37,7 +38,16 @@ export default function AdminBlogsPage() {
   }, []);
 
   const handleDeleteBlog = async (id: number) => {
-    if(!confirm('Are you sure you want to delete this blog?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this blog?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/blogs/${id}`);
       loadBlogs();

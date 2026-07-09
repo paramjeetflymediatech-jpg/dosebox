@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Users, Search, Plus, Edit, Trash2, X, Eye, EyeOff } from 'lucide-react';
 import api from '../../../../lib/api';
 import toast from 'react-hot-toast';
 import Pagination from '../../../../components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface User {
   id: number;
@@ -27,6 +28,7 @@ export default function AdminUsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -104,7 +106,16 @@ export default function AdminUsersPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this user?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       const res = await api.delete(`/admin/users/${id}`);
       if (res.data?.success) {
@@ -137,8 +148,6 @@ export default function AdminUsersPage() {
   const getRoleName = (roleId: number) => {
     if (roleId === 1) return 'Admin';
     if (roleId === 2) return 'Customer';
-    if (roleId === 3) return 'Pharmacist';
-    if (roleId === 4) return 'Doctor';
     return 'Unknown';
   };
 
@@ -327,8 +336,6 @@ export default function AdminUsersPage() {
                   >
                     <option value="1">Admin</option>
                     <option value="2">Customer</option>
-                    <option value="3">Pharmacist</option>
-                    <option value="4">Doctor</option>
                   </select>
                 </div>
 
@@ -348,14 +355,19 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     {editUser ? 'Reset Password (optional)' : 'Password *'}
                   </label>
-                  <input
-                    type="password"
-                    required={!editUser}
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500"
-                    placeholder={editUser ? "Leave blank to keep current" : "Create a password"}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required={!editUser}
+                      value={formData.password}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 pr-10"
+                      placeholder={editUser ? "Leave blank to keep current" : "Create a password"}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 

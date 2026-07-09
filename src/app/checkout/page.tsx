@@ -66,6 +66,7 @@ export default function CheckoutPage() {
   
   const [processing, setProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
 
   // Address Search & Location States
@@ -201,7 +202,7 @@ export default function CheckoutPage() {
 
   // Handle Return from PhonePe payment
   useEffect(() => {
-    if (typeof window !== 'undefined' && !orderComplete) {
+    if (typeof window !== 'undefined' && !orderComplete && !paymentFailed) {
       const urlParams = new URLSearchParams(window.location.search);
       const status = urlParams.get('status');
       if (status === 'success') {
@@ -211,12 +212,12 @@ export default function CheckoutPage() {
         // Clean up the URL to prevent re-triggering on refresh
         router.replace('/checkout');
       } else if (status === 'failed') {
-        alert('Payment failed or cancelled. Please try again.');
+        setPaymentFailed(true);
         router.replace('/checkout');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, orderComplete]);
+  }, [router, orderComplete, paymentFailed]);
 
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,39 +318,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (orderComplete) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-32 text-center flex flex-col items-center">
-        <motion.div 
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="w-24 h-24 bg-brand-600 text-white rounded-full flex items-center justify-center mb-8 shadow-xl shadow-brand-500/30"
-        >
-          <CheckCircle2 className="w-12 h-12" />
-        </motion.div>
-        
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Order Confirmed!</h2>
-        <p className="text-slate-500 mt-4 text-sm font-medium max-w-sm">
-          Thank you. Your order <strong className="text-slate-900">#OD-{createdOrderId}</strong> has been received and is being reviewed by our pharmacists.
-        </p>
-
-        <div className="mt-12 w-full space-y-4">
-          <Link 
-            href="/account" 
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
-          >
-            Track Order Status
-          </Link>
-          <Link 
-            href="/medicines" 
-            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold py-4 px-8 rounded-full transition-all flex items-center justify-center gap-2"
-          >
-            Continue Shopping
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Removed early return for orderComplete to allow modal overlay
 
   if (!user) {
     return (
@@ -735,6 +704,72 @@ export default function CheckoutPage() {
         </div>
 
       </div>
+
+      {/* Success & Failed Modals */}
+      <AnimatePresence>
+        {(orderComplete || paymentFailed) && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center relative overflow-hidden"
+            >
+              {orderComplete ? (
+                <>
+                  <div className="absolute top-0 left-0 w-full h-2 bg-brand-500" />
+                  <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <CheckCircle2 className="w-10 h-10" />
+                  </div>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Order Confirmed!</h2>
+                  <p className="text-slate-500 text-sm mb-8 px-4">
+                    Thank you! Your order {createdOrderId ? <strong className="text-slate-900">#OD-{createdOrderId}</strong> : ''} has been received and is being prepared.
+                  </p>
+                  <div className="space-y-3">
+                    <Link 
+                      href="/account" 
+                      className="block w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-lg shadow-brand-500/20"
+                    >
+                      Track Order Status
+                    </Link>
+                    <Link 
+                      href="/medicines" 
+                      className="block w-full bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3.5 px-6 rounded-xl transition-colors"
+                    >
+                      Continue Shopping
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="absolute top-0 left-0 w-full h-2 bg-rose-500" />
+                  <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Payment Failed</h2>
+                  <p className="text-slate-500 text-sm mb-8 px-4">
+                    Your payment was cancelled or failed to process. Please try again using a different payment method.
+                  </p>
+                  <button 
+                    onClick={() => setPaymentFailed(false)}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-lg"
+                  >
+                    Try Again
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

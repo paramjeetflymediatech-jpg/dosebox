@@ -5,6 +5,7 @@ import { Truck, Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import Pagination from '@/components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface Supplier {
   id: number;
@@ -68,7 +69,16 @@ export default function AdminSuppliersPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this supplier?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this supplier?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/suppliers/${id}`);
       toast.success('Supplier deleted successfully');

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import {
-  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu
+  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -84,7 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 // Sub-component to use context hooks safely inside layout
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, login, googleLogin, logout, isAdmin, isPharmacist } = useAuth();
+  const { user, login, googleLogin, logout, isAdmin } = useAuth();
   const { cartItems } = useCart();
   const [searchVal, setSearchVal] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -93,7 +93,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [pincodeInput, setPincodeInput] = useState('');
   const [deliveryLocation, setDeliveryLocation] = useState('New Delhi (110001)');
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot' | 'verify' | 'reset'>('login');
   const [globalSettings, setGlobalSettings] = useState<Record<string, string>>({});
   const pathname = usePathname();
   const router = useRouter();
@@ -108,7 +108,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
     api.get('/admin/settings')
@@ -122,33 +128,109 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       .catch(e => console.error('Failed to load global settings', e));
   }, []);
 
+  // Auto-open login modal when session expires
+  React.useEffect(() => {
+    const handleLoginRequired = () => {
+      setAuthMode('login');
+      setShowAuthModal(true);
+    };
+    window.addEventListener('auth_login_required', handleLoginRequired);
+    return () => window.removeEventListener('auth_login_required', handleLoginRequired);
+  }, []);
+
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-    if (isSignUp) {
+    setIsLoading(true);
+    if (authMode === 'signup') {
       // Sign up mock
       try {
         const { api } = await import('../lib/api');
         const res = await api.post('/auth/register', { name, email, password });
         if (res.data?.success) {
-          setIsSignUp(false);
+          setAuthMode('login');
           setPassword('');
-          alert('Registration successful! Please sign in with your credentials.');
+          toast.success('Registration successful! Please sign in with your credentials.');
         } else {
           setErrorMsg(res.data?.message || 'Registration failed');
         }
       } catch (err: any) {
         setErrorMsg(err.response?.data?.message || 'Error occurred');
+      } finally {
+        setIsLoading(false);
       }
-    } else {
+    } else if (authMode === 'login') {
       // Sign in standard
       const success = await login(email, password);
+      setIsLoading(false);
       if (success) {
         setShowAuthModal(false);
         resetForm();
       } else {
         setErrorMsg('Invalid email or password');
       }
+    } else if (authMode === 'forgot') {
+      try {
+        const { api } = await import('../lib/api');
+        const res = await api.post('/auth/forgot-password', { email });
+        if (res.data?.success) {
+          setAuthMode('verify');
+        } else {
+          setErrorMsg(res.data?.message || 'Failed to send OTP');
+        }
+      } catch (err: any) {
+        setErrorMsg(err.response?.data?.message || 'Error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (authMode === 'verify') {
+      try {
+        const { api } = await import('../lib/api');
+        const res = await api.post('/auth/verify-otp', { email, otp });
+        if (res.data?.success) {
+          setResetToken(res.data.resetToken);
+          setAuthMode('reset');
+        } else {
+          setErrorMsg(res.data?.message || 'Invalid OTP');
+        }
+      } catch (err: any) {
+        setErrorMsg(err.response?.data?.message || 'Error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (authMode === 'reset') {
+      try {
+        const { api } = await import('../lib/api');
+        const res = await api.post('/auth/reset-password', { email, otp, password: newPassword });
+        if (res.data?.success) {
+          toast.success('Password reset successful. Please login.');
+          setAuthMode('login');
+          setOtp('');
+          setNewPassword('');
+          setPassword('');
+        } else {
+          setErrorMsg(res.data?.message || 'Failed to reset password');
+        }
+      } catch (err: any) {
+        setErrorMsg(err.response?.data?.message || 'Error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setErrorMsg('');
+    try {
+      const { api } = await import('../lib/api');
+      const res = await api.post('/auth/forgot-password', { email });
+      if (res.data?.success) {
+        toast.success('OTP resent to your email.');
+      } else {
+        setErrorMsg(res.data?.message || 'Failed to resend OTP');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Error occurred');
     }
   };
 
@@ -157,6 +239,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     setEmail('');
     setPassword('');
     setErrorMsg('');
+    setOtp('');
+    setNewPassword('');
+    setAuthMode('login');
   };
 
   const handleApplyPincode = async () => {
@@ -310,19 +395,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
 
 
-            {/* Admin / Pharmacist Dashboards */}
-            {user && (isAdmin || isPharmacist) && (
+            {/* Admin Dashboard */}
+            {user && isAdmin && (
               <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-                {isAdmin && (
-                  <Link href="/dashboard/admin" className="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-full transition-colors" title="Admin">
-                    <LayoutDashboard className="w-5 h-5" />
-                  </Link>
-                )}
-                {isPharmacist && (
-                  <Link href="/dashboard/pharmacist" className="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-full transition-colors" title="Pharmacist">
-                    <Clipboard className="w-5 h-5" />
-                  </Link>
-                )}
+                <Link href="/dashboard/admin" className="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-full transition-colors" title="Admin">
+                  <LayoutDashboard className="w-5 h-5" />
+                </Link>
               </div>
             )}
 
@@ -559,9 +637,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div className="p-8">
               <div className="text-center mb-6">
                 <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal-50 text-brand-600 mb-3 font-extrabold text-2xl">M</span>
-                <h3 className="text-xl font-bold text-slate-900">{isSignUp ? 'Create your Account' : 'Welcome Back to DoseBox'}</h3>
+                <h3 className="text-xl font-bold text-slate-900">
+                  {authMode === 'signup' ? 'Create your Account' : authMode === 'forgot' ? 'Reset Password' : authMode === 'verify' ? 'Verify OTP' : authMode === 'reset' ? 'New Password' : 'Welcome Back to DoseBox'}
+                </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  {isSignUp ? 'Sign up to upload prescriptions and purchase medications.' : 'Please sign in to continue shopping and consulting.'}
+                  {authMode === 'signup' ? 'Sign up to upload prescriptions.' : authMode === 'forgot' ? 'Enter your email to get a reset code.' : authMode === 'verify' ? 'Enter the 6-digit code sent to your email.' : authMode === 'reset' ? 'Create your new password.' : 'Please sign in to continue.'}
                 </p>
               </div>
 
@@ -572,7 +652,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               )}
 
               <form onSubmit={handleAuthSubmit} className="space-y-4">
-                {isSignUp && (
+                {authMode === 'signup' && (
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name</label>
                     <input
@@ -586,90 +666,173 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg p-2.5 focus:outline-none focus:border-brand-500 focus:bg-white"
-                    required
-                  />
-                </div>
+                {(authMode === 'login' || authMode === 'signup' || authMode === 'forgot' || authMode === 'verify') && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg p-2.5 focus:outline-none focus:border-brand-500 focus:bg-white"
+                      required
+                      disabled={authMode === 'verify'}
+                    />
+                  </div>
+                )}
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg p-2.5 focus:outline-none focus:border-brand-500 focus:bg-white"
-                    required
-                  />
-                </div>
+                {(authMode === 'login' || authMode === 'signup') && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 uppercase">Password</label>
+                      {authMode === 'login' && (
+                        <button type="button" onClick={() => { setAuthMode('forgot'); setErrorMsg(''); }} className="text-xs font-bold text-brand-600 hover:underline">
+                          Forgot Password?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg p-2.5 focus:outline-none focus:border-brand-500 focus:bg-white pr-10"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {authMode === 'verify' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">6-Digit OTP</label>
+                    <input
+                      type="text"
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg p-2.5 focus:outline-none focus:border-brand-500 focus:bg-white tracking-widest text-center text-xl"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+                )}
+
+                {authMode === 'reset' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg p-2.5 focus:outline-none focus:border-brand-500 focus:bg-white pr-10"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="submit"
-                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-3 rounded-lg shadow-lg shadow-brand-500/10 transition-colors flex items-center justify-center gap-1.5"
+                  className={`w-full ${isLoading ? 'bg-brand-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700'} text-white font-bold text-sm py-3 rounded-lg shadow-lg shadow-brand-500/10 transition-colors flex items-center justify-center gap-1.5 mt-2`}
+                  disabled={isLoading}
                 >
-                  {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-                  {isSignUp ? 'Sign Up' : 'Sign In'}
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Please wait...
+                    </span>
+                  ) : (
+                    <>
+                      {authMode === 'signup' && <UserPlus className="w-4 h-4" />}
+                      {authMode === 'login' && <LogIn className="w-4 h-4" />}
+                      {authMode === 'signup' ? 'Sign Up' : authMode === 'forgot' ? 'Send OTP' : authMode === 'verify' ? 'Verify Code' : authMode === 'reset' ? 'Reset Password' : 'Sign In'}
+                    </>
+                  )}
                 </button>
               </form>
 
-              <div className="relative my-6 text-center">
-                <hr className="border-slate-100" />
-                <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xxs font-semibold uppercase tracking-wider text-slate-300">
-                  Or Sign in with Google
-                </span>
-              </div>
+              {(authMode === 'login' || authMode === 'signup') && (
+                <>
+                  <div className="relative my-6 text-center">
+                    <hr className="border-slate-100" />
+                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xxs font-semibold uppercase tracking-wider text-slate-300">
+                      Or Sign in with Google
+                    </span>
+                  </div>
 
-              <div className="flex justify-center w-full">
-                <GoogleLogin
-                  onSuccess={async (credentialResponse) => {
-                    if (credentialResponse.credential) {
-                      const decoded: any = jwtDecode(credentialResponse.credential);
-                      const success = await googleLogin(
-                        decoded.sub,
-                        decoded.email,
-                        decoded.name,
-                        decoded.picture || ''
-                      );
-                      if (success) {
-                        setShowAuthModal(false);
-                        resetForm();
-                      } else {
-                        setErrorMsg('Google login failed');
-                      }
-                    }
-                  }}
-                  onError={() => {
-                    setErrorMsg('Google Login Failed');
-                  }}
-                  useOneTap
-                  theme="outline"
-                  shape="rectangular"
-                  text="signin_with"
-                />
-              </div>
+                  <div className="flex justify-center w-full">
+                    <GoogleLogin
+                      onSuccess={async (credentialResponse) => {
+                        if (credentialResponse.credential) {
+                          const decoded: any = jwtDecode(credentialResponse.credential);
+                          const success = await googleLogin(
+                            decoded.sub,
+                            decoded.email,
+                            decoded.name,
+                            decoded.picture || ''
+                          );
+                          if (success) {
+                            setShowAuthModal(false);
+                            resetForm();
+                          } else {
+                            setErrorMsg('Google login failed');
+                          }
+                        }
+                      }}
+                      onError={() => {
+                        setErrorMsg('Google Login Failed');
+                      }}
+                      theme="outline"
+                      shape="rectangular"
+                      text="signin_with"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="mt-6 text-center text-xs">
-                {isSignUp ? (
+                {authMode === 'verify' && (
+                  <div className="mb-4">
+                    <span className="text-slate-500">Didn't receive the code? </span>
+                    <button onClick={handleResendOtp} type="button" className="text-brand-600 font-bold hover:underline">
+                      Resend OTP
+                    </button>
+                  </div>
+                )}
+                
+                {authMode === 'signup' && (
                   <span>
                     Already have an account?{' '}
-                    <button onClick={() => { setIsSignUp(false); resetForm(); }} className="text-brand-600 font-bold hover:underline">
+                    <button type="button" onClick={() => { setAuthMode('login'); setErrorMsg(''); }} className="text-brand-600 font-bold hover:underline">
                       Sign In
                     </button>
                   </span>
-                ) : (
+                )}
+                {authMode === 'login' && (
                   <span>
                     New to DoseBox?{' '}
-                    <button onClick={() => { setIsSignUp(true); resetForm(); }} className="text-brand-600 font-bold hover:underline">
+                    <button type="button" onClick={() => { setAuthMode('signup'); setErrorMsg(''); }} className="text-brand-600 font-bold hover:underline">
                       Create an Account
                     </button>
                   </span>
+                )}
+                {(authMode === 'forgot' || authMode === 'verify' || authMode === 'reset') && (
+                  <button type="button" onClick={() => { setAuthMode('login'); setErrorMsg(''); }} className="text-brand-600 font-bold hover:underline">
+                    Back to Login
+                  </button>
                 )}
               </div>
             </div>

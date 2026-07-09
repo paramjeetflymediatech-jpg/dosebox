@@ -5,6 +5,7 @@ import { Plus, Trash2, Flag, Edit } from 'lucide-react';
 import api from '../../../../lib/api';
 import Link from 'next/link';
 import Pagination from '../../../../components/admin/Pagination';
+import Swal from 'sweetalert2';
 
 interface Banner {
   id: number;
@@ -37,7 +38,16 @@ export default function AdminBannersPage() {
   }, []);
 
   const handleDeleteBanner = async (id: number) => {
-    if(!confirm('Are you sure you want to delete this banner?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this banner?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/admin/banners/${id}`);
       loadBanners();
