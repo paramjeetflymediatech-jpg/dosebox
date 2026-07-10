@@ -2,14 +2,11 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { Home, Bell, Search, ShoppingBag, User } from 'lucide-react-native';
+import { Home, Search, User } from 'lucide-react-native';
 
 import HomeScreen from '../screens/user/HomeScreen';
-import AlertsScreen from '../screens/user/AlertsScreen';
 import BrowseMedicinesScreen from '../screens/user/BrowseMedicinesScreen';
-import ProceedScreen from '../screens/user/ProceedScreen';
-import ProfileScreen from '../screens/user/ProfileScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
 
 import { rs, rv, rm, TAB_BAR_HEIGHT } from '../utils/responsive';
 
@@ -26,10 +23,8 @@ function TabIcon({ IconComponent, color, focused }) {
   );
 }
 
-export default function MainTabNavigator() {
+export default function GuestTabNavigator() {
   const insets = useSafeAreaInsets();
-
-  // Height accounts for safe-area bottom (gesture bar on Android / home bar on iOS)
   const tabBarHeight = TAB_BAR_HEIGHT + insets.bottom;
 
   return (
@@ -50,7 +45,7 @@ export default function MainTabNavigator() {
       }}
     >
       <Tab.Screen
-        name="HomeTab"
+        name="GuestHome"
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
@@ -60,17 +55,7 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="AlertsTab"
-        component={AlertsScreen}
-        options={{
-          tabBarLabel: 'Alerts',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={Bell} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ExploreTab"
+        name="GuestExplore"
         component={BrowseMedicinesScreen}
         options={{
           tabBarLabel: 'Explore',
@@ -80,20 +65,10 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="ProceedTab"
-        component={ProceedScreen}
+        name="GuestLogin"
+        component={LoginScreen}
         options={{
-          tabBarLabel: 'Proceed',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={ShoppingBag} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Login',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon IconComponent={User} color={color} focused={focused} />
           ),
@@ -114,7 +89,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 16,
-    // Ensure it sits above Android gesture navigation bar
     position: 'absolute',
     left: 0,
     right: 0,

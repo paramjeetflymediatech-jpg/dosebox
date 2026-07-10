@@ -5,9 +5,10 @@ import { Sparkles, History, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../lib/api';
 
-export default function RewardsPage() {
+export default function DoseBoxTokensPage() {
   const { user } = useAuth();
   const [history, setHistory] = useState<any[]>([]);
+  const [currentTokens, setCurrentTokens] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +17,7 @@ export default function RewardsPage() {
         const res = await api.get('/account/rewards/history');
         if (res.data?.success) {
           setHistory(res.data.data);
+          setCurrentTokens(res.data.currentTokens || 0);
         }
       } catch (err) {
         console.error('Failed to load rewards history', err);
@@ -35,15 +37,15 @@ export default function RewardsPage() {
       <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 sm:p-8 shadow-lg shadow-amber-500/20 text-white flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
           <h3 className="text-xl font-extrabold flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-white" /> Your Reward Points
+            <Sparkles className="w-6 h-6 text-white" /> Your DoseBox Tokens
           </h3>
           <p className="text-amber-100 font-medium text-sm mt-1">
-            Earn points on every purchase! 1 Point = ₹1 discount on your next order.
+            Earn tokens on every purchase! 1 Token = ₹1 discount on your next order.
           </p>
         </div>
         <div className="bg-white/20 px-6 py-4 rounded-2xl border border-white/20 backdrop-blur-md text-center min-w-[140px]">
-          <span className="block text-4xl font-black tracking-tight">{user?.rewardPoints || 0}</span>
-          <span className="block text-xs font-bold text-amber-100 uppercase tracking-widest mt-1">Total Points</span>
+          <span className="block text-4xl font-black tracking-tight">{currentTokens}</span>
+          <span className="block text-xs font-bold text-amber-100 uppercase tracking-widest mt-1">Total Tokens</span>
         </div>
       </div>
 
@@ -96,11 +98,18 @@ export default function RewardsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4 font-medium text-slate-800">{tx.description}</td>
-                    <td className="px-4 py-4 text-right font-black flex items-center justify-end gap-1">
-                      {tx.points > 0 ? (
-                        <span className="text-emerald-600 flex items-center"><ArrowUpRight className="w-4 h-4 mr-0.5" /> +{tx.points}</span>
+                    <td className="px-4 py-4 text-right font-black flex flex-col items-end gap-1">
+                      {tx.tokens > 0 ? (
+                        <>
+                          {tx.type === 'Refund' && tx.bonusTokens > 0 && (
+                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+                              ₹{tx.tokens - tx.bonusTokens} + {tx.bonusTokens} Bonus =
+                            </span>
+                          )}
+                          <span className="text-emerald-600 flex items-center text-base"><ArrowUpRight className="w-4 h-4 mr-0.5" /> +{tx.tokens}</span>
+                        </>
                       ) : (
-                        <span className="text-rose-600 flex items-center"><ArrowDownRight className="w-4 h-4 mr-0.5" /> {tx.points}</span>
+                        <span className="text-rose-600 flex items-center text-base"><ArrowDownRight className="w-4 h-4 mr-0.5" /> {tx.tokens}</span>
                       )}
                     </td>
                   </tr>

@@ -22,10 +22,10 @@ const fonts = {
 const { width } = Dimensions.get('window');
 
 const POINTERS = [
-  'Make sure mobile data is turned on',
-  'Check if your Wi-Fi router is working',
-  'Turn airplane mode on and off',
-  'Close and reopen the DoseBox app'
+  'Check your internet connection',
+  'Try Wi-Fi or mobile data',
+  'Refresh your network',
+  'Reopen the DoseBox app'
 ];
 
 interface NoInternetScreenProps {

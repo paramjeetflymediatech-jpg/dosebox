@@ -8,13 +8,69 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../services/api';
 
 export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Step 1: Create the account
+      const registerResponse = await api.post('/auth/register', {
+        name,
+        email,
+        password,
+      });
+
+      if (!registerResponse.data.success) {
+        Alert.alert('Registration Failed', registerResponse.data.message || 'Could not create account');
+        return;
+      }
+
+      // Step 2: Auto-login to get tokens (backend register doesn't return tokens)
+      const loginResponse = await api.post('/auth/login', {
+        email,
+        password,
+        device_platform: Platform.OS,
+        device_id: 'device_' + Math.random().toString(36).substring(7),
+        app_version: '0.0.1',
+      });
+
+      const loginData = loginResponse.data;
+
+      if (loginData.success) {
+        await AsyncStorage.setItem('accessToken', loginData.accessToken);
+        await AsyncStorage.setItem('refreshToken', loginData.refreshToken);
+        await AsyncStorage.setItem('user', JSON.stringify(loginData.user));
+        navigation.replace('MainTabs');
+      } else {
+        // Account was created but auto-login failed — send to Login screen
+        Alert.alert('Account Created!', 'Your account is ready. Please sign in.', [
+          { text: 'Sign In', onPress: () => navigation.replace('Login') },
+        ]);
+      }
+    } catch (error) {
+      console.error('Register error:', error);
+      const message = error?.response?.data?.message || 'Could not connect to the server.';
+      Alert.alert('Error', message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -73,8 +129,17 @@ export default function RegisterScreen({ navigation }) {
                 />
               </View>
 
-              <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Home')} activeOpacity={0.8}>
-                <Text style={styles.primaryButtonText}>Sign Up</Text>
+              <TouchableOpacity
+                style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+                onPress={handleRegister}
+                activeOpacity={0.8}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Sign Up</Text>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -150,6 +215,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20},
+  primaryButtonDisabled: {
+    backgroundColor: '#94a3b8'},
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,

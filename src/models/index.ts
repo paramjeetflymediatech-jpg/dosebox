@@ -23,6 +23,40 @@ Role.init(
 );
 
 // ----------------------------------------------------
+// DoseboxTokenTransaction
+// ----------------------------------------------------
+export interface DoseboxTokenTransactionAttributes {
+  id: number;
+  userId: number;
+  orderId?: number;
+  type: string; // 'Earned' | 'Redeemed' | 'Refund'
+  tokens: number;
+  bonusTokens?: number;
+  description?: string;
+}
+export class DoseboxTokenTransaction extends Model<DoseboxTokenTransactionAttributes, Optional<DoseboxTokenTransactionAttributes, 'id' | 'orderId' | 'bonusTokens' | 'description'>> implements DoseboxTokenTransactionAttributes {
+  declare id: number;
+  declare userId: number;
+  declare orderId?: number;
+  declare type: string;
+  declare tokens: number;
+  declare bonusTokens?: number;
+  declare description?: string;
+}
+DoseboxTokenTransaction.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    orderId: { type: DataTypes.INTEGER, allowNull: true },
+    type: { type: DataTypes.STRING, allowNull: false },
+    tokens: { type: DataTypes.INTEGER, allowNull: false },
+    bonusTokens: { type: DataTypes.INTEGER, defaultValue: 0 },
+    description: { type: DataTypes.STRING, allowNull: true },
+  },
+  { sequelize, modelName: 'DoseboxTokenTransaction', tableName: 'dosebox_token_transactions', timestamps: true }
+);
+
+// ----------------------------------------------------
 // 2. USER
 // ----------------------------------------------------
 export interface UserAttributes {
@@ -33,7 +67,8 @@ export interface UserAttributes {
   googleId?: string;
   phone?: string;
   avatar?: string;
-  rewardPoints?: number;
+  doseboxTokens?: number;
+  tokenRefundCount?: number;
   roleId: number;
   status: string; // 'active' | 'inactive'
   age?: number;
@@ -45,7 +80,7 @@ export interface UserAttributes {
   resetOtp?: string | null;
   resetOtpExpires?: Date | null;
 }
-export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'rewardPoints' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires'>> implements UserAttributes {
+export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'doseboxTokens' | 'tokenRefundCount' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires'>> implements UserAttributes {
   declare id: number;
   declare name: string;
   declare email: string;
@@ -53,7 +88,8 @@ export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 
   declare googleId?: string;
   declare phone?: string;
   declare avatar?: string;
-  declare rewardPoints?: number;
+  declare doseboxTokens?: number;
+  declare tokenRefundCount?: number;
   declare roleId: number;
   declare status: string;
   declare age?: number;
@@ -75,7 +111,8 @@ User.init(
     googleId: { type: DataTypes.STRING, allowNull: true },
     phone: { type: DataTypes.STRING, allowNull: true },
     avatar: { type: DataTypes.STRING, allowNull: true },
-    rewardPoints: { type: DataTypes.INTEGER, defaultValue: 0 },
+    doseboxTokens: { type: DataTypes.INTEGER, defaultValue: 0 },
+    tokenRefundCount: { type: DataTypes.INTEGER, defaultValue: 0 },
     roleId: { type: DataTypes.INTEGER, allowNull: false },
     status: { type: DataTypes.STRING, defaultValue: 'active' },
     age: { type: DataTypes.INTEGER, allowNull: true },
@@ -328,8 +365,13 @@ export interface OrderAttributes {
   shippingAddressId: number;
   transactionId?: string;
   refundedToPoints?: boolean;
+  cancelledBy?: string; // 'customer' | 'admin'
+  cancelReason?: string;
+  refundMethod?: string; // 'bank' | 'tokens'
+  refundStatus?: string; // 'None' | 'Pending' | 'Processed'
+  refundTransactionId?: string;
 }
-export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id' | 'prescriptionId' | 'status' | 'discountAmount' | 'gstAmount' | 'paymentStatus' | 'paymentMethod' | 'trackingTimeline' | 'couponId' | 'transactionId' | 'refundedToPoints'>> implements OrderAttributes {
+export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id' | 'prescriptionId' | 'status' | 'discountAmount' | 'gstAmount' | 'paymentStatus' | 'paymentMethod' | 'trackingTimeline' | 'couponId' | 'transactionId' | 'refundedToPoints' | 'cancelledBy' | 'cancelReason' | 'refundMethod' | 'refundStatus' | 'refundTransactionId'>> implements OrderAttributes {
   declare id: number;
   declare userId: number;
   declare prescriptionId?: number;
@@ -345,6 +387,11 @@ export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id'
   declare shippingAddressId: number;
   declare transactionId?: string;
   declare refundedToPoints?: boolean;
+  declare cancelledBy?: string;
+  declare cancelReason?: string;
+  declare refundMethod?: string;
+  declare refundStatus?: string;
+  declare refundTransactionId?: string;
 }
 Order.init(
   {
@@ -363,6 +410,11 @@ Order.init(
     shippingAddressId: { type: DataTypes.INTEGER, allowNull: false },
     transactionId: { type: DataTypes.STRING, allowNull: true },
     refundedToPoints: { type: DataTypes.BOOLEAN, defaultValue: false },
+    cancelledBy: { type: DataTypes.STRING, allowNull: true },
+    cancelReason: { type: DataTypes.TEXT, allowNull: true },
+    refundMethod: { type: DataTypes.STRING, allowNull: true },
+    refundStatus: { type: DataTypes.STRING, defaultValue: 'None' },
+    refundTransactionId: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: 'Order', tableName: 'orders', timestamps: true }
 );
@@ -1269,5 +1321,6 @@ export default {
   Supplier,
   UserActivity,
   Faq,
-  MobileAuthUser
+  MobileAuthUser,
+  DoseboxTokenTransaction
 };

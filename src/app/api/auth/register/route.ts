@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        rewardPoints: user.rewardPoints
+        doseboxTokens: user.doseboxTokens
       }
     }, { status: 201 });
   } catch (error: any) {

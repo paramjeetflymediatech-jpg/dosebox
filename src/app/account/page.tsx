@@ -15,16 +15,18 @@ export default function AccountDashboardPage() {
     addresses: 0,
     consultations: 0
   });
+  const [currentTokens, setCurrentTokens] = useState(user?.doseboxTokens || 0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [ordersRes, prescRes, addrRes, consultRes] = await Promise.all([
+        const [ordersRes, prescRes, addrRes, consultRes, profileRes] = await Promise.all([
           api.get('/orders').catch(() => ({ data: { success: false } })),
           api.get('/prescriptions/customer').catch(() => ({ data: { success: false } })),
           api.get('/account/addresses').catch(() => ({ data: { success: false } })),
-          api.get('/account/appointments').catch(() => ({ data: { success: false } }))
+          api.get('/account/appointments').catch(() => ({ data: { success: false } })),
+          api.get('/account/profile').catch(() => ({ data: { success: false } }))
         ]);
         
         setStats({
@@ -33,6 +35,9 @@ export default function AccountDashboardPage() {
           addresses: addrRes.data?.success ? addrRes.data.data.length : 0,
           consultations: consultRes.data?.success ? consultRes.data.data.length : 0
         });
+        if (profileRes.data?.success) {
+          setCurrentTokens(profileRes.data.data.doseboxTokens || 0);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -76,20 +81,20 @@ export default function AccountDashboardPage() {
             <p className="text-3xl font-black text-emerald-600 mt-2">{stats.prescriptions}</p>
           </Link>
 
-          <Link href="/account/consultations" className="block bg-slate-50 hover:bg-slate-100 border border-slate-100 p-6 rounded-2xl transition-all">
+          {/* <Link href="/account/consultations" className="block bg-slate-50 hover:bg-slate-100 border border-slate-100 p-6 rounded-2xl transition-all">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm mb-4">
               <Stethoscope className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="font-bold text-slate-900">Consultations</h3>
             <p className="text-3xl font-black text-blue-600 mt-2">{stats.consultations}</p>
-          </Link>
+          </Link> */}
           
           <Link href="/account/rewards" className="block bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl transition-all hover:shadow-lg shadow-amber-500/20 text-white">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center mb-4 border border-white/20">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h3 className="font-bold text-white">Reward Points</h3>
-            <p className="text-3xl font-black text-white mt-2">{user?.rewardPoints || 0}</p>
+            <p className="text-white/80 font-medium text-sm mt-4">DoseBox Tokens</p>
+            <p className="text-3xl font-black text-white mt-2">{currentTokens}</p>
           </Link>
         </div>
       </div>

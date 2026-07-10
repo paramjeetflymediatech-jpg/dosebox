@@ -20,9 +20,14 @@ interface Order {
   totalAmount: string;
   finalAmount: string;
   paymentStatus: string;
+  paymentMethod?: string;
   trackingTimeline: string;
   createdAt: string;
   items?: OrderItem[];
+  cancelledBy?: string;
+  cancelReason?: string;
+  refundMethod?: string;
+  refundStatus?: string;
 }
 
 const getRichTimeline = (order: Order, timeline: any[]) => {
@@ -73,6 +78,15 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [orderPage, setOrderPage] = useState(1);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+  
+  // Cancel & Refund state
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [refundMethod, setRefundMethod] = useState<'bank' | 'tokens'>('bank');
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+  const [isClaimMode, setIsClaimMode] = useState(false);
+
   const ordersPerPage = 5;
 
   useEffect(() => {
@@ -89,6 +103,41 @@ export default function OrdersPage() {
       setLoading(false);
     }
   }
+
+  const openCancelModal = (order: Order, isClaim: boolean = false) => {
+    setOrderToCancel(order);
+    setIsClaimMode(isClaim);
+    setCancelReason('');
+    setRefundMethod(order.paymentMethod === 'COD' ? 'tokens' : 'bank');
+    setCancelModalOpen(true);
+  };
+
+  const submitCancelOrClaim = async () => {
+    if (!orderToCancel) return;
+    if (!isClaimMode && !cancelReason.trim()) {
+      toast.error('Please provide a cancellation reason');
+      return;
+    }
+    setIsSubmittingCancel(true);
+    try {
+      const endpoint = isClaimMode ? `/orders/${orderToCancel.id}/claim-refund` : `/orders/${orderToCancel.id}/cancel`;
+      const res = await api.post(endpoint, {
+        refundMethod,
+        cancelReason: isClaimMode ? undefined : cancelReason
+      });
+      if (res.data?.success) {
+        toast.success(isClaimMode ? 'Refund claimed successfully!' : 'Order cancelled successfully!');
+        setCancelModalOpen(false);
+        loadOrders();
+      } else {
+        toast.error(res.data?.message || 'Action failed');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'An error occurred');
+    } finally {
+      setIsSubmittingCancel(false);
+    }
+  };
 
   const downloadInvoice = async (orderId: number) => {
     try {
@@ -155,9 +204,19 @@ export default function OrdersPage() {
                       <button onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} className="p-2 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-lg transition-all" title="View details">
                         <Eye className="w-4 h-4" />
                       </button>
-                      {order.paymentStatus === 'Paid' && (
+                      {order.status === 'Delivered' && (
                         <button onClick={() => downloadInvoice(order.id)} className="p-2 bg-brand-50 border border-brand-100 text-brand-600 hover:bg-brand-100 rounded-lg transition-all" title="Download Invoice">
                           <Download className="w-4 h-4" />
+                        </button>
+                      )}
+                      {['Pending', 'Confirmed', 'Packed'].includes(order.status) && (
+                        <button onClick={() => openCancelModal(order, false)} className="px-3 py-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg transition-all text-xs font-bold whitespace-nowrap">
+                          Cancel Order
+                        </button>
+                      )}
+                      {order.status === 'Cancelled' && order.refundStatus === 'Pending User Choice' && (
+                        <button onClick={() => openCancelModal(order, true)} className="px-3 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all text-xs font-bold whitespace-nowrap shadow-sm shadow-amber-500/20">
+                          Claim Refund
                         </button>
                       )}
                     </div>
@@ -265,6 +324,92 @@ export default function OrdersPage() {
           )}
         </div>
       )}
+
+      {/* Cancel / Refund Modal */}
+      {cancelModalOpen && orderToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-extrabold text-slate-900">{isClaimMode ? 'Claim Your Refund' : 'Cancel Order'}</h3>
+                <button onClick={() => setCancelModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+              <p className="text-slate-500 text-sm mt-1">
+                {isClaimMode ? 'Please select how you would like to receive your refund for this cancelled order.' : 'We are sorry to see you cancel. Please choose a refund method.'}
+              </p>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              {!isClaimMode && (
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Reason for Cancellation</label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                    placeholder="Tell us why you are cancelling..."
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">Select Refund Method</label>
+                
+                <div className="space-y-3">
+                  {orderToCancel.paymentMethod !== 'COD' && (
+                    <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'bank' ? 'border-brand-500 bg-brand-50' : 'border-slate-100 hover:border-slate-200'}`}>
+                      <input type="radio" name="refundMethod" value="bank" checked={refundMethod === 'bank'} onChange={() => setRefundMethod('bank')} className="mt-1" />
+                      <div>
+                        <span className="block font-bold text-slate-900">Original Payment Method</span>
+                        <span className="block text-xs text-slate-500 mt-0.5">Amount will be refunded to your bank/card in 5-7 days.</span>
+                      </div>
+                    </label>
+                  )}
+
+                  <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'tokens' ? 'border-amber-500 bg-amber-50' : 'border-slate-100 hover:border-slate-200'}`}>
+                    <input type="radio" name="refundMethod" value="tokens" checked={refundMethod === 'tokens'} onChange={() => setRefundMethod('tokens')} className="mt-1" />
+                    <div>
+                      <span className="block font-bold text-amber-900 flex items-center gap-2">
+                        DoseBox Tokens
+                        <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full">+ Bonus!</span>
+                      </span>
+                      <span className="block text-xs text-amber-700/80 mt-0.5">
+                        {orderToCancel.paymentMethod === 'COD' ? (
+                          `Get ${Number(orderToCancel.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly as an apology.`
+                        ) : (
+                          `Get ₹${formatCurrency(Number(orderToCancel.finalAmount))} + ${Number(orderToCancel.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.`
+                        )}
+                      </span>
+                      {!isClaimMode && (
+                        <span className="block text-[10px] font-bold text-rose-500 mt-2 bg-rose-50 py-1 px-2 rounded">
+                          * Note: This option is only available twice per lifetime for self-cancellations.
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+              <button onClick={() => setCancelModalOpen(false)} className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-all">
+                Close
+              </button>
+              <button 
+                onClick={submitCancelOrClaim} 
+                disabled={isSubmittingCancel || (!isClaimMode && !cancelReason.trim())}
+                className="flex-1 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-all shadow-sm shadow-brand-500/20"
+              >
+                {isSubmittingCancel ? 'Processing...' : isClaimMode ? 'Claim Refund' : 'Confirm Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

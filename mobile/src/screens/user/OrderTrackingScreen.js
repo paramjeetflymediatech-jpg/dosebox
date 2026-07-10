@@ -1,4 +1,5 @@
 import React from 'react';
+import { CommonActions } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -29,7 +30,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
       <View style={styles.contentWrapper}>
         <View style={styles.headerContainer}>
           <TouchableOpacity 
-            onPress={() => navigation.navigate('Home')} 
+            onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }))}
             style={styles.backButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
@@ -55,7 +56,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
         <View style={styles.footerContainer}>
           <TouchableOpacity 
             style={styles.primaryButton}
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' }] }))}
             activeOpacity={0.8}
           >
             <Text style={styles.primaryButtonText}>Back to Dashboard</Text>

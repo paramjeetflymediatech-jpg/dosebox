@@ -1,171 +1,218 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
-  TextInput,
-  Platform,
   ScrollView,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
+import api from '../../services/api';
+import { useCart } from '../../context/CartContext';
 
-const MEDICINES = [
-  { id: '1', name: 'Amoxicillin 500mg', desc: 'Antibiotic', price: '$12.00' },
-  { id: '2', name: 'Lisinopril 10mg', desc: 'Blood Pressure', price: '$8.50' },
-  { id: '3', name: 'Atorvastatin 20mg', desc: 'Cholesterol', price: '$15.00' },
-  { id: '4', name: 'Metformin 500mg', desc: 'Diabetes', price: '$5.00' },
-];
 
-export default function BrowseMedicinesScreen({ navigation }) {
-  const [search, setSearch] = useState('');
+
+export default function BrowseMedicinesScreen({ navigation, route }) {
+  const initialSearch = route?.params?.search || '';
+  const [search, setSearch] = useState(initialSearch);
+  const [medicines, setMedicines] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { addToCart, totalQty } = useCart();
+
+  useEffect(() => {
+    // Debounce search slightly or just fetch on change.
+    const delayDebounceFn = setTimeout(() => {
+      fetchMedicines(search);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
+
+  const fetchMedicines = async (query) => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/medicines?search=${encodeURIComponent(query)}`);
+      if (res.data?.success) {
+        setMedicines(res.data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch medicines:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.contentWrapper}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            style={styles.backButton}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Medicines</Text>
-          
-          <View style={styles.searchBar}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search medicines..."
-              placeholderTextColor="#94a3b8"
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Explore</Text>
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search medicines..."
+            placeholderTextColor="#94a3b8"
+            value={search}
+            onChangeText={setSearch}
+          />
         </View>
+      </View>
 
-        <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
-          {MEDICINES.map((med) => (
-            <View key={med.id} style={styles.medCard}>
+      {/* List */}
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#1F5C52" />
+        </View>
+      ) : medicines.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyText}>No medicines found.</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {medicines.map((med) => (
+            <View key={med.id} style={styles.card}>
               <View style={styles.medInfo}>
                 <Text style={styles.medName}>{med.name}</Text>
-                <Text style={styles.medDesc}>{med.desc}</Text>
+                <Text style={styles.medDesc}>{med.composition || 'Medicine'}</Text>
               </View>
               <View style={styles.medAction}>
-                <Text style={styles.medPrice}>{med.price}</Text>
-                <TouchableOpacity style={styles.addButton}>
-                  <Text style={styles.addButtonText}>+</Text>
+                <Text style={styles.medPrice}>₹{med.price}</Text>
+                <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(med)}>
+                  <Text style={styles.addBtnText}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ))}
         </ScrollView>
+      )}
 
-        <View style={styles.footerContainer}>
-          <TouchableOpacity 
-            style={styles.primaryButton}
+      {/* Footer CTA */}
+      {totalQty > 0 && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
             onPress={() => navigation.navigate('CartCheckout')}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryButtonText}>View Cart (3 items)</Text>
+            <Text style={styles.primaryBtnText}>View Cart ({totalQty} item{totalQty !== 1 ? 's' : ''})</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff'},
-  contentWrapper: {
-    width: '100%',
-    maxWidth: 600,
-    alignSelf: 'center',
-    flex: 1,
-    paddingHorizontal: 24},
-  headerContainer: {
-    paddingTop: Platform.OS === 'android' ? 40 : 20,
-    marginBottom: 24},
-  backButton: {
-    marginBottom: 16,
-    alignSelf: 'flex-start'},
-  backIcon: {
-    color: '#0f172a',
-    fontSize: 24,
-    fontWeight: '300'},
-  title: {
-    fontSize: 32,
-    fontWeight: '300',
-    color: '#0f172a',
-    marginBottom: 20,
-    letterSpacing: -0.5},
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  header: {
+    backgroundColor: '#fff',
+    paddingHorizontal: spacing.md,
+    paddingTop: rv(12),
+    paddingBottom: rv(14),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    gap: rv(12),
+  },
+  headerTitle: {
+    fontSize: rm(22),
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0'},
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 10},
+    borderColor: '#E2E8F0',
+    height: rv(46),
+  },
+  searchIcon: { fontSize: rs(16), marginRight: rs(10) },
   searchInput: {
     flex: 1,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#0f172a'},
-  listContainer: {
-    flex: 1},
-  medCard: {
+    fontSize: rm(15),
+    color: '#0F172A',
+  },
+  list: { flex: 1 },
+  listContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: rv(12),
+    paddingBottom: rv(120),
+  },
+  card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9'},
-  medInfo: {
-    flex: 1},
+    backgroundColor: '#fff',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: rv(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  medInfo: { flex: 1 },
   medName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#0f172a',
-    marginBottom: 4},
-  medDesc: {
-    fontSize: 14,
-    color: '#64748b'},
-  medAction: {
-    alignItems: 'flex-end'},
-  medPrice: {
-    fontSize: 16,
+    fontSize: rm(15),
     fontWeight: '600',
-    color: '#134E4A',
-    marginBottom: 8},
-  addButton: {
-    backgroundColor: '#f1f5f9',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    color: '#0F172A',
+    marginBottom: rv(4),
+  },
+  medDesc: { fontSize: rm(13), color: '#64748B' },
+  medAction: { alignItems: 'flex-end' },
+  medPrice: {
+    fontSize: rm(15),
+    fontWeight: '700',
+    color: '#1F5C52',
+    marginBottom: rv(8),
+  },
+  addBtn: {
+    backgroundColor: '#EAF4F2',
+    width: rs(34),
+    height: rs(34),
+    borderRadius: rs(17),
     alignItems: 'center',
-    justifyContent: 'center'},
-  addButtonText: {
-    fontSize: 18,
-    color: '#0f172a',
-    fontWeight: '500'},
-  footerContainer: {
-    paddingVertical: 20},
-  primaryButton: {
-    backgroundColor: '#134E4A',
-    paddingVertical: 18,
-    borderRadius: 8,
-    alignItems: 'center'},
-  primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
-    letterSpacing: 0.5}});
-
+    justifyContent: 'center',
+  },
+  addBtnText: { fontSize: rm(20), color: '#1F5C52', fontWeight: '600' },
+  footer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: rv(14),
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  primaryBtn: {
+    backgroundColor: '#1F5C52',
+    paddingVertical: rv(16),
+    borderRadius: radius.md,
+    alignItems: 'center',
+  },
+  primaryBtnText: {
+    color: '#fff',
+    fontSize: rm(16),
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: rm(15),
+    color: '#94A3B8',
+  },
+});

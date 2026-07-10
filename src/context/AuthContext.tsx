@@ -9,7 +9,7 @@ interface UserProfile {
   email: string;
   phone?: string;
   role: 'Admin' | 'Customer';
-  rewardPoints?: number;
+  doseboxTokens?: number;
 }
 
 interface AuthContextType {

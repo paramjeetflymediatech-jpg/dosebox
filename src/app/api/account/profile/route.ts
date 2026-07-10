@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const user = await User.findByPk(userAuth.id, {
-      attributes: ['id', 'name', 'email', 'phone', 'avatar', 'rewardPoints', 'age', 'gender', 'bloodGroup', 'height', 'weight', 'address']
+      attributes: ['id', 'name', 'email', 'phone', 'avatar', 'doseboxTokens', 'age', 'gender', 'bloodGroup', 'height', 'weight', 'address']
     });
 
     if (!user) {
@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest) {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        rewardPoints: user.rewardPoints
+        doseboxTokens: user.doseboxTokens
       }
     }, { status: 200 });
 

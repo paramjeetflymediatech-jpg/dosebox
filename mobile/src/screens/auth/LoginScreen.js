@@ -39,12 +39,16 @@ export default function LoginScreen({ navigation }) {
       const data = response.data;
 
       if (data.success) {
-        await AsyncStorage.setItem('accessToken', data.accessToken);
-        await AsyncStorage.setItem('refreshToken', data.refreshToken);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        await AsyncStorage.setItem('accessToken', data.accessToken || '');
+        if (data.refreshToken) {
+          await AsyncStorage.setItem('refreshToken', data.refreshToken);
+        }
+        if (data.user) {
+          await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        }
         
-        // Route based on user role
-        if (data.user && data.user.role === 'Admin') {
+        // Route based on user role (case insensitive)
+        if (data.user && data.user.role?.toLowerCase() === 'admin') {
           navigation.replace('AdminTabs');
         } else {
           navigation.replace('MainTabs');

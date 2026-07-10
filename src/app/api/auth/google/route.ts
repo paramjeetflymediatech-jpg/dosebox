@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
         email: user!.email,
         phone: user!.phone,
         avatar: user!.avatar,
-        rewardPoints: user!.rewardPoints,
+        doseboxTokens: user!.doseboxTokens,
         role: roleName
       }
     }, { status: 200 });

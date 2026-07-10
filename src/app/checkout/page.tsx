@@ -32,23 +32,40 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'PhonePe'>('COD');
-  const [useRewardPoints, setUseRewardPoints] = useState(false);
+  const [useDoseboxTokens, setUseDoseboxTokens] = useState(false);
   const [pointsInput, setPointsInput] = useState('');
+  const [currentTokens, setCurrentTokens] = useState(0);
+
+  useEffect(() => {
+    async function fetchTokens() {
+      try {
+        const res = await api.get('/account/profile');
+        if (res.data?.success) {
+          setCurrentTokens(res.data.data.doseboxTokens || 0);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile', err);
+      }
+    }
+    if (user) {
+      fetchTokens();
+    }
+  }, [user]);
   
   const parsedPoints = parseInt(pointsInput) || 0;
-  const pointsError = useRewardPoints && parsedPoints > (user?.rewardPoints || 0) 
-    ? `You only have ${user?.rewardPoints || 0} points available.`
-    : useRewardPoints && parsedPoints > Math.floor(totalAmount)
-    ? `You can only apply up to ${Math.floor(totalAmount)} points.`
+  const pointsError = useDoseboxTokens && parsedPoints > currentTokens 
+    ? `You only have ${currentTokens} tokens available.`
+    : useDoseboxTokens && parsedPoints > Math.floor(totalAmount)
+    ? `You can only apply up to ${Math.floor(totalAmount)} tokens.`
     : null;
 
-  const pointsUsed = useRewardPoints && !pointsError ? parsedPoints : 0;
+  const pointsUsed = useDoseboxTokens && paymentMethod === 'PhonePe' && !pointsError ? parsedPoints : 0;
   const finalPayable = Math.max(0, totalAmount - pointsUsed);
 
-  const handleToggleRewardPoints = (checked: boolean) => {
-    setUseRewardPoints(checked);
+  const handleToggleDoseboxTokens = (checked: boolean) => {
+    setUseDoseboxTokens(checked);
     if (checked) {
-      const max = user?.rewardPoints ? Math.min(user.rewardPoints, Math.floor(totalAmount)) : 0;
+      const max = currentTokens ? Math.min(currentTokens, Math.floor(totalAmount)) : 0;
       setPointsInput(max.toString());
     } else {
       setPointsInput('');
@@ -276,8 +293,8 @@ export default function CheckoutPage() {
         shippingAddress: selectedAddrObj,
         paymentMethod,
         prescriptionId,
-        useRewardPoints: useRewardPoints && !pointsError,
-        rewardPointsToUse: pointsUsed
+        useDoseboxTokens: useDoseboxTokens && !pointsError,
+        doseboxTokensToUse: pointsUsed
       };
 
       const res = await api.post('/orders', orderData);
@@ -629,26 +646,26 @@ export default function CheckoutPage() {
                 <span className="font-black text-slate-900 text-lg tracking-tight">₹{formatCurrency(totalAmount)}</span>
               </div>
               
-              {user && (user.rewardPoints || 0) > 0 && (
+              {user && currentTokens > 0 && paymentMethod === 'PhonePe' && (
                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mt-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="flex items-center gap-1.5 font-bold text-amber-700 text-sm">
-                      <Sparkles className="w-4 h-4" /> Reward Points
+                      <Sparkles className="w-4 h-4" /> DoseBox Tokens
                     </span>
-                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Balance: {user.rewardPoints} Pts</span>
+                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Balance: {currentTokens} Tokens</span>
                   </div>
                   
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
-                      checked={useRewardPoints}
-                      onChange={(e) => handleToggleRewardPoints(e.target.checked)}
+                      checked={useDoseboxTokens}
+                      onChange={(e) => handleToggleDoseboxTokens(e.target.checked)}
                       className="w-4 h-4 text-brand-600 border-amber-300 rounded focus:ring-brand-500 bg-white" 
                     />
-                    <span className="text-sm font-semibold text-amber-800">Use points for this order</span>
+                    <span className="text-sm font-semibold text-amber-800">Use tokens for this order</span>
                   </label>
                   
-                  {useRewardPoints && (
+                  {useDoseboxTokens && (
                     <div className="mt-3 pt-3 border-t border-amber-200/50">
                       <div className="flex flex-col gap-2 mb-3">
                         <label className="text-xs text-amber-700 font-semibold">Points to Apply</label>
@@ -732,7 +749,7 @@ export default function CheckoutPage() {
                   </p>
                   <div className="space-y-3">
                     <Link 
-                      href="/account" 
+                      href="/account/orders" 
                       className="block w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-lg shadow-brand-500/20"
                     >
                       Track Order Status

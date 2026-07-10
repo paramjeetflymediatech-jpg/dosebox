@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../middleware/auth';
-import { Order, OrderItem, Medicine, Coupon, Address, User, Notification, Prescription, Supplier, RewardTransaction } from '../../../models';
+import { Order, OrderItem, Medicine, Coupon, Address, User, Notification, Prescription, Supplier, DoseboxTokenTransaction } from '../../../models';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     const userId = userAuth.id;
     const body = await req.json().catch(() => ({}));
-    const { items, couponCode, shippingAddressId, shippingAddress, paymentMethod, prescriptionId, useRewardPoints, rewardPointsToUse } = body;
+    const { items, couponCode, shippingAddressId, shippingAddress, paymentMethod, prescriptionId, useDoseboxTokens, doseboxTokensToUse } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, message: 'Shopping cart items are required' }, { status: 400 });
@@ -131,11 +131,11 @@ export async function POST(req: NextRequest) {
 
     let pointsUsed = 0;
     const userRecord = await User.findByPk(userId);
-    if (useRewardPoints && userRecord && (userRecord.rewardPoints || 0) > 0) {
-      if (rewardPointsToUse !== undefined) {
-         pointsUsed = Math.min(Number(rewardPointsToUse), userRecord.rewardPoints || 0, finalAmount);
+    if (useDoseboxTokens && userRecord && (userRecord.doseboxTokens || 0) > 0) {
+      if (doseboxTokensToUse !== undefined) {
+         pointsUsed = Math.min(Number(doseboxTokensToUse), userRecord.doseboxTokens || 0, finalAmount);
       } else {
-         pointsUsed = Math.min(userRecord.rewardPoints || 0, finalAmount);
+         pointsUsed = Math.min(userRecord.doseboxTokens || 0, finalAmount);
       }
       finalAmount -= pointsUsed;
     }
@@ -206,12 +206,13 @@ export async function POST(req: NextRequest) {
 
     if (pointsUsed > 0 && userRecord) {
       await userRecord.update({
-        rewardPoints: (userRecord.rewardPoints || 0) - pointsUsed
+        doseboxTokens: (userRecord.doseboxTokens || 0) - pointsUsed
       });
 
-      await RewardTransaction.create({
+      await DoseboxTokenTransaction.create({
         userId: userRecord.id,
-        points: -pointsUsed,
+        orderId: order.id,
+        tokens: pointsUsed,
         type: 'Redeemed',
         description: `Redeemed for Order #${order.id}`
       });

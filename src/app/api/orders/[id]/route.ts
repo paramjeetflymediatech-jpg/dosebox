@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
-import { Order, Notification, User, RewardTransaction } from '../../../../models';
+import { Order, Notification, User, DoseboxTokenTransaction } from '../../../../models';
+import { sendOrderStatusEmail, sendOrderCancelledEmail } from '../../../../lib/email';
+import { initiatePhonePeRefund } from '../../payments/phonepe/refund/route';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -9,15 +11,20 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'Admin');
+    const authCheck = authorizeRoles(userAuth, 'Admin', 'Pharmacist');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const body = await req.json();
-    const { status, paymentStatus, trackingMessage } = body;
+    const { status, paymentStatus, trackingMessage, cancelReason } = body;
 
     const order = await Order.findByPk(params.id);
     if (!order) {
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
+    }
+
+    const user = await User.findByPk(order.userId);
+    if (!user) {
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
     let updated = false;
@@ -45,32 +52,23 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     if (updated) {
-      if (order.status === 'Cancelled' && order.paymentStatus === 'Paid' && order.paymentMethod !== 'COD' && !order.refundedToPoints) {
-        const finalAmt = Number(order.finalAmount);
-        const bonus = (finalAmt <= 500 ? 50 : 100);
-        const refundPoints = finalAmt + bonus;
+      // ----------------------------------------------------
+      // ADMIN CANCELLATION LOGIC
+      // ----------------------------------------------------
+      if (order.status === 'Cancelled' && !order.cancelledBy) {
+        order.cancelledBy = 'admin';
+        order.cancelReason = cancelReason || 'Cancelled by DoseBox Admin';
         
-        const user = await User.findByPk(order.userId);
-        if (user) {
-          await user.update({
-            rewardPoints: (user.rewardPoints || 0) + refundPoints
-          });
-
-          await RewardTransaction.create({
-            userId: user.id,
-            points: finalAmt,
-            type: 'Refund',
-            description: `Refund for Cancelled Order #${order.id}`
-          });
-
-          await RewardTransaction.create({
-            userId: user.id,
-            points: bonus,
-            type: 'Bonus',
-            description: `Cancellation Guarantee Bonus for Order #${order.id}`
-          });
-        }
-        order.refundedToPoints = true;
+        // Wait for the user to login and choose their refund method (Bank vs Tokens)
+        // No auto-refunding happens here.
+        order.refundStatus = 'Pending User Choice';
+        order.refundMethod = 'None';
+        
+        // Send a generic cancellation email (the refund claim email will be sent later once they claim it)
+        sendOrderStatusEmail(user, order, 'Cancelled (Please choose a refund option in your account)').catch(console.error);
+      } else if (status) {
+        // Send normal status update email
+        sendOrderStatusEmail(user, order, status).catch(console.error);
       }
 
       await order.save();

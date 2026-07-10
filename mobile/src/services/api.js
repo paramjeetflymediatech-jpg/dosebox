@@ -65,7 +65,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.error('Refresh token expired or invalid', refreshError);
         // Clean up storage so the app knows the user is logged out
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+        await AsyncStorage.removeItem('accessToken');
+        await AsyncStorage.removeItem('refreshToken');
+        await AsyncStorage.removeItem('user');
         
         // TODO: You might want to trigger a global event here or use a Navigation reference
         // to forcefully navigate the user back to the Welcome/Login screen.

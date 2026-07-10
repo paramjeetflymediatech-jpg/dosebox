@@ -16,8 +16,12 @@ import UploadPrescriptionScreen from '../screens/user/UploadPrescriptionScreen';
 import BrowseMedicinesScreen from '../screens/user/BrowseMedicinesScreen';
 import CartCheckoutScreen from '../screens/user/CartCheckoutScreen';
 import OrderTrackingScreen from '../screens/user/OrderTrackingScreen';
+import ProfileScreen from '../screens/user/ProfileScreen';
+import ProceedScreen from '../screens/user/ProceedScreen';
+import AlertsScreen from '../screens/user/AlertsScreen';
 import MainTabNavigator from './MainTabNavigator';
 import AdminTabNavigator from './AdminTabNavigator';
+import GuestTabNavigator from './GuestTabNavigator';
 
 const Stack = createNativeStackNavigator();
 
@@ -66,6 +70,7 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="GuestTabs" component={GuestTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="MainTabs" component={MainTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="AdminTabs" component={AdminTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -77,6 +82,9 @@ export default function AppNavigator() {
         <Stack.Screen name="BrowseMedicines" component={BrowseMedicinesScreen} />
         <Stack.Screen name="CartCheckout" component={CartCheckoutScreen} />
         <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Proceed" component={ProceedScreen} />
+        <Stack.Screen name="Alerts" component={AlertsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

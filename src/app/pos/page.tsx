@@ -963,10 +963,11 @@ export default function POSPage() {
                   <span>GRAND TOTAL:</span>
                   <span>₹{formatCurrency(recentOrder.total)}</span>
                 </div>
-                {recentOrder.rewardPoints > 0 && (
-                  <div className="flex justify-between text-xs font-bold text-amber-600 mt-1 pt-1 border-t border-dashed border-slate-300">
-                    <span>REWARD POINTS EARNED:</span>
-                    <span>+{recentOrder.rewardPoints} Pts</span>
+                {recentOrder.doseboxTokens > 0 && (
+                  <div className="absolute top-2 right-2 flex flex-col items-end">
+                    <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border border-amber-200">
+                    +{recentOrder.doseboxTokens} Tokens
+                    </span>
                   </div>
                 )}
               </div>

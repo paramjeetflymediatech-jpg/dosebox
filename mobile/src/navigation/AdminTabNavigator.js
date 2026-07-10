@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { LayoutDashboard, Package, Pill } from 'lucide-react-native';
 
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminOrdersScreen from '../screens/admin/AdminOrdersScreen';
@@ -34,7 +35,7 @@ export default function AdminTabNavigator() {
         component={AdminDashboardScreen} 
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📊</Text>,
+          tabBarIcon: ({ color }) => <LayoutDashboard size={20} color={color} />,
         }}
       />
       <Tab.Screen 
@@ -42,7 +43,7 @@ export default function AdminTabNavigator() {
         component={AdminOrdersScreen} 
         options={{
           tabBarLabel: 'Orders',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📦</Text>,
+          tabBarIcon: ({ color }) => <Package size={20} color={color} />,
         }}
       />
       <Tab.Screen 
@@ -50,7 +51,7 @@ export default function AdminTabNavigator() {
         component={AdminMedicinesScreen} 
         options={{
           tabBarLabel: 'Medicines',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>💊</Text>,
+          tabBarIcon: ({ color }) => <Pill size={20} color={color} />,
         }}
       />
     </Tab.Navigator>

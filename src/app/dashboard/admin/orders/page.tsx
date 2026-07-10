@@ -18,6 +18,7 @@ export default function AdminOrdersPage() {
   const [updateStatus, setUpdateStatus] = useState('');
   const [updatePayment, setUpdatePayment] = useState('');
   const [trackingMessage, setTrackingMessage] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -46,7 +47,8 @@ export default function AdminOrdersPage() {
       const res = await api.put(`/orders/${selectedOrder.id}`, {
         status: updateStatus,
         paymentStatus: updatePayment,
-        trackingMessage: trackingMessage.trim() || undefined
+        trackingMessage: trackingMessage.trim() || undefined,
+        cancelReason: updateStatus === 'Cancelled' ? cancelReason.trim() : undefined
       });
       if (res.data?.success) {
         setTrackingMessage('');
@@ -65,6 +67,7 @@ export default function AdminOrdersPage() {
     setUpdateStatus(order.status);
     setUpdatePayment(order.paymentStatus);
     setTrackingMessage('');
+    setCancelReason('');
   };
 
   const filteredOrders = orders.filter(o => 
@@ -206,6 +209,18 @@ export default function AdminOrdersPage() {
                   </select>
                 </div>
               </div>
+
+              {updateStatus === 'Cancelled' && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                  <label className="block text-xs font-bold text-slate-700 mb-2">Cancellation Reason</label>
+                  <textarea 
+                    value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Enter reason for cancellation..."
+                    className="w-full px-4 py-3 rounded-xl border border-rose-200 bg-rose-50/30 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 transition-all outline-none text-sm min-h-[80px] resize-none"
+                    required
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2">Quick Timeline Updates</label>
