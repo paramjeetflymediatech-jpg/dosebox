@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         roleId: 2, // Customer
         status: 'active'
       });
-      
+
       user = await User.findByPk(user.id, {
         include: [{ model: Role, as: 'role' }]
       }) as any;

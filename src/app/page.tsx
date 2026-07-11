@@ -75,7 +75,6 @@ export default function HomePage() {
   // Quick View state
   const [quickViewMed, setQuickViewMed] = useState<any>(null);
   const [qty, setQty] = useState(1);
-  const [googleReviews, setGoogleReviews] = useState<any[]>([]);
   const [dynamicFaqs, setDynamicFaqs] = useState<any[]>([]);
   const [expandedReviews, setExpandedReviews] = useState<number[]>([]);
   const reviewSliderRef = useRef<HTMLDivElement>(null);
@@ -95,20 +94,6 @@ export default function HomePage() {
     }
   };
 
-  useEffect(() => {
-    async function fetchReviews() {
-      try {
-        const res = await fetch('/api/reviews');
-        const data = await res.json();
-        if (data.success && data.reviews && data.reviews.length > 0) {
-          setGoogleReviews(data.reviews);
-        }
-      } catch (err) {
-        console.error('Failed to load Google Reviews', err);
-      }
-    }
-    fetchReviews();
-  }, []);
 
   useEffect(() => {
     async function fetchFaqs() {
@@ -1074,11 +1059,11 @@ export default function HomePage() {
           </button>
           
           <div ref={reviewSliderRef} className="flex overflow-x-auto gap-6 snap-x snap-mandatory hide-scrollbar pb-6 pt-2">
-            {(googleReviews.length > 0 ? googleReviews : [
+            {[
               { author_name: "Rajesh Sharma", rating: 5, relative_time_description: "2 days ago", text: "Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly. Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly" },
               { author_name: "Priyanka Sen", rating: 5, relative_time_description: "1 week ago", text: "The video consultation slot booking is extremely clean. I booked a skin specialist at 10 AM, had session at 10:15 AM, and had my medicines shipped by afternoon!" },
               { author_name: "Amit Verma", rating: 5, relative_time_description: "2 weeks ago", text: "Extremely impressed by the GST compliance invoice layout. I need this to file company medical reimbursement. The PDF matches physical enterprise standards." }
-            ]).map((review, idx) => {
+            ].map((review: any, idx) => {
               const colors = ["bg-blue-100 text-blue-700", "bg-emerald-100 text-emerald-700", "bg-purple-100 text-purple-700"];
               const bgClass = colors[idx % colors.length];
               const initial = review.author_name ? review.author_name.charAt(0).toUpperCase() : 'U';
