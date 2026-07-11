@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (user!.status !== 'active') {
+    if (user!.status.toLowerCase() !== 'active') {
       return NextResponse.json({ success: false, message: 'Account is suspended' }, { status: 403 });
     }
 
