@@ -6,12 +6,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkeyforauth';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecretrefreshjwtkeyforauth';
 
 export async function POST(req: NextRequest) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nk.socialflymediatech.com';
   try {
     const formData = await req.formData();
     const credential = (formData as any).get('credential') as string;
 
     if (!credential) {
-      return NextResponse.redirect(new URL('/?error=NoCredential', req.url));
+      return NextResponse.redirect(new URL('/?error=NoCredential', baseUrl));
     }
 
     // Decode JWT (Google's credential) without external library
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     const { sub: googleId, email, name, picture: avatar } = payload;
 
     if (!googleId || !email || !name) {
-      return NextResponse.redirect(new URL('/?error=InvalidGooglePayload', req.url));
+      return NextResponse.redirect(new URL('/?error=InvalidGooglePayload', baseUrl));
     }
 
     let user = await User.findOne({
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       }
     }
     if (user?.status?.toLowerCase() !== 'active') {
-      return NextResponse.redirect(new URL('/?error=AccountSuspended', req.url));
+      return NextResponse.redirect(new URL('/?error=AccountSuspended', baseUrl));
     }
 
     const roleName = user!.role ? (user!.role as any).name : 'Customer';
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
     };
 
     // Redirect to frontend success page
-    const redirectUrl = new URL('/auth/success', req.url);
+    const redirectUrl = new URL('/auth/success', baseUrl);
     redirectUrl.searchParams.set('accessToken', accessToken);
     redirectUrl.searchParams.set('refreshToken', refreshToken);
     redirectUrl.searchParams.set('user', JSON.stringify(userData));
@@ -95,6 +96,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   } catch (error: any) {
     console.error('Google Callback Error:', error);
-    return NextResponse.redirect(new URL('/?error=GoogleLoginFailed', req.url));
+    return NextResponse.redirect(new URL('/?error=GoogleLoginFailed', baseUrl));
   }
 }
