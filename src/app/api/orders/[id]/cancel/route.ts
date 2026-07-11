@@ -43,24 +43,27 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
     const orderAmount = Number(order.finalAmount);
     const bonusTokens = orderAmount < 500 ? 50 : 100;
+    const tokensToRefund = order.tokensUsed || 0;
 
     if (refundMethod === 'tokens') {
       // Check limit
       const currentTokenRefunds = user.tokenRefundCount || 0;
+      let actualBonus = bonusTokens;
+      
       if (currentTokenRefunds >= 2) {
-        return NextResponse.json({ 
-          success: false, 
-          message: 'You have reached the lifetime limit of 2 token refunds for customer cancellations.' 
-        }, { status: 403 });
+        // Limit reached: allow cancellation but strip bonus tokens
+        actualBonus = 0;
+      } else {
+        // Increment count only if they actually got a bonus
+        await user.update({ tokenRefundCount: currentTokenRefunds + 1 });
       }
 
-      // For COD, they haven't paid, so they only get the bonus tokens
-      finalTokensGranted = order.paymentMethod === 'COD' ? bonusTokens : orderAmount + bonusTokens;
+      // For COD, they haven't paid, so they only get the bonus tokens + any tokens they used
+      finalTokensGranted = order.paymentMethod === 'COD' ? actualBonus + tokensToRefund : orderAmount + actualBonus + tokensToRefund;
       
       // Update User
       await user.update({
-        doseboxTokens: (user.doseboxTokens || 0) + finalTokensGranted,
-        tokenRefundCount: currentTokenRefunds + 1
+        doseboxTokens: (user.doseboxTokens || 0) + finalTokensGranted
       });
 
       // Log Transaction
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         orderId: order.id,
         type: 'Refund',
         tokens: finalTokensGranted,
-        bonusTokens: bonusTokens,
+        bonusTokens: actualBonus,
         description: `Refund for Cancelled Order #${order.id} (Customer Fault)`
       });
 
@@ -88,6 +91,19 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       } else {
         // COD order
         actualRefundMethod = 'None (COD)';
+      }
+      
+      // Refund tokens if any were used
+      if (tokensToRefund > 0) {
+        await user.update({ doseboxTokens: (user.doseboxTokens || 0) + tokensToRefund });
+        await DoseboxTokenTransaction.create({
+          userId: user.id,
+          orderId: order.id,
+          type: 'Refund',
+          tokens: tokensToRefund,
+          bonusTokens: 0,
+          description: `Refunded tokens used for Cancelled Order #${order.id}`
+        });
       }
     }
 

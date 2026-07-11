@@ -102,37 +102,43 @@ export default function AddressesPage() {
           
           let street = '', city = '', state = '', zipCode = '';
 
+          let usingGoogle = false;
           if (apiKey) {
-            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
-            const data = await res.json();
-            
-            if (data.status === 'OK' && data.results[0]) {
-              const result = data.results[0];
-              result.address_components.forEach((component: any) => {
-                if (component.types.includes('route')) street = component.long_name;
-                if (!street && component.types.includes('neighborhood')) street = component.long_name;
-                if (component.types.includes('locality')) city = component.long_name;
-                if (component.types.includes('administrative_area_level_1')) state = component.long_name;
-                if (component.types.includes('postal_code')) zipCode = component.long_name;
-              });
-              if (!street) street = result.formatted_address.split(',')[0];
-            } else {
+            try {
+              const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+              const data = await res.json();
+              if (data.status === 'OK' && data.results[0]) {
+                const result = data.results[0];
+                result.address_components.forEach((component: any) => {
+                  if (component.types.includes('route')) street = component.long_name;
+                  if (!street && component.types.includes('neighborhood')) street = component.long_name;
+                  if (component.types.includes('locality')) city = component.long_name;
+                  if (component.types.includes('administrative_area_level_1')) state = component.long_name;
+                  if (component.types.includes('postal_code')) zipCode = component.long_name;
+                });
+                if (!street) street = result.formatted_address.split(',')[0];
+                usingGoogle = true;
+              }
+            } catch (e) { console.error('Google Maps API failed', e); }
+          }
+          
+          if (!usingGoogle) {
+            try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+              const data = await res.json();
+              
+              if (data && data.address) {
+                street = data.address.road || data.address.suburb || data.address.neighbourhood || '';
+                city = data.address.city || data.address.town || data.address.county || '';
+                state = data.address.state || '';
+                zipCode = data.address.postcode || '';
+              } else {
+                toast.error('Could not determine address from location');
+                setIsFetchingLocation(false);
+                return;
+              }
+            } catch (e) {
               toast.error('Could not determine address from location');
-              setIsFetchingLocation(false);
-              return;
-            }
-          } else {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-            const data = await res.json();
-            
-            if (data && data.address) {
-              street = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-              city = data.address.city || data.address.town || data.address.county || '';
-              state = data.address.state || '';
-              zipCode = data.address.postcode || '';
-              toast.success('Used OpenStreetMap Demo API (Add Google Key for production)');
-            } else {
-              toast.error('Demo API failed to locate address');
               setIsFetchingLocation(false);
               return;
             }
@@ -225,7 +231,10 @@ export default function AddressesPage() {
         {addresses.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">
             <MapPin className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm font-medium">No saved addresses found.</p>
+            <p className="text-slate-500 text-sm font-medium mb-4">No saved addresses found.</p>
+            <button onClick={() => openAddressModal()} className="inline-flex items-center gap-2 text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 px-6 py-2.5 rounded-xl transition-all shadow-sm">
+              <Plus className="w-4 h-4" /> Add Address
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

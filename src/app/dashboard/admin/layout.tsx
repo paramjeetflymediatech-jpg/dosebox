@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutGrid },
     { name: 'Users', href: '/dashboard/admin/users', icon: Users },
+    { name: 'Reward Points', href: '/dashboard/admin/rewards', icon: Gift },
     { name: 'Orders', href: '/dashboard/admin/orders', icon: ShoppingBag },
     { name: 'Transactions', href: '/dashboard/admin/transactions', icon: FileText },
     { name: 'Medicines', href: '/dashboard/admin/medicines', icon: Pill },

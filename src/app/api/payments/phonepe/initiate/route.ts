@@ -43,8 +43,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Order is already paid' }, { status: 400 });
     }
 
-    const merchantOrderId = 'MT-' + order.id.toString() + '-' + Date.now();
     const amountInPaise = Math.round(Number(order.finalAmount) * 100);
+
+    // If the order is fully covered by DoseBox tokens, mark it paid directly
+    // PhonePe requires a minimum of 100 paise (₹1)
+    if (amountInPaise < 100) {
+      await order.update({ paymentStatus: 'Paid' });
+      return NextResponse.json({
+        success: true,
+        fullyPaidByTokens: true,
+        message: 'Order fully paid using DoseBox Tokens'
+      }, { status: 200 });
+    }
+
+    const merchantOrderId = 'MT-' + order.id.toString() + '-' + Date.now();
 
     const host = process.env.NEXT_PUBLIC_APP_URL ? process.env.NEXT_PUBLIC_APP_URL.replace(/https?:\/\//, '') : (req.headers.get('host') || 'localhost:3000');
     const protocol = req.headers.get('x-forwarded-proto') || 'http';

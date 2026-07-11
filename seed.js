@@ -92,7 +92,7 @@ async function seed() {
       const workbook = xlsx.readFile(csvPath);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const medicinesData = xlsx.utils.sheet_to_json(sheet);
-      
+
       for (const med of medicinesData) {
         // Find if exists
         const [existing] = await connection.execute('SELECT id FROM medicines WHERE name = ?', [med.name]);

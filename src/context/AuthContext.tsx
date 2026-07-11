@@ -8,7 +8,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
-  role: 'Admin' | 'Customer';
+  role: 'Admin' | 'Customer' | 'SuperAdmin';
   doseboxTokens?: number;
 }
 
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAdmin = user?.role === 'Admin';
+  const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
   const isCustomer = user?.role === 'Customer';
 
   return (

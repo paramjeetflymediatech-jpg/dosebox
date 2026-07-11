@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
       } else {
          pointsUsed = Math.min(userRecord.doseboxTokens || 0, finalAmount);
       }
-      finalAmount -= pointsUsed;
+      finalAmount = Math.max(0, finalAmount - pointsUsed);
     }
 
     const trackingTimeline = [
@@ -157,7 +157,8 @@ export async function POST(req: NextRequest) {
       paymentMethod,
       trackingTimeline: JSON.stringify(trackingTimeline),
       couponId: couponObj ? couponObj.id : null,
-      shippingAddressId: dbShippingAddressId
+      shippingAddressId: dbShippingAddressId,
+      tokensUsed: pointsUsed
     });
 
     for (const entry of checkedItems) {
@@ -241,8 +242,8 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     
-    // If admin or pharmacist
-    if (userAuth.roleName === 'Admin' || userAuth.roleName === 'Pharmacist') {
+    // If admin, superadmin or pharmacist
+    if (userAuth.roleName === 'Admin' || userAuth.roleName === 'SuperAdmin' || userAuth.roleName === 'Pharmacist') {
       const status = searchParams.get('status');
       const filter: any = {};
       if (status) {

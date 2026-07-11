@@ -21,8 +21,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !user && isMounted) {
-      router.push('/');
+    if (!authLoading && isMounted) {
+      if (!user) {
+        router.push('/');
+      } else if (user.role === 'Admin' || user.role === 'SuperAdmin') {
+        router.push('/dashboard/admin');
+      }
     }
   }, [user, authLoading, isMounted, router]);
 

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import {
-  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff
+  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -866,13 +866,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               )}
 
               {user && (
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 max-h-40 overflow-y-auto custom-scrollbar">
-                  <h4 className="font-bold text-xs text-slate-500 uppercase tracking-widest mb-3">Saved Addresses</h4>
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-xs text-slate-500 uppercase tracking-widest">Saved Addresses</h4>
+                  </div>
                   <div className="space-y-3">
-                    <button onClick={() => { setDeliveryLocation('Noida (201301)'); setShowLocationModal(false); }} className="w-full text-left bg-white border border-slate-200 p-3 rounded-xl hover:border-brand-500 transition-colors">
-                      <div className="font-bold text-slate-800 text-sm">Home Address</div>
-                      <div className="text-xs text-slate-500 truncate mt-1">45, Emerald Residency, Sector 62, Noida - 201301</div>
-                    </button>
+                    <Link href="/account/addresses" onClick={() => setShowLocationModal(false)} className="w-full flex items-center justify-center gap-2 text-sm font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-4 py-3 rounded-xl transition-all border border-brand-200">
+                      <Plus className="w-4 h-4" /> Manage Addresses
+                    </Link>
                   </div>
                 </div>
               )}

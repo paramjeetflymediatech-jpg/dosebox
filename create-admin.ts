@@ -11,7 +11,7 @@ async function createAdmin() {
 
   try {
     // 1. Ensure SuperAdmin role exists (id: 1)
-    const [roles] = await sequelize.query(`SELECT id FROM roles WHERE id = 1`) as any[];
+    const [roles] = await sequelize.query(`SELECT id FROM roles WHERE id = 1`);
     if (!roles || roles.length === 0) {
       await sequelize.query(`INSERT INTO roles (id, name) VALUES (1, 'SuperAdmin')`);
     }
@@ -20,7 +20,7 @@ async function createAdmin() {
     const [existingUsers] = await sequelize.query(
       `SELECT id FROM users WHERE email = :email LIMIT 1`,
       { replacements: { email } }
-    ) as any[];
+    );
     
     if (existingUsers && existingUsers.length > 0) {
       console.log(`[Info] User with email ${email} already exists.`);

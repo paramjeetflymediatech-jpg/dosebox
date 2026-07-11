@@ -10,17 +10,27 @@ async function alterTable() {
   });
   
   try {
-    await connection.execute('ALTER TABLE `medicines` ADD COLUMN `packSize` TEXT NULL;');
-    console.log('Successfully added packSize column');
+    await connection.execute('ALTER TABLE `orders` ADD COLUMN `courierName` VARCHAR(255) NULL;');
+    console.log('Successfully added courierName column');
   } catch (err) {
-    if (err.code === 'ER_DUP_FIELDNAME') {
-      console.log('Column already exists');
-    } else {
-      console.error('Error adding column:', err);
-    }
-  } finally {
-    await connection.end();
+    console.log('courierName column already exists or error:', err.message);
   }
+  
+  try {
+    await connection.execute('ALTER TABLE `orders` ADD COLUMN `trackingId` VARCHAR(255) NULL;');
+    console.log('Successfully added trackingId column');
+  } catch (err) {
+    console.log('trackingId column already exists or error:', err.message);
+  }
+
+  try {
+    await connection.execute('ALTER TABLE `orders` ADD COLUMN `shipmentId` VARCHAR(255) NULL;');
+    console.log('Successfully added shipmentId column');
+  } catch (err) {
+    console.log('shipmentId column already exists or error:', err.message);
+  }
+
+  await connection.end();
 }
 
 alterTable();

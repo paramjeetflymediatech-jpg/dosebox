@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Eye, Download, CheckCircle2, XCircle } from 'lucide-react';
+import { ShoppingBag, Eye, Download, CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
@@ -28,6 +28,7 @@ interface Order {
   cancelReason?: string;
   refundMethod?: string;
   refundStatus?: string;
+  trackingId?: string;
 }
 
 const getRichTimeline = (order: Order, timeline: any[]) => {
@@ -86,11 +87,20 @@ export default function OrdersPage() {
   const [refundMethod, setRefundMethod] = useState<'bank' | 'tokens'>('bank');
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [isClaimMode, setIsClaimMode] = useState(false);
+  const [liveTracking, setLiveTracking] = useState<Record<number, any>>({});
+  const [loadingTracking, setLoadingTracking] = useState<Record<number, boolean>>({});
+  const [tokenRefundCount, setTokenRefundCount] = useState<number>(0);
 
   const ordersPerPage = 5;
 
   useEffect(() => {
     loadOrders();
+    // Fetch user's token refund usage count
+    api.get('/account/profile').then(res => {
+      if (res.data?.success) {
+        setTokenRefundCount(res.data.data.tokenRefundCount || 0);
+      }
+    }).catch(() => {});
   }, []);
 
   async function loadOrders() {
@@ -104,11 +114,33 @@ export default function OrdersPage() {
     }
   }
 
+  useEffect(() => {
+    if (expandedOrderId) {
+      const order = orders.find(o => o.id === expandedOrderId);
+      if (order?.trackingId && !liveTracking[expandedOrderId] && !loadingTracking[expandedOrderId]) {
+        setLoadingTracking(prev => ({ ...prev, [expandedOrderId]: true }));
+        api.get(`/orders/${expandedOrderId}/track`)
+          .then(res => {
+            if (res.data?.success && res.data.data) {
+              setLiveTracking(prev => ({ ...prev, [expandedOrderId]: res.data.data }));
+            }
+          })
+          .catch(err => console.error('Failed to load live tracking:', err))
+          .finally(() => {
+            setLoadingTracking(prev => ({ ...prev, [expandedOrderId]: false }));
+          });
+      }
+    }
+  }, [expandedOrderId, orders, liveTracking, loadingTracking]);
+
   const openCancelModal = (order: Order, isClaim: boolean = false) => {
     setOrderToCancel(order);
     setIsClaimMode(isClaim);
     setCancelReason('');
-    setRefundMethod(order.paymentMethod === 'COD' ? 'tokens' : 'bank');
+    // For COD orders where the bonus token limit is exhausted, default to 'bank'
+    // since the DoseBox Tokens option will be hidden (they'd get 0 tokens)
+    const codLimitReached = order.paymentMethod === 'COD' && tokenRefundCount >= 2;
+    setRefundMethod(order.paymentMethod === 'COD' && !codLimitReached ? 'tokens' : 'bank');
     setCancelModalOpen(true);
   };
 
@@ -199,6 +231,9 @@ export default function OrdersPage() {
                     <div className="text-right">
                       <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Total</span>
                       <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{formatCurrency(Number(order.finalAmount))}</span>
+                      {(order as any).tokensUsed > 0 && (
+                        <span className="text-xs text-brand-600 font-semibold block mt-1">Tokens Used: {(order as any).tokensUsed}</span>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} className="p-2 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-lg transition-all" title="View details">
@@ -260,6 +295,41 @@ export default function OrdersPage() {
 
                       {(() => {
                         const richTimeline = getRichTimeline(order, timeline);
+                        const liveData = liveTracking[order.id];
+                        const isLoadingLive = loadingTracking[order.id];
+                        
+                        if (isLoadingLive) {
+                          return (
+                            <div className="flex flex-col items-center justify-center py-8 opacity-50">
+                              <Loader2 className="w-8 h-8 animate-spin text-brand-600 mb-2" />
+                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Fetching Live Tracking from Courier...</span>
+                            </div>
+                          );
+                        }
+
+                        if (liveData && liveData.checkpoints && liveData.checkpoints.length > 0) {
+                          return (
+                            <>
+                              <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                                <p className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-1">Live Tracking ({liveData.courier})</p>
+                                <p className="text-sm font-semibold text-blue-600">AWB: {liveData.trackingId}</p>
+                              </div>
+                              <div className="relative border-l-2 border-slate-100 ml-3 pl-6 space-y-6 flex-1">
+                                {liveData.checkpoints.map((cp: any, idx: number) => (
+                                  <div key={idx} className={`relative opacity-100`}>
+                                    <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${idx === 0 ? 'bg-brand-600 text-white ring-4 ring-brand-100' : 'bg-emerald-500 text-white'}`}>
+                                      {idx !== 0 && <CheckCircle2 className="w-3 h-3" />}
+                                    </div>
+                                    <span className={`font-bold text-xs block ${idx === 0 ? 'text-brand-700' : 'text-slate-800'}`}>{cp.status}</span>
+                                    <span className="text-xs text-slate-400 block mt-0.5">{new Date(cp.time).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                                    {cp.desc && <span className="text-xs text-slate-500 mt-2 block bg-white p-2.5 rounded-lg border border-slate-100 shadow-sm font-medium">{cp.desc} {cp.location ? `(${cp.location})` : ''}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          );
+                        }
+
                         const courierEvent = timeline.find((t: any) => t.desc && (t.desc.includes('Courier:') || t.desc.includes('AWB:')));
                         return (
                           <>
@@ -270,26 +340,47 @@ export default function OrdersPage() {
                               </div>
                             )}
                             <div className="relative border-l-2 border-slate-100 ml-3 pl-6 space-y-6 flex-1">
-                              {richTimeline.map((item, idx) => {
-                                const cleanDesc = item.desc ? item.desc.split('|').filter((s: string) => !s.includes('Courier:') && !s.includes('AWB:')).join('|').trim() : '';
-                                return (
-                                  <div key={idx} className={`relative ${item.isCompleted || item.isActive ? 'opacity-100' : 'opacity-40'}`}>
-                                    <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${item.isActive ? 'bg-brand-600 text-white ring-4 ring-brand-100' : item.isCompleted ? 'bg-emerald-500 text-white' : 'bg-slate-200'}`}>
-                                      {item.isCompleted && <CheckCircle2 className="w-3 h-3" />}
+                              {order.status === 'Cancelled' ? (
+                                <>
+                                  {/* Only show Order Placed when cancelled */}
+                                  {(() => {
+                                    const placedEntry = richTimeline[0];
+                                    return (
+                                      <div className="relative opacity-100">
+                                        <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm bg-emerald-500 text-white">
+                                          <CheckCircle2 className="w-3 h-3" />
+                                        </div>
+                                        <span className="font-bold text-xs block text-slate-800">{placedEntry.step}</span>
+                                        {placedEntry.time && <span className="text-xs text-slate-400 block mt-0.5">{new Date(placedEntry.time).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>}
+                                      </div>
+                                    );
+                                  })()}
+                                  <div className="relative opacity-100">
+                                    <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm bg-rose-500 text-white ring-4 ring-rose-100">
+                                      <XCircle className="w-3 h-3" />
                                     </div>
-                                    <span className={`font-bold text-xs block ${item.isActive ? 'text-brand-700' : item.isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>{item.step}</span>
-                                    {item.time && <span className="text-xs text-slate-400 block mt-0.5">{new Date(item.time).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>}
-                                    {cleanDesc && <span className="text-xs text-slate-500 mt-2 block bg-white p-2.5 rounded-lg border border-slate-100 shadow-sm font-medium">{cleanDesc}</span>}
+                                    <span className="font-bold text-xs block text-rose-700">Order Cancelled</span>
+                                    {order.cancelReason && (
+                                      <span className="text-xs text-slate-500 mt-2 block bg-rose-50 p-2.5 rounded-lg border border-rose-100 font-medium">
+                                        Reason: {order.cancelReason}
+                                      </span>
+                                    )}
                                   </div>
-                                );
-                              })}
-                              {order.status === 'Cancelled' && (
-                                <div className="relative opacity-100 mt-6">
-                                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm bg-rose-500 text-white ring-4 ring-rose-100">
-                                    <XCircle className="w-3 h-3" />
-                                  </div>
-                                  <span className="font-bold text-xs block text-rose-700">Order Cancelled</span>
-                                </div>
+                                </>
+                              ) : (
+                                richTimeline.map((item, idx) => {
+                                  const cleanDesc = item.desc ? item.desc.split('|').filter((s: string) => !s.includes('Courier:') && !s.includes('AWB:')).join('|').trim() : '';
+                                  return (
+                                    <div key={idx} className={`relative ${item.isCompleted || item.isActive ? 'opacity-100' : 'opacity-40'}`}>
+                                      <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${item.isActive ? 'bg-brand-600 text-white ring-4 ring-brand-100' : item.isCompleted ? 'bg-emerald-500 text-white' : 'bg-slate-200'}`}>
+                                        {item.isCompleted && <CheckCircle2 className="w-3 h-3" />}
+                                      </div>
+                                      <span className={`font-bold text-xs block ${item.isActive ? 'text-brand-700' : item.isCompleted ? 'text-slate-800' : 'text-slate-500'}`}>{item.step}</span>
+                                      {item.time && <span className="text-xs text-slate-400 block mt-0.5">{new Date(item.time).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>}
+                                      {cleanDesc && <span className="text-xs text-slate-500 mt-2 block bg-white p-2.5 rounded-lg border border-slate-100 shadow-sm font-medium">{cleanDesc}</span>}
+                                    </div>
+                                  );
+                                })
                               )}
                             </div>
                           </>
@@ -369,27 +460,30 @@ export default function OrdersPage() {
                     </label>
                   )}
 
-                  <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'tokens' ? 'border-amber-500 bg-amber-50' : 'border-slate-100 hover:border-slate-200'}`}>
-                    <input type="radio" name="refundMethod" value="tokens" checked={refundMethod === 'tokens'} onChange={() => setRefundMethod('tokens')} className="mt-1" />
-                    <div>
-                      <span className="block font-bold text-amber-900 flex items-center gap-2">
-                        DoseBox Tokens
-                        <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full">+ Bonus!</span>
-                      </span>
-                      <span className="block text-xs text-amber-700/80 mt-0.5">
-                        {orderToCancel.paymentMethod === 'COD' ? (
-                          `Get ${Number(orderToCancel.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly as an apology.`
-                        ) : (
-                          `Get ₹${formatCurrency(Number(orderToCancel.finalAmount))} + ${Number(orderToCancel.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.`
-                        )}
-                      </span>
-                      {!isClaimMode && (
-                        <span className="block text-[10px] font-bold text-rose-500 mt-2 bg-rose-50 py-1 px-2 rounded">
-                          * Note: This option is only available twice per lifetime for self-cancellations.
+                  {/* Hide DoseBox Tokens option for COD orders when the 2-time bonus limit is exhausted (they'd get 0 tokens) */}
+                  {!(orderToCancel.paymentMethod === 'COD' && tokenRefundCount >= 2) && (
+                    <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'tokens' ? 'border-amber-500 bg-amber-50' : 'border-slate-100 hover:border-slate-200'}`}>
+                      <input type="radio" name="refundMethod" value="tokens" checked={refundMethod === 'tokens'} onChange={() => setRefundMethod('tokens')} className="mt-1" />
+                      <div>
+                        <span className="block font-bold text-amber-900 flex items-center gap-2">
+                          DoseBox Tokens
+                          <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full">+ Bonus!</span>
                         </span>
-                      )}
-                    </div>
-                  </label>
+                        <span className="block text-xs text-amber-700/80 mt-0.5">
+                          {orderToCancel.paymentMethod === 'COD' ? (
+                            `Get ${Number(orderToCancel.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly as an apology.`
+                          ) : (
+                            `Get ₹${formatCurrency(Number(orderToCancel.finalAmount))} + ${Number(orderToCancel.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.`
+                          )}
+                        </span>
+                        {!isClaimMode && (
+                          <span className="block text-[10px] font-bold text-rose-500 mt-2 bg-rose-50 py-1 px-2 rounded">
+                            * Note: This option is only available twice per lifetime for self-cancellations.
+                          </span>
+                        )}
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
@@ -409,7 +503,6 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

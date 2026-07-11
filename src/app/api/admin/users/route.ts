@@ -3,9 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { User } from '../../../../models';
 import bcrypt from 'bcryptjs';
 
+import { Op } from 'sequelize';
+
 export async function GET(req: NextRequest) {
   try {
     const users = await User.findAll({
+      where: {
+        status: { [Op.ne]: 'deleted' },
+        email: { [Op.ne]: 'admin@dosebox.com' }
+      },
       attributes: ['id', 'name', 'email', 'phone', 'roleId', 'status', 'createdAt']
     });
     return NextResponse.json({ success: true, data: users }, { status: 200 });

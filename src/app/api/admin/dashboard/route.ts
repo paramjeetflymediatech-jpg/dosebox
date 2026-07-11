@@ -20,6 +20,8 @@ export async function GET(req: NextRequest) {
 
     const totalCustomers = await User.count({ where: { roleId: 2 } });
     const activeUsers = await User.count({ where: { status: 'active' } });
+    const totalTokensResult = await User.sum('doseboxTokens');
+    const totalTokens = totalTokensResult || 0;
     
     const prescriptionRequests = 0;
 
@@ -80,7 +82,13 @@ export async function GET(req: NextRequest) {
       success: true,
       data: {
         kpis: {
-          totalRevenue, totalOrders, totalCustomers, activeUsers, prescriptionRequests, inventoryAlerts
+          totalRevenue,
+          totalOrders,
+          totalCustomers,
+          activeUsers,
+          totalTokens,
+          prescriptionRequests,
+          inventoryAlerts
         },
         charts: { revenueChart, customerGrowthChart },
         topSellingMedicines, topCategories

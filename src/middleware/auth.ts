@@ -42,6 +42,9 @@ export const authenticateJWT = async (req: NextRequest): Promise<AuthenticatedUs
 };
 
 export const authorizeRoles = (user: AuthenticatedUser, ...allowedRoles: string[]): NextResponse | null => {
+  // SuperAdmin has access to everything
+  if (user.roleName === 'SuperAdmin') return null;
+
   if (!allowedRoles.includes(user.roleName)) {
     return NextResponse.json({ 
       success: false, 

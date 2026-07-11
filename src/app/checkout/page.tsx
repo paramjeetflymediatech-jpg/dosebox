@@ -148,36 +148,43 @@ export default function CheckoutPage() {
           
           let st = '', c = '', stt = '', zc = '';
 
+          let usingGoogle = false;
           if (apiKey) {
-            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
-            const data = await res.json();
-            
-            if (data.status === 'OK' && data.results[0]) {
-              const result = data.results[0];
-              result.address_components.forEach((component: any) => {
-                if (component.types.includes('route')) st = component.long_name;
-                if (!st && component.types.includes('neighborhood')) st = component.long_name;
-                if (component.types.includes('locality')) c = component.long_name;
-                if (component.types.includes('administrative_area_level_1')) stt = component.long_name;
-                if (component.types.includes('postal_code')) zc = component.long_name;
-              });
-              if (!st) st = result.formatted_address.split(',')[0];
-            } else {
+            try {
+              const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+              const data = await res.json();
+              if (data.status === 'OK' && data.results[0]) {
+                const result = data.results[0];
+                result.address_components.forEach((component: any) => {
+                  if (component.types.includes('route')) st = component.long_name;
+                  if (!st && component.types.includes('neighborhood')) st = component.long_name;
+                  if (component.types.includes('locality')) c = component.long_name;
+                  if (component.types.includes('administrative_area_level_1')) stt = component.long_name;
+                  if (component.types.includes('postal_code')) zc = component.long_name;
+                });
+                if (!st) st = result.formatted_address.split(',')[0];
+                usingGoogle = true;
+              }
+            } catch (e) { console.error('Google Maps API failed', e); }
+          }
+          
+          if (!usingGoogle) {
+            try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+              const data = await res.json();
+              
+              if (data && data.address) {
+                st = data.address.road || data.address.suburb || data.address.neighbourhood || '';
+                c = data.address.city || data.address.town || data.address.county || '';
+                stt = data.address.state || '';
+                zc = data.address.postcode || '';
+              } else {
+                alert('Could not determine address from location');
+                setIsFetchingLocation(false);
+                return;
+              }
+            } catch (e) {
               alert('Could not determine address from location');
-              setIsFetchingLocation(false);
-              return;
-            }
-          } else {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-            const data = await res.json();
-            
-            if (data && data.address) {
-              st = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-              c = data.address.city || data.address.town || data.address.county || '';
-              stt = data.address.state || '';
-              zc = data.address.postcode || '';
-            } else {
-              alert('Demo API failed to locate address');
               setIsFetchingLocation(false);
               return;
             }
@@ -205,21 +212,26 @@ export default function CheckoutPage() {
     if (!user) return;
     async function loadAddresses() {
       try {
-        const defaultList = [
-          { id: 1, title: 'Home Address', street: '45, Emerald Residency, Sector 62', city: 'Noida', state: 'Uttar Pradesh', zipCode: '201301', country: 'India', isDefault: true }
-        ];
-        setAddresses(defaultList);
-        setSelectedAddressId(1);
+        const res = await api.get('/account/addresses');
+        if (res.data?.success && res.data.data.length > 0) {
+          setAddresses(res.data.data);
+          const defaultAddr = res.data.data.find((a: any) => a.isDefault);
+          setSelectedAddressId(defaultAddr ? defaultAddr.id : res.data.data[0].id);
+        } else {
+          setAddresses([]);
+        }
       } catch (err) {
-        console.warn('Addresses listing fallback');
+        console.error('Failed to load addresses', err);
       }
     }
     loadAddresses();
   }, [user]);
 
+  const [hasProcessedUrl, setHasProcessedUrl] = useState(false);
+
   // Handle Return from PhonePe payment
   useEffect(() => {
-    if (typeof window !== 'undefined' && !orderComplete && !paymentFailed) {
+    if (typeof window !== 'undefined' && !hasProcessedUrl) {
       const urlParams = new URLSearchParams(window.location.search);
       const status = urlParams.get('status');
       if (status === 'success') {
@@ -232,9 +244,10 @@ export default function CheckoutPage() {
         setPaymentFailed(true);
         router.replace('/checkout');
       }
+      setHasProcessedUrl(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, orderComplete, paymentFailed]);
+  }, [router, hasProcessedUrl]);
 
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,6 +319,13 @@ export default function CheckoutPage() {
         if (paymentMethod === 'PhonePe') {
           try {
             const phonepeRes = await api.post('/payments/phonepe/initiate', { orderId });
+            if (phonepeRes.data?.success && phonepeRes.data?.fullyPaidByTokens) {
+              // Order fully covered by DoseBox tokens — no PhonePe redirect needed
+              clearCart();
+              sessionStorage.removeItem('attachedPrescriptionId');
+              setOrderComplete(true);
+              return;
+            }
             if (phonepeRes.data?.success && phonepeRes.data?.redirectUrl) {
               window.location.href = phonepeRes.data.redirectUrl;
               return; // Halt and redirect
@@ -681,7 +701,7 @@ export default function CheckoutPage() {
                       
                       {!pointsError && (
                         <div className="flex justify-between text-sm font-bold text-amber-600">
-                          <span>Points Applied</span>
+                          <span>Tokens Used ({pointsUsed})</span>
                           <span>- ₹{formatCurrency(pointsUsed)}</span>
                         </div>
                       )}
@@ -744,9 +764,16 @@ export default function CheckoutPage() {
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Order Confirmed!</h2>
-                  <p className="text-slate-500 text-sm mb-8 px-4">
+                  <p className="text-slate-500 text-sm mb-4 px-4">
                     Thank you! Your order {createdOrderId ? <strong className="text-slate-900">#OD-{createdOrderId}</strong> : ''} has been received and is being prepared.
                   </p>
+                  {pointsUsed > 0 && (
+                    <div className="mb-6 mx-auto bg-brand-50 border border-brand-100 rounded-lg p-3 inline-block">
+                      <span className="text-sm font-bold text-brand-700 flex items-center justify-center gap-2">
+                        <Sparkles className="w-4 h-4" /> {pointsUsed} DoseBox Tokens Applied
+                      </span>
+                    </div>
+                  )}
                   <div className="space-y-3">
                     <Link 
                       href="/account/orders" 

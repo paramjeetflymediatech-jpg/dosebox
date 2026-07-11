@@ -51,29 +51,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
-    // Delete associated records first to avoid foreign key constraints
-    const relatedModels = [
-      'Prescription', 'Order', 'Review', 'UserActivity', 'Address', 
-      'Appointment', 'Notification', 'DraftCart', 'MobileAuthUser'
-    ];
-
-    for (const modelName of relatedModels) {
-      const modelKey = modelName as keyof typeof models;
-      if (models[modelKey]) {
-        try {
-          await (models[modelKey] as any).destroy({ where: { userId } });
-        } catch (e) {
-          // Ignore if the column doesn't exist or table is empty
-        }
-      }
-    }
-
-    // Some tables might not have standard Sequelize models loaded but still hold foreign keys
-    try {
-      await (models as any).sequelize.query(`DELETE FROM reward_transactions WHERE userId = ${userId}`);
-    } catch (e) {}
-
-    await user.destroy();
+    // Soft delete the user by updating status
+    await user.update({ status: 'deleted' });
 
     return NextResponse.json({ success: true, message: 'User deleted successfully' }, { status: 200 });
   } catch (error: any) {

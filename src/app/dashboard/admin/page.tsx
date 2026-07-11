@@ -18,6 +18,7 @@ interface KPI {
   totalOrders: number;
   totalCustomers: number;
   activeUsers: number;
+  totalTokens: number;
   prescriptionRequests: number;
   inventoryAlerts: number;
 }
@@ -76,11 +77,11 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
           <div>
             <p className="text-sm font-semibold text-slate-500 mb-1">Total Revenue</p>
-            <h3 className="text-2xl font-black text-slate-800">₹{formatCurrency(kpis?.totalRevenue)}</h3>
+            <h3 className="text-2xl font-black text-slate-800">₹{formatCurrency(kpis?.totalRevenue || 0)}</h3>
           </div>
           <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <DollarSign className="w-6 h-6 text-emerald-600" />
@@ -111,6 +112,15 @@ export default function AdminDashboardPage() {
           </div>
           <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <AlertTriangle className="w-6 h-6 text-rose-600" />
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
+          <div>
+            <p className="text-sm font-semibold text-slate-500 mb-1">Total Tokens</p>
+            <h3 className="text-2xl font-black text-amber-600">{kpis?.totalTokens?.toLocaleString() || '0'}</h3>
+          </div>
+          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <DollarSign className="w-6 h-6 text-amber-600" />
           </div>
         </div>
       </div>

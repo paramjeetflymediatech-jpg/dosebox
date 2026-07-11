@@ -370,8 +370,12 @@ export interface OrderAttributes {
   refundMethod?: string; // 'bank' | 'tokens'
   refundStatus?: string; // 'None' | 'Pending' | 'Processed'
   refundTransactionId?: string;
+  courierName?: string;
+  trackingId?: string;
+  shipmentId?: string;
+  tokensUsed?: number;
 }
-export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id' | 'prescriptionId' | 'status' | 'discountAmount' | 'gstAmount' | 'paymentStatus' | 'paymentMethod' | 'trackingTimeline' | 'couponId' | 'transactionId' | 'refundedToPoints' | 'cancelledBy' | 'cancelReason' | 'refundMethod' | 'refundStatus' | 'refundTransactionId'>> implements OrderAttributes {
+export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id' | 'prescriptionId' | 'status' | 'discountAmount' | 'gstAmount' | 'paymentStatus' | 'paymentMethod' | 'trackingTimeline' | 'couponId' | 'transactionId' | 'refundedToPoints' | 'cancelledBy' | 'cancelReason' | 'refundMethod' | 'refundStatus' | 'refundTransactionId' | 'courierName' | 'trackingId' | 'shipmentId'>> implements OrderAttributes {
   declare id: number;
   declare userId: number;
   declare prescriptionId?: number;
@@ -392,6 +396,10 @@ export class Order extends Model<OrderAttributes, Optional<OrderAttributes, 'id'
   declare refundMethod?: string;
   declare refundStatus?: string;
   declare refundTransactionId?: string;
+  declare courierName?: string;
+  declare trackingId?: string;
+  declare shipmentId?: string;
+  declare tokensUsed?: number;
 }
 Order.init(
   {
@@ -415,6 +423,10 @@ Order.init(
     refundMethod: { type: DataTypes.STRING, allowNull: true },
     refundStatus: { type: DataTypes.STRING, defaultValue: 'None' },
     refundTransactionId: { type: DataTypes.STRING, allowNull: true },
+    courierName: { type: DataTypes.STRING, allowNull: true },
+    trackingId: { type: DataTypes.STRING, allowNull: true },
+    shipmentId: { type: DataTypes.STRING, allowNull: true },
+    tokensUsed: { type: DataTypes.INTEGER, defaultValue: 0 },
   },
   { sequelize, modelName: 'Order', tableName: 'orders', timestamps: true }
 );
@@ -1289,6 +1301,9 @@ MobileAuthUser.init(
 
 MobileAuthUser.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(MobileAuthUser, { foreignKey: 'userId', as: 'mobileDevices' });
+
+DoseboxTokenTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(DoseboxTokenTransaction, { foreignKey: 'userId', as: 'tokenTransactions' });
 
 // ----------------------------------------------------
 export default {

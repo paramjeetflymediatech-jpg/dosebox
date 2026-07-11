@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
-import { Order, Notification, User, DoseboxTokenTransaction } from '../../../../models';
+import { Order, Notification, User, Address, OrderItem, Medicine } from '../../../../models';
 import { sendOrderStatusEmail, sendOrderCancelledEmail } from '../../../../lib/email';
 import { initiatePhonePeRefund } from '../../payments/phonepe/refund/route';
+import { getLogisticsProvider } from '../../../../lib/logistics';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -17,10 +18,16 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     const body = await req.json();
     const { status, paymentStatus, trackingMessage, cancelReason } = body;
 
-    const order = await Order.findByPk(params.id);
+    const order = await Order.findByPk(params.id, {
+      include: [
+        { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine' }] }
+      ]
+    });
     if (!order) {
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
+
+    const shippingAddress = await Address.findByPk(order.shippingAddressId);
 
     const user = await User.findByPk(order.userId);
     if (!user) {
@@ -67,6 +74,55 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         // Send a generic cancellation email (the refund claim email will be sent later once they claim it)
         sendOrderStatusEmail(user, order, 'Cancelled (Please choose a refund option in your account)').catch(console.error);
       } else if (status) {
+        // Logistics Integration
+        if ((status === 'Packed' || status === 'Dispatched') && !order.trackingId && shippingAddress) {
+          try {
+            const logistics = getLogisticsProvider();
+            
+            // Map items for logistics
+            const items = (order as any).items?.map((i: any) => ({
+              name: i.medicine?.name || 'Medical Supplies',
+              quantity: i.quantity,
+              price: i.price
+            })) || [];
+
+            const shipmentRes = await logistics.createShipment({
+              orderId: order.id,
+              weightInKg: 0.5, // Default weight
+              paymentMethod: order.paymentMethod === 'COD' ? 'COD' : 'Prepaid',
+              codAmount: order.paymentMethod === 'COD' ? Number(order.finalAmount) : 0,
+              deliveryAddress: {
+                name: user.name,
+                phone: user.phone || '',
+                street: shippingAddress.street,
+                city: shippingAddress.city,
+                state: shippingAddress.state,
+                zipCode: shippingAddress.zipCode,
+                country: shippingAddress.country || 'India'
+              },
+              items
+            });
+
+            if (shipmentRes.success && shipmentRes.trackingId) {
+              order.trackingId = shipmentRes.trackingId;
+              order.shipmentId = shipmentRes.shipmentId;
+              order.courierName = process.env.LOGISTICS_PROVIDER || 'Ekart Logistics';
+              
+              // Add tracking info to timeline
+              let timeline = [];
+              try { timeline = JSON.parse(order.trackingTimeline || '[]'); } catch(e){}
+              timeline.push({
+                status: 'Shipping Initiated',
+                time: new Date().toISOString(),
+                desc: `Courier: ${order.courierName} | AWB: ${order.trackingId}`
+              });
+              order.trackingTimeline = JSON.stringify(timeline);
+            }
+          } catch (logisticsErr) {
+            console.error('Failed to create logistics shipment:', logisticsErr);
+          }
+        }
+
         // Send normal status update email
         sendOrderStatusEmail(user, order, status).catch(console.error);
       }

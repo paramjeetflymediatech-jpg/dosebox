@@ -101,7 +101,7 @@ export default function DoseBoxTokensPage() {
                     <td className="px-4 py-4 text-right font-black flex flex-col items-end gap-1">
                       {tx.tokens > 0 ? (
                         <>
-                          {tx.type === 'Refund' && tx.bonusTokens > 0 && (
+                          {tx.type === 'Refund' && tx.bonusTokens > 0 && (tx.tokens - tx.bonusTokens) > 0 && (
                             <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
                               ₹{tx.tokens - tx.bonusTokens} + {tx.bonusTokens} Bonus =
                             </span>

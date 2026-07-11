@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const userData = JSON.parse(storedUser);
-          if (userData.role === 'Admin') {
+          if (userData.role === 'Admin' || userData.role === 'SuperAdmin') {
             router.push('/dashboard/admin');
           } else {
             setErrorMsg('Access denied. You do not have admin privileges.');
@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=1200')] opacity-10 mix-blend-overlay bg-cover bg-center"></div>
             
             <div className="relative z-10">
-              <img src="/Media.jpg" alt="DoseBox Logo" className="w-16 h-16 md:w-24 md:h-24 rounded-xl shadow-lg border border-white/20 mb-6 object-cover" />
+              <img src="/mobile-uper.png" alt="DoseBox Logo" className="bg-white w-16 h-16 md:w-24 md:h-24 rounded-xl shadow-lg border border-white/20 mb-6 object-cover" />
               <h1 className="text-4xl font-extrabold leading-tight mb-4">
                 DoseBox<br/>Control Center
               </h1>
