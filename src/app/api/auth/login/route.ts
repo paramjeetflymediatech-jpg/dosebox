@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Invalid email or password' }, { status: 401 });
     }
 
-    if (user.status.toLowerCase() !== 'active') {
+    if (user.status?.trim().toLowerCase() !== 'active') {
       return NextResponse.json({ success: false, message: 'Account is suspended' }, { status: 403 });
     }
 

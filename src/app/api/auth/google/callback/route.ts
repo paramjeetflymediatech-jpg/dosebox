@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         await user.save();
       }
     }
-    if (user?.status?.toLowerCase() !== 'active') {
+    if (user?.status?.trim().toLowerCase() !== 'active') {
       return NextResponse.redirect(new URL('/?error=AccountSuspended', baseUrl));
     }
 
