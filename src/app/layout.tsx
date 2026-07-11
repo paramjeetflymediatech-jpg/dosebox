@@ -775,26 +775,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
                   <div className="flex justify-center w-full">
                     <GoogleLogin
-                      onSuccess={async (credentialResponse) => {
-                        if (credentialResponse.credential) {
-                          const decoded: any = jwtDecode(credentialResponse.credential);
-                          const success = await googleLogin(
-                            decoded.sub,
-                            decoded.email,
-                            decoded.name,
-                            decoded.picture || ''
-                          );
-                          if (success) {
-                            setShowAuthModal(false);
-                            resetForm();
-                          } else {
-                            setErrorMsg('Google login failed');
-                          }
-                        }
-                      }}
-                      onError={() => {
-                        setErrorMsg('Google Login Failed');
-                      }}
+                      ux_mode="redirect"
+                      login_uri={`${process.env.NEXT_PUBLIC_APP_URL || 'https://nk.socialflymediatech.com'}/api/auth/google/callback`}
+                      onSuccess={() => {}}
+                      onError={() => setErrorMsg('Google Login Failed')}
                       theme="outline"
                       shape="rectangular"
                       text="signin_with"
