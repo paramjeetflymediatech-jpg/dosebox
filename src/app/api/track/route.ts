@@ -36,15 +36,15 @@ export async function POST(req: NextRequest) {
       userId,
       sessionId,
       action,
-      path,
+      path: path ? path.substring(0, 255) : undefined,
       details: details ? JSON.stringify(details) : undefined,
-      userAgent: userAgent || undefined,
+      userAgent: userAgent ? userAgent.substring(0, 255) : undefined,
       ipAddress: ipAddress || undefined,
       deviceType: deviceType || undefined,
       screenResolution: screenResolution || undefined,
       language: language || undefined,
       timezone: timezone || undefined,
-      referrer: referrer || undefined
+      referrer: referrer ? referrer.substring(0, 255) : undefined
     });
 
     const response = NextResponse.json({ success: true, sessionId }, { status: 201 });
