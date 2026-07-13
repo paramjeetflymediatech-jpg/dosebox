@@ -10,8 +10,13 @@ export async function GET(req: NextRequest) {
 
     const user = await User.findByPk(auth.id, { attributes: ['doseboxTokens'] });
 
+    const { Op } = require('sequelize');
+    
     const transactions = await DoseboxTokenTransaction.findAll({
-      where: { userId: auth.id },
+      where: { 
+        userId: auth.id,
+        tokens: { [Op.ne]: 0 }
+      },
       order: [['createdAt', 'DESC']]
     });
 

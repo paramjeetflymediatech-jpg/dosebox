@@ -137,9 +137,9 @@ export default function OrdersPage() {
     setOrderToCancel(order);
     setIsClaimMode(isClaim);
     setCancelReason('');
-    // For COD orders where the bonus token limit is exhausted, default to 'bank'
+    // For COD orders where the bonus token limit is exhausted (and it's a self-cancellation), default to 'bank'
     // since the DoseBox Tokens option will be hidden (they'd get 0 tokens)
-    const codLimitReached = order.paymentMethod === 'COD' && tokenRefundCount >= 2;
+    const codLimitReached = !isClaim && order.paymentMethod === 'COD' && tokenRefundCount >= 2;
     setRefundMethod(order.paymentMethod === 'COD' && !codLimitReached ? 'tokens' : 'bank');
     setCancelModalOpen(true);
   };
@@ -460,8 +460,21 @@ export default function OrdersPage() {
                     </label>
                   )}
 
-                  {/* Hide DoseBox Tokens option for COD orders when the 2-time bonus limit is exhausted (they'd get 0 tokens) */}
-                  {!(orderToCancel.paymentMethod === 'COD' && tokenRefundCount >= 2) && (
+                  {!isClaimMode && orderToCancel.paymentMethod === 'COD' && tokenRefundCount >= 2 && (
+                    <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'bank' ? 'border-brand-500 bg-brand-50' : 'border-slate-100 hover:border-slate-200'}`}>
+                      <input type="radio" name="refundMethod" value="bank" checked={refundMethod === 'bank'} onChange={() => setRefundMethod('bank')} className="mt-1" />
+                      <div>
+                        <span className="block font-bold text-slate-900">Cancel Order</span>
+                        <span className="block text-xs text-slate-500 mt-0.5">As this is a Cash on Delivery order, no payment needs to be refunded.</span>
+                        <span className="block text-[10px] font-bold text-rose-500 mt-2 bg-rose-50 py-1 px-2 rounded w-fit">
+                          * Note: You have exhausted your 2-time bonus token limit for self-cancellations.
+                        </span>
+                      </div>
+                    </label>
+                  )}
+
+                  {/* Hide DoseBox Tokens option for COD orders when the 2-time bonus limit is exhausted (except for admin cancels) */}
+                  {!(!isClaimMode && orderToCancel.paymentMethod === 'COD' && tokenRefundCount >= 2) && (
                     <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'tokens' ? 'border-amber-500 bg-amber-50' : 'border-slate-100 hover:border-slate-200'}`}>
                       <input type="radio" name="refundMethod" value="tokens" checked={refundMethod === 'tokens'} onChange={() => setRefundMethod('tokens')} className="mt-1" />
                       <div>
@@ -477,7 +490,7 @@ export default function OrdersPage() {
                           )}
                         </span>
                         {!isClaimMode && (
-                          <span className="block text-[10px] font-bold text-rose-500 mt-2 bg-rose-50 py-1 px-2 rounded">
+                          <span className="block text-[10px] font-bold text-rose-500 mt-2 bg-rose-50 py-1 px-2 rounded w-fit">
                             * Note: This option is only available twice per lifetime for self-cancellations.
                           </span>
                         )}
