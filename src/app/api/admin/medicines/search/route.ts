@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Op } from 'sequelize';
 import models from '../../../../../models';
-import { authenticateJWT } from '../../../../../middleware/auth';
+import { authenticateJWT, authorizeRoles } from '../../../../../middleware/auth';
 
 const { Medicine, Brand, Category } = models;
 
@@ -11,9 +11,8 @@ export async function GET(req: NextRequest) {
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'admin') {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
-    }
+    const authCheck = authorizeRoles(authResult, 'Admin');
+    if (authCheck instanceof NextResponse) return authCheck;
 
     const { searchParams } = new URL(req.url);
     const query = searchParams.get('q');

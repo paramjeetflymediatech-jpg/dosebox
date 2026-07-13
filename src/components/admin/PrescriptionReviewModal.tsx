@@ -7,12 +7,127 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 
-export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx: any, onClose: () => void, onSuccess: () => void }) {
-  const [items, setItems] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+const CartItemEditor = ({ item, idx, onSelectProduct, onQuantityChange, onRemove }: any) => {
+  const [isEditing, setIsEditing] = useState(!item.product);
+  const [searchQuery, setSearchQuery] = useState(item.extractedName !== 'Manual Entry' ? item.extractedName : '');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Optionally auto-search if it's missing a product and has a decent query length
+    if (!item.product && searchQuery.length >= 3 && searchResults.length === 0) {
+      performSearch(searchQuery);
+    }
+  }, []);
+
+  const performSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const res = await api.get(`/admin/medicines/search?q=${encodeURIComponent(query)}`);
+      if (res.data.success) {
+        setSearchResults(res.data.data);
+      }
+    } catch (error) {
+      toast.error('Search failed');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.length < 2) return;
+    performSearch(searchQuery);
+  };
+
+  return (
+    <div className={`p-4 rounded-xl border ${!item.product ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <span className="font-bold text-slate-800 text-sm">Requested: {item.extractedName}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsEditing(!isEditing)} className="text-slate-400 hover:text-brand-600">
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button onClick={() => onRemove(idx)} className="text-slate-400 hover:text-red-500">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {item.product ? (
+        <div className="bg-white p-3 rounded-lg border border-slate-100 flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="font-semibold text-slate-700">{item.product.name}</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">{item.product.genericName}</p>
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-slate-500">Qty:</span>
+              <input 
+                type="number" 
+                min="1" 
+                value={item.requestedQuantity}
+                onChange={(e) => onQuantityChange(idx, parseInt(e.target.value) || 1)}
+                className="w-16 p-1 text-sm border rounded text-center"
+              />
+            </div>
+            {item.product.stock >= item.requestedQuantity ? (
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">In Stock ({item.product.stock})</span>
+            ) : (
+              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Out of Stock ({item.product.stock})</span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm text-amber-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" /> No product matched. Please select one.
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="mt-3 p-3 bg-slate-100 rounded-lg border border-slate-200">
+          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
+            <input 
+              type="text" 
+              placeholder="Search generic or brand..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 p-2 text-sm rounded border border-slate-300"
+            />
+            <button type="submit" className="px-3 py-2 bg-brand-600 text-white rounded hover:bg-brand-700">
+              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            </button>
+          </form>
+          
+          {searchResults.length > 0 && (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {searchResults.map(res => (
+                <div key={res.id} className="flex justify-between items-center p-2 bg-white rounded border border-slate-200 hover:border-brand-300 cursor-pointer" onClick={() => { onSelectProduct(idx, res); setIsEditing(false); }}>
+                  <div>
+                    <div className="font-semibold text-sm text-slate-800">{res.name}</div>
+                    <div className="text-xs text-slate-500">{res.genericName}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-brand-600">₹{formatCurrency((res.discountPrice || res.price))}</div>
+                    <div className={`text-[10px] ${res.stock > 0 ? 'text-emerald-600' : 'text-red-500'}`}>Stock: {res.stock}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx: any, onClose: () => void, onSuccess: () => void }) {
+  const [items, setItems] = useState<any[]>([]);
   const [processing, setProcessing] = useState(false);
   const [notes, setNotes] = useState('');
 
@@ -33,31 +148,11 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
     }
   }, [rx]);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.length < 2) return;
-    setIsSearching(true);
-    try {
-      const res = await api.get(`/admin/medicines/search?q=${encodeURIComponent(searchQuery)}`);
-      const data = res.data;
-      if (data.success) {
-        setSearchResults(data.data);
-      }
-    } catch (error) {
-      toast.error('Search failed');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   const handleSelectProduct = (index: number, product: any) => {
     const newItems = [...items];
     newItems[index].product = product;
     newItems[index].matchType = 'alternative';
     setItems(newItems);
-    setEditingIndex(null);
-    setSearchQuery('');
-    setSearchResults([]);
   };
 
   const handleQuantityChange = (index: number, qty: number) => {
@@ -72,7 +167,6 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
 
   const handleAddItem = () => {
     setItems([...items, { id: Math.random().toString(), extractedName: 'Manual Entry', requestedQuantity: 1, product: null, matchType: 'none' }]);
-    setEditingIndex(items.length);
   };
 
   const handleApprove = async () => {
@@ -178,88 +272,14 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
 
             <div className="space-y-4 flex-1 overflow-y-auto pr-2">
               {items.map((item, idx) => (
-                <div key={item.id} className={`p-4 rounded-xl border ${!item.product ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <span className="font-bold text-slate-800 text-sm">Requested: {item.extractedName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setEditingIndex(editingIndex === idx ? null : idx)} className="text-slate-400 hover:text-brand-600">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleRemoveItem(idx)} className="text-slate-400 hover:text-red-500">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {item.product ? (
-                    <div className="bg-white p-3 rounded-lg border border-slate-100 flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-500" />
-                          <span className="font-semibold text-slate-700">{item.product.name}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">{item.product.genericName}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-slate-500">Qty:</span>
-                          <input 
-                            type="number" 
-                            min="1" 
-                            value={item.requestedQuantity}
-                            onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 1)}
-                            className="w-16 p-1 text-sm border rounded text-center"
-                          />
-                        </div>
-                        {item.product.stock >= item.requestedQuantity ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">In Stock ({item.product.stock})</span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Out of Stock ({item.product.stock})</span>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-amber-700 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" /> No product matched. Please select one.
-                    </div>
-                  )}
-
-                  {editingIndex === idx && (
-                    <div className="mt-3 p-3 bg-slate-100 rounded-lg border border-slate-200">
-                      <form onSubmit={handleSearch} className="flex gap-2 mb-3">
-                        <input 
-                          type="text" 
-                          placeholder="Search generic or brand..." 
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="flex-1 p-2 text-sm rounded border border-slate-300"
-                        />
-                        <button type="submit" className="px-3 py-2 bg-brand-600 text-white rounded hover:bg-brand-700">
-                          {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                        </button>
-                      </form>
-                      
-                      {searchResults.length > 0 && (
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {searchResults.map(res => (
-                            <div key={res.id} className="flex justify-between items-center p-2 bg-white rounded border border-slate-200 hover:border-brand-300 cursor-pointer" onClick={() => handleSelectProduct(idx, res)}>
-                              <div>
-                                <div className="font-semibold text-sm text-slate-800">{res.name}</div>
-                                <div className="text-xs text-slate-500">{res.genericName}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm font-bold text-brand-600">₹{formatCurrency((res.discountPrice || res.price))}</div>
-                                <div className={`text-[10px] ${res.stock > 0 ? 'text-emerald-600' : 'text-red-500'}`}>Stock: {res.stock}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <CartItemEditor
+                  key={item.id}
+                  item={item}
+                  idx={idx}
+                  onSelectProduct={handleSelectProduct}
+                  onQuantityChange={handleQuantityChange}
+                  onRemove={handleRemoveItem}
+                />
               ))}
               {items.length === 0 && (
                 <div className="text-center py-10 text-slate-500 text-sm">

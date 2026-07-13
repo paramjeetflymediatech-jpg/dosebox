@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import models from '../../../../../models';
-import { authenticateJWT } from '../../../../../middleware/auth';
+import { authenticateJWT, authorizeRoles } from '../../../../../middleware/auth';
 import sequelize from '../../../../../config/database';
 
 const { Prescription, DraftCart, DraftCartItem, Notification, AuditLog } = models;
@@ -15,9 +15,10 @@ export async function POST(req: NextRequest) {
       return authResult;
     }
     
-    if (authResult.roleName !== 'admin') {
+    const authCheck = authorizeRoles(authResult, 'Admin');
+    if (authCheck instanceof NextResponse) {
       await transaction.rollback();
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+      return authCheck;
     }
 
     const body = await req.json();
