@@ -30,14 +30,18 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "*.ts",
+    "*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-, "create-admin.js"  ],
+  ],
   "exclude": [
     "node_modules",
     "backend/dist",
-    "dist"
+    "dist",
+    "mobile",
+    "mobile/**/*"
   ]
 }
