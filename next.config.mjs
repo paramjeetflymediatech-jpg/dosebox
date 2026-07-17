@@ -13,7 +13,7 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['sequelize'],
+  serverExternalPackages: ['sequelize', 'pdfkit', 'fontkit'],
 };
 
 export default nextConfig;

@@ -8,7 +8,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
-  role: 'Admin' | 'Customer' | 'SuperAdmin';
+  role: 'Admin' | 'Customer' | 'SuperAdmin' | 'Pharmacist';
   doseboxTokens?: number;
 }
 
@@ -21,6 +21,7 @@ interface AuthContextType {
   isAdmin: boolean;
 
   isCustomer: boolean;
+  isPharmacist: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
   const isCustomer = user?.role === 'Customer';
+  const isPharmacist = user?.role === 'Pharmacist';
 
   return (
     <AuthContext.Provider value={{
@@ -114,7 +116,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       googleLogin,
       logout,
       isAdmin,
-      isCustomer
+      isCustomer,
+      isPharmacist
     }}>
       {children}
     </AuthContext.Provider>

@@ -8,7 +8,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecretrefresh
 export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nk.socialflymediatech.com';
   try {
-    const formData = await req.formData();
+    const formData = (await req.formData()) as any;
     const credential = (formData as any).get('credential') as string;
 
     if (!credential) {

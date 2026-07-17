@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Brand } from '../../../../../models';
 import { authenticateJWT } from '../../../../../middleware/auth';
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
@@ -28,7 +28,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const roleAuth = authorizeRoles(userAuth, 'Admin');
     if (roleAuth instanceof NextResponse) return roleAuth;
 
-    const formData = await req.formData();
+    const formData = (await req.formData()) as any;
     const file = (formData as any).get('file') as File;
 
     if (!file) {

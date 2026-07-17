@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const formData = await req.formData();
+    const formData = (await req.formData()) as any;
     const file = formData.get('file') as File;
 
     if (!file) {

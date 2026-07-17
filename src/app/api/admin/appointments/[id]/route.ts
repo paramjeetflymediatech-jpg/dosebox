@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Appointment } from '../../../../../models';
 import { authenticateJWT, authorizeRoles } from '../../../../../middleware/auth';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userAuth = await authenticateJWT(req);
   if (userAuth instanceof NextResponse) return userAuth;
   const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin');
   if (authError) return authError;
 
   try {
-    const appointmentId = parseInt(params.id);
+    const { id } = await params;
+    const appointmentId = parseInt(id);
     const appointment = await Appointment.findByPk(appointmentId);
     
     if (!appointment) {
