@@ -13,7 +13,7 @@ export default function CustomEditor({ value, onChange }: CustomEditorProps) {
   return (
     <div className="prose max-w-none">
       <CKEditor
-        editor={ClassicEditor}
+        editor={ClassicEditor as any}
         data={value}
         onChange={(event, editor) => {
           const data = editor.getData();
