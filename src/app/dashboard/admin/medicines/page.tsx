@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Pill, Plus, Search, Edit2, Trash2, ShieldAlert, Download } from 'lucide-react';
 import api from '@/lib/api';
 import Swal from 'sweetalert2';
+import Pagination from '../../../../components/admin/Pagination';
 
 interface Medicine {
   id: number;
@@ -268,17 +269,15 @@ export default function AdminMedicinesPage() {
           </div>
         )}
 
-        {Math.ceil(filteredMedicines.length / itemsPerPage) > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-slate-100 mt-6 gap-4">
-            <span className="text-sm font-semibold text-slate-500">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredMedicines.length)} of {filteredMedicines.length} entries
-            </span>
-            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-all disabled:opacity-50">Prev</button>
-              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredMedicines.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(filteredMedicines.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-all disabled:opacity-50">Next</button>
-            </div>
-          </div>
-        )}
+        <div className="mt-8 -mx-4 md:-mx-8">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredMedicines.length / itemsPerPage)}
+            totalItems={filteredMedicines.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
       {/* CSV Upload Modal */}

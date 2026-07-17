@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { orderId } = body;
+    const { orderId, client } = body;
 
     const order = await Order.findOne({ where: { id: orderId, userId } });
     if (!order) {
@@ -58,15 +58,17 @@ export async function POST(req: NextRequest) {
 
     const merchantOrderId = 'MT-' + order.id.toString() + '-' + Date.now();
 
-    const host = process.env.NEXT_PUBLIC_APP_URL ? process.env.NEXT_PUBLIC_APP_URL.replace(/https?:\/\//, '') : (req.headers.get('host') || 'localhost:3000');
+    const host = req.headers.get('host') || 'localhost:3000';
     const protocol = req.headers.get('x-forwarded-proto') || 'http';
     let baseUrl = `${protocol}://${host}`;
-    if (process.env.NEXT_PUBLIC_APP_URL) {
+    
+    // Override with NEXT_PUBLIC_APP_URL for web, but NOT for mobile since mobile needs the dynamic host (e.g. 10.0.2.2)
+    if (client !== 'mobile' && process.env.NEXT_PUBLIC_APP_URL) {
         baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     }
 
     const redirectUrl = new URL(
-      `/api/payments/phonepe/redirect?orderId=${order.id}`,
+      `/api/payments/phonepe/redirect?orderId=${order.id}&client=${client || 'web'}`,
       baseUrl
     ).toString();
 

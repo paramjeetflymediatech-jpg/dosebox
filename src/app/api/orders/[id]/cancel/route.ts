@@ -59,7 +59,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       }
 
       // For COD, they haven't paid, so they only get the bonus tokens + any tokens they used
-      finalTokensGranted = order.paymentMethod === 'COD' ? actualBonus + tokensToRefund : orderAmount + actualBonus + tokensToRefund;
+      const isCOD = order.paymentMethod === 'COD' || order.paymentMethod === 'Cash on Delivery';
+      finalTokensGranted = isCOD ? actualBonus + tokensToRefund : orderAmount + actualBonus + tokensToRefund;
       
       // Update User
       await user.update({

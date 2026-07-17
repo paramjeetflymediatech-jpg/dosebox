@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, ActivityIndicator } from 'react-native';
 
+import SplashScreen from '../screens/auth/SplashScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import OnboardingScreen from '../screens/auth/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -23,51 +24,59 @@ import MainTabNavigator from './MainTabNavigator';
 import AdminTabNavigator from './AdminTabNavigator';
 import GuestTabNavigator from './GuestTabNavigator';
 
+import UserPrescriptionsScreen from '../screens/user/UserPrescriptionsScreen';
+import UserConsultationsScreen from '../screens/user/UserConsultationsScreen';
+import UserRewardsScreen from '../screens/user/UserRewardsScreen';
+import UserAddressesScreen from '../screens/user/UserAddressesScreen';
+import UserProfileEditScreen from '../screens/user/UserProfileEditScreen';
+
+import CategoriesScreen from '../screens/explore/CategoriesScreen';
+import AboutScreen from '../screens/explore/AboutScreen';
+import FAQScreen from '../screens/explore/FAQScreen';
+import BlogScreen from '../screens/explore/BlogScreen';
+import ContactScreen from '../screens/explore/ContactScreen';
+import TestimonialScreen from '../screens/explore/TestimonialScreen';
+import NewsScreen from '../screens/explore/NewsScreen';
+import TermsScreen from '../screens/explore/TermsScreen';
+import PrivacyPolicyScreen from '../screens/explore/PrivacyPolicyScreen';
+import RefundPolicyScreen from '../screens/explore/RefundPolicyScreen';
+import CookiePolicyScreen from '../screens/explore/CookiePolicyScreen';
+import SearchScreen from '../screens/explore/SearchScreen';
+import MedicineDetailScreen from '../screens/explore/MedicineDetailScreen';
+
+import AdminModulesScreen from '../screens/admin/AdminModulesScreen';
+import AdminProfileScreen from '../screens/admin/AdminProfileScreen';
+import AdminAppointmentsScreen from '../screens/admin/AdminAppointmentsScreen';
+import AdminBannersScreen from '../screens/admin/AdminBannersScreen';
+import AdminBlogsScreen from '../screens/admin/AdminBlogsScreen';
+import AdminBrandsScreen from '../screens/admin/AdminBrandsScreen';
+import AdminCategoriesScreen from '../screens/admin/AdminCategoriesScreen';
+import AdminCouponsScreen from '../screens/admin/AdminCouponsScreen';
+import AdminDoctorsScreen from '../screens/admin/AdminDoctorsScreen';
+import AdminFAQsScreen from '../screens/admin/AdminFAQsScreen';
+import AdminGlobalSEOScreen from '../screens/admin/AdminGlobalSEOScreen';
+import AdminPrescriptionsScreen from '../screens/admin/AdminPrescriptionsScreen';
+import AdminRewardsScreen from '../screens/admin/AdminRewardsScreen';
+import AdminSEOScreen from '../screens/admin/AdminSEOScreen';
+import AdminSuppliersScreen from '../screens/admin/AdminSuppliersScreen';
+import AdminTransactionsScreen from '../screens/admin/AdminTransactionsScreen';
+import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
+import AdminMedicinesScreen from '../screens/admin/AdminMedicinesScreen';
+import AdminOrdersScreen from '../screens/admin/AdminOrdersScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
-  const [isReady, setIsReady] = useState(false);
-  const [initialRoute, setInitialRoute] = useState('Welcome');
-
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      try {
-        const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
-        if (hasSeenOnboarding === 'true') {
-          // If returning user, skip Welcome and Onboarding entirely
-          setInitialRoute('MainTabs');
-        } else {
-          // If first time, show Welcome which auto-navigates to Onboarding
-          setInitialRoute('Welcome');
-        }
-      } catch (e) {
-        console.error('Failed to read onboarding status', e);
-        setInitialRoute('Welcome');
-      } finally {
-        setIsReady(true);
-      }
-    };
-    
-    checkOnboardingStatus();
-  }, []);
-
-  if (!isReady) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F7F5EF' }}>
-        <ActivityIndicator size="large" color="#1F5C52" />
-      </View>
-    );
-  }
-
   return (
     <NavigationContainer>
       <Stack.Navigator 
-        initialRouteName={initialRoute}
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right'
         }}
       >
+        <Stack.Screen name="Splash" component={SplashScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="GuestTabs" component={GuestTabNavigator} options={{ animation: 'fade' }} />
@@ -85,6 +94,46 @@ export default function AppNavigator() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Proceed" component={ProceedScreen} />
         <Stack.Screen name="Alerts" component={AlertsScreen} />
+        <Stack.Screen name="UserPrescriptions" component={UserPrescriptionsScreen} />
+        <Stack.Screen name="UserConsultations" component={UserConsultationsScreen} />
+        <Stack.Screen name="UserRewards" component={UserRewardsScreen} />
+        <Stack.Screen name="UserAddresses" component={UserAddressesScreen} />
+        <Stack.Screen name="UserProfileEdit" component={UserProfileEditScreen} />
+
+        <Stack.Screen name="Categories" component={CategoriesScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="FAQ" component={FAQScreen} />
+        <Stack.Screen name="Blog" component={BlogScreen} />
+        <Stack.Screen name="Contact" component={ContactScreen} />
+        <Stack.Screen name="Testimonial" component={TestimonialScreen} />
+        <Stack.Screen name="News" component={NewsScreen} />
+        <Stack.Screen name="Terms" component={TermsScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="RefundPolicy" component={RefundPolicyScreen} />
+        <Stack.Screen name="CookiePolicy" component={CookiePolicyScreen} />
+        <Stack.Screen name="SearchScreen" component={SearchScreen} />
+        <Stack.Screen name="MedicineDetail" component={MedicineDetailScreen} />
+
+        {/* Admin Screens */}
+        <Stack.Screen name="AdminModules" component={AdminModulesScreen} />
+        <Stack.Screen name="AdminProfile" component={AdminProfileScreen} />
+        <Stack.Screen name="AdminAppointments" component={AdminAppointmentsScreen} />
+        <Stack.Screen name="AdminBanners" component={AdminBannersScreen} />
+        <Stack.Screen name="AdminBlogs" component={AdminBlogsScreen} />
+        <Stack.Screen name="AdminBrands" component={AdminBrandsScreen} />
+        <Stack.Screen name="AdminCategories" component={AdminCategoriesScreen} />
+        <Stack.Screen name="AdminCoupons" component={AdminCouponsScreen} />
+        <Stack.Screen name="AdminDoctors" component={AdminDoctorsScreen} />
+        <Stack.Screen name="AdminFAQs" component={AdminFAQsScreen} />
+        <Stack.Screen name="AdminGlobalSEO" component={AdminGlobalSEOScreen} />
+        <Stack.Screen name="AdminPrescriptions" component={AdminPrescriptionsScreen} />
+        <Stack.Screen name="AdminRewards" component={AdminRewardsScreen} />
+        <Stack.Screen name="AdminSEO" component={AdminSEOScreen} />
+        <Stack.Screen name="AdminSuppliers" component={AdminSuppliersScreen} />
+        <Stack.Screen name="AdminTransactions" component={AdminTransactionsScreen} />
+        <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
+        <Stack.Screen name="AdminMedicines" component={AdminMedicinesScreen} />
+        <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

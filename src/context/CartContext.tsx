@@ -25,6 +25,7 @@ interface CartContextType {
   // Computed values
   subtotal: number;
   savings: number;
+  couponDiscount: number;
   gstAmount: number;
   totalAmount: number;
   requiresPrescription: boolean;
@@ -142,6 +143,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeCoupon,
       subtotal,
       savings,
+      couponDiscount,
       gstAmount,
       totalAmount,
       requiresPrescription

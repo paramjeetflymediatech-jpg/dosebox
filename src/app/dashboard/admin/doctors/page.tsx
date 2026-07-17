@@ -4,11 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X, Stethoscope } from 'lucide-react';
 import api from '../../../../lib/api';
 import Swal from 'sweetalert2';
+import Pagination from '../../../../components/admin/Pagination';
 
 export default function AdminDoctorsPage() {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -137,7 +140,7 @@ export default function AdminDoctorsPage() {
               type="text" 
               placeholder="Search doctors..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
             />
           </div>
@@ -164,7 +167,7 @@ export default function AdminDoctorsPage() {
                   <td colSpan={5} className="px-6 py-8 text-center text-slate-500">No doctors found.</td>
                 </tr>
               ) : (
-                filteredDoctors.map(doctor => (
+                filteredDoctors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(doctor => (
                   <tr key={doctor.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900">{doctor.name}</td>
                     <td className="px-6 py-4">
@@ -195,6 +198,16 @@ export default function AdminDoctorsPage() {
               )}
             </tbody>
           </table>
+        </div>
+        
+        <div className="-mx-4 md:-mx-8 mt-6">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredDoctors.length / itemsPerPage)}
+            totalItems={filteredDoctors.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

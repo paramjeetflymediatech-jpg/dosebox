@@ -1,29 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  reactStrictMode: true,
   images: {
-    unoptimized: true,
-  },
-  serverExternalPackages: ['sequelize', 'pg', 'pg-hstore', 'sqlite3', 'tesseract.js', 'pdfkit', 'fontkit'],
-  async rewrites() {
-    return [
+    remotePatterns: [
       {
-        source: '/uploads/:path*',
-        destination: '/api/file/:path*',
+        protocol: 'https',
+        hostname: '**',
       },
-    ];
-  },
-  async redirects() {
-    return [
       {
-        source: '/admin',
-        destination: '/admin/login',
-        permanent: true,
+        protocol: 'http',
+        hostname: '**',
       },
-    ];
+    ],
   },
+  serverExternalPackages: ['sequelize'],
 };
 
 export default nextConfig;

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AlertService } from './AlertService';
 import { API_URL } from '../config/env';
 
 /**
@@ -18,6 +19,19 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
+      if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
+        // Convert empty strings to null recursively
+        const cleanData = (obj) => {
+          for (let key in obj) {
+            if (obj[key] === '') {
+              obj[key] = null;
+            } else if (obj[key] !== null && typeof obj[key] === 'object') {
+              cleanData(obj[key]);
+            }
+          }
+        };
+        cleanData(config.data);
+      }
       const token = await AsyncStorage.getItem('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -69,8 +83,27 @@ api.interceptors.response.use(
         await AsyncStorage.removeItem('refreshToken');
         await AsyncStorage.removeItem('user');
         
-        // TODO: You might want to trigger a global event here or use a Navigation reference
-        // to forcefully navigate the user back to the Welcome/Login screen.
+        AlertService.show({
+          type: 'error',
+          title: 'Session Expired',
+          message: 'Your session has expired. Please log in again.'
+        });
+      }
+    } else {
+      // Global Error Popups for any other error (excluding the 401 which is either retried or handled by specific screens like UploadPrescription)
+      if (error.response && error.response.status !== 401) {
+        const msg = error.response.data?.message || `Server Error (${error.response.status}). Please try again.`;
+        AlertService.show({
+          type: 'error',
+          title: 'Oops!',
+          message: msg
+        });
+      } else if (!error.response) {
+        AlertService.show({
+          type: 'error',
+          title: 'Network Error',
+          message: 'Unable to connect to the server. Please check your internet connection.'
+        });
       }
     }
     

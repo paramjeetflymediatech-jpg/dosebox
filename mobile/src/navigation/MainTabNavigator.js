@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Home, Bell, Search, ShoppingBag, User } from 'lucide-react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import HomeScreen from '../screens/user/HomeScreen';
-import AlertsScreen from '../screens/user/AlertsScreen';
 import BrowseMedicinesScreen from '../screens/user/BrowseMedicinesScreen';
+import CartCheckoutScreen from '../screens/user/CartCheckoutScreen';
 import ProceedScreen from '../screens/user/ProceedScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 
@@ -15,13 +15,13 @@ import { rs, rv, rm, TAB_BAR_HEIGHT } from '../utils/responsive';
 
 const Tab = createBottomTabNavigator();
 
-const ACTIVE_COLOR = '#1F5C52';
-const INACTIVE_COLOR = '#94A3B8';
+const ACTIVE_COLOR = '#0852A1';
+const INACTIVE_COLOR = '#6B7280';
 
-function TabIcon({ IconComponent, color, focused }) {
+function TabIcon({ iconName, color, focused }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <IconComponent size={rs(22)} color={color} />
+      <Ionicons name={iconName} size={rs(22)} color={color} />
     </View>
   );
 }
@@ -38,6 +38,7 @@ export default function MainTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: ACTIVE_COLOR,
         tabBarInactiveTintColor: INACTIVE_COLOR,
+        tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
         tabBarStyle: [
           styles.tabBar,
           {
@@ -55,37 +56,17 @@ export default function MainTabNavigator() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={Home} color={color} focused={focused} />
+            <TabIcon iconName={focused ? 'home' : 'home-outline'} color={color} focused={focused} />
           ),
         }}
       />
       <Tab.Screen
-        name="AlertsTab"
-        component={AlertsScreen}
+        name="AlertTab"
+        component={require('../screens/user/AlertsScreen').default}
         options={{
-          tabBarLabel: 'Alerts',
+          tabBarLabel: 'Alert',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={Bell} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ExploreTab"
-        component={BrowseMedicinesScreen}
-        options={{
-          tabBarLabel: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={Search} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ProceedTab"
-        component={ProceedScreen}
-        options={{
-          tabBarLabel: 'Proceed',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={ShoppingBag} color={color} focused={focused} />
+            <TabIcon iconName={focused ? 'notifications' : 'notifications-outline'} color={color} focused={focused} />
           ),
         }}
       />
@@ -95,7 +76,17 @@ export default function MainTabNavigator() {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={User} color={color} focused={focused} />
+            <TabIcon iconName={focused ? 'person' : 'person-outline'} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ExploreTab"
+        component={BrowseMedicinesScreen}
+        options={{
+          tabBarLabel: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon iconName={focused ? 'compass' : 'compass-outline'} color={color} focused={focused} />
           ),
         }}
       />
@@ -113,7 +104,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 16,
+    // elevation: 16,
     // Ensure it sits above Android gesture navigation bar
     position: 'absolute',
     left: 0,
@@ -136,6 +127,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: '#EAF4F2',
+    backgroundColor: '#E8F0FE',
   },
 });

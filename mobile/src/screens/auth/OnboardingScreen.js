@@ -12,22 +12,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const palette = {
-  bg: '#F7F5EF',
-  surface: '#FFFFFF',
-  surfaceMuted: '#EAF2EE',
-  ink: '#122622',
-  inkMuted: '#5B6F69',
-  primary: '#1F5C52',
-  primaryDark: '#123B34',
-  accent: '#E3A857',
-  line: '#DCE6E1',
-};
-
-const fonts = {
-  // display: 'Newsreader_500Medium',
-  // body: 'Manrope_600SemiBold',
-};
+import { COLORS, FONTS, SHADOWS } from '../../utils/theme';
+import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 
 const SLIDES = [
   {
@@ -97,10 +83,10 @@ export default function OnboardingScreen({ navigation }) {
   const finishOnboarding = async () => {
     try {
       await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-      navigation.replace('MainTabs');
+      navigation.replace('GuestTabs');
     } catch (e) {
       console.error('Failed to save onboarding flag', e);
-      navigation.replace('MainTabs');
+      navigation.replace('GuestTabs');
     }
   };
 
@@ -141,7 +127,7 @@ export default function OnboardingScreen({ navigation }) {
             />
           ))}
         </View>
-        
+
         {/* Skip Button */}
         <TouchableOpacity onPress={finishOnboarding} style={styles.skipButton}>
           <Text style={styles.skipText}>Skip</Text>
@@ -187,113 +173,107 @@ export default function OnboardingScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.bg,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingTop: 16,
-    height: 60,
+    paddingHorizontal: spacing.xl,
+    paddingTop: rv(16),
+    height: rv(60),
   },
   dotsContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: rs(8),
   },
   dot: {
-    height: 6,
-    borderRadius: 3,
+    height: rs(6),
+    borderRadius: rs(3),
   },
   dotActive: {
-    width: 20,
-    backgroundColor: palette.primary,
+    width: rs(20),
+    backgroundColor: COLORS.primary,
   },
   dotInactive: {
-    width: 6,
-    backgroundColor: palette.line,
+    width: rs(6),
+    backgroundColor: COLORS.border,
   },
   skipButton: {
-    padding: 8,
+    padding: rs(8),
   },
   skipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: palette.inkMuted,
+    fontSize: rm(14),
+    fontWeight: FONTS.semiBold,
+    color: COLORS.textSecondary,
   },
   slide: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: spacing.xxl,
   },
   iconBadge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: palette.surfaceMuted,
+    width: rs(120),
+    height: rs(120),
+    borderRadius: rs(60),
+    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: rv(40),
+    ...SHADOWS.sm,
   },
   iconText: {
-    fontSize: 56,
+    fontSize: rs(56),
   },
   slideTitle: {
-    fontSize: 32,
-    fontWeight: '500',
-    color: palette.ink,
+    fontSize: rm(32),
+    fontWeight: FONTS.bold,
+    color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: rv(16),
     letterSpacing: -0.5,
   },
   slideDescription: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: palette.inkMuted,
+    fontSize: rm(16),
+    fontWeight: FONTS.regular,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: rv(24),
   },
   footer: {
-    paddingHorizontal: 32,
-    paddingBottom: 40,
-    paddingTop: 20,
-    height: 120,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: rv(40),
+    paddingTop: rv(20),
+    height: rv(120),
     justifyContent: 'center',
   },
   primaryButton: {
-    backgroundColor: palette.primary,
-    paddingVertical: 17,
-    borderRadius: 14,
+    backgroundColor: COLORS.primary,
+    paddingVertical: rv(16),
+    borderRadius: radius.md,
     alignItems: 'center',
-    shadowColor: palette.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 3,
+    ...SHADOWS.md,
   },
   primaryButtonText: {
-    color: palette.surface,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    color: COLORS.surface,
+    fontSize: rm(16),
+    fontWeight: FONTS.bold,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 17,
-    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    paddingVertical: rv(16),
+    borderRadius: radius.md,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: palette.primary,
+    ...SHADOWS.sm,
   },
   secondaryButtonText: {
-    color: palette.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    color: COLORS.primary,
+    fontSize: rm(16),
+    fontWeight: FONTS.bold,
   },
   placeholderButton: {
-    height: 56, // Same height as primary button approximately
+    height: rv(56),
   },
 });
 

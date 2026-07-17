@@ -1,48 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
-
-const MOCK_ALERTS = [
-  {
-    id: '1',
-    type: 'refill',
-    title: 'Refill Reminder',
-    message: 'Metformin 500mg is running low. Order now to avoid a gap.',
-    time: '2h ago',
-    unread: true,
-  },
-  {
-    id: '2',
-    type: 'order',
-    title: 'Order Shipped',
-    message: 'Your order #DB1042 has been dispatched and is on the way.',
-    time: '5h ago',
-    unread: true,
-  },
-  {
-    id: '3',
-    type: 'promo',
-    title: 'Special Offer',
-    message: 'Get 15% off on all diabetes care products today only.',
-    time: 'Yesterday',
-    unread: false,
-  },
-  {
-    id: '4',
-    type: 'order',
-    title: 'Order Delivered',
-    message: 'Your order #DB1038 was successfully delivered.',
-    time: '3 days ago',
-    unread: false,
-  },
-];
+import api from '../../services/api';
 
 const TYPE_CONFIG = {
   refill: { color: '#EF4444', bg: '#FEF2F2', label: 'Refill' },
@@ -50,13 +18,69 @@ const TYPE_CONFIG = {
   promo: { color: '#F59E0B', bg: '#FFFBEB', label: 'Offer' },
 };
 
-export default function AlertsScreen() {
+export default function AlertsScreen({ navigation }) {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAlerts = async () => {
+    try {
+      const res = await api.get('/account/alerts');
+      if (res.data?.success) {
+        setAlerts(res.data.data || []);
+      }
+    } catch (e) {
+      console.log('Failed to fetch alerts', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAlerts();
+  };
+
+  const markAllRead = async () => {
+    try {
+      const res = await api.put('/account/alerts');
+      if (res.data?.success) {
+        setAlerts(alerts.map(a => ({ ...a, read: true })));
+      }
+    } catch (e) {
+      console.log('Failed to mark alerts as read', e);
+    }
+  };
+
+  const handlePress = async (item) => {
+    if (!item.read) {
+      try {
+        await api.put('/account/alerts', { alertId: item.id });
+        setAlerts(alerts.map(a => a.id === item.id ? { ...a, read: true } : a));
+      } catch (e) {}
+    }
+
+    const orderMatch = item.message.match(/#OD-(\d+)/);
+    if (orderMatch) {
+      navigation.navigate('OrderTracking', { order: { id: parseInt(orderMatch[1]) } });
+    }
+  };
+
   const renderItem = ({ item }) => {
     const cfg = TYPE_CONFIG[item.type] || TYPE_CONFIG.order;
+    const isUnread = !item.read;
+    const timeText = new Date(item.createdAt).toLocaleDateString();
+
     return (
       <TouchableOpacity
-        style={[styles.card, item.unread && styles.cardUnread]}
+        style={[styles.card, isUnread && styles.cardUnread]}
         activeOpacity={0.7}
+        onPress={() => handlePress(item)}
       >
         <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
           <Text style={[styles.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
@@ -64,10 +88,10 @@ export default function AlertsScreen() {
         <View style={styles.cardBody}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>{item.title}</Text>
-            {item.unread && <View style={styles.dot} />}
+            {isUnread && <View style={styles.dot} />}
           </View>
           <Text style={styles.cardMessage}>{item.message}</Text>
-          <Text style={styles.cardTime}>{item.time}</Text>
+          <Text style={styles.cardTime}>{timeText}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -77,18 +101,28 @@ export default function AlertsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Alerts</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={markAllRead}>
           <Text style={styles.markAll}>Mark all read</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={MOCK_ALERTS}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: rv(10) }} />}
-      />
+      {loading ? (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator size="large" color="#1F5C52" />
+        </View>
+      ) : (
+        <FlatList
+          data={alerts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: rv(10) }} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1F5C52" />}
+          ListEmptyComponent={
+            <Text style={{textAlign: 'center', color: '#94A3B8', marginTop: 50}}>No alerts found</Text>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

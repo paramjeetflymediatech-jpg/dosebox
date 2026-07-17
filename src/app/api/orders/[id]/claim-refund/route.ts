@@ -38,7 +38,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     if (refundMethod === 'tokens') {
       // NOTE: NO 2-TIME LIMIT FOR ADMIN CANCEL
       // For COD, they haven't paid, so they only get the bonus tokens
-      finalTokensGranted = order.paymentMethod === 'COD' ? bonusTokens : orderAmount + bonusTokens;
+      const isCOD = order.paymentMethod === 'COD' || order.paymentMethod === 'Cash on Delivery';
+      finalTokensGranted = isCOD ? bonusTokens : orderAmount + bonusTokens;
       
       // Update User
       await user.update({

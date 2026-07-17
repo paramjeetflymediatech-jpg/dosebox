@@ -131,6 +131,22 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
   const [processing, setProcessing] = useState(false);
   const [notes, setNotes] = useState('');
 
+  const getSafeFileUrl = (url: any) => {
+    if (!url) return '';
+    if (typeof url === 'string') {
+      try {
+        const parsed = JSON.parse(url);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+      } catch(e) {
+        return url;
+      }
+    }
+    if (Array.isArray(url) && url.length > 0) return url[0];
+    return url;
+  };
+
+  const safeFileUrl = getSafeFileUrl(rx?.fileUrl);
+
   // Initialize items from AI matches
   useEffect(() => {
     if (rx?.extractedMedicines) {
@@ -244,10 +260,12 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
           <div className="w-full lg:w-1/2 p-6 flex flex-col bg-slate-50">
             <h4 className="font-semibold text-slate-700 mb-4">Uploaded Document</h4>
             <div className="flex-1 relative w-full min-h-[400px] bg-slate-200 rounded-xl overflow-hidden border border-slate-300">
-              {rx.fileUrl?.endsWith('.pdf') ? (
-                <iframe src={rx.fileUrl} className="w-full h-full" />
+              {!safeFileUrl ? (
+                <div className="flex items-center justify-center h-full text-slate-500 font-medium">No document available</div>
+              ) : safeFileUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={safeFileUrl} className="w-full h-full" />
               ) : (
-                <Image src={rx.fileUrl} alt="Prescription" fill className="object-contain" />
+                <Image src={safeFileUrl} alt="Prescription" fill className="object-contain" />
               )}
             </div>
             <div className="mt-4">

@@ -12,17 +12,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
 
-const palette = {
-  bg: '#F7F5EF',
-  surface: '#FFFFFF',
-  ink: '#122622',
-  inkMuted: '#5B6F69',
-  primary: '#1F5C52',
-  primaryDark: '#123B34',
-  accent: '#E3A857',
-  line: '#DCE6E1'};
+import { COLORS, FONTS } from '../../utils/theme';
+import { rs, rv, rm } from '../../utils/responsive';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -62,48 +56,49 @@ export default function ForgotPasswordScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.contentWrapper}>
-            <View style={styles.headerContainer}>
-              <TouchableOpacity 
-                onPress={() => navigation.goBack()} 
-                style={styles.backButton}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              >
-                <Text style={styles.backIcon}>←</Text>
-              </TouchableOpacity>
-              <Text style={styles.title}>Forgot Password?</Text>
-              <Text style={styles.subtitle}>Enter your email to receive a secure OTP.</Text>
+          
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={styles.backButton}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+            <Ionicons name="chevron-back" size={24} color="#111827" />
+          </TouchableOpacity>
+
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Forgot Password?</Text>
+            <Text style={styles.subtitle}>Enter your email to receive a secure OTP.</Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="name@example.com"
+                placeholderTextColor="#9ca3af"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
             </View>
 
-            <View style={styles.formContainer}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="name@example.com"
-                  placeholderTextColor="#cbd5e1"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
-
-              <TouchableOpacity 
-                style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} 
-                onPress={handleSendOtp} 
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Send OTP</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} 
+              onPress={handleSendOtp} 
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Send OTP</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -114,68 +109,84 @@ export default function ForgotPasswordScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.bg},
-  keyboardView: {
-    flex: 1},
+    backgroundColor: '#FAFCFB',
+  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24},
-  contentWrapper: {
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center'},
-  headerContainer: {
-    marginBottom: 40},
+    paddingHorizontal: rs(24),
+    paddingTop: rv(20),
+    paddingBottom: rv(40),
+  },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: palette.surface,
+    width: rs(40),
+    height: rs(40),
+    borderRadius: rs(20),
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: palette.line},
-  backIcon: {
-    fontSize: 20,
-    color: palette.ink},
-  title: {
-    fontSize: 36,
-    color: palette.ink,
-    marginBottom: 8,
-    fontWeight: '700',
-    letterSpacing: -1},
-  subtitle: {
-    fontSize: 16,
-    color: palette.inkMuted,
-    lineHeight: 24},
-  formContainer: {
-    gap: 20},
-  inputGroup: {
-    gap: 8},
-  label: {
-    fontSize: 14,
-    color: palette.ink,
-    fontWeight: '600'},
-  input: {
-    backgroundColor: palette.surface,
-    borderWidth: 1,
-    borderColor: palette.line,
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    color: palette.ink},
-  primaryButton: {
-    backgroundColor: palette.primary,
-    borderRadius: 16,
-    padding: 18,
+    marginBottom: rv(20),
+  },
+  headerContainer: {
     alignItems: 'center',
-    marginTop: 12},
-  primaryButtonDisabled: {
-    opacity: 0.7},
-  primaryButtonText: {
-    color: palette.surface,
-    fontSize: 16,
+    marginBottom: rv(32),
+  },
+  title: {
+    fontSize: rm(26),
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: rv(8),
+  },
+  subtitle: {
+    fontSize: rm(14),
+    color: '#6b7280',
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingHorizontal: rs(20),
+  },
+  formContainer: {
+    flex: 1,
+  },
+  inputGroup: {
+    marginBottom: rv(20),
+  },
+  label: {
+    fontSize: rm(13),
     fontWeight: '600',
-    letterSpacing: 0.5}});
+    color: '#4b5563',
+    marginBottom: rv(8),
+    marginLeft: rs(4),
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: rs(30),
+    paddingVertical: rv(16),
+    paddingHorizontal: rs(20),
+    fontSize: rm(15),
+    color: '#111827',
+  },
+  primaryButton: {
+    backgroundColor: COLORS.primary, // Using DoseBox Teal
+    paddingVertical: rv(18),
+    borderRadius: rs(30),
+    alignItems: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
+    marginTop: rv(12),
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: rm(16),
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+});

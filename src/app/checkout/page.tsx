@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  MapPin, CreditCard, ChevronRight, CheckCircle2, Plus, Loader2, ArrowLeft, ShieldCheck, Wallet, Sparkles
+  MapPin, CreditCard, ChevronRight, CheckCircle2, Plus, Loader2, ArrowLeft, ShieldCheck, Wallet, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,7 @@ interface Address {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, totalAmount, clearCart, subtotal, savings, gstAmount } = useCart();
+  const { cartItems, totalAmount, clearCart, subtotal, savings, gstAmount, couponCode, couponDiscount } = useCart();
   const { user } = useAuth();
   
   // States
@@ -85,6 +85,7 @@ export default function CheckoutPage() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
 
   // Address Search & Location States
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
@@ -644,25 +645,53 @@ export default function CheckoutPage() {
 
               <div className="border-t border-slate-100 pt-6 space-y-4 text-sm font-semibold text-slate-500">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span>Total MRP</span>
                   <span className="text-slate-900">₹{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-emerald-600">
-                  <span>Discount</span>
+                  <span>Dosebox Discount</span>
                   <span>- ₹{formatCurrency(savings)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Estimated GST</span>
-                  <span className="text-slate-900">₹{formatCurrency(gstAmount)}</span>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-indigo-600 font-bold">
+                    <span>Promo Discount ({couponCode})</span>
+                    <span>- ₹{formatCurrency(couponDiscount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-slate-800">
+                  <span>Cart Total</span>
+                  <span className="text-slate-900">₹{formatCurrency(subtotal - savings)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span className="text-slate-900">{(subtotal - savings) > 500 ? 'Free' : '₹50.00'}</span>
+                
+                <div className="pt-2">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer" 
+                    onClick={() => setShowAdditionalCharges(!showAdditionalCharges)}
+                  >
+                    <span className="flex items-center gap-1">
+                      Additional Charges
+                      {showAdditionalCharges ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </span>
+                    <span className="text-slate-900">₹{formatCurrency(gstAmount + ((subtotal - savings) > 500 ? 0 : 50))}</span>
+                  </div>
+                  
+                  {showAdditionalCharges && (
+                    <div className="pl-4 mt-3 space-y-3 text-xs text-slate-400 border-l-2 border-slate-100">
+                      <div className="flex justify-between">
+                        <span>Estimated GST</span>
+                        <span>₹{formatCurrency(gstAmount)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Delivery Charges</span>
+                        <span>{(subtotal - savings) > 500 ? 'Free' : '₹50.00'}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="border-t border-slate-100 pt-6 flex justify-between items-baseline">
-                <span className="font-extrabold text-slate-900 text-lg">Total</span>
+                <span className="font-extrabold text-slate-900 text-lg">Order Total</span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">₹{formatCurrency(totalAmount)}</span>
               </div>
               

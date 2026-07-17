@@ -15,6 +15,7 @@ const initialState = { items: [] };
 function cartReducer(state, action) {
   switch (action.type) {
     case 'LOAD':
+      if (state.items.length > 0) return state; // Prevent overwriting newly added items
       return { items: action.payload };
 
     case 'ADD': {
@@ -56,6 +57,8 @@ function cartReducer(state, action) {
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
+  const [isLoaded, setIsLoaded] = React.useState(false);
+
   // Load from storage on mount
   useEffect(() => {
     AsyncStorage.getItem(CART_KEY).then((raw) => {
@@ -64,13 +67,16 @@ export function CartProvider({ children }) {
           dispatch({ type: 'LOAD', payload: JSON.parse(raw) });
         } catch {}
       }
+      setIsLoaded(true);
     });
   }, []);
 
   // Persist whenever cart changes
   useEffect(() => {
-    AsyncStorage.setItem(CART_KEY, JSON.stringify(state.items));
-  }, [state.items]);
+    if (isLoaded) {
+      AsyncStorage.setItem(CART_KEY, JSON.stringify(state.items));
+    }
+  }, [state.items, isLoaded]);
 
   const totalQty = state.items.reduce((sum, i) => sum + i.qty, 0);
   const totalPrice = state.items.reduce((sum, i) => sum + i.price * i.qty, 0);

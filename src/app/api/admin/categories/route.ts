@@ -22,11 +22,11 @@ export async function POST(req: NextRequest) {
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin') {
+    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
       return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     }
 
-    const formData = await req.formData();
+    const formData = (await req.formData()) as any;
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
     const description = formData.get('description') as string;

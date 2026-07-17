@@ -10,7 +10,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin') {
+    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
       return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     }
 
@@ -35,7 +35,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin') {
+    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
       return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     }
 
@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ success: false, message: 'Category not found' }, { status: 404 });
     }
 
-    const formData = await req.formData();
+    const formData = (await req.formData()) as any;
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
     const description = formData.get('description') as string;

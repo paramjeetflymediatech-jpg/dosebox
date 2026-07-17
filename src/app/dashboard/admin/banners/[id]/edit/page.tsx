@@ -46,11 +46,26 @@ export default function EditBannerPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const handleUpdateBanner = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.put(`/admin/banners/${bannerId}`, banner);
+      const formData = new FormData();
+      formData.append('title', banner.title);
+      formData.append('subtitle', banner.subtitle);
+      formData.append('type', banner.type);
+      formData.append('link', banner.link);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (banner.image) {
+        formData.append('image', banner.image);
+      }
+
+      await api.put(`/admin/banners/${bannerId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       router.push('/dashboard/admin/banners');
     } catch (err) {
       console.error('Failed to update banner', err);
@@ -80,11 +95,18 @@ export default function EditBannerPage({ params }: { params: Promise<{ id: strin
           </select>
           
           <input type="text" placeholder="Subtitle (optional)" value={banner.subtitle} onChange={e => setBanner({...banner, subtitle: e.target.value})} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl md:col-span-2 focus:outline-none focus:border-brand-500 transition-colors" />
-          <input required type="url" placeholder="Image URL" value={banner.image} onChange={e => setBanner({...banner, image: e.target.value})} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl md:col-span-2 focus:outline-none focus:border-brand-500 transition-colors" />
+          
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Banner Image (Upload new or URL)</label>
+            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
+            <div className="text-center text-sm font-medium text-slate-400">OR</div>
+            <input type="url" placeholder="Image URL (if not uploading)" value={banner.image} onChange={e => setBanner({...banner, image: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
+          </div>
+
           <input required type="text" placeholder="Destination Link (e.g. /medicines)" value={banner.link} onChange={e => setBanner({...banner, link: e.target.value})} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl md:col-span-2 focus:outline-none focus:border-brand-500 transition-colors" />
           
           <div className="md:col-span-2 mt-4 flex justify-end">
-            <button type="submit" disabled={saving} className="px-8 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50">
+            <button type="submit" disabled={saving || (!imageFile && !banner.image)} className="px-8 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50">
               <Save className="w-5 h-5" /> {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>

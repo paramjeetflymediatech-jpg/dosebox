@@ -8,7 +8,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin') {
+    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
       return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     }
 
@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin') {
+    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
       return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     }
 

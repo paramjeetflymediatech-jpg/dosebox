@@ -53,6 +53,9 @@ export async function POST(req: NextRequest) {
     const checkedItems = [];
 
     for (const item of items) {
+      if (!item.medicineId) {
+        return NextResponse.json({ success: false, message: `Invalid item: missing medicineId` }, { status: 400 });
+      }
       const medicine = await Medicine.findByPk(item.medicineId);
       if (!medicine) {
         return NextResponse.json({ success: false, message: `Medicine ID ${item.medicineId} not found` }, { status: 404 });
@@ -231,6 +234,7 @@ export async function POST(req: NextRequest) {
       data: order
     }, { status: 201 });
   } catch (error: any) {
+    console.error('[ORDER API ERROR]:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }

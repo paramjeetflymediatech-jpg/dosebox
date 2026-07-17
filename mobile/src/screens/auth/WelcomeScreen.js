@@ -8,22 +8,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const palette = {
-  bg: '#F7F5EF',
-  surface: '#FFFFFF',
-  surfaceMuted: '#EAF2EE',
-  ink: '#122622',
-  inkMuted: '#5B6F69',
-  primary: '#1F5C52',
-  primaryDark: '#123B34',
-  accent: '#E3A857',
-  line: '#DCE6E1',
-};
-
-const fonts = {
-  // display: 'Newsreader_500Medium',
-  // body: 'Manrope_600SemiBold',
-};
+import { COLORS, FONTS, SHADOWS } from '../../utils/theme';
+import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 
 export default function WelcomeScreen({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -67,7 +53,7 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.bg,
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
@@ -78,14 +64,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoImage: {
-    width: 260,
-    height: 70,
-    marginBottom: 24,
+    width: rs(260),
+    height: rv(70),
+    marginBottom: spacing.xl,
   },
   tagline: {
-    fontSize: 24,
-    fontWeight: '500',
-    color: palette.ink,
+    fontSize: rm(24),
+    fontWeight: FONTS.semiBold,
+    color: COLORS.text,
     letterSpacing: -0.5,
   },
 });

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Search, User } from 'lucide-react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import HomeScreen from '../screens/user/HomeScreen';
 import BrowseMedicinesScreen from '../screens/user/BrowseMedicinesScreen';
@@ -15,10 +15,10 @@ const Tab = createBottomTabNavigator();
 const ACTIVE_COLOR = '#1F5C52';
 const INACTIVE_COLOR = '#94A3B8';
 
-function TabIcon({ IconComponent, color, focused }) {
+function TabIcon({ iconName, color, focused }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <IconComponent size={rs(22)} color={color} />
+      <Ionicons name={iconName} size={rs(22)} color={color} />
     </View>
   );
 }
@@ -33,6 +33,7 @@ export default function GuestTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: ACTIVE_COLOR,
         tabBarInactiveTintColor: INACTIVE_COLOR,
+        tabBarButton: (props) => <TouchableOpacity {...props} activeOpacity={1} />,
         tabBarStyle: [
           styles.tabBar,
           {
@@ -45,22 +46,12 @@ export default function GuestTabNavigator() {
       }}
     >
       <Tab.Screen
-        name="GuestHome"
+        name="HomeTab"
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={Home} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="GuestExplore"
-        component={BrowseMedicinesScreen}
-        options={{
-          tabBarLabel: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={Search} color={color} focused={focused} />
+            <TabIcon iconName={focused ? 'home' : 'home-outline'} color={color} focused={focused} />
           ),
         }}
       />
@@ -70,7 +61,17 @@ export default function GuestTabNavigator() {
         options={{
           tabBarLabel: 'Login',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon IconComponent={User} color={color} focused={focused} />
+            <TabIcon iconName={focused ? 'person' : 'person-outline'} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ExploreTab"
+        component={BrowseMedicinesScreen}
+        options={{
+          tabBarLabel: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon iconName={focused ? 'search' : 'search-outline'} color={color} focused={focused} />
           ),
         }}
       />

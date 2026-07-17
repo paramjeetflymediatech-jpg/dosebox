@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Eye, Edit2, Search, Filter, CheckCircle2, XCircle } from 'lucide-react';
 import api from '../../../../lib/api';
 import { formatCurrency } from '@/lib/utils';
+import Pagination from '../../../../components/admin/Pagination';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -154,17 +155,15 @@ export default function AdminOrdersPage() {
           </table>
         </div>
 
-        {Math.ceil(filteredOrders.length / itemsPerPage) > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50 gap-4">
-            <span className="text-sm font-semibold text-slate-500">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} entries
-            </span>
-            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Prev</button>
-              <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredOrders.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm">Next</button>
-            </div>
-          </div>
-        )}
+        <div className="-mx-4 md:-mx-8 mt-6">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredOrders.length / itemsPerPage)}
+            totalItems={filteredOrders.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
       {/* Update Order Modal */}
