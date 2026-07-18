@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT } from '../../../../middleware/auth';
-import { Prescription } from '../../../../models';
+import { Prescription, DraftCart, DraftCartItem, Medicine } from '../../../../models';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,6 +15,19 @@ export async function GET(req: NextRequest) {
 
     const { count, rows: prescriptions } = await Prescription.findAndCountAll({
       where: { userId: userAuth.id },
+      include: [
+        {
+          model: DraftCart,
+          as: 'draftCart',
+          include: [
+            {
+              model: DraftCartItem,
+              as: 'items',
+              include: [{ model: Medicine, as: 'medicine' }]
+            }
+          ]
+        }
+      ],
       order: [['createdAt', 'DESC']],
       limit,
       offset

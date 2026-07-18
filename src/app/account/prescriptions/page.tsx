@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Upload, ShieldCheck, Eye, History, ArrowRight, Trash2 } from 'lucide-react';
+import { FileText, Upload, ShieldCheck, Eye, History, ArrowRight, Trash2, ShoppingCart, Loader2, X } from 'lucide-react';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../../../context/CartContext';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Prescription {
   id: number;
@@ -14,10 +15,12 @@ interface Prescription {
   status: string;
   pharmacistNotes?: string;
   createdAt: string;
+  draftCart?: any;
 }
 
 export default function PrescriptionsPage() {
   const { addToCart } = useCart();
+  const router = useRouter();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,6 +30,7 @@ export default function PrescriptionsPage() {
   const [uploading, setUploading] = useState(false);
   const [scanResults, setScanResults] = useState<any[]>([]);
   const [showScanResults, setShowScanResults] = useState(false);
+  const [selectedPrescriptionUrl, setSelectedPrescriptionUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadPrescriptions(currentPage);
@@ -63,6 +67,19 @@ export default function PrescriptionsPage() {
     }
   };
 
+  const handleCheckoutDraft = (draftCart: any, rxId: number) => {
+    if (!draftCart || !draftCart.items) return;
+    draftCart.items.forEach((item: any) => {
+      if (item.medicine) {
+        addToCart({ ...item.medicine, quantity: item.quantity }, true);
+      }
+    });
+    localStorage.setItem('attachedPrescriptionId', rxId.toString());
+    localStorage.setItem('attachedPrescriptionStatus', 'Approved');
+    toast.success('Items added to cart!');
+    router.push('/cart');
+  };
+
   const handlePrescriptionUpload = async () => {
     if (!prescriptionFile) {
       toast.error('Please choose a file to upload first.');
@@ -94,29 +111,34 @@ export default function PrescriptionsPage() {
   };
 
   const addAllScannedToCart = () => {
+    let count = 0;
     scanResults.forEach((med) => {
       let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
-      try { if (med.images) imagesArr = JSON.parse(med.images); } catch (e) {}
+      try {
+        if (med.images) {
+          const parsed = JSON.parse(med.images);
+          if (parsed && parsed.length > 0) imagesArr = parsed;
+        }
+      } catch(e) {}
+
       addToCart({ id: med.id, name: med.name, price: Number(med.price), prescriptionRequired: med.prescriptionRequired, image: imagesArr[0] });
+      count++;
     });
-    toast.success('All scanned medicines added to cart!');
+    toast.success(`Added ${count} items to cart`);
     setShowScanResults(false);
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
-      </div>
-    );
+    return <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
         <h3 className="text-xl font-extrabold text-slate-900 mb-6 flex items-center gap-2">
-          <FileText className="w-6 h-6 text-brand-600" /> Prescriptions
+          <FileText className="w-6 h-6 text-brand-600" /> My Prescriptions
         </h3>
+        <p className="text-slate-500 font-medium mb-8">Manage your uploaded prescriptions and AI-scanned medicine lists.</p>
         
         <div className="bg-brand-50/50 border border-brand-100 rounded-xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
@@ -189,18 +211,25 @@ export default function PrescriptionsPage() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <a 
-                            href={presc.fileUrl.replace(/^\/uploads\//, '/api/file/')} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors"
+                          {presc.status === 'Approved' && presc.draftCart && (
+                            <button
+                              onClick={() => handleCheckoutDraft(presc.draftCart, presc.id)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200"
+                            >
+                              <ShoppingCart className="w-3.5 h-3.5" />
+                              Checkout Approved
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setSelectedPrescriptionUrl(presc.fileUrl.replace(/^\/uploads\//, '/api/file/'))}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors border border-brand-100"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             View
-                          </a>
+                          </button>
                           <button
                             onClick={() => handleDeletePrescription(presc.id)}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors border border-rose-100"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             Delete
@@ -244,6 +273,27 @@ export default function PrescriptionsPage() {
           )}
         </div>
       </div>
+      
+      {/* Modal Overlay */}
+      {selectedPrescriptionUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedPrescriptionUrl(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800">View Prescription</h3>
+              <button onClick={() => setSelectedPrescriptionUrl(null)} className="p-2 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-100 overflow-hidden relative p-4 flex items-center justify-center min-h-[500px]">
+              {selectedPrescriptionUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={selectedPrescriptionUrl} className="w-full h-full border-0 rounded-lg shadow-sm bg-white" />
+              ) : (
+                <img src={selectedPrescriptionUrl} alt="Prescription View" className="max-w-full max-h-full object-contain rounded-lg shadow-sm" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
