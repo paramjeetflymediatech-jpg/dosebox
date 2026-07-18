@@ -225,7 +225,7 @@ export default function OrdersPage() {
                         {order.status}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-slate-400 mt-1">Placed on {new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">

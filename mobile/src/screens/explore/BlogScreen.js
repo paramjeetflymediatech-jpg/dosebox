@@ -1,16 +1,74 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
-
-const POSTS = [
-  { id: 1, category: 'Health Tips', title: '10 Superfoods for a Healthy Heart', read: '5 min read', date: 'Jul 12, 2026', color: '#E0F2FE', text: '#0284C7' },
-  { id: 2, category: 'Wellness', title: 'The Importance of Sleep on Immunity', read: '4 min read', date: 'Jul 10, 2026', color: '#DCFCE7', text: '#16A34A' },
-  { id: 3, category: 'Medical News', title: 'Understanding Generic vs Branded Drugs', read: '7 min read', date: 'Jul 05, 2026', color: '#FEE2E2', text: '#DC2626' },
-  { id: 4, category: 'Nutrition', title: 'Vitamins You Actually Need Daily', read: '3 min read', date: 'Jun 28, 2026', color: '#FEF3C7', text: '#D97706' },
-];
+import api from '../../services/api';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function BlogScreen({ navigation }) {
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBlogs();
+  }, []);
+
+  const loadBlogs = async () => {
+    try {
+      const res = await api.get('/blogs');
+      if (res.data?.success) {
+        setBlogs(res.data.data);
+      }
+    } catch (err) {
+      console.warn('Failed to load blogs', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderBlog = ({ item: post }) => {
+    const bgColors = ['#E0F2FE', '#DCFCE7', '#FEE2E2', '#FEF3C7'];
+    const textColors = ['#0284C7', '#16A34A', '#DC2626', '#D97706'];
+    const colorIdx = post.id % bgColors.length;
+    
+    const bgColor = post.color || bgColors[colorIdx];
+    const textColor = post.text || textColors[colorIdx];
+    
+    const dateStr = post.createdAt 
+      ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : post.date;
+
+    const imageUrl = getFullImageUrl(post.coverImage);
+
+    return (
+      <TouchableOpacity 
+        key={post.id} 
+        style={styles.card} 
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('BlogDetail', { blogId: post.id })}
+      >
+        <View style={styles.imagePlaceholder}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+          ) : (
+            <Text style={styles.imageIcon}>📰</Text>
+          )}
+        </View>
+        <View style={styles.cardBody}>
+          <View style={[styles.badge, { backgroundColor: bgColor }]}>
+            <Text style={[styles.badgeText, { color: textColor }]}>{post.category || 'Health'}</Text>
+          </View>
+          <Text style={styles.title} numberOfLines={2}>{post.title}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.meta}>{dateStr}</Text>
+            <Text style={styles.metaDot}>•</Text>
+            <Text style={styles.meta}>{post.read || '5 min read'}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -21,24 +79,20 @@ export default function BlogScreen({ navigation }) {
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {POSTS.map(post => (
-          <TouchableOpacity key={post.id} style={styles.card} activeOpacity={0.7}>
-            <View style={styles.imagePlaceholder}><Text style={styles.imageIcon}>📰</Text></View>
-            <View style={styles.cardBody}>
-              <View style={[styles.badge, { backgroundColor: post.color }]}>
-                <Text style={[styles.badgeText, { color: post.text }]}>{post.category}</Text>
-              </View>
-              <Text style={styles.title} numberOfLines={2}>{post.title}</Text>
-              <View style={styles.metaRow}>
-                <Text style={styles.meta}>{post.date}</Text>
-                <Text style={styles.metaDot}>•</Text>
-                <Text style={styles.meta}>{post.read}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0c888d" style={{ marginTop: rv(40) }} />
+      ) : (
+        <FlatList
+          data={blogs}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderBlog}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', color: '#64748B', marginTop: rv(40) }}>No blogs found.</Text>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

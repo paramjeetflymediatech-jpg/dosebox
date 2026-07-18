@@ -60,6 +60,7 @@ export default function ProfileScreen({ navigation }) {
     { label: 'Manage Addresses', sub: 'Manage delivery locations', route: 'UserAddresses' },
     { label: 'My Orders', sub: 'View your order history', route: 'Proceed' },
     { label: 'Personal Information', sub: 'Update your profile details', route: 'UserProfileEdit' },
+    { label: 'Account Deletion', sub: 'Request to delete your account data', route: 'DataDeletion' },
   ];
 
   return (

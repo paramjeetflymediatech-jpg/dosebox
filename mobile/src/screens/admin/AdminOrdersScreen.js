@@ -100,7 +100,7 @@ export default function AdminOrdersScreen({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
-    const formattedDate = new Date(item.createdAt).toLocaleDateString();
+    const formattedDate = new Date(item.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     return (
       <View style={[styles.card, { flexDirection: 'column', alignItems: 'stretch' }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

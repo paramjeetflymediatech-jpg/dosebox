@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import api from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import PermissionsService from '../../services/PermissionsService';
 
 export default function UploadPrescriptionScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -29,7 +30,10 @@ export default function UploadPrescriptionScreen({ navigation }) {
   
   const { addToCart } = useCart();
 
-  const pickImage = () => {
+  const pickImage = async () => {
+    const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+    if (!hasPermission) return;
+
     launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, (response) => {
       if (response.didCancel) return;
       if (response.assets && response.assets.length > 0) {

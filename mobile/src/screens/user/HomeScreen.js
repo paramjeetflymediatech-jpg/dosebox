@@ -42,7 +42,6 @@ const CATEGORY_GRADIENTS = [
   ['#e8783a', '#f0974e'],
   ['#7c6fc4', '#a494e0'],
   ['#3ea8b0', '#5dc8d0'],
-  ['#6b6b6b', '#8c8c8c']
 ];
 
 export default function HomeScreen({ navigation }) {
@@ -59,6 +58,7 @@ export default function HomeScreen({ navigation }) {
   const [recommendations, setRecommendations] = useState([]);
   const [trending, setTrending] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [blogs, setBlogs] = useState([]);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -101,17 +101,19 @@ export default function HomeScreen({ navigation }) {
   const fetchHomeData = async () => {
     setLoadingData(true);
     try {
-      const [catRes, recRes, trendRes, bannersRes] = await Promise.all([
+      const [catRes, recRes, trendRes, bannersRes, blogsRes] = await Promise.all([
         api.get('/medicines/categories'),
         api.get('/medicines/recommendations').catch(() => ({ data: { success: false } })),
         api.get('/medicines?limit=5'),
-        api.get('/banners').catch(() => ({ data: { success: false } }))
+        api.get('/banners').catch(() => ({ data: { success: false } })),
+        api.get('/blogs').catch(() => ({ data: { success: false } }))
       ]);
 
       if (catRes.data?.success) setCategories(catRes.data.data);
       if (recRes.data?.success) setRecommendations(recRes.data.data);
       if (trendRes.data?.success) setTrending(trendRes.data.data);
       if (bannersRes.data?.success) setBanners(bannersRes.data.data);
+      if (blogsRes.data?.success) setBlogs(blogsRes.data.data);
     } catch (e) {
       console.warn('Failed to load home data', e);
     } finally {
@@ -164,6 +166,50 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.catTextWrap}>
           <Text style={styles.catTitle} numberOfLines={1}>{cat.name}</Text>
           <Text style={styles.catDesc} numberOfLines={2}>{cat.description || 'View products in this category'}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderBlogCard = ({ item: post }) => {
+    // Dynamic mapping for missing colors, fallback to defaults
+    const bgColors = ['#E0F2FE', '#DCFCE7', '#FEE2E2', '#FEF3C7'];
+    const textColors = ['#0284C7', '#16A34A', '#DC2626', '#D97706'];
+    const colorIdx = post.id % bgColors.length;
+    
+    const bgColor = post.color || bgColors[colorIdx];
+    const textColor = post.text || textColors[colorIdx];
+    
+    // Format date if it's a real timestamp
+    const dateStr = post.createdAt 
+      ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : post.date;
+
+    const imageUrl = getFullImageUrl(post.coverImage);
+
+    return (
+      <TouchableOpacity 
+        style={styles.blogCard} 
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('BlogDetail', { blogId: post.id })}
+      >
+        <View style={styles.blogImagePlaceholder}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+          ) : (
+            <Text style={styles.blogImageIcon}>📰</Text>
+          )}
+        </View>
+        <View style={styles.blogCardBody}>
+          <View style={[styles.blogBadge, { backgroundColor: bgColor }]}>
+            <Text style={[styles.blogBadgeText, { color: textColor }]}>{post.category || 'Health'}</Text>
+          </View>
+          <Text style={styles.blogTitle} numberOfLines={2}>{post.title}</Text>
+          <View style={styles.blogMetaRow}>
+            <Text style={styles.blogMeta}>{dateStr}</Text>
+            <Text style={styles.blogMetaDot}>•</Text>
+            <Text style={styles.blogMeta}>{post.read || '5 min read'}</Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -323,11 +369,14 @@ export default function HomeScreen({ navigation }) {
             {/* ── DIGITAL SPECIALTY SHELF (Trending) ── */}
             {trending.length > 0 && (
               <View style={styles.sectionBlock}>
-                <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }]}>
                   <View>
                     <Text style={styles.sectionOverline}>DIGITAL SPECIALTY SHELF</Text>
                     <Text style={styles.sectionTitle}>Substitute & Save Instantly</Text>
                   </View>
+                  <TouchableOpacity onPress={() => navigation.navigate('SearchScreen', { showAll: true })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Text style={{ color: C.primary, fontWeight: '700', fontSize: rm(13) }}>View All</Text>
+                  </TouchableOpacity>
                 </View>
                 <FlatList
                   data={trending}
@@ -337,6 +386,30 @@ export default function HomeScreen({ navigation }) {
                   renderItem={renderMedicineCard}
                   contentContainerStyle={styles.horizontalList}
                   ItemSeparatorComponent={() => <View style={{ width: rs(12) }} />}
+                />
+              </View>
+            )}
+
+            {/* ── FROM THE BLOG ── */}
+            {blogs.length > 0 && (
+              <View style={styles.sectionBlockAlt}>
+                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }]}>
+                  <View>
+                    <Text style={styles.sectionOverline}>HEALTH INSIGHTS</Text>
+                    <Text style={styles.sectionTitle}>From the Blog</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => navigation.navigate('Blog')}>
+                    <Text style={styles.seeAll}>View all</Text>
+                  </TouchableOpacity>
+                </View>
+                <FlatList
+                  data={blogs}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={renderBlogCard}
+                  contentContainerStyle={styles.horizontalList}
+                  ItemSeparatorComponent={() => <View style={{ width: rs(16) }} />}
                 />
               </View>
             )}
@@ -537,4 +610,16 @@ const styles = StyleSheet.create({
   featureIcon: { marginBottom: rv(12) },
   featureTitle: { fontSize: rm(16), fontWeight: '600', color: C.text, marginBottom: rv(6) },
   featureDesc: { fontSize: rm(13), color: C.sub, textAlign: 'center', lineHeight: rv(18), paddingHorizontal: spacing.lg },
+
+  /* Blog Card */
+  blogCard: { width: rs(260), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: C.border, overflow: 'hidden', elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
+  blogImagePlaceholder: { height: rv(120), backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
+  blogImageIcon: { fontSize: rm(32) },
+  blogCardBody: { padding: spacing.md },
+  blogBadge: { alignSelf: 'flex-start', paddingHorizontal: rv(8), paddingVertical: rv(2), borderRadius: radius.sm, marginBottom: rv(8) },
+  blogBadgeText: { fontSize: rm(10), fontWeight: '700', textTransform: 'uppercase' },
+  blogTitle: { fontSize: rm(15), fontWeight: '700', color: C.text, marginBottom: rv(8), lineHeight: rv(20), height: rv(40) },
+  blogMetaRow: { flexDirection: 'row', alignItems: 'center' },
+  blogMeta: { fontSize: rm(11), color: C.sub, fontWeight: '500' },
+  blogMetaDot: { fontSize: rm(11), color: '#CBD5E1', marginHorizontal: rv(6) },
 });

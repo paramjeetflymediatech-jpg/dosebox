@@ -131,7 +131,7 @@ export default function AdminOrdersPage() {
                       <p className="font-bold text-slate-800 text-sm">{order.user?.name}</p>
                       <p className="text-xs text-slate-500">{order.user?.phone}</p>
                     </td>
-                    <td className="p-4 text-sm text-slate-600 font-medium">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="p-4 text-sm text-slate-600 font-medium">{new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                     <td className="p-4 font-extrabold text-slate-900">₹{formatCurrency(Number(order.finalAmount))}</td>
                     <td className="p-4">
                       <span className={`text-xxs font-bold px-2.5 py-1 rounded-full ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>

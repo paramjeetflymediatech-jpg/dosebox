@@ -22,6 +22,7 @@ const MODULES = [
   { id: 'suppliers', title: 'Suppliers', icon: 'business-outline', screen: 'AdminSuppliers', color: '#E2E8F0', iconColor: '#475569' },
   { id: 'faqs', title: 'FAQs', icon: 'help-circle-outline', screen: 'AdminFAQs', color: '#DBEAFE', iconColor: '#2563EB' },
   { id: 'seo', title: 'SEO', icon: 'search-outline', screen: 'AdminSEO', color: '#FDE68A', iconColor: '#D97706' },
+  { id: 'dataDeletion', title: 'Data Deletion', icon: 'trash-outline', screen: 'AdminDataDeletion', color: '#FEE2E2', iconColor: '#E11D48' },
 ];
 
 export default function AdminModulesScreen({ navigation }) {

@@ -84,8 +84,8 @@ export default function ProceedScreen({ navigation }) {
             <Text style={styles.orderId}>Order #{item.id}</Text>
             {item.createdAt && (
               <Text style={styles.orderDate}>
-                {new Date(item.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric', month: 'short', year: 'numeric',
+                {new Date(item.createdAt).toLocaleString('en-IN', {
+                  month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
                 })}
               </Text>
             )}

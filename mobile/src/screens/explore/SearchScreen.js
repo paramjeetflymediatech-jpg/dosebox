@@ -8,7 +8,9 @@ import {
   TextInput,
   Image,
   Keyboard,
-  ActivityIndicator
+  ActivityIndicator,
+  FlatList,
+  Animated
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -16,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { useCart } from '../../context/CartContext';
 import MedicineCard from '../../components/MedicineCard';
+import { MedicineCardSkeleton } from '../../components/Skeleton';
 import api from '../../services/api';
 
 const C = {
@@ -32,9 +35,10 @@ const C = {
 
 const DISCOVER_TAGS = ['Pain Relief', 'Cold & Cough', 'Vitamins', 'Diabetes', 'First Aid', 'Skin Care'];
 
-
-
 const SEARCH_HISTORY_KEY = '@dosebox_search_history';
+
+// ── SKELETON LOADER ──
+// We are now importing MedicineCardSkeleton from components/Skeleton.js
 
 export default function SearchScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -47,22 +51,84 @@ export default function SearchScreen({ navigation, route }) {
   const [recentSearches, setRecentSearches] = useState([]);
   const [topSelling, setTopSelling] = useState([]);
   
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   const initialCategorySlug = route.params?.categorySlug || null;
 
   useEffect(() => {
-    // Auto-focus input on mount if no initial query
     if (route.params?.query) {
       saveSearchAndNavigate(route.params.query, initialCategorySlug);
+    } else if (route.params?.showAll) {
+      setSearchQuery('');
+      performSearch('', 1, false);
     } else {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
     }
-
-    // Load recent searches
     loadRecentSearches();
     fetchTopSelling();
   }, []);
+
+  // Live search with debounce
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    if (searchQuery === route.params?.query && searchResults !== null) return;
+
+    const delayDebounceFn = setTimeout(() => {
+      performSearch(searchQuery.trim(), 1, false);
+    }, 400); 
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const performSearch = async (query, targetPage = 1, isLoadMore = false) => {
+    if (isLoadMore) setIsLoadingMore(true);
+    else setIsSearching(true);
+    
+    try {
+      let url = `/medicines?search=${encodeURIComponent(query)}&limit=16&page=${targetPage}`;
+      if (!isLoadMore && initialCategorySlug && query === route.params?.query) {
+         url = `/medicines?category=${encodeURIComponent(initialCategorySlug)}&limit=16&page=${targetPage}`;
+      }
+      
+      const res = await api.get(url);
+      if (res.data?.success) {
+        const newData = res.data.data || [];
+        if (isLoadMore) {
+          setSearchResults(prev => [...(prev || []), ...newData]);
+        } else {
+          setSearchResults(newData);
+        }
+        
+        const pagination = res.data.pagination;
+        if (pagination && targetPage >= pagination.totalPages) {
+          setHasMore(false);
+        } else if (newData.length < 16) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+        setPage(targetPage);
+      }
+    } catch (e) {
+      console.error('Search error', e);
+    } finally {
+      setIsSearching(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!hasMore || isLoadingMore || isSearching) return;
+    performSearch(searchQuery.trim(), page + 1, true);
+  };
 
   const fetchTopSelling = async () => {
     try {
@@ -75,35 +141,19 @@ export default function SearchScreen({ navigation, route }) {
     try {
       const stored = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
       if (stored) setRecentSearches(JSON.parse(stored));
-    } catch (e) {
-      console.error('Error loading search history', e);
-    }
+    } catch (e) {}
   };
 
   const saveSearchAndNavigate = async (query, categorySlug = null) => {
     if (!query.trim()) return;
-    
-    // Save to recents (keep last 10 unique)
     let newRecents = [query.trim(), ...recentSearches.filter(q => q.toLowerCase() !== query.trim().toLowerCase())];
     newRecents = newRecents.slice(0, 10);
     setRecentSearches(newRecents);
     AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newRecents));
-
-    setIsSearching(true);
-    try {
-      let url = `/medicines?search=${encodeURIComponent(query.trim())}&limit=1000`;
-      if (categorySlug) {
-        url = `/medicines?category=${encodeURIComponent(categorySlug)}&limit=1000`;
-      }
-      const res = await api.get(url);
-      if (res.data?.success) {
-        setSearchResults(res.data.data || []);
-      }
-    } catch (e) {
-      console.error('Search error', e);
-    } finally {
-      setIsSearching(false);
-    }
+    
+    setPage(1);
+    setHasMore(true);
+    performSearch(query, 1, false);
   };
 
   const handleClearSearch = () => {
@@ -116,6 +166,14 @@ export default function SearchScreen({ navigation, route }) {
     setRecentSearches([]);
     AsyncStorage.removeItem(SEARCH_HISTORY_KEY);
   };
+
+  const renderMedicineItem = ({ item }) => (
+    <MedicineCard 
+      med={item} 
+      compact={true} 
+      containerStyle={{ flex: 1, margin: rs(6), maxWidth: '48%' }} 
+    />
+  );
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -157,100 +215,108 @@ export default function SearchScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(40) }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        
-        {searchResults !== null ? (
-          <View style={[styles.section, { flex: 1, minHeight: rv(400) }]}>
-            <Text style={styles.sectionTitle}>
-              Search Results {searchResults.length > 0 ? `(${searchResults.length})` : ''}
+      {searchResults !== null ? (
+        <View style={{ flex: 1, backgroundColor: C.bg }}>
+          {isSearching && page === 1 ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: spacing.sm, justifyContent: 'space-between' }}>
+              {[1, 2, 3, 4, 5, 6].map(k => <MedicineCardSkeleton key={k} containerStyle={{ width: '48%', marginBottom: rv(16) }} />)}
+            </View>
+          ) : searchResults.length === 0 ? (
+            <Text style={{ fontSize: rm(15), color: C.sub, textAlign: 'center', marginTop: rv(40) }}>
+              No medicines found for "{searchQuery}".
             </Text>
-            {isSearching ? (
-              <ActivityIndicator size="large" color={C.primary} style={{ marginTop: rv(40) }} />
-            ) : searchResults.length === 0 ? (
-              <Text style={{ fontSize: rm(15), color: C.sub, textAlign: 'center', marginTop: rv(40) }}>
-                No medicines found for "{searchQuery}".
-              </Text>
-            ) : (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                {searchResults.map((med) => (
-                  <MedicineCard 
-                    key={med.id} 
-                    med={med} 
-                    compact={true} 
-                    containerStyle={{ width: '48%', marginBottom: rv(12) }} 
-                  />
-                ))}
+          ) : (
+            <FlatList
+              data={searchResults}
+              keyExtractor={item => item.id.toString()}
+              renderItem={renderMedicineItem}
+              numColumns={2}
+              contentContainerStyle={{ padding: spacing.sm, paddingBottom: insets.bottom + rv(40) }}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.3}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              ListHeaderComponent={
+                <Text style={[styles.sectionTitle, { marginHorizontal: spacing.sm, marginTop: rv(12), marginBottom: rv(8) }]}>
+                  {route.params?.showAll && !searchQuery ? 'All Medicines' : 'Search Results'}
+                </Text>
+              }
+              ListFooterComponent={
+                isLoadingMore ? (
+                  <View style={{ paddingVertical: rv(20), alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color={C.primary} />
+                  </View>
+                ) : null
+              }
+            />
+          )}
+        </View>
+      ) : (
+        <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(40) }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          {/* ── RECENT SEARCHES ── */}
+          {recentSearches.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recent Searches</Text>
+                <TouchableOpacity onPress={handleClearHistory} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Text style={styles.clearText}>Clear</Text>
+                </TouchableOpacity>
               </View>
-            )}
-          </View>
-        ) : (
-          <>
-            {/* ── RECENT SEARCHES ── */}
-            {recentSearches.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Recent Searches</Text>
-                  <TouchableOpacity onPress={handleClearHistory} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Text style={styles.clearText}>Clear</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.recentWrap}>
-                  {recentSearches.map((item, idx) => (
-                    <TouchableOpacity key={idx} style={styles.recentItem} onPress={() => { setSearchQuery(item); saveSearchAndNavigate(item); }}>
-                      <Ionicons name="time-outline" size={16} color={C.sub} style={{ marginRight: rs(12) }} />
-                      <Text style={styles.recentText}>{item}</Text>
-                      <Ionicons name="arrow-forward" size={14} color={C.border} />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* ── DISCOVER MORE ── */}
-            <View style={[styles.section, { paddingTop: recentSearches.length ? 0 : rv(16) }]}>
-              <Text style={styles.sectionTitle}>Discover More</Text>
-              <View style={styles.tagWrap}>
-                {DISCOVER_TAGS.map((tag) => (
-                  <TouchableOpacity key={tag} style={styles.tagPill} onPress={() => { setSearchQuery(tag); saveSearchAndNavigate(tag); }}>
-                    <Text style={styles.tagText}>{tag}</Text>
+              <View style={styles.recentWrap}>
+                {recentSearches.map((item, idx) => (
+                  <TouchableOpacity key={idx} style={styles.recentItem} onPress={() => { setSearchQuery(item); saveSearchAndNavigate(item); }}>
+                    <Ionicons name="time-outline" size={16} color={C.sub} style={{ marginRight: rs(12) }} />
+                    <Text style={styles.recentText}>{item}</Text>
+                    <Ionicons name="arrow-forward" size={14} color={C.border} />
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
+          )}
 
-            {/* ── TOP SELLING ── */}
-            {topSelling.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Top Selling</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-                  {topSelling.map((med) => (
-                    <MedicineCard key={med.id} med={med} containerStyle={{ marginRight: rs(12) }} />
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </>
-        )}
+          {/* ── DISCOVER MORE ── */}
+          <View style={[styles.section, { paddingTop: recentSearches.length ? 0 : rv(16) }]}>
+            <Text style={styles.sectionTitle}>Discover More</Text>
+            <View style={styles.tagWrap}>
+              {DISCOVER_TAGS.map((tag) => (
+                <TouchableOpacity key={tag} style={styles.tagPill} onPress={() => { setSearchQuery(tag); saveSearchAndNavigate(tag); }}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
-        {/* ── ORDER WITH PRESCRIPTION CTA ── */}
-        <View style={[styles.section, { marginTop: rv(8) }]}>
-          <TouchableOpacity 
-            style={styles.prescriptionCard} 
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('UploadPrescription')}
-          >
-             <View style={styles.rxIconWrap}>
-                <Ionicons name="document-text" size={28} color={C.white} />
-             </View>
-             <View style={{ flex: 1, marginRight: rs(12) }}>
-                <Text style={styles.rxTitle}>Order with Prescription</Text>
-                <Text style={styles.rxSub}>Upload and let us handle your medicine order</Text>
-             </View>
-             <Ionicons name="chevron-forward" size={24} color={C.white} />
-          </TouchableOpacity>
-        </View>
+          {/* ── TOP SELLING ── */}
+          {topSelling.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Top Selling</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+                {topSelling.map((med) => (
+                  <MedicineCard key={med.id} med={med} containerStyle={{ marginRight: rs(12) }} />
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
-      </ScrollView>
+          {/* ── ORDER WITH PRESCRIPTION CTA ── */}
+          <View style={[styles.section, { marginTop: rv(8) }]}>
+            <TouchableOpacity 
+              style={styles.prescriptionCard} 
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('UploadPrescription')}
+            >
+               <View style={styles.rxIconWrap}>
+                  <Ionicons name="document-text" size={28} color={C.white} />
+               </View>
+               <View style={{ flex: 1, marginRight: rs(12) }}>
+                  <Text style={styles.rxTitle}>Order with Prescription</Text>
+                  <Text style={styles.rxSub}>Upload and let us handle your medicine order</Text>
+               </View>
+               <Ionicons name="chevron-forward" size={24} color={C.white} />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

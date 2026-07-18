@@ -15,7 +15,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     const { refundMethod } = body; // refundMethod: 'bank' | 'tokens'
 
     const order = await Order.findByPk(orderId);
-    if (!order || order.userId !== userAuth.id) {
+    if (!order || Number(order.userId) !== Number(userAuth.id)) {
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
 

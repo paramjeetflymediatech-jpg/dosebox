@@ -22,8 +22,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     // Only allow Admin or the order owner to view the invoice
-    if (order.userId !== userAuth.id && userAuth.roleName !== 'Admin') {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+    if (Number(order.userId) !== Number(userAuth.id) && userAuth.roleName !== 'Admin') {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 
     return new Promise<NextResponse>((resolve, reject) => {

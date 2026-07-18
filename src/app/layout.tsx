@@ -575,7 +575,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               </li>
               <li className="flex items-start gap-3">
                 <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
-                {globalSettings['contact_email'] || ''}
+                {globalSettings['contact_email'] || 'support@dosebox.com'}
               </li>
             </ul>
             {/* Dynamic Social Links */}
@@ -595,6 +595,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <li><Link href="/institutional-supply" className="hover:text-white transition-colors">Institutional Supply</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy & HIPAA Compliance</Link></li>
               <li><Link href="/return-policy" className="hover:text-white transition-colors">Return / Safety Policy</Link></li>
+              <li><Link href="/data-deletion" className="hover:text-white transition-colors text-rose-400">Account Deletion Request</Link></li>
             </ul>
             
             {/* Dev Login Panel - Mocking only */}

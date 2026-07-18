@@ -50,6 +50,10 @@ export default function CustomerDashboardPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'prescriptions'>('orders');
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(true);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersTotalPages, setOrdersTotalPages] = useState(1);
+  const [prescriptionsPage, setPrescriptionsPage] = useState(1);
+  const [prescriptionsTotalPages, setPrescriptionsTotalPages] = useState(1);
 
   // Scan states
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
@@ -91,7 +95,7 @@ export default function CustomerDashboardPage() {
         setUploadSuccess(true);
         
         // Refresh prescriptions list
-        const prescRes = await api.get('/prescriptions/my');
+        const prescRes = await api.get('/prescriptions/customer');
         if (prescRes.data?.success) {
           setPrescriptions(prescRes.data.data);
         }
@@ -159,8 +163,8 @@ export default function CustomerDashboardPage() {
       setLoadingData(true);
       try {
         const [ordersRes, prescRes] = await Promise.all([
-          api.get('/orders/my'),
-          api.get('/prescriptions/my')
+          api.get('/orders'),
+          api.get('/prescriptions/customer')
         ]);
         if (ordersRes.data?.success) setOrders(ordersRes.data.data);
         if (prescRes.data?.success) setPrescriptions(prescRes.data.data);
@@ -261,7 +265,7 @@ export default function CustomerDashboardPage() {
                             {order.status}
                           </span>
                         </div>
-                        <p className="text-xxs text-slate-400 mt-1">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xxs text-slate-400 mt-1">Placed on {new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
 
                       <div className="flex items-center gap-4">

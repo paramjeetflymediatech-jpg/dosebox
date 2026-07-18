@@ -900,9 +900,85 @@ Appointment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Doctor.hasMany(Appointment, { foreignKey: 'doctorId', as: 'appointments' });
 Appointment.belongsTo(Doctor, { foreignKey: 'doctorId', as: 'doctor' });
 
+// ----------------------------------------------------
+// NEW: SUPPORT TICKET
+// ----------------------------------------------------
+export interface SupportTicketAttributes {
+  id: number;
+  userId?: number;
+  name: string;
+  email: string;
+  phone: string;
+  issueType: string;
+  orderId?: string;
+  message: string;
+  status: string; // 'Open' | 'In Progress' | 'Resolved'
+}
+export class SupportTicket extends Model<SupportTicketAttributes, Optional<SupportTicketAttributes, 'id' | 'userId' | 'orderId' | 'status'>> implements SupportTicketAttributes {
+  declare id: number;
+  declare userId?: number;
+  declare name: string;
+  declare email: string;
+  declare phone: string;
+  declare issueType: string;
+  declare orderId?: string;
+  declare message: string;
+  declare status: string;
+}
+SupportTicket.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    userId: { type: DataTypes.INTEGER, allowNull: true },
+    name: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false },
+    phone: { type: DataTypes.STRING, allowNull: false },
+    issueType: { type: DataTypes.STRING, allowNull: false },
+    orderId: { type: DataTypes.STRING, allowNull: true },
+    message: { type: DataTypes.TEXT, allowNull: false },
+    status: { type: DataTypes.STRING, defaultValue: 'Open' },
+  },
+  { sequelize, modelName: 'SupportTicket', tableName: 'support_tickets', timestamps: true }
+);
+
+// User & SupportTicket
+User.hasMany(SupportTicket, { foreignKey: 'userId', as: 'supportTickets' });
+SupportTicket.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // User & Notification
 User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// ----------------------------------------------------
+// NEW: DATA DELETION REQUEST
+// ----------------------------------------------------
+export interface DataDeletionRequestAttributes {
+  id: number;
+  email: string;
+  reason: string;
+  status: string; // 'Pending' | 'Processed' | 'Rejected'
+  userId?: number;
+}
+export class DataDeletionRequest extends Model<DataDeletionRequestAttributes, Optional<DataDeletionRequestAttributes, 'id' | 'status' | 'userId'>> implements DataDeletionRequestAttributes {
+  declare id: number;
+  declare email: string;
+  declare reason: string;
+  declare status: string;
+  declare userId?: number;
+}
+DataDeletionRequest.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    email: { type: DataTypes.STRING, allowNull: false },
+    reason: { type: DataTypes.TEXT, allowNull: false },
+    status: { type: DataTypes.STRING, defaultValue: 'Pending' },
+    userId: { type: DataTypes.INTEGER, allowNull: true },
+  },
+  { sequelize, modelName: 'DataDeletionRequest', tableName: 'data_deletion_requests', timestamps: true }
+);
+
+// User & DataDeletionRequest
+User.hasMany(DataDeletionRequest, { foreignKey: 'userId', as: 'dataDeletionRequests' });
+DataDeletionRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // ----------------------------------------------------
 // PRESCRIPTION
@@ -1337,5 +1413,7 @@ export default {
   UserActivity,
   Faq,
   MobileAuthUser,
-  DoseboxTokenTransaction
+  DoseboxTokenTransaction,
+  SupportTicket,
+  DataDeletionRequest
 };

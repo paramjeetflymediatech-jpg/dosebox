@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
+import { AlertService } from '../../services/AlertService';
 import { COLORS, FONTS } from '../../utils/theme';
 import { rs, rv, rm } from '../../utils/responsive';
 
@@ -31,6 +32,14 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // UI Error States
+  const [generalError, setGeneralError] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -75,7 +84,7 @@ export default function RegisterScreen({ navigation }) {
           navigation.replace('MainTabs');
         }
       } else {
-        Alert.alert('Login Failed', data.message || 'Invalid Google credentials');
+        AlertService.show({ type: 'error', title: 'Login Failed', message: data.message || 'Invalid Google credentials' });
       }
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -83,10 +92,10 @@ export default function RegisterScreen({ navigation }) {
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Error', 'Play services not available or outdated.');
+        AlertService.show({ type: 'error', title: 'Error', message: 'Play services not available or outdated.' });
       } else {
         console.error('Google Sign-In error:', error);
-        Alert.alert('Google Sign-In Error', 'Failed to complete Google Login. Ensure your native app credentials (SHA-1) are configured in the Google Cloud Console.');
+        AlertService.show({ type: 'error', title: 'Google Sign-In Error', message: 'Failed to complete Google Login.' });
       }
     } finally {
       setLoading(false);
@@ -94,10 +103,50 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const handleRegister = async () => {
-    if (!firstName || !lastName || !email || !password) {
-      Alert.alert('Error', 'Please fill in all required fields (First Name, Last Name, Email, Password)');
-      return;
+    setGeneralError('');
+    setFirstNameError('');
+    setLastNameError('');
+    setEmailError('');
+    setPhoneError('');
+    setPasswordError('');
+    
+    let hasError = false;
+    
+    if (!firstName.trim()) { setFirstNameError('Required'); hasError = true; }
+    if (!lastName.trim()) { setLastNameError('Required'); hasError = true; }
+    
+    if (hasError) {
+      AlertService.show({ type: 'error', title: 'Missing Fields', message: 'First name and last name are required.' });
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      setEmailError('Please enter your email');
+      if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Email', message: 'Please enter your email.' });
+      hasError = true;
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Invalid email format');
+      if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Email', message: 'Invalid email format.' });
+      hasError = true;
+    }
+    
+    if (phone.trim() && phone.trim().length < 10) {
+      setPhoneError('Invalid phone number');
+      if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Phone', message: 'Invalid phone number.' });
+      hasError = true;
+    }
+    
+    if (!password) {
+      setPasswordError('Please set a password');
+      if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Password', message: 'Please set a password.' });
+      hasError = true;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Password', message: 'Password must be at least 6 characters.' });
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     setLoading(true);
     try {
@@ -105,18 +154,27 @@ export default function RegisterScreen({ navigation }) {
       // Step 1: Create the account
       const registerResponse = await api.post('/auth/register', {
         name,
-        email,
+        email: email.trim(),
         password,
+        phone: phone.trim()
       });
 
       if (!registerResponse.data.success) {
-        Alert.alert('Registration Failed', registerResponse.data.message || 'Could not create account');
+        const msg = registerResponse.data.message?.toLowerCase() || '';
+        if (msg.includes('exist') || msg.includes('already')) {
+          setEmailError('Email already exists');
+          AlertService.show({ type: 'error', title: 'Registration Failed', message: 'Email already exists. Please login.' });
+        } else {
+          setGeneralError(registerResponse.data.message || 'Could not create account');
+          AlertService.show({ type: 'error', title: 'Registration Failed', message: registerResponse.data.message || 'Could not create account' });
+        }
+        setLoading(false);
         return;
       }
 
       // Step 2: Auto-login to get tokens
       const loginResponse = await api.post('/auth/login', {
-        email,
+        email: email.trim(),
         password,
         device_platform: Platform.OS,
         device_id: 'device_' + Math.random().toString(36).substring(7),
@@ -131,14 +189,24 @@ export default function RegisterScreen({ navigation }) {
         await AsyncStorage.setItem('user', JSON.stringify(loginData.user));
         navigation.replace('MainTabs');
       } else {
-        Alert.alert('Account Created!', 'Your account is ready. Please sign in.', [
-          { text: 'Sign In', onPress: () => navigation.replace('Login') },
-        ]);
+        AlertService.show({
+          type: 'success',
+          title: 'Account Created!',
+          message: 'Your account is ready. Please sign in.',
+          buttons: [{ text: 'Sign In', onPress: () => navigation.replace('Login') }]
+        });
       }
     } catch (error) {
       console.error('Register error:', error);
       const message = error?.response?.data?.message || 'Could not connect to the server.';
-      Alert.alert('Error', message);
+      const lowerMsg = message.toLowerCase();
+      if (lowerMsg.includes('exist')) {
+        setEmailError('Email already exists');
+        AlertService.show({ type: 'error', title: 'Registration Failed', message: 'Email already exists. Please login.' });
+      } else {
+        setGeneralError(message);
+        AlertService.show({ type: 'error', title: 'Error', message });
+      }
     } finally {
       setLoading(false);
     }
@@ -188,28 +256,37 @@ export default function RegisterScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          {generalError ? (
+            <View style={styles.generalErrorBox}>
+              <Ionicons name="warning" size={20} color="#DC2626" style={{marginRight: 8}} />
+              <Text style={styles.generalErrorText}>{generalError}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.formContainer}>
             {/* ROW: FIRST NAME / LAST NAME */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: rs(10) }]}>
                 <Text style={styles.label}>First Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, firstNameError && styles.inputError]}
                   placeholder="John"
                   placeholderTextColor="#9ca3af"
                   value={firstName}
-                  onChangeText={setFirstName}
+                  onChangeText={(t) => { setFirstName(t); setFirstNameError(''); }}
                 />
+                {firstNameError ? <Text style={styles.errorText}>{firstNameError}</Text> : null}
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: rs(10) }]}>
                 <Text style={styles.label}>Last Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, lastNameError && styles.inputError]}
                   placeholder="Doe"
                   placeholderTextColor="#9ca3af"
                   value={lastName}
-                  onChangeText={setLastName}
+                  onChangeText={(t) => { setLastName(t); setLastNameError(''); }}
                 />
+                {lastNameError ? <Text style={styles.errorText}>{lastNameError}</Text> : null}
               </View>
             </View>
 
@@ -217,46 +294,48 @@ export default function RegisterScreen({ navigation }) {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, emailError && styles.inputError]}
                 placeholder="name@example.com"
                 placeholderTextColor="#9ca3af"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(t) => { setEmail(t); setEmailError(''); }}
               />
+              {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
             </View>
-
 
             {/* PHONE NUMBER */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Phone Number</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, phoneError && styles.inputError]}
                 placeholder="+91 9876543210"
                 placeholderTextColor="#9ca3af"
                 keyboardType="phone-pad"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(t) => { setPhone(t); setPhoneError(''); }}
               />
+              {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
             </View>
 
             {/* PASSWORD */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Set Password</Text>
-              <View style={styles.inputWithIcon}>
+              <View style={[styles.inputWithIcon, passwordError && styles.inputError]}>
                 <TextInput
                   style={styles.inputFlex}
                   placeholder="••••••••"
                   placeholderTextColor="#9ca3af"
                   secureTextEntry={!showPassword}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(t) => { setPassword(t); setPasswordError(''); }}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: rs(4) }}>
                   <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6b7280" />
                 </TouchableOpacity>
               </View>
+              {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
             </View>
 
             <TouchableOpacity
@@ -404,6 +483,31 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderRadius: rs(30),
     paddingHorizontal: rs(20),
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: rm(12),
+    marginTop: rv(6),
+    marginLeft: rs(8),
+  },
+  generalErrorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: rs(12),
+    padding: rs(12),
+    marginBottom: rv(20),
+  },
+  generalErrorText: {
+    flex: 1,
+    color: '#DC2626',
+    fontSize: rm(13),
+    fontWeight: '500',
   },
   inputFlex: {
     flex: 1,

@@ -1,5 +1,5 @@
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { 
   View, Text, StyleSheet, TouchableOpacity, FlatList, 
@@ -16,6 +16,12 @@ export default function AdminMedicinesScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const filteredData = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchQuery.toLowerCase())));
   const [currentPage, setCurrentPage] = useState(1);
+  const flatListRef = useRef(null);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
   const itemsPerPage = 10;
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [categories, setCategories] = useState([]);
@@ -73,7 +79,8 @@ export default function AdminMedicinesScreen({ navigation }) {
     composition: '', dosage: '', packSize: '', description: '',
     sideEffects: '', storageInstructions: '', papOffer: '',
     prescriptionRequired: false, price: '0', discountPrice: '0',
-    stock: '0', categoryId: '', supplierId: '', images: ''
+    stock: '0', categoryId: '', supplierId: '', images: '',
+    sections: []
   });
 
   const handlePickImage = async () => {
@@ -107,7 +114,7 @@ export default function AdminMedicinesScreen({ navigation }) {
     }
   };
 
-  const handleOpenModal = (item = null) => {
+  const handleOpenModal = async (item = null) => {
     if (item) {
       setIsEditing(true);
       setCurrentId(item.id);
@@ -129,14 +136,29 @@ export default function AdminMedicinesScreen({ navigation }) {
         stock: item.stock ? item.stock.toString() : '0',
         categoryId: item.categoryId ? item.categoryId.toString() : '',
         supplierId: item.supplierId ? item.supplierId.toString() : '',
-        images: item.images || ''
+        images: item.images || '',
+        sections: item.sections || []
       });
+      setModalVisible(true);
+
+      try {
+        const res = await api.get(`/medicines/${item.id}`);
+        if (res.data?.success && res.data?.data) {
+           const fullData = res.data.data;
+           setFormData(prev => ({
+             ...prev,
+             sections: fullData.sections || []
+           }));
+        }
+      } catch (err) {
+        console.log('Error fetching detailed medicine data:', err);
+      }
     } else {
       setIsEditing(false);
       setCurrentId(null);
       setFormData(getEmptyForm());
+      setModalVisible(true);
     }
-    setModalVisible(true);
   };
 
   const handleSave = async () => {
@@ -277,6 +299,7 @@ export default function AdminMedicinesScreen({ navigation }) {
       </View>
 
       <FlatList
+          ref={flatListRef}
           data={paginatedData}
           keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
           renderItem={renderItem}
@@ -288,7 +311,7 @@ export default function AdminMedicinesScreen({ navigation }) {
               currentPage={currentPage}
               totalItems={typeof filteredData !== 'undefined' ? filteredData.length : data.length}
               itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
             />
           }
         />
@@ -383,6 +406,55 @@ export default function AdminMedicinesScreen({ navigation }) {
                   thumbColor={formData.prescriptionRequired ? "#059669" : "#94A3B8"}
                 />
               </View>
+
+              <Text style={styles.sectionTitle}>Dynamic Sections (Uses, FAQs, etc.)</Text>
+              {formData.sections && formData.sections.map((sec, idx) => (
+                <View key={idx} style={{ backgroundColor: '#F1F5F9', padding: spacing.md, borderRadius: radius.md, marginBottom: rv(12) }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rv(8) }}>
+                    <Text style={{ fontWeight: '700', color: '#0F172A' }}>Section {idx + 1}</Text>
+                    <TouchableOpacity onPress={() => {
+                      const newSections = [...formData.sections];
+                      newSections.splice(idx, 1);
+                      setFormData({...formData, sections: newSections});
+                    }}>
+                      <Text style={{ color: '#EF4444', fontWeight: '600' }}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={[styles.label, { marginTop: 0 }]}>Title</Text>
+                  <TextInput 
+                    style={styles.input} 
+                    value={sec.title} 
+                    onChangeText={(t) => {
+                      const newSections = [...formData.sections];
+                      newSections[idx].title = t;
+                      setFormData({...formData, sections: newSections});
+                    }} 
+                    placeholder="e.g. Uses" 
+                  />
+                  <Text style={styles.label}>Content (HTML)</Text>
+                  <TextInput 
+                    style={[styles.input, { minHeight: rv(100), textAlignVertical: 'top' }]} 
+                    value={sec.content} 
+                    onChangeText={(t) => {
+                      const newSections = [...formData.sections];
+                      newSections[idx].content = t;
+                      setFormData({...formData, sections: newSections});
+                    }} 
+                    placeholder="<p>Content goes here...</p>" 
+                    multiline 
+                  />
+                </View>
+              ))}
+              <TouchableOpacity 
+                style={{ backgroundColor: '#E0F2FE', paddingVertical: rv(12), borderRadius: radius.md, alignItems: 'center', marginBottom: rv(16) }} 
+                onPress={() => {
+                   const newSections = [...(formData.sections || [])];
+                   newSections.push({ title: '', content: '', sortOrder: newSections.length + 1 });
+                   setFormData({...formData, sections: newSections});
+                }}
+              >
+                <Text style={{ color: '#0284C7', fontWeight: '700' }}>+ Add Section</Text>
+              </TouchableOpacity>
 
               <Text style={styles.sectionTitle}>Inventory</Text>
               <Text style={styles.label}>Initial Stock</Text>

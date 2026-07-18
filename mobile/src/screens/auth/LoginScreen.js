@@ -18,16 +18,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
+import { AlertService } from '../../services/AlertService';
 import { COLORS, FONTS } from '../../utils/theme';
 import { rs, rv, rm } from '../../utils/responsive';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
+  // UI Error States
+  const [generalError, setGeneralError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -65,14 +71,17 @@ export default function LoginScreen({ navigation }) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
         }
 
+        const returnTo = route.params?.returnTo;
         const userRole = data.user?.role?.toLowerCase() || '';
-        if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
+        if (returnTo) {
+          navigation.replace(returnTo);
+        } else if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
           navigation.replace('AdminTabs');
         } else {
           navigation.replace('MainTabs');
         }
       } else {
-        Alert.alert('Login Failed', data.message || 'Invalid Google credentials');
+        AlertService.show({ type: 'error', title: 'Login Failed', message: data.message || 'Invalid Google credentials' });
       }
     } catch (error) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -80,10 +89,10 @@ export default function LoginScreen({ navigation }) {
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Error', 'Play services not available or outdated.');
+        AlertService.show({ type: 'error', title: 'Error', message: 'Play services not available or outdated.' });
       } else {
         console.error('Google Sign-In error:', error);
-        Alert.alert('Google Sign-In Error', 'Failed to complete Google Login. Ensure your native app credentials (SHA-1) are configured in the Google Cloud Console.');
+        AlertService.show({ type: 'error', title: 'Google Sign-In Error', message: 'Failed to complete Google Login.' });
       }
     } finally {
       setLoading(false);
@@ -91,15 +100,26 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter your email and password');
-      return;
+    setGeneralError('');
+    setEmailError('');
+    setPasswordError('');
+    let hasError = false;
+
+    if (!email) {
+      setEmailError('Please enter your email');
+      AlertService.show({ type: 'error', title: 'Invalid Email', message: 'Please enter your email address' });
+      hasError = true;
+    } else if (!password) {
+      setPasswordError('Please enter your password');
+      AlertService.show({ type: 'error', title: 'Missing Password', message: 'Please enter your password' });
+      hasError = true;
     }
+    if (hasError) return;
 
     setLoading(true);
     try {
       const payload = {
-        email,
+        email: email.trim(),
         password,
         device_platform: Platform.OS,
         device_id: 'device_' + Math.random().toString(36).substring(7),
@@ -118,18 +138,46 @@ export default function LoginScreen({ navigation }) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
         }
 
+        const returnTo = route.params?.returnTo;
         const userRole = data.user?.role?.toLowerCase() || '';
-        if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
+        if (returnTo) {
+          navigation.replace(returnTo);
+        } else if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
           navigation.replace('AdminTabs');
         } else {
           navigation.replace('MainTabs');
         }
       } else {
-        Alert.alert('Login Failed', data.message || 'Invalid credentials');
+        const msg = data.message?.toLowerCase() || '';
+        if (msg.includes('not found')) {
+          setEmailError('Account not found');
+          AlertService.show({ type: 'error', title: 'Login Failed', message: 'Account not found. Please sign up.' });
+        } else if (msg.includes('password') || msg.includes('credential')) {
+          setPasswordError('Wrong password or invalid credentials');
+          AlertService.show({ type: 'error', title: 'Login Failed', message: 'Wrong password or invalid credentials' });
+        } else if (msg.includes('too many') || msg.includes('attempts')) {
+          setGeneralError('Too many login attempts. Please try again later.');
+          AlertService.show({ type: 'error', title: 'Locked', message: 'Too many login attempts. Please try again later.' });
+        } else {
+          setGeneralError(data.message || 'Invalid credentials');
+          AlertService.show({ type: 'error', title: 'Login Failed', message: data.message || 'Invalid credentials' });
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Network Error', 'Could not connect to the server. Check your network.');
+      if (error.response?.status === 401) {
+        setPasswordError('Wrong password or invalid credentials');
+        AlertService.show({ type: 'error', title: 'Login Failed', message: 'Wrong password or invalid credentials' });
+      } else if (error.response?.status === 404) {
+        setEmailError('Account not found');
+        AlertService.show({ type: 'error', title: 'Login Failed', message: 'Account not found. Please sign up.' });
+      } else if (error.response?.status === 429) {
+        setGeneralError('Too many login attempts. Please try again later.');
+        AlertService.show({ type: 'error', title: 'Locked', message: 'Too many login attempts. Please try again later.' });
+      } else {
+        setGeneralError('Could not connect to the server. Check your network.');
+        AlertService.show({ type: 'error', title: 'Network Error', message: 'Could not connect to the server. Check your network.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -171,35 +219,44 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          {generalError ? (
+            <View style={styles.generalErrorBox}>
+              <Ionicons name="warning" size={20} color="#DC2626" style={{marginRight: 8}} />
+              <Text style={styles.generalErrorText}>{generalError}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, emailError && styles.inputError]}
                 placeholder="name@example.com"
                 placeholderTextColor="#9ca3af"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(t) => { setEmail(t); setEmailError(''); }}
               />
+              {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordContainer}>
+              <View style={[styles.passwordContainer, passwordError && styles.inputError]}>
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="••••••••"
                   placeholderTextColor="#9ca3af"
                   secureTextEntry={!showPassword}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(t) => { setPassword(t); setPasswordError(''); }}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                   <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6b7280" />
                 </TouchableOpacity>
               </View>
+              {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
             </View>
 
             <View style={styles.optionsRow}>
@@ -343,6 +400,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: rs(20),
     fontSize: rm(15),
     color: '#111827',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: rm(12),
+    marginTop: rv(6),
+    marginLeft: rs(8),
+  },
+  generalErrorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: rs(12),
+    padding: rs(12),
+    marginBottom: rv(20),
+  },
+  generalErrorText: {
+    flex: 1,
+    color: '#DC2626',
+    fontSize: rm(13),
+    fontWeight: '500',
   },
   passwordContainer: {
     flexDirection: 'row',

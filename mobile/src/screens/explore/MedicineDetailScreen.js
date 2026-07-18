@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCart } from '../../context/CartContext';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { getFullImageUrl } from '../../utils/image';
+import RenderHtml from 'react-native-render-html';
+import api from '../../services/api';
 
 const C = {
   primary: '#1F5C52',
@@ -22,9 +24,27 @@ const C = {
 export default function MedicineDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const { addToCart, cart, updateQty } = useCart();
-  const medicine = route?.params?.medicine;
+  const { width } = useWindowDimensions();
+  const initialMedicine = route?.params?.medicine;
 
+  const [medicine, setMedicine] = useState(initialMedicine);
   const [qty, setQty] = useState(1);
+  const [loadingDetails, setLoadingDetails] = useState(true);
+
+  useEffect(() => {
+    if (initialMedicine?.id) {
+      api.get(`/medicines/${initialMedicine.id}`)
+        .then(res => {
+          if (res.data?.success) {
+            setMedicine(res.data.data);
+          }
+        })
+        .catch(err => console.log('Error fetching detailed medicine data:', err))
+        .finally(() => setLoadingDetails(false));
+    } else {
+      setLoadingDetails(false);
+    }
+  }, [initialMedicine?.id]);
 
   if (!medicine) {
     return (
@@ -120,13 +140,25 @@ export default function MedicineDetailScreen({ navigation, route }) {
           
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Category:</Text>
-            <Text style={styles.detailValue}>{medicine.category?.name || 'General'}</Text>
+            <Text style={styles.detailValue}>{medicine.categoryDetail?.name || medicine.category?.name || 'General'}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Manufacturer:</Text>
             <Text style={styles.detailValue}>{medicine.brand?.name || 'Not specified'}</Text>
           </View>
         </View>
+
+        {/* ── DYNAMIC SECTIONS ── */}
+        {medicine.sections && medicine.sections.map((sec, idx) => (
+          <View key={idx} style={styles.section}>
+            <Text style={styles.sectionTitle}>{sec.title}</Text>
+            <RenderHtml
+              contentWidth={width - spacing.md * 2}
+              source={{ html: sec.content || '' }}
+              baseStyle={{ fontSize: rm(15), color: '#475569', lineHeight: rv(24) }}
+            />
+          </View>
+        ))}
       </ScrollView>
 
       {/* ── BOTTOM STICKY BAR ── */}

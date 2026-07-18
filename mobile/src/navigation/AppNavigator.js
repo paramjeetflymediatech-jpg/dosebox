@@ -29,11 +29,13 @@ import UserConsultationsScreen from '../screens/user/UserConsultationsScreen';
 import UserRewardsScreen from '../screens/user/UserRewardsScreen';
 import UserAddressesScreen from '../screens/user/UserAddressesScreen';
 import UserProfileEditScreen from '../screens/user/UserProfileEditScreen';
+import DataDeletionScreen from '../screens/user/DataDeletionScreen';
 
 import CategoriesScreen from '../screens/explore/CategoriesScreen';
 import AboutScreen from '../screens/explore/AboutScreen';
 import FAQScreen from '../screens/explore/FAQScreen';
 import BlogScreen from '../screens/explore/BlogScreen';
+import BlogDetailScreen from '../screens/explore/BlogDetailScreen';
 import ContactScreen from '../screens/explore/ContactScreen';
 import TestimonialScreen from '../screens/explore/TestimonialScreen';
 import NewsScreen from '../screens/explore/NewsScreen';
@@ -63,6 +65,7 @@ import AdminTransactionsScreen from '../screens/admin/AdminTransactionsScreen';
 import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
 import AdminMedicinesScreen from '../screens/admin/AdminMedicinesScreen';
 import AdminOrdersScreen from '../screens/admin/AdminOrdersScreen';
+import AdminDataDeletionScreen from '../screens/admin/AdminDataDeletionScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -99,11 +102,13 @@ export default function AppNavigator() {
         <Stack.Screen name="UserRewards" component={UserRewardsScreen} />
         <Stack.Screen name="UserAddresses" component={UserAddressesScreen} />
         <Stack.Screen name="UserProfileEdit" component={UserProfileEditScreen} />
+        <Stack.Screen name="DataDeletion" component={DataDeletionScreen} />
 
         <Stack.Screen name="Categories" component={CategoriesScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="FAQ" component={FAQScreen} />
         <Stack.Screen name="Blog" component={BlogScreen} />
+        <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
         <Stack.Screen name="Contact" component={ContactScreen} />
         <Stack.Screen name="Testimonial" component={TestimonialScreen} />
         <Stack.Screen name="News" component={NewsScreen} />
@@ -134,6 +139,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
         <Stack.Screen name="AdminMedicines" component={AdminMedicinesScreen} />
         <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} />
+        <Stack.Screen name="AdminDataDeletion" component={AdminDataDeletionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -18,6 +18,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { getFullImageUrl } from '../../utils/image';
+import { AlertService } from '../../services/AlertService';
 
 const C = {
   primary: '#1F5C52',
@@ -136,7 +137,11 @@ export default function OrderTrackingScreen({ route, navigation }) {
 
   const submitCancel = async () => {
     if (!isClaimMode && !cancelReason.trim()) {
-      Alert.alert('Error', 'Please provide a reason');
+      AlertService.show({
+        type: 'error',
+        title: 'Error',
+        message: 'Please provide a reason for cancellation'
+      });
       return;
     }
     setIsSubmittingCancel(true);
@@ -147,7 +152,11 @@ export default function OrderTrackingScreen({ route, navigation }) {
         cancelReason: isClaimMode ? undefined : cancelReason
       });
       if (res.data?.success) {
-        Alert.alert('Success', isClaimMode ? 'Refund claimed!' : 'Order cancelled!');
+        AlertService.show({
+          type: 'success',
+          title: 'Success',
+          message: isClaimMode ? 'Refund claimed successfully!' : 'Order cancelled successfully!'
+        });
         setCancelModalOpen(false);
         const refresh = await api.get('/orders');
         if (refresh.data?.success) {
@@ -155,10 +164,18 @@ export default function OrderTrackingScreen({ route, navigation }) {
           if (updated) setOrder(updated);
         }
       } else {
-        Alert.alert('Failed', res.data?.message || 'Action failed');
+        AlertService.show({
+          type: 'error',
+          title: 'Failed',
+          message: res.data?.message || 'Action failed'
+        });
       }
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Error occurred');
+      AlertService.show({
+        type: 'error',
+        title: 'Error',
+        message: e.response?.data?.message || 'Error occurred'
+      });
     } finally {
       setIsSubmittingCancel(false);
     }
@@ -214,7 +231,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
            <View style={styles.infoRow}>
              <View>
                 <Text style={styles.infoLabel}>Order Date</Text>
-                <Text style={styles.infoDate}>{new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
+                <Text style={styles.infoDate}>{new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
              </View>
              <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.infoLabel}>Payment</Text>
@@ -282,6 +299,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
                          <Ionicons name="close-circle" size={rs(20)} color={C.danger} />
                       </View>
                       <View style={[styles.timelineContent, { borderBottomWidth: 0 }]}>
+                        
                         <Text style={[styles.timelineStep, { color: C.danger }]}>Order Cancelled</Text>
                         {order.cancelReason ? <Text style={[styles.timelineDesc, { backgroundColor: C.dangerLight, color: C.danger }]}>Reason: {order.cancelReason}</Text> : null}
                       </View>
@@ -400,8 +418,8 @@ export default function OrderTrackingScreen({ route, navigation }) {
                         <View style={[styles.radio, refundMethod === 'bank' && styles.radioActive]}>{refundMethod === 'bank' && <View style={styles.radioInner}/>}</View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.refundTitle}>Cancel Order</Text>
-                          <Text style={styles.refundDesc}>As this is a COD order, no payment needs to be refunded.</Text>
-                          <Text style={styles.warningText}>Note: 2-time bonus token limit exhausted.</Text>
+                          {/* <Text style={styles.refundDesc}>As this is a COD order, no payment needs to be refunded.</Text> */}
+                          {/* <Text style={styles.warningText}>Note: 2-time bonus token limit exhausted.</Text> */}
                         </View>
                      </TouchableOpacity>
                    )}

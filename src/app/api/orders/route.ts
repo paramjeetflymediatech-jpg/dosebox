@@ -245,6 +245,9 @@ export async function GET(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const offset = (page - 1) * limit;
     
     // If admin, superadmin or pharmacist
     if (userAuth.roleName === 'Admin' || userAuth.roleName === 'SuperAdmin' || userAuth.roleName === 'Pharmacist') {
@@ -254,7 +257,7 @@ export async function GET(req: NextRequest) {
         filter.status = status;
       }
 
-      const orders = await Order.findAll({
+      const { count, rows: orders } = await Order.findAndCountAll({
         where: filter,
         include: [
           { model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone'] },
@@ -262,22 +265,44 @@ export async function GET(req: NextRequest) {
           { model: Address, as: 'shippingAddress' },
           { model: Prescription, as: 'prescription' }
         ],
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset
       });
 
-      return NextResponse.json({ success: true, data: orders }, { status: 200 });
+      return NextResponse.json({ 
+        success: true, 
+        data: orders,
+        pagination: {
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+          currentPage: page,
+          pageSize: limit
+        }
+      }, { status: 200 });
     } else {
       // Customer
-      const orders = await Order.findAll({
+      const { count, rows: orders } = await Order.findAndCountAll({
         where: { userId: userAuth.id },
         include: [
           { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine', attributes: ['id', 'name', 'images'] }] },
           { model: Address, as: 'shippingAddress' }
         ],
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset
       });
 
-      return NextResponse.json({ success: true, data: orders }, { status: 200 });
+      return NextResponse.json({ 
+        success: true, 
+        data: orders,
+        pagination: {
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+          currentPage: page,
+          pageSize: limit
+        }
+      }, { status: 200 });
     }
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

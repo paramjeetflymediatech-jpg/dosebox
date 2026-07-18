@@ -2,12 +2,14 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, FlatList, 
-  ActivityIndicator, Modal, TextInput, Alert, RefreshControl 
+  ActivityIndicator, Modal, TextInput, Alert, RefreshControl, Image 
 } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function AdminBlogsScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -24,6 +26,7 @@ export default function AdminBlogsScreen({ navigation }) {
   const [currentId, setCurrentId] = useState(null);
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const loadData = async () => {
     try {
@@ -105,12 +108,53 @@ export default function AdminBlogsScreen({ navigation }) {
     ]);
   };
 
+  const handleUploadImage = async () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+    };
+    
+    launchImageLibrary(options, async (response) => {
+      if (response.didCancel || response.errorCode) return;
+      
+      const asset = response.assets[0];
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', {
+        uri: asset.uri,
+        type: asset.type,
+        name: asset.fileName || 'upload.jpg',
+      });
+      
+      setUploadingImage(true);
+      try {
+        const res = await api.post('/upload', formDataUpload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (res.data?.success) {
+          setFormData({ ...formData, coverImage: res.data.fileUrl });
+        }
+      } catch (err) {
+        console.error('Failed to upload image', err);
+        Alert.alert('Error', 'Failed to upload image');
+      } finally {
+        setUploadingImage(false);
+      }
+    });
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
+      {!!item.coverImage && (
+        <Image 
+          source={{ uri: getFullImageUrl(item.coverImage) }} 
+          style={{ width: rv(60), height: rv(60), borderRadius: radius.md, marginRight: spacing.md }} 
+          resizeMode="contain" 
+        />
+      )}
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle}>{item.title || 'Untitled'}</Text>
         <Text style={styles.cardSubtitle} numberOfLines={2}>
-          {item.summary || 'No description available'}
+          {item.category || 'Uncategorized'}
         </Text>
       </View>
       <View style={styles.cardActions}>
@@ -271,13 +315,25 @@ export default function AdminBlogsScreen({ navigation }) {
               </View>
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>Cover Image URL</Text>
-                <TextInput
-                  style={[styles.input, null]}
-                  value={String(formData.coverImage || '')}
-                  onChangeText={txt => setFormData({...formData, coverImage: txt})}
-                  placeholder="Enter cover image URL"
-                  placeholderTextColor="#94A3B8"
-                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={String(formData.coverImage || '')}
+                    onChangeText={txt => setFormData({...formData, coverImage: txt})}
+                    placeholder="Enter cover image URL"
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <TouchableOpacity 
+                    style={{ backgroundColor: '#F1F5F9', padding: rv(12), borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' }}
+                    onPress={handleUploadImage}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? <ActivityIndicator size="small" color="#1F5C52" /> : <Ionicons name="cloud-upload-outline" size={20} color="#1F5C52" />}
+                  </TouchableOpacity>
+                </View>
+                {!!formData.coverImage && (
+                  <Image source={{ uri: getFullImageUrl(formData.coverImage) }} style={{ width: '100%', height: rv(150), borderRadius: radius.md, marginTop: rv(10) }} resizeMode="contain" />
+                )}
               </View>
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>SEO Title</Text>

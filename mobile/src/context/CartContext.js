@@ -5,6 +5,7 @@
  */
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AlertService } from '../services/AlertService';
 
 const CART_KEY = '@dosebox_cart';
 
@@ -81,7 +82,16 @@ export function CartProvider({ children }) {
   const totalQty = state.items.reduce((sum, i) => sum + i.qty, 0);
   const totalPrice = state.items.reduce((sum, i) => sum + i.price * i.qty, 0);
 
-  const addToCart = (item) => dispatch({ type: 'ADD', item });
+  const addToCart = (item, suppressPopup = false) => {
+    dispatch({ type: 'ADD', item });
+    if (!suppressPopup) {
+      AlertService.show({
+        type: 'success',
+        title: 'Added to Cart',
+        message: `${item.name || 'Product'} has been added to your cart.`
+      });
+    }
+  };
   const removeFromCart = (id) => dispatch({ type: 'REMOVE', id });
   const deleteFromCart = (id) => dispatch({ type: 'DELETE', id });
   const clearCart = () => dispatch({ type: 'CLEAR' });

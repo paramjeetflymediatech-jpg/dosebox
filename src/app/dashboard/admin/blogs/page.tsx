@@ -13,6 +13,7 @@ interface Blog {
   slug: string;
   category: string;
   createdAt: string;
+  coverImage?: string;
 }
 
 export default function AdminBlogsPage() {
@@ -97,6 +98,7 @@ export default function AdminBlogsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm uppercase tracking-wider">
+                <th className="py-4 px-6 font-semibold w-16">Image</th>
                 <th className="py-4 px-6 font-semibold">Title</th>
                 <th className="py-4 px-6 font-semibold">Category</th>
                 <th className="py-4 px-6 font-semibold">Date</th>
@@ -106,6 +108,17 @@ export default function AdminBlogsPage() {
             <tbody>
               {filteredBlogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(blog => (
                 <tr key={blog.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                  <td className="py-4 px-6">
+                    {blog.coverImage ? (
+                      <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200">
+                        <img src={blog.coverImage} alt={blog.title} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                        <FileText className="w-5 h-5 text-slate-400" />
+                      </div>
+                    )}
+                  </td>
                   <td className="py-4 px-6 font-medium text-slate-800">{blog.title}</td>
                   <td className="py-4 px-6 text-slate-600">
                     <span className="px-2.5 py-1 bg-brand-50 text-brand-700 rounded-lg text-sm font-medium">
@@ -135,7 +148,7 @@ export default function AdminBlogsPage() {
               ))}
               {filteredBlogs.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-slate-400">
+                  <td colSpan={5} className="py-12 text-center text-slate-400">
                     <FileText className="w-12 h-12 text-slate-200 mx-auto mb-3" />
                     No blogs found. Create your first blog!
                   </td>

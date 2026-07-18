@@ -67,16 +67,29 @@ export default function CartPage() {
     toast.success('All scanned medicines added to cart!');
   };
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     setPromoError('');
+    if (!promoInput.trim()) return;
     const code = promoInput.trim().toUpperCase();
     
-    if (['WELCOME10', 'HEALTH20', 'FLAT50'].includes(code)) {
-      applyCoupon(code);
-      setPromoInput('');
-    } else {
-      setPromoError('Invalid coupon code. Try WELCOME10.');
+    try {
+      // Calculate cart total without shipping
+      const taxableAmount = cartItems.reduce((acc, item) => {
+        const p = item.discountPrice || item.price;
+        return acc + (p * item.quantity);
+      }, 0);
+
+      const res = await api.post('/coupons/verify', { code, cartTotal: taxableAmount });
+      if (res.data?.success) {
+        applyCoupon(code, res.data.data);
+        setPromoInput('');
+        toast.success(`${code} applied!`);
+      } else {
+        setPromoError(res.data?.message || 'Invalid coupon code.');
+      }
+    } catch (err: any) {
+      setPromoError(err.response?.data?.message || 'Failed to apply coupon.');
     }
   };
 

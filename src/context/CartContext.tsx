@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export interface CartItem {
   id: number;
@@ -19,7 +20,8 @@ interface CartContextType {
   updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
   couponCode: string;
-  applyCoupon: (code: string) => void;
+  couponObj: any;
+  applyCoupon: (code: string, obj: any) => void;
   removeCoupon: () => void;
   
   // Computed values
@@ -36,6 +38,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [couponCode, setCouponCode] = useState('');
+  const [couponObj, setCouponObj] = useState<any>(null);
 
   // Load cart from LocalStorage on mount
   useEffect(() => {
@@ -71,6 +74,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { quantity, ...itemWithoutQty } = item;
       saveCart([...cartItems, { ...itemWithoutQty, quantity: qtyToAdd }]);
     }
+    toast.success(`${item.name || 'Item'} added to cart`);
   };
 
   const removeFromCart = (id: number) => {
@@ -93,12 +97,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCouponCode('');
   };
 
-  const applyCoupon = (code: string) => {
+  const applyCoupon = (code: string, obj: any) => {
     setCouponCode(code.toUpperCase());
+    setCouponObj(obj);
   };
 
   const removeCoupon = () => {
     setCouponCode('');
+    setCouponObj(null);
   };
 
   // Computed values
@@ -117,14 +123,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Shipping details
   const shippingFee = (taxableAmount > 500 || cartItems.length === 0) ? 0 : 50;
 
-  // Basic coupon reductions mock
+  // Dynamic coupon calculation based on verified couponObj
   let couponDiscount = 0;
-  if (couponCode === 'WELCOME10' && taxableAmount >= 200) {
-    couponDiscount = taxableAmount * 0.10;
-  } else if (couponCode === 'HEALTH20' && taxableAmount >= 500) {
-    couponDiscount = Math.min(taxableAmount * 0.20, 250);
-  } else if (couponCode === 'FLAT50' && taxableAmount >= 300) {
-    couponDiscount = 50;
+  if (couponObj && taxableAmount >= Number(couponObj.minOrderValue)) {
+    if (couponObj.discountType === 'Percentage') {
+      couponDiscount = taxableAmount * (Number(couponObj.discountValue) / 100);
+      if (couponObj.maxDiscount && couponDiscount > Number(couponObj.maxDiscount)) {
+        couponDiscount = Number(couponObj.maxDiscount);
+      }
+    } else {
+      couponDiscount = Number(couponObj.discountValue);
+    }
   }
 
   const totalAmount = Math.max(0, taxableAmount - couponDiscount + shippingFee);
@@ -139,6 +148,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateQuantity,
       clearCart,
       couponCode,
+      couponObj,
       applyCoupon,
       removeCoupon,
       subtotal,

@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { AlertService } from '../../services/AlertService';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCart } from '../../context/CartContext';
 import { useLocation } from '../../context/LocationContext';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import api from '../../services/api';
 import { getFullImageUrl } from '../../utils/image';
+import PermissionsService from '../../services/PermissionsService';
 
 const C = {
   primary: '#1F5C52',
@@ -106,6 +108,8 @@ export default function CartCheckoutScreen({ navigation }) {
   
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState('');
+  const [appliedPromoObj, setAppliedPromoObj] = useState(null);
+  const [isVerifyingPromo, setIsVerifyingPromo] = useState(false);
   const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
 
   const deliveryFee = items.length > 0 ? 50.00 : 0.00;
@@ -115,17 +119,23 @@ export default function CartCheckoutScreen({ navigation }) {
   const doseboxDiscount = totalMRP - cartTotal;
   
   let couponDiscount = 0;
-  if (appliedPromo === 'WELCOME10' && cartTotal >= 200) {
-    couponDiscount = cartTotal * 0.10;
-  } else if (appliedPromo === 'HEALTH20' && cartTotal >= 500) {
-    couponDiscount = Math.min(cartTotal * 0.20, 250);
-  } else if (appliedPromo === 'FLAT50' && cartTotal >= 300) {
-    couponDiscount = 50;
+  if (appliedPromoObj && cartTotal >= Number(appliedPromoObj.minOrderValue)) {
+    if (appliedPromoObj.discountType === 'Percentage') {
+      couponDiscount = cartTotal * (Number(appliedPromoObj.discountValue) / 100);
+      if (appliedPromoObj.maxDiscount && couponDiscount > Number(appliedPromoObj.maxDiscount)) {
+        couponDiscount = Number(appliedPromoObj.maxDiscount);
+      }
+    } else {
+      couponDiscount = Number(appliedPromoObj.discountValue);
+    }
   }
   
   const finalTotal = Math.max(0, cartTotal - couponDiscount + deliveryFee);
 
   const fetchCurrentAddress = async () => {
+    const hasPermission = await PermissionsService.requestLocationPermission();
+    if (!hasPermission) return;
+
     setIsFetchingLocation(true);
     try {
       const response = await fetch('https://ipapi.co/json/');
@@ -279,7 +289,7 @@ export default function CartCheckoutScreen({ navigation }) {
                         <Ionicons name="remove" size={16} color={C.text} />
                       </TouchableOpacity>
                       <Text style={styles.qtyText}>{item.qty}</Text>
-                      <TouchableOpacity onPress={() => addToCart(item)} style={styles.qtyBtn}>
+                      <TouchableOpacity onPress={() => addToCart(item, true)} style={styles.qtyBtn}>
                         <Ionicons name="add" size={16} color={C.text} />
                       </TouchableOpacity>
                     </View>
@@ -477,49 +487,74 @@ export default function CartCheckoutScreen({ navigation }) {
               )}
             </View>
 
-            {/* Promo Code */}
-            <Text style={styles.sectionLabel}>Promo Code</Text>
-            <View style={styles.paymentCard}>
-              {appliedPromo ? (
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: rs(16), backgroundColor: '#F0FDF4' }}>
-                  <Text style={{ fontSize: rm(14), fontWeight: 'bold', color: '#166534' }}>{appliedPromo} Applied</Text>
-                  <TouchableOpacity onPress={() => setAppliedPromo('')} style={{ backgroundColor: '#DC2626', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
-                    <Text style={{ color: '#fff', fontSize: rm(12), fontWeight: 'bold' }}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={{ flexDirection: 'row', alignItems: 'center', padding: rs(16) }}>
-                  <TextInput
-                    style={{ flex: 1, height: rv(40), borderWidth: 1, borderColor: '#E2E8F0', borderRadius: radius.md, paddingHorizontal: rs(12), backgroundColor: '#F8FAFC', color: C.text }}
-                    placeholder="Enter promo code"
-                    placeholderTextColor="#94A3B8"
-                    value={promoCode}
-                    onChangeText={setPromoCode}
-                    autoCapitalize="characters"
-                  />
-                  <TouchableOpacity 
-                    style={{ marginLeft: rs(12), backgroundColor: C.primary, height: rv(40), paddingHorizontal: rs(20), borderRadius: radius.md, justifyContent: 'center' }}
-                    onPress={() => {
-                      const code = promoCode.trim().toUpperCase();
-                      if (['WELCOME10', 'HEALTH20', 'FLAT50'].includes(code)) {
-                        setAppliedPromo(code);
-                        setPromoCode('');
-                      } else {
-                        AlertService.show({ type: 'error', title: 'Invalid Code', message: 'Please enter a valid promo code.' });
-                      }
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Apply</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
             </>
             )}
 
-            {/* Step 3: Payment Method */}
+            {/* Step 3: Order Summary & Payment */}
             {currentStep === 3 && (
               <>
+                <Text style={styles.sectionLabel}>Delivery Address</Text>
+                <View style={[styles.paymentCard, { padding: rs(16), marginBottom: rv(16) }]}>
+                  <Text style={{ fontSize: rm(14), color: C.text, lineHeight: rv(20) }}>
+                    {selectedAddress
+                      ? `${selectedAddress.title ? `${selectedAddress.title} — ` : ''}${selectedAddress.street}${selectedAddress.city ? `, ${selectedAddress.city}` : ''}${selectedAddress.zipCode ? ` ${selectedAddress.zipCode}` : ''}`
+                      : 'No address selected.'}
+                  </Text>
+                </View>
+
+                {/* Promo Code */}
+                <Text style={styles.sectionLabel}>Promo Code</Text>
+                <View style={[styles.paymentCard, { marginBottom: rv(16) }]}>
+                  {appliedPromo ? (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: rs(16), backgroundColor: '#F0FDF4' }}>
+                      <Text style={{ fontSize: rm(14), fontWeight: 'bold', color: '#166534' }}>{appliedPromo} Applied</Text>
+                      <TouchableOpacity onPress={() => { setAppliedPromo(''); setAppliedPromoObj(null); }} style={{ backgroundColor: '#DC2626', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+                        <Text style={{ color: '#fff', fontSize: rm(12), fontWeight: 'bold' }}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', padding: rs(16) }}>
+                      <TextInput
+                        style={{ flex: 1, height: rv(40), borderWidth: 1, borderColor: '#E2E8F0', borderRadius: radius.md, paddingHorizontal: rs(12), backgroundColor: '#F8FAFC', color: C.text }}
+                        placeholder="Enter promo code"
+                        placeholderTextColor="#94A3B8"
+                        value={promoCode}
+                        onChangeText={setPromoCode}
+                        autoCapitalize="characters"
+                      />
+                      <TouchableOpacity 
+                        style={{ marginLeft: rs(12), backgroundColor: C.primary, height: rv(40), paddingHorizontal: rs(20), borderRadius: radius.md, justifyContent: 'center' }}
+                        disabled={isVerifyingPromo}
+                        onPress={async () => {
+                          if (!promoCode.trim()) return;
+                          const code = promoCode.trim().toUpperCase();
+                          setIsVerifyingPromo(true);
+                          try {
+                            const res = await api.post('/coupons/verify', { code, cartTotal });
+                            if (res.data?.success) {
+                              setAppliedPromo(code);
+                              setAppliedPromoObj(res.data.data);
+                              setPromoCode('');
+                            } else {
+                              AlertService.show({ type: 'error', title: 'Invalid Code', message: res.data?.message || 'Please enter a valid promo code.' });
+                            }
+                          } catch (error) {
+                            AlertService.show({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Failed to verify promo code.' });
+                          } finally {
+                            setIsVerifyingPromo(false);
+                          }
+                        }}
+                      >
+                        {isVerifyingPromo ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Apply</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+
                 <Text style={styles.sectionLabel}>Payment Method</Text>
                 <View style={styles.paymentCard}>
                <TouchableOpacity 
@@ -550,6 +585,57 @@ export default function CartCheckoutScreen({ navigation }) {
                  <Text style={styles.paymentText}>PhonePe / UPI</Text>
                </TouchableOpacity>
             </View>
+
+              {/* Final Order Summary */}
+              <Text style={styles.sectionLabel}>Order Summary</Text>
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Total MRP</Text>
+                  <Text style={styles.summaryValue}>₹{totalMRP.toFixed(2)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: '#059669' }]}>Dosebox Discount</Text>
+                  <Text style={[styles.summaryValue, { color: '#059669' }]}>- ₹{doseboxDiscount.toFixed(2)}</Text>
+                </View>
+                {couponDiscount > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={[styles.summaryLabel, { color: '#4338CA', fontWeight: 'bold' }]}>Promo Discount ({appliedPromo})</Text>
+                    <Text style={[styles.summaryValue, { color: '#4338CA', fontWeight: 'bold' }]}>- ₹{couponDiscount.toFixed(2)}</Text>
+                  </View>
+                )}
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.text }]}>Cart Total</Text>
+                  <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
+                </View>
+                
+                <View style={{ paddingTop: rv(8) }}>
+                  <TouchableOpacity 
+                    style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                    onPress={() => setShowAdditionalCharges(!showAdditionalCharges)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={styles.summaryLabel}>Additional Charges</Text>
+                      <Ionicons name={showAdditionalCharges ? "chevron-up" : "chevron-down"} size={16} color={C.sub} />
+                    </View>
+                    <Text style={styles.summaryValue}>₹{deliveryFee.toFixed(2)}</Text>
+                  </TouchableOpacity>
+                  
+                  {showAdditionalCharges && (
+                    <View style={{ paddingLeft: rs(16), marginTop: rv(8), borderLeftWidth: 2, borderLeftColor: C.border, gap: rv(6) }}>
+                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                         <Text style={{ fontSize: rm(12), color: C.sub }}>Delivery Charges</Text>
+                         <Text style={{ fontSize: rm(12), color: C.sub }}>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</Text>
+                       </View>
+                    </View>
+                  )}
+                </View>
+
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={styles.totalLabel}>Order Total</Text>
+                  <Text style={styles.totalValue}>₹{finalTotal.toFixed(2)}</Text>
+                </View>
+              </View>
             </>
             )}
 
@@ -560,7 +646,19 @@ export default function CartCheckoutScreen({ navigation }) {
             {currentStep === 1 && (
               <TouchableOpacity
                 style={styles.placeOrderBtn}
-                onPress={() => setCurrentStep(2)}
+                onPress={async () => {
+                  try {
+                    const token = await AsyncStorage.getItem('accessToken');
+                    if (!token) {
+                      AlertService.show({ type: 'info', title: 'Login Required', message: 'Please login to continue checkout.' });
+                      navigation.navigate('Login', { returnTo: 'CartCheckout' });
+                    } else {
+                      setCurrentStep(2);
+                    }
+                  } catch (e) {
+                    setCurrentStep(2);
+                  }
+                }}
                 activeOpacity={0.85}
               >
                 <Text style={styles.placeOrderText}>Proceed to Delivery</Text>

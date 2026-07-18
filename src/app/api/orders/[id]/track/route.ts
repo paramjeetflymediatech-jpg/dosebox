@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     // Verify ownership or admin
-    if (order.userId !== userAuth.id && userAuth.roleName !== 'Admin' && userAuth.roleName !== 'Pharmacist') {
+    if (Number(order.userId) !== Number(userAuth.id) && userAuth.roleName !== 'Admin' && userAuth.roleName !== 'Pharmacist') {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 

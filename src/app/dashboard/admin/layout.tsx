@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift, Trash2
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -49,6 +49,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Appointments', href: '/dashboard/admin/appointments', icon: Calendar },
     { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText },
     { name: 'FAQs', href: '/dashboard/admin/faqs', icon: HelpCircle },
+    { name: 'Support Tickets', href: '/dashboard/admin/support', icon: HelpCircle },
+    { name: 'Data Deletion', href: '/dashboard/admin/data-deletion', icon: Trash2 },
     { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings },
     { name: 'Coupons', href: '/dashboard/admin/coupons', icon: Tag },
     { name: 'Banners', href: '/dashboard/admin/banners', icon: Flag }
