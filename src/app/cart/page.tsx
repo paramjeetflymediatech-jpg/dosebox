@@ -154,9 +154,9 @@ export default function CartPage() {
     setShowScanResults(false);
     try {
       const formData = new FormData();
-      formData.append('prescription', prescriptionFile);
+      formData.append('file', prescriptionFile);
 
-      const res = await api.post('/prescriptions/upload', formData, {
+      const res = await api.post('/prescriptions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
