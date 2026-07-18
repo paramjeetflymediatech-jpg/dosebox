@@ -137,11 +137,13 @@ export default function AdminPrescriptionsScreen({ navigation }) {
         </View>
 
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#E0F2FE'}]} onPress={() => handleOpenModal(item)}>
-            <Ionicons name="pencil-outline" size={rm(18)} color="#0284C7" />
+          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#E0F2FE', flexDirection: 'row', alignItems: 'center', gap: 4}]} onPress={() => navigation.navigate('AdminPrescriptionReview', { prescription: item })}>
+            <Ionicons name="create-outline" size={16} color="#0284C7" />
+            <Text style={[styles.actionText, {color: '#0284C7', fontSize: 12, fontWeight: '600'}]}>Review</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#FEE2E2'}]} onPress={() => handleDelete(item.id)}>
-            <Ionicons name="trash-outline" size={rm(18)} color="#DC2626" />
+          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#FEE2E2', flexDirection: 'row', alignItems: 'center', gap: 4}]} onPress={() => handleDelete(item.id)}>
+            <Ionicons name="trash-outline" size={16} color="#DC2626" />
+            <Text style={[styles.actionText, {color: '#DC2626', fontSize: 12, fontWeight: '600'}]}>Delete</Text>
           </TouchableOpacity>
         </View>
       </View>

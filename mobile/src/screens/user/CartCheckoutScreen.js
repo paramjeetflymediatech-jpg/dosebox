@@ -8,7 +8,9 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Linking
+  Linking,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { AlertService } from '../../services/AlertService';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -82,7 +84,7 @@ function EmptyCart({ onExplore }) {
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function CartCheckoutScreen({ navigation }) {
-  const { items, totalPrice, clearCart, addToCart, removeFromCart } = useCart();
+  const { items, totalPrice, clearCart, addToCart, removeFromCart, attachedPrescriptionStatus, attachedPrescriptionId } = useCart();
   const { selectedAddress, selectAddress } = useLocation();
   const insets = useSafeAreaInsets();
 
@@ -132,6 +134,9 @@ export default function CartCheckoutScreen({ navigation }) {
   
   const gstAmount = Math.max(0, cartTotal - couponDiscount) * 0.18;
   const finalTotal = Math.max(0, cartTotal - couponDiscount + gstAmount + deliveryFee);
+
+  const requiresPrescription = items.some(item => item.prescriptionRequired);
+  const isRestricted = requiresPrescription && attachedPrescriptionStatus !== 'Approved';
 
   const fetchCurrentAddress = async () => {
     const hasPermission = await PermissionsService.requestLocationPermission();
@@ -194,6 +199,7 @@ export default function CartCheckoutScreen({ navigation }) {
         items: mappedItems,
         shippingAddress: selectedAddress,
         paymentMethod: paymentMethod === 'COD' ? 'Cash on Delivery' : 'PhonePe',
+        prescriptionId: attachedPrescriptionId || null
       };
 
       const res = await api.post('/orders', body);
@@ -274,11 +280,15 @@ export default function CartCheckoutScreen({ navigation }) {
       ) : (
         /* ── FILLED STATE ── */
         <>
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: rv(120) }}
-            showsVerticalScrollIndicator={false}
+          <KeyboardAvoidingView 
+            style={{ flex: 1 }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: rv(120) }}
+              showsVerticalScrollIndicator={false}
+            >
             {/* Step 1: Summary */}
             {currentStep === 1 && (
               <>
@@ -308,6 +318,26 @@ export default function CartCheckoutScreen({ navigation }) {
                     </View>
                   </View>
                 ))}
+
+                {/* Restricted Cart Warning */}
+                {isRestricted && (
+                  <View style={{ backgroundColor: '#FEF2F2', padding: rs(16), borderRadius: radius.lg, borderWidth: 1, borderColor: '#FECACA', marginBottom: rv(16) }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(8), marginBottom: rv(8) }}>
+                      <Ionicons name="warning" size={rs(20)} color="#DC2626" />
+                      <Text style={{ fontSize: rm(15), fontWeight: '700', color: '#991B1B' }}>Prescription Required</Text>
+                    </View>
+                    <Text style={{ fontSize: rm(13), color: '#7F1D1D', lineHeight: rv(20), marginBottom: rv(12) }}>
+                      Your cart contains medicines that require a doctor's prescription. 
+                      You must upload a valid prescription and wait for admin approval to proceed.
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={() => navigation.navigate('UploadPrescription')}
+                      style={{ backgroundColor: '#DC2626', paddingVertical: rv(10), borderRadius: radius.md, alignItems: 'center' }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: rm(13), fontWeight: '700' }}>Upload Prescription</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
                 {/* Summary */}
                 <View style={styles.summaryCard}>
@@ -624,14 +654,19 @@ export default function CartCheckoutScreen({ navigation }) {
             )}
 
           </ScrollView>
+        </KeyboardAvoidingView>
 
-          {/* Place Order Footer */}
+        {/* Place Order Footer */}
           <View style={[styles.footer, { paddingBottom: insets.bottom + rv(16) }]}>
             {currentStep === 1 && (
               <TouchableOpacity
                 style={styles.placeOrderBtn}
                 onPress={async () => {
                   try {
+                    if (isRestricted) {
+                      AlertService.show({ type: 'error', title: 'Prescription Required', message: 'You must upload an approved prescription to checkout.' });
+                      return;
+                    }
                     const token = await AsyncStorage.getItem('accessToken');
                     if (!token) {
                       AlertService.show({ type: 'info', title: 'Login Required', message: 'Please login to continue checkout.' });
@@ -640,9 +675,10 @@ export default function CartCheckoutScreen({ navigation }) {
                       setCurrentStep(2);
                     }
                   } catch (e) {
-                    setCurrentStep(2);
+                    if (!isRestricted) setCurrentStep(2);
                   }
                 }}
+                disabled={isRestricted}
                 activeOpacity={0.85}
               >
                 <Text style={styles.placeOrderText}>Proceed to Delivery</Text>

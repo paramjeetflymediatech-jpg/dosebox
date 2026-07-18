@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function AdminUsersScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -109,7 +110,7 @@ export default function AdminUsersScreen({ navigation }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
           {item.avatar ? (
             <Image 
-              source={{ uri: item.avatar.startsWith('http') ? item.avatar : `http://10.0.2.2:3000${item.avatar}` }} 
+              source={{ uri: getFullImageUrl(item.avatar) }} 
               style={styles.cardAvatar} 
             />
           ) : (

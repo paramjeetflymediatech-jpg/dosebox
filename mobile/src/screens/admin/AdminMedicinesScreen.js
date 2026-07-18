@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function AdminMedicinesScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -216,7 +217,7 @@ export default function AdminMedicinesScreen({ navigation }) {
         <View style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12}}>
           <View style={[styles.imageContainer, { width: rv(56), height: rv(56), borderRadius: 8, backgroundColor: '#F1F5F9' }]}>
             {item.images ? (
-               <Image source={{uri: item.images.startsWith('http') ? item.images : `http://10.0.2.2:3000${item.images}`}} style={[styles.itemImage, {width: '100%', height: '100%', borderRadius: 8}]} resizeMode="cover" />
+               <Image source={{uri: getFullImageUrl(item.images)}} style={[styles.itemImage, {width: '100%', height: '100%', borderRadius: 8}]} resizeMode="cover" />
             ) : (
                <Ionicons name="medical-outline" size={32} color="#CBD5E1" />
             )}
@@ -334,7 +335,7 @@ export default function AdminMedicinesScreen({ navigation }) {
               <View style={styles.imageUploadWrapper}>
                 <View style={styles.imagePreviewBox}>
                   {formData.images ? (
-                    <Image source={{uri: formData.images.startsWith('http') ? formData.images : `http://10.0.2.2:3000${formData.images}`}} style={styles.previewImage} resizeMode="contain" />
+                    <Image source={{uri: getFullImageUrl(formData.images)}} style={styles.previewImage} resizeMode="contain" />
                   ) : (
                     <Ionicons name="image-outline" size={40} color="#ccc" />
                   )}

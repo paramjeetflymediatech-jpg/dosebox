@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function AdminBrandsScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -152,7 +153,7 @@ export default function AdminBrandsScreen({ navigation }) {
     <View style={[styles.card, { flexDirection: 'column', alignItems: 'stretch' }]}>
       <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
         {item.logo ? (
-          <Image source={{ uri: item.logo.startsWith('http') ? item.logo : `http://10.0.2.2:3000${item.logo}` }} style={styles.cardImage} />
+          <Image source={{ uri: getFullImageUrl(item.logo) }} style={styles.cardImage} />
         ) : (
           <View style={styles.placeholderImage}>
             <Text style={styles.placeholderText}>{item.name?.[0]}</Text>

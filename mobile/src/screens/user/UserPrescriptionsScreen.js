@@ -11,7 +11,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [viewImageUri, setViewImageUri] = useState(null);
   
-  const { addToCart } = useCart();
+  const { addToCart, setVerifiedCart } = useCart();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -22,7 +22,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
 
   const fetchPrescriptions = async () => {
     try {
-      const res = await api.get('/customer/prescriptions');
+      const res = await api.get('/prescriptions/customer');
       if (res.data?.success) {
         setPrescriptions(res.data.data);
       }
@@ -38,7 +38,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
-            const res = await api.delete(`/customer/prescriptions/${id}`);
+            const res = await api.delete(`/prescriptions/customer/${id}`);
             if (res.data?.success) {
               setPrescriptions(prev => prev.filter(p => p.id !== id));
             } else {
@@ -51,26 +51,21 @@ export default function UserPrescriptionsScreen({ navigation }) {
     ]);
   };
 
-  const handleProceed = (draftCart) => {
+  const handleProceed = (draftCart, prescriptionId) => {
     if (!draftCart || !draftCart.items || draftCart.items.length === 0) return;
     
-    let addedCount = 0;
-    draftCart.items.forEach(item => {
-      if (item.medicine) {
-        addToCart({
-          id: item.medicine.id,
-          name: item.medicine.name,
-          price: item.medicine.discountPrice || item.medicine.price,
-          qty: item.quantity,
-          image: item.medicine.images?.[0] || '',
-          prescriptionRequired: item.medicine.requiresPrescription || false,
-        });
-        addedCount++;
-      }
-    });
+    const verifiedItems = draftCart.items.map(item => ({
+      id: item.medicine.id,
+      name: item.medicine.name,
+      price: item.medicine.discountPrice || item.medicine.price,
+      qty: item.quantity,
+      image: item.medicine.images?.[0] || '',
+      prescriptionRequired: item.medicine.requiresPrescription || true,
+    }));
 
-    if (addedCount > 0) {
-      Alert.alert('Success', 'Medicines added to cart');
+    if (verifiedItems.length > 0) {
+      setVerifiedCart(verifiedItems, prescriptionId);
+      Alert.alert('Success', 'Verified prescription medicines loaded into cart');
       navigation.navigate('CartCheckout');
     }
   };
@@ -115,7 +110,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
         </View>
 
         {hasDraftItems && (
-          <TouchableOpacity style={styles.proceedBtn} onPress={() => handleProceed(item.draftCart)}>
+          <TouchableOpacity style={styles.proceedBtn} onPress={() => handleProceed(item.draftCart, item.id)}>
             <Text style={styles.proceedBtnText}>Proceed to Order</Text>
             <Ionicons name="arrow-forward" size={16} color="#fff" />
           </TouchableOpacity>

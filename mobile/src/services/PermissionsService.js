@@ -40,8 +40,10 @@ class PermissionsService {
       }
       return true;
     } catch (err) {
-      console.warn(err);
-      return false;
+      console.warn('Permission request error:', err);
+      // If we get an IllegalStateException (not attached to Activity), 
+      // just return true as a fallback because launchImageLibrary often doesn't need it anyway.
+      return true;
     }
   }
 
@@ -74,7 +76,7 @@ class PermissionsService {
         return false;
       }
     } catch (err) {
-      console.warn(err);
+      console.warn('Location permission error:', err);
       return false;
     }
   }

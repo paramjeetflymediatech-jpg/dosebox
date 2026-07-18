@@ -73,7 +73,7 @@ export default function HomeScreen({ navigation }) {
     { id: 1, label: 'Medicines', emoji: '💊', bg: '#EEF8F6', route: 'ExploreTab' },
     { id: 2, label: 'Consult', emoji: '🩺', bg: '#FFF7E6', route: 'HomeTab' },
     { id: 3, label: 'Prescription', emoji: '📋', bg: '#F0EEFF', route: 'UploadPrescription' },
-    { id: 4, label: 'My Orders', emoji: '📦', bg: '#FFF0F0', route: 'ProceedTab' },
+    { id: 4, label: 'My Orders', emoji: '📦', bg: '#FFF0F0', route: 'Proceed' },
   ];
 
   useEffect(() => {
@@ -547,23 +547,23 @@ const styles = StyleSheet.create({
   sectionBlock: { paddingTop: rv(24), paddingBottom: rv(16), backgroundColor: C.white },
   sectionBlockAlt: { paddingTop: rv(24), paddingBottom: rv(24), backgroundColor: '#F8FAFC', borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   sectionHeader: { paddingHorizontal: spacing.md, marginBottom: rv(16) },
-  sectionOverline: { fontSize: rm(10), fontWeight: '700', color: C.primary, textTransform: 'uppercase', letterSpacing: 1 },
+  sectionOverline: { fontSize: rm(9), fontWeight: '700', color: C.primary, textTransform: 'uppercase', letterSpacing: 1 },
   sparkleRow: { flexDirection: 'row', alignItems: 'center', gap: rs(4), backgroundColor: '#E6FFFA', alignSelf: 'flex-start', paddingHorizontal: rs(8), paddingVertical: rv(2), borderRadius: radius.full, marginBottom: rv(4) },
-  sectionTitle: { fontSize: rm(20), fontWeight: '800', color: C.text, marginTop: rv(4) },
+  sectionTitle: { fontSize: rm(18), fontWeight: '800', color: C.text, marginTop: rv(4), flexShrink: 1 },
   horizontalList: { paddingHorizontal: spacing.md },
-  seeAll: { fontSize: rm(13), color: C.primary, fontWeight: '600', marginBottom: rv(4) },
+  seeAll: { fontSize: rm(13), color: C.primary, fontWeight: '600', marginBottom: rv(4), marginLeft: rs(8) },
 
   /* Category Card */
-  catCard: { width: rs(160), backgroundColor: C.white, borderRadius: radius.lg, borderWidth: 1, borderColor: '#b2d8dc', padding: rs(16), elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
+  catCard: { width: rs(150), backgroundColor: C.white, borderRadius: radius.lg, borderWidth: 1, borderColor: '#b2d8dc', padding: rs(16), elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
   catImageWrap: { width: rs(48), height: rs(48), borderRadius: radius.md, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F1F5F9', marginBottom: rv(12) },
   catIconWrap: { width: rs(48), height: rs(48), borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', marginBottom: rv(12) },
   catImage: { width: '60%', height: '60%' },
   catTextWrap: { flex: 1 },
-  catTitle: { fontSize: rm(14), fontWeight: '700', color: C.text, marginBottom: rv(4) },
+  catTitle: { fontSize: rm(13), fontWeight: '700', color: C.text, marginBottom: rv(4) },
   catDesc: { fontSize: rm(11), color: C.sub, lineHeight: rv(16) },
 
   /* Medicine Card */
-  medCardContainer: { width: rs(220), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: 'rgba(27,141,145,0.4)', padding: rs(12), elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
+  medCardContainer: { width: rs(200), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: 'rgba(27,141,145,0.4)', padding: rs(12), elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
   medCardHeader: { flexDirection: 'row', justifyContent: 'space-between', zIndex: 10, position: 'absolute', top: rv(12), left: rs(12), right: rs(12) },
   rxBadge: { backgroundColor: '#f0ecec', borderWidth: 1, borderColor: '#e6dfdf', paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 4 },
   rxBadgeText: { fontSize: rm(8), fontWeight: '800', color: '#786c6c' },
@@ -573,23 +573,23 @@ const styles = StyleSheet.create({
   medImage: { width: '80%', height: '80%' },
   medDetails: { marginBottom: rv(12) },
   medBrandText: { fontSize: rm(9), fontWeight: '700', color: '#8c8c8c', textTransform: 'uppercase', marginBottom: rv(4) },
-  medNameText: { fontSize: rm(13), fontWeight: '700', color: C.text, lineHeight: rv(18), height: rv(36) },
+  medNameText: { fontSize: rm(12), fontWeight: '700', color: C.text, lineHeight: rv(16), height: rv(32) },
   medRatingRow: { flexDirection: 'row', alignItems: 'center', marginTop: rv(4), gap: rs(4) },
   medRatingText: { fontSize: rm(10), fontWeight: '600', color: '#9b9b9b' },
   medFooter: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 'auto' },
   medPriceBox: { flex: 1 },
   medOldPrice: { fontSize: rm(10), color: '#9b9b9b', textDecorationLine: 'line-through', fontWeight: '600' },
   medSaveText: { fontSize: rm(9), color: C.accent, fontWeight: '700', marginLeft: rs(4) },
-  medNewPrice: { fontSize: rm(18), fontWeight: '800', color: C.primary, marginTop: rv(2) },
+  medNewPrice: { fontSize: rm(16), fontWeight: '800', color: C.primary, marginTop: rv(2) },
   medActions: { flexDirection: 'row', alignItems: 'center', gap: rs(8) },
   medEyeBtn: { width: rs(28), height: rs(28), borderRadius: rs(14), borderWidth: 1, borderColor: 'rgba(12,136,141,0.3)', alignItems: 'center', justifyContent: 'center' },
   medAddBtn: { width: rs(28), height: rs(28), borderRadius: rs(14), backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
 
   /* Prescription Banner */
-  prescriptionBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1B2A', borderRadius: radius.xl, padding: rs(20), marginHorizontal: spacing.md, marginVertical: rv(24) },
-  prescriptionTitle: { fontSize: rm(16), fontWeight: '700', color: C.white, marginBottom: rv(4) },
-  prescriptionSub: { fontSize: rm(12), color: 'rgba(255,255,255,0.55)' },
-  prescriptionArrow: { flexDirection: 'row', borderRadius: rs(20), backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: rs(12), paddingVertical: rv(8) },
+  prescriptionBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1B2A', borderRadius: radius.xl, padding: rs(16), marginHorizontal: spacing.md, marginVertical: rv(24) },
+  prescriptionTitle: { fontSize: rm(14), fontWeight: '700', color: C.white, marginBottom: rv(4) },
+  prescriptionSub: { fontSize: rm(11), color: 'rgba(255,255,255,0.55)', flexShrink: 1 },
+  prescriptionArrow: { flexDirection: 'row', borderRadius: rs(20), backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: rs(12), paddingVertical: rv(8), marginLeft: rs(8) },
 
   /* Modal */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },

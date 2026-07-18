@@ -17,6 +17,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import api from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import PermissionsService from '../../services/PermissionsService';
+import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 
 export default function UploadPrescriptionScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -31,18 +32,24 @@ export default function UploadPrescriptionScreen({ navigation }) {
   const { addToCart } = useCart();
 
   const pickImage = async () => {
-    const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
-    if (!hasPermission) return;
-
-    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, (response) => {
+    try {
+      const response = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
       if (response.didCancel) return;
+      
+      if (response.errorCode || response.errorMessage) {
+        AlertService.show({ type: 'error', title: 'Picker Error', message: response.errorMessage || response.errorCode });
+        return;
+      }
+      
       if (response.assets && response.assets.length > 0) {
         setImageUri(response.assets[0].uri);
         setImageType(response.assets[0].type || 'image/jpeg');
         setImageName(response.assets[0].fileName || 'upload.jpg');
         setResult(null); // Reset if picking a new image
       }
-    });
+    } catch (err) {
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to open gallery: ' + err.message });
+    }
   };
 
   const startScan = async () => {
@@ -168,7 +175,7 @@ export default function UploadPrescriptionScreen({ navigation }) {
           <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Scan Prescription</Text>
-        <View style={{ width: 44 }} />
+        <View style={{ width: rs(44) }} />
       </View>
 
       {!imageUri ? (
@@ -194,24 +201,24 @@ export default function UploadPrescriptionScreen({ navigation }) {
       ) : result && result.status === 'Manual Review' ? (
         <View style={styles.uploadContainer}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Ionicons name="time-outline" size={64} color="#F59E0B" style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: 24, fontWeight: '800', color: '#0F172A', marginBottom: 8, textAlign: 'center' }}>Review Pending</Text>
-            <Text style={{ fontSize: 16, color: '#64748B', textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>
+            <Ionicons name="time-outline" size={rs(64)} color="#F59E0B" style={{ marginBottom: rv(16) }} />
+            <Text style={{ fontSize: rm(24), fontWeight: '800', color: '#0F172A', marginBottom: rv(8), textAlign: 'center' }}>Review Pending</Text>
+            <Text style={{ fontSize: rm(16), color: '#64748B', textAlign: 'center', lineHeight: rv(24), marginBottom: rv(32) }}>
               Your prescription has been uploaded successfully! Our AI could not automatically extract all the details, so a pharmacist will manually review it shortly.
             </Text>
             <TouchableOpacity 
-              style={{ backgroundColor: '#1F5C52', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 999 }} 
+              style={{ backgroundColor: '#1F5C52', paddingHorizontal: spacing.xl, paddingVertical: rv(16), borderRadius: radius.full }} 
               onPress={() => navigation.navigate('MainTabs', { screen: 'HomeTab' })}
             >
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Back to Home</Text>
+              <Text style={{ color: '#fff', fontSize: rm(16), fontWeight: '700' }}>Back to Home</Text>
             </TouchableOpacity>
           </View>
         </View>
-      ) : result && result.medicines && result.medicines.length > 0 ? (
+      ) : result ? (
         <ScrollView style={styles.resultContainer} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
           <View style={styles.successHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, width: '100%' }}>
-              <Image source={{ uri: imageUri }} style={{ width: 60, height: 80, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' }} resizeMode="cover" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, width: '100%', marginBottom: rv(16) }}>
+              <Image source={{ uri: imageUri }} style={{ width: rs(60), height: rv(80), borderRadius: radius.sm, borderWidth: 1, borderColor: '#e2e8f0' }} resizeMode="cover" />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Ionicons name="checkmark-circle" size={24} color="#0D9488" />
@@ -255,10 +262,10 @@ export default function UploadPrescriptionScreen({ navigation }) {
       ) : (
         <>
           <View style={styles.scannerContainer}>
-            <View style={[styles.documentCard, { overflow: 'hidden' }]}>
-              <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%', borderRadius: 32 }} resizeMode="contain" />
+            <View style={styles.documentCard}>
+              <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%', borderRadius: radius.xl }} resizeMode="contain" />
               
-              {isScanning && <View style={styles.scanningOverlay} />}
+              {isScanning && (<View style={styles.scanningOverlay} />)}
               {isScanning && (
                 <Animated.View
                   style={[
@@ -346,14 +353,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: spacing.lg,
+    paddingTop: rv(16),
+    paddingBottom: rv(24),
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: rs(44),
+    height: rs(44),
+    borderRadius: rs(22),
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -364,86 +371,87 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rm(20),
     fontWeight: '500',
     color: '#0F172A',
   },
   uploadContainer: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: spacing.lg,
+    paddingTop: rv(20),
   },
   instructionsText: {
-    fontSize: 14,
+    fontSize: rm(14),
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
+    marginBottom: rv(32),
+    lineHeight: rv(22),
   },
   uploadBox: {
     borderWidth: 2,
     borderColor: '#99F6E4',
     borderStyle: 'dashed',
-    borderRadius: 24,
+    borderRadius: radius.xl,
     backgroundColor: '#F0FDFA',
-    padding: 40,
+    padding: rv(32),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: rv(24),
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: rs(64),
+    height: rs(64),
+    borderRadius: rs(32),
     backgroundColor: '#CCFBF1',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: rv(16),
   },
   uploadText: {
-    fontSize: 16,
+    fontSize: rm(16),
     fontWeight: '600',
     color: '#115E59',
-    marginBottom: 8,
+    marginBottom: rv(8),
   },
   uploadSubText: {
-    fontSize: 12,
+    fontSize: rm(12),
     color: '#0D9488',
   },
   privacyBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 16,
+    padding: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   privacyText: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 12,
+    marginLeft: rs(12),
+    fontSize: rm(12),
     color: '#475569',
-    lineHeight: 18,
+    lineHeight: rv(18),
   },
   scannerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xl,
   },
   documentCard: {
     width: '100%',
     aspectRatio: 0.65,
     backgroundColor: '#ffffff',
-    borderRadius: 32,
+    borderRadius: radius.xl,
     borderWidth: 1.5,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 30,
+    shadowRadius: 20,
     elevation: 10,
+    overflow: 'hidden',
   },
   scanLine: {
     position: 'absolute',
@@ -464,20 +472,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(52, 211, 153, 0.1)',
   },
   bottomContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    paddingHorizontal: spacing.lg,
+    paddingTop: rv(32),
   },
   statusText: {
     textAlign: 'center',
     color: '#64748B',
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 24,
+    fontSize: rm(14),
+    lineHeight: rv(22),
+    marginBottom: rv(24),
   },
   processButton: {
     backgroundColor: '#0D9488',
-    borderRadius: 16,
-    paddingVertical: 18,
+    borderRadius: radius.lg,
+    paddingVertical: rv(16),
     alignItems: 'center',
     shadowColor: '#0D9488',
     shadowOffset: { width: 0, height: 8 },
@@ -487,17 +495,17 @@ const styles = StyleSheet.create({
   },
   processButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: rm(16),
     fontWeight: '700',
   },
   scanButton: {
     backgroundColor: '#34D399',
-    borderRadius: 100,
+    borderRadius: radius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: rv(16),
+    paddingHorizontal: spacing.lg,
     shadowColor: '#34D399',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -510,14 +518,14 @@ const styles = StyleSheet.create({
   },
   scanButtonText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: rm(18),
     fontWeight: '600',
-    marginLeft: 12,
+    marginLeft: rs(12),
   },
   progressCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: rs(36),
+    height: rs(36),
+    borderRadius: rs(18),
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.4)',
     alignItems: 'center',
@@ -525,19 +533,19 @@ const styles = StyleSheet.create({
   },
   progressText: {
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: rm(11),
     fontWeight: '700',
   },
   resultContainer: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
   },
   successHeader: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: rv(24),
     backgroundColor: '#ffffff',
-    padding: 24,
-    borderRadius: 24,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -545,31 +553,31 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   resultTitle: {
-    fontSize: 18,
+    fontSize: rm(18),
     fontWeight: '700',
     color: '#0F172A',
-    marginTop: 12,
+    marginTop: rv(12),
     textAlign: 'center',
   },
   resultSubtitle: {
-    fontSize: 14,
+    fontSize: rm(14),
     color: '#64748B',
-    marginTop: 8,
+    marginTop: rv(8),
     textAlign: 'center',
   },
   sectionHeader: {
-    fontSize: 12,
+    fontSize: rm(12),
     fontWeight: '700',
     color: '#94A3B8',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 16,
+    marginBottom: rv(16),
   },
   medCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: rv(16),
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
@@ -582,25 +590,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: 16,
-    gap: 8,
+    marginBottom: rv(16),
+    gap: rs(8),
   },
   brandBadge: {
     backgroundColor: '#FFF1F2',
     borderWidth: 1,
     borderColor: '#FFE4E6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: rs(8),
+    paddingVertical: rv(4),
+    borderRadius: radius.sm,
   },
   brandBadgeText: {
     color: '#E11D48',
-    fontSize: 10,
+    fontSize: rm(10),
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   extractedText: {
-    fontSize: 14,
+    fontSize: rm(14),
     fontWeight: '500',
     color: '#475569',
     fontStyle: 'italic',
@@ -609,30 +617,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: '#F8FAFC',
-    padding: 16,
-    borderRadius: 16,
+    padding: spacing.md,
+    borderRadius: radius.lg,
   },
   matchDetails: {
     flex: 1,
   },
   productName: {
-    fontSize: 16,
+    fontSize: rm(16),
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 8,
+    marginBottom: rv(8),
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
+    gap: rs(8),
   },
   doseboxPrice: {
-    fontSize: 18,
+    fontSize: rm(18),
     fontWeight: '800',
     color: '#0D9488',
   },
   marketPrice: {
-    fontSize: 14,
+    fontSize: rm(14),
     fontWeight: '500',
     color: '#94A3B8',
     textDecorationLine: 'line-through',
@@ -645,16 +653,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
-    paddingTop: 16,
+    paddingTop: rv(16),
   },
   addToCartButton: {
     backgroundColor: '#0D9488',
-    borderRadius: 16,
-    paddingVertical: 18,
+    borderRadius: radius.lg,
+    paddingVertical: rv(18),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: rs(8),
     shadowColor: '#0D9488',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -663,7 +671,7 @@ const styles = StyleSheet.create({
   },
   addToCartText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: rm(16),
     fontWeight: '700',
   },
 });
