@@ -52,8 +52,10 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     setMounted(true);
-    loadAdminData();
-  }, []);
+    if (isAdmin) {
+      loadAdminData();
+    }
+  }, [isAdmin]);
 
   if (!mounted) return null;
 

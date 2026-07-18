@@ -173,7 +173,7 @@ export default function PrescriptionsPage() {
                     <tr key={presc.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-4">
                         <span className="font-bold text-slate-800 block">#{presc.id}</span>
-                        <span className="text-xs text-slate-500">{new Date(presc.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-slate-500">{new Date(presc.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${

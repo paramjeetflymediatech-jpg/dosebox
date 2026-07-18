@@ -15,7 +15,7 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }, bypassRxCheck?: boolean) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
@@ -62,22 +62,44 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
-    const qtyToAdd = item.quantity || 1;
-    const existingIndex = cartItems.findIndex(i => i.id === item.id);
-    if (existingIndex > -1) {
-      const updated = [...cartItems];
-      updated[existingIndex].quantity += qtyToAdd;
-      saveCart(updated);
-    } else {
-      // Create a clean item without the optional quantity property for the rest object
-      const { quantity, ...itemWithoutQty } = item;
-      saveCart([...cartItems, { ...itemWithoutQty, quantity: qtyToAdd }]);
+  const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }, bypassRxCheck: boolean = false) => {
+    if (!bypassRxCheck && item.prescriptionRequired) {
+      if (typeof window !== 'undefined') {
+        const existingStatus = localStorage.getItem('attachedPrescriptionStatus');
+        if (existingStatus === 'Approved' || existingStatus === 'Verified') {
+          localStorage.removeItem('attachedPrescriptionId');
+          localStorage.removeItem('attachedPrescriptionStatus');
+          toast.error('Added new Rx medicine. Previous prescription approval was unlinked.');
+          // Fire event to let cart page know if it's currently open
+          window.dispatchEvent(new Event('prescription_unlinked'));
+        }
+      }
     }
+
+    setCartItems(prev => {
+      const qtyToAdd = item.quantity || 1;
+      const existingIndex = prev.findIndex(i => i.id === item.id);
+      let updated;
+      if (existingIndex > -1) {
+        updated = [...prev];
+        updated[existingIndex].quantity += qtyToAdd;
+      } else {
+        const { quantity, ...itemWithoutQty } = item;
+        updated = [...prev, { ...itemWithoutQty, quantity: qtyToAdd }];
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cart', JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const removeFromCart = (id: number) => {
-    saveCart(cartItems.filter(i => i.id !== id));
+    setCartItems(prev => {
+      const updated = prev.filter(i => i.id !== id);
+      if (typeof window !== 'undefined') localStorage.setItem('cart', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const updateQuantity = (id: number, quantity: number) => {
@@ -85,10 +107,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeFromCart(id);
       return;
     }
-    const updated = cartItems.map(item => 
-      item.id === id ? { ...item, quantity } : item
-    );
-    saveCart(updated);
+    setCartItems(prev => {
+      const updated = prev.map(item => item.id === id ? { ...item, quantity } : item);
+      if (typeof window !== 'undefined') localStorage.setItem('cart', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const clearCart = () => {

@@ -22,6 +22,7 @@ import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../lib/api";
 import { formatCurrency } from "@/lib/utils";
+import toast from 'react-hot-toast';
 
 interface Address {
   id: number;
@@ -60,6 +61,14 @@ export default function CheckoutPage() {
   const [useDoseboxTokens, setUseDoseboxTokens] = useState(false);
   const [pointsInput, setPointsInput] = useState("");
   const [currentTokens, setCurrentTokens] = useState(0);
+
+  useEffect(() => {
+    const rxStatus = typeof window !== 'undefined' ? sessionStorage.getItem('attachedPrescriptionStatus') || localStorage.getItem('attachedPrescriptionStatus') : null;
+    if (requiresPrescription && rxStatus !== 'Approved' && rxStatus !== 'Verified') {
+      toast.error("You have Rx-required medicines but no approved prescription.");
+      router.push('/cart');
+    }
+  }, [requiresPrescription, router]);
 
   useEffect(() => {
     async function fetchTokens() {

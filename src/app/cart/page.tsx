@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Trash2, AlertCircle, FileText, CheckCircle, Upload, ArrowRight, ArrowLeft, Percent, ShieldCheck, Sparkles, ChevronDown, ChevronUp, X
 } from 'lucide-react';
@@ -24,6 +24,7 @@ export default function CartPage() {
   const [promoError, setPromoError] = useState('');
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [prescriptionId, setPrescriptionId] = useState<number | null>(null);
+  const [prescriptionStatus, setPrescriptionStatus] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -32,6 +33,40 @@ export default function CartPage() {
   const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const savedId = localStorage.getItem('attachedPrescriptionId');
+    const savedStatus = localStorage.getItem('attachedPrescriptionStatus');
+    if (savedId) {
+      setPrescriptionId(parseInt(savedId, 10));
+      setUploadSuccess(true);
+      if (savedStatus) setPrescriptionStatus(savedStatus);
+      
+      // Fetch latest status
+      api.get(`/prescriptions/${savedId}`).then(res => {
+        if (res.data?.success && res.data.data?.status) {
+           const newStatus = res.data.data.status;
+           setPrescriptionStatus(newStatus);
+           localStorage.setItem('attachedPrescriptionStatus', newStatus);
+        }
+      }).catch(err => console.error("Error fetching prescription status:", err));
+    }
+
+    const handleUnlink = () => {
+      setPrescriptionId(null);
+      setPrescriptionStatus(null);
+      setUploadSuccess(false);
+      setPrescriptionFile(null);
+      setPreviewUrl(null);
+    };
+    window.addEventListener('prescription_unlinked', handleUnlink);
+    return () => window.removeEventListener('prescription_unlinked', handleUnlink);
+  }, []);
+
+  if (!isMounted) return null;
 
   const addScannedToCart = (medObj: any) => {
     const med = medObj.product || medObj;
@@ -178,9 +213,10 @@ export default function CartPage() {
         if (prescId) {
           setPrescriptionId(prescId);
           setUploadSuccess(true);
-          sessionStorage.setItem('attachedPrescriptionId', prescId.toString());
+          localStorage.setItem('attachedPrescriptionId', prescId.toString());
           if (prescStatus) {
-             sessionStorage.setItem('attachedPrescriptionStatus', prescStatus);
+             localStorage.setItem('attachedPrescriptionStatus', prescStatus);
+             setPrescriptionStatus(prescStatus);
           }
         } else {
           toast.error('Upload succeeded but no prescription ID was returned.');
@@ -310,87 +346,124 @@ export default function CartPage() {
             {/* PRESCRIPTION ATTACHMENT */}
             {(requiresPrescription || !user) && (
               <div className="bg-brand-50/50 rounded-[2rem] border border-brand-100/50 p-8 space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-lg">
-                      {requiresPrescription ? 'Upload Prescription (Required)' : 'AI Prescription Scanner'}
-                    </h3>
-                    <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed max-w-md">
-                      {requiresPrescription 
-                        ? 'Your bag contains Rx-required medicines. Please upload a valid doctor prescription to proceed.'
-                        : 'Upload a prescription and our AI will instantly extract and match the medicines to our catalog.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col space-y-4">
-                  {!prescriptionFile ? (
-                    <div 
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${isDragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
-                    >
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.pdf"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <div className="flex flex-col items-center gap-3">
-                        <Upload className={`w-8 h-8 ${isDragging ? 'text-brand-500' : 'text-slate-400'}`} />
-                        <p className="text-sm font-semibold text-slate-700">
-                          Drag & drop your prescription here or <span className="text-brand-600">click to browse</span>
+                {uploadSuccess ? (
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        prescriptionStatus === 'Approved' || prescriptionStatus === 'Verified' ? 'bg-emerald-100 text-emerald-600' : 
+                        prescriptionStatus === 'Rejected' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                      }`}>
+                        {prescriptionStatus === 'Rejected' ? <AlertCircle className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-900 text-lg">Prescription Status</h3>
+                        <p className={`text-sm mt-1 font-bold ${
+                          prescriptionStatus === 'Approved' || prescriptionStatus === 'Verified' ? 'text-emerald-600' : 
+                          prescriptionStatus === 'Rejected' ? 'text-rose-600' : 'text-amber-600'
+                        }`}>
+                          {prescriptionStatus === 'Approved' || prescriptionStatus === 'Verified' 
+                            ? 'Approved - You can proceed to checkout.'
+                            : prescriptionStatus === 'Rejected' 
+                            ? 'Rejected - Please upload a valid prescription.'
+                            : 'Awaiting Admin Approval'}
                         </p>
-                        <p className="text-xs font-medium text-slate-500">
-                          Supported formats: JPG, PNG, PDF (Max 5MB)<br/>
-                          Make sure the Doctor's name and Patient's name are clearly visible.
+                        {prescriptionFile && (
+                          <p className="text-xs text-slate-500 mt-2 font-medium">Uploaded: {prescriptionFile.name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-start pl-16">
+                      <button 
+                        onClick={() => { 
+                          clearFile(); 
+                          localStorage.removeItem('attachedPrescriptionId'); 
+                          localStorage.removeItem('attachedPrescriptionStatus'); 
+                        }} 
+                        className="text-xs font-bold text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1 bg-white border border-slate-200 py-1.5 px-3 rounded-lg shadow-sm"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Remove & Upload New
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex gap-4">
+                      <div className="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-lg">
+                          {requiresPrescription ? 'Upload Prescription (Required)' : 'AI Prescription Scanner'}
+                        </h3>
+                        <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed max-w-md">
+                          {requiresPrescription 
+                            ? 'Your bag contains Rx-required medicines. Please upload a valid doctor prescription to proceed.'
+                            : 'Upload a prescription and our AI will instantly extract and match the medicines to our catalog.'}
                         </p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4">
-                      {previewUrl ? (
-                        <img src={previewUrl} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shrink-0" />
+
+                    <div className="flex flex-col space-y-4">
+                      {!prescriptionFile ? (
+                        <div 
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                          className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${isDragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
+                        >
+                          <input
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.pdf"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <div className="flex flex-col items-center gap-3">
+                            <Upload className={`w-8 h-8 ${isDragging ? 'text-brand-500' : 'text-slate-400'}`} />
+                            <p className="text-sm font-semibold text-slate-700">
+                              Drag & drop your prescription here or <span className="text-brand-600">click to browse</span>
+                            </p>
+                            <p className="text-xs font-medium text-slate-500">
+                              Supported formats: JPG, PNG, PDF (Max 5MB)<br/>
+                              Make sure the Doctor's name and Patient's name are clearly visible.
+                            </p>
+                          </div>
+                        </div>
                       ) : (
-                        <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center shrink-0">
-                          <FileText className="w-8 h-8 text-slate-400" />
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                          {previewUrl ? (
+                            <img src={previewUrl} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shrink-0" />
+                          ) : (
+                            <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center shrink-0">
+                              <FileText className="w-8 h-8 text-slate-400" />
+                            </div>
+                          )}
+                          
+                          <div className="flex-1 min-w-0 text-center sm:text-left">
+                            <p className="text-sm font-bold text-slate-800 truncate">{prescriptionFile.name}</p>
+                            <p className="text-xs font-medium text-slate-500">{(prescriptionFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+
+                          <div className="flex items-center gap-2 w-full sm:w-auto mt-4 sm:mt-0">
+                            <button
+                              onClick={clearFile}
+                              className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                              Change
+                            </button>
+                            <button
+                              onClick={handlePrescriptionUpload}
+                              disabled={uploading}
+                              className="flex-1 sm:flex-none bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-2 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+                            >
+                              {uploading ? 'Processing...' : 'Upload'}
+                              <Upload className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       )}
-                      
-                      <div className="flex-1 min-w-0 text-center sm:text-left">
-                        <p className="text-sm font-bold text-slate-800 truncate">{prescriptionFile.name}</p>
-                        <p className="text-xs font-medium text-slate-500">{(prescriptionFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-
-                      <div className="flex items-center gap-2 w-full sm:w-auto mt-4 sm:mt-0">
-                        <button
-                          onClick={clearFile}
-                          className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                        >
-                          Change
-                        </button>
-                        <button
-                          onClick={handlePrescriptionUpload}
-                          disabled={uploading || uploadSuccess}
-                          className="flex-1 sm:flex-none bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-2 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
-                        >
-                          {uploading ? 'Processing...' : uploadSuccess ? 'Verified' : 'Upload'}
-                          {uploadSuccess ? <CheckCircle className="w-4 h-4 text-emerald-300" /> : <Upload className="w-4 h-4" />}
-                        </button>
-                      </div>
                     </div>
-                  )}
-                </div>
-
-                {uploadSuccess && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-50 text-emerald-800 text-xs font-bold p-4 rounded-2xl flex items-center gap-2 border border-emerald-100">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                    Prescription uploaded. Awaiting pharmacist approval.
-                  </motion.div>
+                  </>
                 )}
 
                 {/* AI Scanner Loading State */}
@@ -444,7 +517,7 @@ export default function CartPage() {
                               </div>
                               <div className="min-w-0 flex flex-col justify-center">
                                 {medObj.extracted?.medicineName && (
-                                  <span className="text-[9px] uppercase font-bold text-brand-600 block mb-0.5 truncate bg-brand-50 px-1.5 py-0.5 rounded-sm w-fit border border-brand-100">
+                                  <span className="text-[9px] uppercase font-bold text-brand-600 inline-block max-w-full mb-0.5 truncate bg-brand-50 px-1.5 py-0.5 rounded-sm border border-brand-100">
                                     Rx: {medObj.extracted.medicineName} {medObj.extracted.strength || ''}
                                   </span>
                                 )}
@@ -559,7 +632,7 @@ export default function CartPage() {
                 >
                   Upload Rx to Checkout
                 </button>
-              ) : requiresPrescription && prescriptionId && sessionStorage.getItem('attachedPrescriptionStatus') !== 'Approved' && sessionStorage.getItem('attachedPrescriptionStatus') !== 'Verified' ? (
+              ) : requiresPrescription && prescriptionId && prescriptionStatus !== 'Approved' && prescriptionStatus !== 'Verified' ? (
                 <button
                   disabled
                   className="w-full bg-amber-100 text-amber-700 font-bold py-4 rounded-full flex items-center justify-center gap-2 text-sm cursor-not-allowed border border-amber-200"

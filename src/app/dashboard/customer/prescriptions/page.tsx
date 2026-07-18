@@ -53,11 +53,11 @@ export default function CustomerPrescriptionsPage() {
     if (!draftCart || !draftCart.items) return;
     draftCart.items.forEach((item: any) => {
       if (item.medicine) {
-        addToCart({ ...item.medicine, quantity: item.quantity });
+        addToCart({ ...item.medicine, quantity: item.quantity }, true);
       }
     });
-    sessionStorage.setItem('attachedPrescriptionId', rxId.toString());
-    sessionStorage.setItem('attachedPrescriptionStatus', 'Approved');
+    localStorage.setItem('attachedPrescriptionId', rxId.toString());
+    localStorage.setItem('attachedPrescriptionStatus', 'Approved');
     toast.success('Items added to cart!');
     router.push('/cart');
   };
@@ -93,7 +93,7 @@ export default function CustomerPrescriptionsPage() {
                 <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-slate-800">Prescription #{rx.id}</h3>
-                    <p className="text-sm text-slate-500">Uploaded on {new Date(rx.createdAt).toLocaleDateString()}</p>
+                    <p className="text-sm text-slate-500">Uploaded on {new Date(rx.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                   <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${statusInfo.bg} ${statusInfo.border} ${statusInfo.color}`}>
                     <StatusIcon className="w-4 h-4" />
