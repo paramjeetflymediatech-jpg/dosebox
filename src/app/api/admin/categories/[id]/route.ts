@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const fileName = `${slug || category.slug}-${Date.now()}${ext}`;
       const filePath = path.join(uploadDir, fileName);
       await writeFile(filePath, buffer);
-      updateData.image = `/uploads/categories/${fileName}`;
+      updateData.image = `/api/file/categories/${fileName}`;
     } else if (typeof imageFile === 'string' && imageFile) {
       updateData.image = imageFile;
     }

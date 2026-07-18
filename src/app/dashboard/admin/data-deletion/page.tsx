@@ -12,6 +12,7 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
+import api from '../../../../lib/api';
 
 export default function DataDeletionRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -29,8 +30,8 @@ export default function DataDeletionRequestsPage() {
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch('/api/admin/data-deletion');
-      const data = await res.json();
+      const res = await api.get('/admin/data-deletion');
+      const data = res.data;
       if (data.success) {
         setRequests(data.data);
       }
@@ -45,28 +46,24 @@ export default function DataDeletionRequestsPage() {
     if (!confirm('Are you sure you want to delete this request record entirely?')) return;
     
     try {
-      const res = await fetch(`/api/admin/data-deletion/${id}`, { method: 'DELETE' });
-      const data = await res.json();
+      const res = await api.delete(`/admin/data-deletion/${id}`);
+      const data = res.data;
       if (data.success) {
         setRequests(requests.filter(r => r.id !== id));
         if (selectedRequest?.id === id) setSelectedRequest(null);
       } else {
         alert(data.message);
       }
-    } catch (error) {
-      alert('Error deleting request');
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Error deleting request');
     }
   };
 
   const handleUpdateStatus = async (id: number, status: string) => {
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/admin/data-deletion/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      const data = await res.json();
+      const res = await api.patch(`/admin/data-deletion/${id}`, { status });
+      const data = res.data;
       if (data.success) {
         setRequests(requests.map(r => r.id === id ? { ...r, status } : r));
         if (selectedRequest?.id === id) {
@@ -75,8 +72,8 @@ export default function DataDeletionRequestsPage() {
       } else {
         alert(data.message);
       }
-    } catch (error) {
-      alert('Error updating status');
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Error updating status');
     } finally {
       setIsUpdating(false);
     }

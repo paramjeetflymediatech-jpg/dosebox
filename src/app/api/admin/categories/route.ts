@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       const filePath = path.join(uploadDir, fileName);
 
       await writeFile(filePath, buffer);
-      imagePath = `/uploads/categories/${fileName}`;
+      imagePath = `/api/file/categories/${fileName}`;
     } else if (typeof imageFile === 'string') {
       // It's just a string (fallback/legacy)
       imagePath = imageFile;

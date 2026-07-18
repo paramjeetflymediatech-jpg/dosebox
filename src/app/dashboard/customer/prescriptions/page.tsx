@@ -49,13 +49,15 @@ export default function CustomerPrescriptionsPage() {
     }
   };
 
-  const handleCheckoutDraft = (draftCart: any) => {
+  const handleCheckoutDraft = (draftCart: any, rxId: number) => {
     if (!draftCart || !draftCart.items) return;
     draftCart.items.forEach((item: any) => {
       if (item.medicine) {
         addToCart({ ...item.medicine, quantity: item.quantity });
       }
     });
+    sessionStorage.setItem('attachedPrescriptionId', rxId.toString());
+    sessionStorage.setItem('attachedPrescriptionStatus', 'Approved');
     toast.success('Items added to cart!');
     router.push('/cart');
   };
@@ -103,9 +105,9 @@ export default function CustomerPrescriptionsPage() {
                   {/* Image Thumb */}
                   <div className="w-full md:w-48 h-48 sm:h-auto bg-slate-100 rounded-xl overflow-hidden relative shrink-0 border border-slate-200">
                     {rx.fileUrl.endsWith('.pdf') ? (
-                       <iframe src={rx.fileUrl} className="w-full h-full pointer-events-none" />
+                       <iframe src={rx.fileUrl.replace(/^\/uploads\//, '/api/file/')} className="w-full h-full pointer-events-none" />
                     ) : (
-                      <Image src={rx.fileUrl} alt="Prescription" fill className="object-cover" />
+                      <Image src={rx.fileUrl.replace(/^\/uploads\//, '/api/file/')} alt="Prescription" fill className="object-cover" unoptimized={true} />
                     )}
                   </div>
 
@@ -162,10 +164,10 @@ export default function CustomerPrescriptionsPage() {
                             Total Items: <span className="font-bold text-slate-800">{rx.draftCart.items?.length || 0}</span>
                           </div>
                           <button 
-                            onClick={() => handleCheckoutDraft(rx.draftCart)}
-                            className="w-full sm:w-auto px-6 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-200"
+                            onClick={() => handleCheckoutDraft(rx.draftCart, rx.id)}
+                            className="w-full mt-4 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm shadow-brand-500/20"
                           >
-                            <ShoppingCart className="w-5 h-5" /> Proceed to Checkout
+                            Proceed to Checkout
                           </button>
                         </div>
                       </div>

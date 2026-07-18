@@ -102,7 +102,9 @@ export default function AdminPrescriptionsPage() {
                 <tr key={rx.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-slate-800">#{rx.id}</div>
-                    <div className="text-xs text-slate-500">{new Date(rx.createdAt).toLocaleDateString()}</div>
+                    <div className="text-xs text-slate-500">
+                      {new Date(rx.createdAt).toLocaleDateString()} at {new Date(rx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-medium text-slate-800">{rx.user?.name}</div>

@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
      filePath,
      buffer
    );
-   const fileUrl = `/uploads/prescriptions/${fileName}`;
+   const fileUrl = `/api/file/prescriptions/${fileName}`;
 
 
    // ============================
@@ -668,22 +668,16 @@ Return ONLY JSON.
 
 
      }      // ==========================================
-     // Decide Final Prescription Status
-     // ==========================================
-     let prescriptionStatus = "Pending";
-     if (
-       matchedResults.length > 0 &&
-       !hasLowConfidence &&
-       overallConfidence >= 0.90
-     ) {
-       prescriptionStatus = "Verified";
-     }
-     if (hasLowConfidence) {
-       prescriptionStatus = "Manual Review";
-     }
-     await prescription.update({
-       status: prescriptionStatus,
-     });
+      // Decide Final Prescription Status
+      // ==========================================
+      let prescriptionStatus = "Pending";
+      // Auto-verification removed to force compulsory admin approval.
+      if (hasLowConfidence) {
+        prescriptionStatus = "Manual Review";
+      }
+      await prescription.update({
+        status: prescriptionStatus,
+      });
 
 
      // ==========================================

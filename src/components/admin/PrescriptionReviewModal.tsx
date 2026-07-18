@@ -132,17 +132,26 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
   const [notes, setNotes] = useState('');
 
   const getSafeFileUrl = (url: any) => {
+    let finalUrl = '';
     if (!url) return '';
     if (typeof url === 'string') {
       try {
         const parsed = JSON.parse(url);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+        if (Array.isArray(parsed) && parsed.length > 0) finalUrl = parsed[0];
+        else finalUrl = url;
       } catch(e) {
-        return url;
+        finalUrl = url;
       }
+    } else if (Array.isArray(url) && url.length > 0) {
+      finalUrl = url[0];
+    } else {
+      finalUrl = url;
     }
-    if (Array.isArray(url) && url.length > 0) return url[0];
-    return url;
+    
+    if (typeof finalUrl === 'string') {
+      return finalUrl.replace(/^\/uploads\//, '/api/file/');
+    }
+    return finalUrl;
   };
 
   const safeFileUrl = getSafeFileUrl(rx?.fileUrl);
@@ -265,7 +274,7 @@ export default function PrescriptionReviewModal({ rx, onClose, onSuccess }: { rx
               ) : safeFileUrl.toLowerCase().endsWith('.pdf') ? (
                 <iframe src={safeFileUrl} className="w-full h-full" />
               ) : (
-                <Image src={safeFileUrl} alt="Prescription" fill className="object-contain" />
+                <Image src={safeFileUrl} alt="Prescription" fill className="object-contain" unoptimized={true} />
               )}
             </div>
             <div className="mt-4">

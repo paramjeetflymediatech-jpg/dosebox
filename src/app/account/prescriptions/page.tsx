@@ -190,7 +190,7 @@ export default function PrescriptionsPage() {
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <a 
-                            href={presc.fileUrl} 
+                            href={presc.fileUrl.replace(/^\/uploads\//, '/api/file/')} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors"

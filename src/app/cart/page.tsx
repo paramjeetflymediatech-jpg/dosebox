@@ -33,7 +33,10 @@ export default function CartPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const addScannedToCart = (med: any) => {
+  const addScannedToCart = (medObj: any) => {
+    const med = medObj.product || medObj;
+    if (!med) return;
+    
     let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
     try {
       if (med.images) imagesArr = JSON.parse(med.images);
@@ -45,13 +48,18 @@ export default function CartPage() {
       price: Number(med.price),
       discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
       prescriptionRequired: med.prescriptionRequired,
-      image: imagesArr[0]
+      image: imagesArr[0],
+      quantity: medObj.extracted?.quantity || 1
     });
     toast.success(`${med.name} added to cart!`);
   };
 
   const addAllScannedToCart = () => {
-    scanResults.forEach((med) => {
+    let count = 0;
+    scanResults.forEach((medObj) => {
+      const med = medObj.product || medObj;
+      if (!med) return;
+      
       let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
       try {
         if (med.images) imagesArr = JSON.parse(med.images);
@@ -63,10 +71,12 @@ export default function CartPage() {
         price: Number(med.price),
         discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
         prescriptionRequired: med.prescriptionRequired,
-        image: imagesArr[0]
+        image: imagesArr[0],
+        quantity: medObj.extracted?.quantity || 1
       });
+      count++;
     });
-    toast.success('All scanned medicines added to cart!');
+    if (count > 0) toast.success(`All ${count} scanned medicines added to cart!`);
   };
 
   const handleApplyPromo = async (e: React.FormEvent) => {
@@ -161,12 +171,24 @@ export default function CartPage() {
       });
 
       if (res.data?.success) {
-        setPrescriptionId(res.data.data.id);
-        setUploadSuccess(true);
-        sessionStorage.setItem('attachedPrescriptionId', res.data.data.id.toString());
+        const resultData = res.data.data || {};
+        const prescId = resultData.prescription?.id || resultData.id;
+        const prescStatus = resultData.status || resultData.prescription?.status;
+
+        if (prescId) {
+          setPrescriptionId(prescId);
+          setUploadSuccess(true);
+          sessionStorage.setItem('attachedPrescriptionId', prescId.toString());
+          if (prescStatus) {
+             sessionStorage.setItem('attachedPrescriptionStatus', prescStatus);
+          }
+        } else {
+          toast.error('Upload succeeded but no prescription ID was returned.');
+        }
         
-        if (res.data.extractedMedicines && res.data.extractedMedicines.length > 0) {
-          setScanResults(res.data.extractedMedicines);
+        const extracted = resultData.medicines || res.data.extractedMedicines;
+        if (extracted && extracted.length > 0) {
+          setScanResults(extracted);
           setShowScanResults(true);
         }
       } else {
@@ -367,7 +389,7 @@ export default function CartPage() {
                 {uploadSuccess && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-50 text-emerald-800 text-xs font-bold p-4 rounded-2xl flex items-center gap-2 border border-emerald-100">
                     <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                    Prescription attached successfully (ID: {prescriptionId}). Valid for checkout.
+                    Prescription uploaded. Awaiting pharmacist approval.
                   </motion.div>
                 )}
 
@@ -400,30 +422,44 @@ export default function CartPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {scanResults.map((med) => {
+                      {scanResults.map((medObj, idx) => {
+                        const med = medObj.product || medObj;
+                        if (!med) return null;
+                        
                         let img = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
-                        try { if (med.images) img = JSON.parse(med.images)[0]; } catch (e) {}
+                        try { 
+                          if (med.images) {
+                            const parsed = JSON.parse(med.images);
+                            if (parsed && parsed.length > 0) img = parsed[0];
+                          } 
+                        } catch (e) {}
+                        
                         const isAlreadyInCart = cartItems.some(item => item.id === med.id);
 
                         return (
-                          <div key={med.id} className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center justify-between gap-3">
+                          <div key={`scanned-${med.id || idx}`} className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-slate-100 flex-shrink-0 overflow-hidden">
                                 <img src={img} className="object-contain max-h-8 p-1 mix-blend-multiply" />
                               </div>
-                              <div className="min-w-0">
-                                <h5 className="font-bold text-slate-900 text-xs truncate">{med.name}</h5>
-                                <span className="text-slate-500 text-xs font-semibold block">₹{formatCurrency(Number(med.price))}</span>
+                              <div className="min-w-0 flex flex-col justify-center">
+                                {medObj.extracted?.medicineName && (
+                                  <span className="text-[9px] uppercase font-bold text-brand-600 block mb-0.5 truncate bg-brand-50 px-1.5 py-0.5 rounded-sm w-fit border border-brand-100">
+                                    Rx: {medObj.extracted.medicineName} {medObj.extracted.strength || ''}
+                                  </span>
+                                )}
+                                <h5 className="font-bold text-slate-900 text-xs truncate leading-tight mt-0.5">{med.name}</h5>
+                                <span className="text-slate-500 text-[11px] font-semibold block mt-0.5">₹{formatCurrency(Number(med.discountPrice || med.price))}</span>
                               </div>
                             </div>
                             
                             <button
-                              onClick={() => addScannedToCart(med)}
+                              onClick={() => addScannedToCart(medObj)}
                               disabled={isAlreadyInCart}
-                              className={`font-bold text-xs py-1.5 px-3 rounded-full transition-all ${
+                              className={`font-bold text-xs py-1.5 px-4 rounded-full transition-all shrink-0 ${
                                 isAlreadyInCart 
                                   ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                                  : 'bg-slate-900 text-white hover:scale-105'
+                                  : 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-500/20'
                               }`}
                             >
                               {isAlreadyInCart ? 'Added' : 'Add'}
@@ -522,6 +558,13 @@ export default function CartPage() {
                   className="w-full bg-slate-100 text-slate-400 font-bold py-4 rounded-full flex items-center justify-center gap-2 text-sm cursor-not-allowed border border-slate-200"
                 >
                   Upload Rx to Checkout
+                </button>
+              ) : requiresPrescription && prescriptionId && sessionStorage.getItem('attachedPrescriptionStatus') !== 'Approved' && sessionStorage.getItem('attachedPrescriptionStatus') !== 'Verified' ? (
+                <button
+                  disabled
+                  className="w-full bg-amber-100 text-amber-700 font-bold py-4 rounded-full flex items-center justify-center gap-2 text-sm cursor-not-allowed border border-amber-200"
+                >
+                  Awaiting Admin Approval
                 </button>
               ) : (
                 <Link
