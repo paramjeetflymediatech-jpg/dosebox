@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       const fileName = `banner-${Date.now()}${ext}`;
       const filePath = path.join(uploadDir, fileName);
       await writeFile(filePath, buffer);
-      bannerData.image = `/uploads/banners/${fileName}`;
+      bannerData.image = `/api/file/banners/${fileName}`;
     } else if (typeof imageFile === 'string' && imageFile) {
       bannerData.image = imageFile;
     }

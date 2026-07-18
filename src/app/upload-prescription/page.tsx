@@ -19,6 +19,7 @@ export default function UploadPrescriptionPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Fake progress effect during upload
   React.useEffect(() => {
@@ -37,9 +38,18 @@ export default function UploadPrescriptionPage() {
     return () => clearInterval(interval);
   }, [isUploading]);
 
+  const handleFileSelection = (file: File) => {
+    setFile(file);
+    if (file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      handleFileSelection(e.target.files[0]);
     }
   };
 
@@ -47,7 +57,7 @@ export default function UploadPrescriptionPage() {
     e.preventDefault();
     setIsDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
+      handleFileSelection(e.dataTransfer.files[0]);
     }
   };
 
@@ -355,7 +365,7 @@ export default function UploadPrescriptionPage() {
               </p>
               <div className="mt-8 flex items-center justify-center gap-4 w-full">
                 <button
-                  onClick={() => { setResult(null); setFile(null); }}
+                  onClick={() => { setResult(null); setFile(null); setPreviewUrl(null); }}
                   className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50 transition-colors shadow-sm"
                 >
                   Upload Another
@@ -392,9 +402,15 @@ export default function UploadPrescriptionPage() {
 
                 {file ? (
                   <div className="space-y-4">
-                    <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-8 h-8 text-teal-600" />
-                    </div>
+                    {previewUrl ? (
+                      <div className="w-24 h-24 bg-slate-100 rounded-xl mx-auto mb-4 border border-slate-200 overflow-hidden flex items-center justify-center">
+                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-teal-600" />
+                      </div>
+                    )}
                     <p className="text-lg font-semibold text-teal-800">{file.name}</p>
                     <p className="text-sm text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
 
@@ -403,6 +419,13 @@ export default function UploadPrescriptionPage() {
                       className="mt-6 w-full sm:w-auto px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200"
                     >
                       Process Prescription
+                    </button>
+                    
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFile(null); setPreviewUrl(null); }}
+                      className="mt-4 block mx-auto text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      Remove File
                     </button>
                   </div>
                 ) : (

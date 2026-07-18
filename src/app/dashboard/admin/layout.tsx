@@ -75,7 +75,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <X className="w-5 h-5" />
           </button>
-          <img src="/Media.jpg" alt="Logo" className="w-30 h-30 object-contain" />
+          <Link href="/">
+            <img src="/Media.jpg" alt="Logo" className="w-30 h-30 object-contain" />
+          </Link>
           <div>
             <h2 className="text-lg font-bold text-slate-800 leading-tight">Admin Control</h2>
             <p className="text-xs text-slate-500">Manage your store</p>

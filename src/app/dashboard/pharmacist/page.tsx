@@ -211,7 +211,7 @@ export default function PharmacistDashboardPage() {
                   <div className="h-44 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center p-3 text-center overflow-hidden">
                     <span className="text-xxs text-slate-400 block mb-2">Prescription Document</span>
                     <a 
-                      href={selectedPresc.fileUrl.startsWith('/') ? `http://localhost:5000${selectedPresc.fileUrl}` : selectedPresc.fileUrl} 
+                      href={selectedPresc.fileUrl.startsWith('/') ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${selectedPresc.fileUrl}` : selectedPresc.fileUrl}
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xxs py-1.5 px-4 rounded-full transition-all shadow flex items-center gap-1.5"
@@ -298,7 +298,7 @@ export default function PharmacistDashboardPage() {
                       <div>Attached Prescription: 
                         {order.prescription ? (
                           <a 
-                            href={order.prescription.fileUrl.startsWith('/') ? `http://localhost:5000${order.prescription.fileUrl}` : order.prescription.fileUrl} 
+                            href={order.prescription.fileUrl.startsWith('/') ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${order.prescription.fileUrl}` : order.prescription.fileUrl}
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="text-brand-600 font-bold hover:underline ml-1"

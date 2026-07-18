@@ -41,7 +41,7 @@ export default function NewBlogPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data?.success) {
-        setNewBlog({ ...newBlog, coverImage: 'http://localhost:5000' + res.data.fileUrl });
+        setNewBlog({ ...newBlog, coverImage: (process.env.NEXT_PUBLIC_APP_URL || '') + res.data.fileUrl });
       }
     } catch (err) {
       console.error('Failed to upload', err);

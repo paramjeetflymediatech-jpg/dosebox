@@ -74,7 +74,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { quantity, ...itemWithoutQty } = item;
       saveCart([...cartItems, { ...itemWithoutQty, quantity: qtyToAdd }]);
     }
-    toast.success(`${item.name || 'Item'} added to cart`);
   };
 
   const removeFromCart = (id: number) => {
@@ -117,8 +116,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const taxableAmount = subtotal - savings;
   
-  // GST calculation (18% inclusive)
-  const gstAmount = taxableAmount * 0.18;
 
   // Shipping details
   const shippingFee = (taxableAmount > 500 || cartItems.length === 0) ? 0 : 50;
@@ -136,7 +133,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const totalAmount = Math.max(0, taxableAmount - couponDiscount + shippingFee);
+  // GST calculation (18% exclusive)
+  const gstAmount = Math.max(0, taxableAmount - couponDiscount) * 0.18;
+
+  const totalAmount = Math.max(0, taxableAmount - couponDiscount + gstAmount + shippingFee);
 
   const requiresPrescription = cartItems.some(item => item.prescriptionRequired);
 

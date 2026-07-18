@@ -130,7 +130,8 @@ export default function CartCheckoutScreen({ navigation }) {
     }
   }
   
-  const finalTotal = Math.max(0, cartTotal - couponDiscount + deliveryFee);
+  const gstAmount = Math.max(0, cartTotal - couponDiscount) * 0.18;
+  const finalTotal = Math.max(0, cartTotal - couponDiscount + gstAmount + deliveryFee);
 
   const fetchCurrentAddress = async () => {
     const hasPermission = await PermissionsService.requestLocationPermission();
@@ -138,25 +139,37 @@ export default function CartCheckoutScreen({ navigation }) {
 
     setIsFetchingLocation(true);
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      
-      if (data.error) {
-        AlertService.show({ type: 'error', title: 'Error', message: 'Could not determine location.' });
-      } else {
-        const newAddress = {
-          title: 'Current Location',
-          street: `${data.city} Area`, // IPAPI gives city, so simulate street
-          city: data.city,
-          state: data.region,
-          zipCode: data.postal,
-          country: data.country_name,
+      let data = null;
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        if (!response.ok) throw new Error('ipapi failed');
+        data = await response.json();
+        if (data.error) throw new Error(data.reason || 'ipapi error');
+      } catch (e) {
+        // Fallback to ipinfo.io if ipapi fails (e.g. rate limit on physical device)
+        const fbResponse = await fetch('https://ipinfo.io/json');
+        if (!fbResponse.ok) throw new Error('ipinfo failed');
+        const fbData = await fbResponse.json();
+        data = {
+          city: fbData.city,
+          region: fbData.region,
+          postal: fbData.postal,
+          country_name: fbData.country === 'IN' ? 'India' : fbData.country === 'US' ? 'United States' : fbData.country
         };
-        selectAddress(newAddress);
       }
+      
+      const newAddress = {
+        title: 'Current Location',
+        street: `${data.city || 'Unknown'} Area`,
+        city: data.city || '',
+        state: data.region || '',
+        zipCode: data.postal || '',
+        country: data.country_name || '',
+      };
+      selectAddress(newAddress);
     } catch (error) {
       console.error('Fetch Location Error:', error);
-      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to fetch location automatically.' });
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to fetch location automatically. Please enter manually.' });
     } finally {
       setIsFetchingLocation(false);
     }
@@ -316,28 +329,14 @@ export default function CartCheckoutScreen({ navigation }) {
                 <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.text }]}>Cart Total</Text>
                 <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
               </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>GST (18%)</Text>
+                <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>
+              </View>
               
-              <View style={{ paddingTop: rv(8) }}>
-                <TouchableOpacity 
-                  style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-                  onPress={() => setShowAdditionalCharges(!showAdditionalCharges)}
-                  activeOpacity={0.7}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={styles.summaryLabel}>Additional Charges</Text>
-                    <Ionicons name={showAdditionalCharges ? "chevron-up" : "chevron-down"} size={16} color={C.sub} />
-                  </View>
-                  <Text style={styles.summaryValue}>₹{deliveryFee.toFixed(2)}</Text>
-                </TouchableOpacity>
-                
-                {showAdditionalCharges && (
-                  <View style={{ paddingLeft: rs(16), marginTop: rv(8), borderLeftWidth: 2, borderLeftColor: C.border, gap: rv(6) }}>
-                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                       <Text style={{ fontSize: rm(12), color: C.sub }}>Delivery Charges</Text>
-                       <Text style={{ fontSize: rm(12), color: C.sub }}>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</Text>
-                     </View>
-                  </View>
-                )}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Delivery Charges</Text>
+                <Text style={styles.summaryValue}>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</Text>
               </View>
 
                 <View style={[styles.summaryRow, styles.totalRow]}>
@@ -607,28 +606,13 @@ export default function CartCheckoutScreen({ navigation }) {
                   <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.text }]}>Cart Total</Text>
                   <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
                 </View>
-                
-                <View style={{ paddingTop: rv(8) }}>
-                  <TouchableOpacity 
-                    style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-                    onPress={() => setShowAdditionalCharges(!showAdditionalCharges)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={styles.summaryLabel}>Additional Charges</Text>
-                      <Ionicons name={showAdditionalCharges ? "chevron-up" : "chevron-down"} size={16} color={C.sub} />
-                    </View>
-                    <Text style={styles.summaryValue}>₹{deliveryFee.toFixed(2)}</Text>
-                  </TouchableOpacity>
-                  
-                  {showAdditionalCharges && (
-                    <View style={{ paddingLeft: rs(16), marginTop: rv(8), borderLeftWidth: 2, borderLeftColor: C.border, gap: rv(6) }}>
-                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                         <Text style={{ fontSize: rm(12), color: C.sub }}>Delivery Charges</Text>
-                         <Text style={{ fontSize: rm(12), color: C.sub }}>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</Text>
-                       </View>
-                    </View>
-                  )}
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>GST (18%)</Text>
+                  <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Delivery Charges</Text>
+                  <Text style={styles.summaryValue}>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</Text>
                 </View>
 
                 <View style={[styles.summaryRow, styles.totalRow]}>

@@ -1,16 +1,27 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  MapPin, CreditCard, ChevronRight, CheckCircle2, Plus, Loader2, ArrowLeft, ShieldCheck, Wallet, Sparkles, ChevronDown, ChevronUp
-} from 'lucide-react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../lib/api';
-import { formatCurrency } from '@/lib/utils';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  MapPin,
+  CreditCard,
+  ChevronRight,
+  CheckCircle2,
+  Plus,
+  Loader2,
+  ArrowLeft,
+  ShieldCheck,
+  Wallet,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../lib/api";
+import { formatCurrency } from "@/lib/utils";
 
 interface Address {
   id: number;
@@ -25,62 +36,82 @@ interface Address {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, totalAmount, clearCart, subtotal, savings, gstAmount, couponCode, couponDiscount } = useCart();
+  const {
+    cartItems,
+    totalAmount,
+    clearCart,
+    subtotal,
+    savings,
+    gstAmount,
+    couponCode,
+    couponDiscount,
+    requiresPrescription,
+  } = useCart();
   const { user } = useAuth();
-  
+
   // States
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'PhonePe'>('COD');
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null,
+  );
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "PhonePe" | "">(
+    "",
+  );
   const [useDoseboxTokens, setUseDoseboxTokens] = useState(false);
-  const [pointsInput, setPointsInput] = useState('');
+  const [pointsInput, setPointsInput] = useState("");
   const [currentTokens, setCurrentTokens] = useState(0);
 
   useEffect(() => {
     async function fetchTokens() {
       try {
-        const res = await api.get('/account/profile');
+        const res = await api.get("/account/profile");
         if (res.data?.success) {
           setCurrentTokens(res.data.data.doseboxTokens || 0);
         }
       } catch (err) {
-        console.error('Failed to fetch profile', err);
+        console.error("Failed to fetch profile", err);
       }
     }
     if (user) {
       fetchTokens();
     }
   }, [user]);
-  
-  const parsedPoints = parseInt(pointsInput) || 0;
-  const pointsError = useDoseboxTokens && parsedPoints > currentTokens 
-    ? `You only have ${currentTokens} tokens available.`
-    : useDoseboxTokens && parsedPoints > Math.floor(totalAmount)
-    ? `You can only apply up to ${Math.floor(totalAmount)} tokens.`
-    : null;
 
-  const pointsUsed = useDoseboxTokens && paymentMethod === 'PhonePe' && !pointsError ? parsedPoints : 0;
+  const parsedPoints = parseInt(pointsInput) || 0;
+  const pointsError =
+    useDoseboxTokens && parsedPoints > currentTokens
+      ? `You only have ${currentTokens} tokens available.`
+      : useDoseboxTokens && parsedPoints > Math.floor(totalAmount)
+        ? `You can only apply up to ${Math.floor(totalAmount)} tokens.`
+        : null;
+
+  const pointsUsed =
+    useDoseboxTokens && paymentMethod === "PhonePe" && !pointsError
+      ? parsedPoints
+      : 0;
   const finalPayable = Math.max(0, totalAmount - pointsUsed);
 
   const handleToggleDoseboxTokens = (checked: boolean) => {
     setUseDoseboxTokens(checked);
     if (checked) {
-      const max = currentTokens ? Math.min(currentTokens, Math.floor(totalAmount)) : 0;
+      const max = currentTokens
+        ? Math.min(currentTokens, Math.floor(totalAmount))
+        : 0;
       setPointsInput(max.toString());
     } else {
-      setPointsInput('');
+      setPointsInput("");
     }
   };
-  
+
   // Inline address creation fields
   const [showAddAddress, setShowAddAddress] = useState(false);
-  const [addressTitle, setAddressTitle] = useState('Home');
-  const [street, setStreet] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  const [country, setCountry] = useState('India');
-  
+  const [addressTitle, setAddressTitle] = useState("Home");
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [country, setCountry] = useState("India");
+
   const [processing, setProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
@@ -89,7 +120,7 @@ export default function CheckoutPage() {
 
   // Address Search & Location States
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -104,12 +135,14 @@ export default function CheckoutPage() {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5`);
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5`,
+        );
         const data = await res.json();
         setSearchResults(data || []);
         setShowSearchResults(true);
       } catch (err) {
-        console.error('Search error', err);
+        console.error("Search error", err);
       } finally {
         setIsSearching(false);
       }
@@ -120,91 +153,118 @@ export default function CheckoutPage() {
 
   const handleSelectSearchResult = (result: any) => {
     const address = result.address || {};
-    const st = address.road || address.suburb || address.neighbourhood || result.name || '';
-    const c = address.city || address.town || address.county || '';
-    const stt = address.state || '';
-    const zc = address.postcode || '';
+    const st =
+      address.road ||
+      address.suburb ||
+      address.neighbourhood ||
+      result.name ||
+      "";
+    const c = address.city || address.town || address.county || "";
+    const stt = address.state || "";
+    const zc = address.postcode || "";
 
     if (st) setStreet(st);
     if (c) setCity(c);
     if (stt) setState(stt);
     if (zc) setZipCode(zc);
-    
-    setSearchQuery('');
+
+    setSearchQuery("");
     setShowSearchResults(false);
   };
 
   const handleFetchLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      alert("Geolocation is not supported by your browser");
       return;
     }
-    
+
     setIsFetchingLocation(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
           const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-          
-          let st = '', c = '', stt = '', zc = '';
+
+          let st = "",
+            c = "",
+            stt = "",
+            zc = "";
 
           let usingGoogle = false;
           if (apiKey) {
             try {
-              const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+              const res = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`,
+              );
               const data = await res.json();
-              if (data.status === 'OK' && data.results[0]) {
+              if (data.status === "OK" && data.results[0]) {
                 const result = data.results[0];
                 result.address_components.forEach((component: any) => {
-                  if (component.types.includes('route')) st = component.long_name;
-                  if (!st && component.types.includes('neighborhood')) st = component.long_name;
-                  if (component.types.includes('locality')) c = component.long_name;
-                  if (component.types.includes('administrative_area_level_1')) stt = component.long_name;
-                  if (component.types.includes('postal_code')) zc = component.long_name;
+                  if (component.types.includes("route"))
+                    st = component.long_name;
+                  if (!st && component.types.includes("neighborhood"))
+                    st = component.long_name;
+                  if (component.types.includes("locality"))
+                    c = component.long_name;
+                  if (component.types.includes("administrative_area_level_1"))
+                    stt = component.long_name;
+                  if (component.types.includes("postal_code"))
+                    zc = component.long_name;
                 });
-                if (!st) st = result.formatted_address.split(',')[0];
+                if (!st) st = result.formatted_address.split(",")[0];
                 usingGoogle = true;
               }
-            } catch (e) { console.error('Google Maps API failed', e); }
+            } catch (e) {
+              console.error("Google Maps API failed", e);
+            }
           }
-          
+
           if (!usingGoogle) {
             try {
-              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+              );
               const data = await res.json();
-              
+
               if (data && data.address) {
-                st = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-                c = data.address.city || data.address.town || data.address.county || '';
-                stt = data.address.state || '';
-                zc = data.address.postcode || '';
+                st =
+                  data.address.road ||
+                  data.address.suburb ||
+                  data.address.neighbourhood ||
+                  "";
+                c =
+                  data.address.city ||
+                  data.address.town ||
+                  data.address.county ||
+                  "";
+                stt = data.address.state || "";
+                zc = data.address.postcode || "";
               } else {
-                alert('Could not determine address from location');
+                alert("Could not determine address from location");
                 setIsFetchingLocation(false);
                 return;
               }
             } catch (e) {
-              alert('Could not determine address from location');
+              alert("Could not determine address from location");
               setIsFetchingLocation(false);
               return;
             }
           }
-          
+
           if (st) setStreet(st);
           if (c) setCity(c);
           if (stt) setState(stt);
           if (zc) setZipCode(zc);
         } catch (error) {
-          alert('Failed to fetch address details');
+          alert("Failed to fetch address details");
         } finally {
           setIsFetchingLocation(false);
         }
       },
       (error) => {
-        alert('Location access denied or unavailable');
+        alert("Location access denied or unavailable");
         setIsFetchingLocation(false);
-      }
+      },
     );
   };
 
@@ -213,16 +273,18 @@ export default function CheckoutPage() {
     if (!user) return;
     async function loadAddresses() {
       try {
-        const res = await api.get('/account/addresses');
+        const res = await api.get("/account/addresses");
         if (res.data?.success && res.data.data.length > 0) {
           setAddresses(res.data.data);
           const defaultAddr = res.data.data.find((a: any) => a.isDefault);
-          setSelectedAddressId(defaultAddr ? defaultAddr.id : res.data.data[0].id);
+          setSelectedAddressId(
+            defaultAddr ? defaultAddr.id : res.data.data[0].id,
+          );
         } else {
           setAddresses([]);
         }
       } catch (err) {
-        console.error('Failed to load addresses', err);
+        console.error("Failed to load addresses", err);
       }
     }
     loadAddresses();
@@ -232,18 +294,18 @@ export default function CheckoutPage() {
 
   // Handle Return from PhonePe payment
   useEffect(() => {
-    if (typeof window !== 'undefined' && !hasProcessedUrl) {
+    if (typeof window !== "undefined" && !hasProcessedUrl) {
       const urlParams = new URLSearchParams(window.location.search);
-      const status = urlParams.get('status');
-      if (status === 'success') {
+      const status = urlParams.get("status");
+      if (status === "success") {
         setOrderComplete(true);
         clearCart();
-        sessionStorage.removeItem('attachedPrescriptionId');
+        sessionStorage.removeItem("attachedPrescriptionId");
         // Clean up the URL to prevent re-triggering on refresh
-        router.replace('/checkout');
-      } else if (status === 'failed') {
+        router.replace("/checkout");
+      } else if (status === "failed") {
         setPaymentFailed(true);
-        router.replace('/checkout');
+        router.replace("/checkout");
       }
       setHasProcessedUrl(true);
     }
@@ -253,7 +315,7 @@ export default function CheckoutPage() {
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
     if (!street || !city || !state || !zipCode) {
-      alert('Please fill out all address details.');
+      alert("Please fill out all address details.");
       return;
     }
 
@@ -265,23 +327,36 @@ export default function CheckoutPage() {
       state,
       zipCode,
       country,
-      isDefault: false
+      isDefault: false,
     };
 
     setAddresses([...addresses, newAddr]);
     setSelectedAddressId(newAddr.id);
     setShowAddAddress(false);
-    
+
     // Clear inputs
-    setStreet('');
-    setCity('');
-    setState('');
-    setZipCode('');
+    setStreet("");
+    setCity("");
+    setState("");
+    setZipCode("");
   };
 
   const handlePlaceOrder = async () => {
+    if (
+      requiresPrescription &&
+      !sessionStorage.getItem("attachedPrescriptionId")
+    ) {
+      alert(
+        "Order contains prescription-required medicines. Please go back to the cart and upload a prescription.",
+      );
+      return;
+    }
+    if (!paymentMethod) {
+      alert("Please select a payment method.");
+      return;
+    }
     if (!selectedAddressId) {
-      alert('Please select or add a shipping address.');
+      alert("Please select or add a shipping address.");
       return;
     }
     if (pointsError) {
@@ -291,39 +366,48 @@ export default function CheckoutPage() {
 
     setProcessing(true);
     try {
-      const itemsPayload = cartItems.map(item => ({
+      const itemsPayload = cartItems.map((item) => ({
         medicineId: item.id,
-        quantity: item.quantity
+        quantity: item.quantity,
       }));
 
-      const prescriptionIdStr = sessionStorage.getItem('attachedPrescriptionId');
-      const prescriptionId = prescriptionIdStr ? parseInt(prescriptionIdStr, 10) : undefined;
+      const prescriptionIdStr = sessionStorage.getItem(
+        "attachedPrescriptionId",
+      );
+      const prescriptionId = prescriptionIdStr
+        ? parseInt(prescriptionIdStr, 10)
+        : undefined;
 
-      const selectedAddrObj = addresses.find(a => a.id === selectedAddressId);
+      const selectedAddrObj = addresses.find((a) => a.id === selectedAddressId);
 
       const orderData = {
         items: itemsPayload,
-        couponCode: sessionStorage.getItem('couponCode') || undefined,
+        couponCode: sessionStorage.getItem("couponCode") || undefined,
         shippingAddress: selectedAddrObj,
         paymentMethod,
         prescriptionId,
         useDoseboxTokens: useDoseboxTokens && !pointsError,
-        doseboxTokensToUse: pointsUsed
+        doseboxTokensToUse: pointsUsed,
       };
 
-      const res = await api.post('/orders', orderData);
+      const res = await api.post("/orders", orderData);
 
       if (res.data?.success) {
         const orderId = res.data.data.id;
         setCreatedOrderId(orderId);
 
-        if (paymentMethod === 'PhonePe') {
+        if (paymentMethod === "PhonePe") {
           try {
-            const phonepeRes = await api.post('/payments/phonepe/initiate', { orderId });
-            if (phonepeRes.data?.success && phonepeRes.data?.fullyPaidByTokens) {
+            const phonepeRes = await api.post("/payments/phonepe/initiate", {
+              orderId,
+            });
+            if (
+              phonepeRes.data?.success &&
+              phonepeRes.data?.fullyPaidByTokens
+            ) {
               // Order fully covered by DoseBox tokens — no PhonePe redirect needed
               clearCart();
-              sessionStorage.removeItem('attachedPrescriptionId');
+              sessionStorage.removeItem("attachedPrescriptionId");
               setOrderComplete(true);
               return;
             }
@@ -331,12 +415,15 @@ export default function CheckoutPage() {
               window.location.href = phonepeRes.data.redirectUrl;
               return; // Halt and redirect
             } else {
-              alert('Failed to initiate PhonePe payment.');
+              alert("Failed to initiate PhonePe payment.");
               setProcessing(false);
               return;
             }
           } catch (phonePeErr: any) {
-            alert('PhonePe init error: ' + (phonePeErr.response?.data?.message || phonePeErr.message));
+            alert(
+              "PhonePe init error: " +
+                (phonePeErr.response?.data?.message || phonePeErr.message),
+            );
             setProcessing(false);
             return;
           }
@@ -344,13 +431,15 @@ export default function CheckoutPage() {
 
         // COD Flow
         clearCart();
-        sessionStorage.removeItem('attachedPrescriptionId');
+        sessionStorage.removeItem("attachedPrescriptionId");
         setOrderComplete(true);
       } else {
-        alert('Checkout failed: ' + res.data?.message);
+        alert("Checkout failed: " + res.data?.message);
       }
     } catch (err: any) {
-      alert('Checkout order error: ' + (err.response?.data?.message || err.message));
+      alert(
+        "Checkout order error: " + (err.response?.data?.message || err.message),
+      );
     } finally {
       setProcessing(false);
     }
@@ -362,9 +451,17 @@ export default function CheckoutPage() {
     return (
       <div className="max-w-xl mx-auto px-4 py-32 text-center flex flex-col items-center">
         <ShieldCheck className="w-16 h-16 text-slate-300 mb-6" />
-        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Please Log In</h2>
-        <p className="text-slate-500 mb-8 font-medium">You must be logged in to securely complete your checkout and place an order.</p>
-        <Link href="/" className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all">
+        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">
+          Please Log In
+        </h2>
+        <p className="text-slate-500 mb-8 font-medium">
+          You must be logged in to securely complete your checkout and place an
+          order.
+        </p>
+        <Link
+          href="/"
+          className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all"
+        >
           Return Home to Login
         </Link>
       </div>
@@ -374,10 +471,12 @@ export default function CheckoutPage() {
   return (
     <div className="bg-slate-50/50 min-h-screen py-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Breadcrumbs */}
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">
-          <Link href="/cart" className="hover:text-slate-900 transition-colors flex items-center gap-1">
+          <Link
+            href="/cart"
+            className="hover:text-slate-900 transition-colors flex items-center gap-1"
+          >
             <ArrowLeft className="w-3.5 h-3.5" /> Bag
           </Link>
           <ChevronRight className="w-3.5 h-3.5 mx-2" />
@@ -385,19 +484,19 @@ export default function CheckoutPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           {/* LEFT: ADDRESS & PAYMENT */}
           <div className="lg:col-span-2 space-y-6">
-            
             {/* Address Selection */}
             <div className="bg-white rounded-[2rem] border border-slate-100/50 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="font-extrabold text-slate-900 text-xl tracking-tight flex items-center gap-3">
-                  <span className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900">1</span>
+                  <span className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900">
+                    1
+                  </span>
                   Shipping Address
                 </h3>
-                
-                <button 
+
+                <button
                   onClick={() => setShowAddAddress(!showAddAddress)}
                   className="text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 py-2 px-4 rounded-full flex items-center gap-1.5 transition-all"
                 >
@@ -409,37 +508,43 @@ export default function CheckoutPage() {
               <AnimatePresence>
                 {/* Add Address Form Minimal */}
                 {showAddAddress && (
-                  <motion.form 
+                  <motion.form
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    onSubmit={handleAddAddress} 
+                    onSubmit={handleAddAddress}
                     className="overflow-hidden"
                   >
                     <div className="bg-slate-50/50 border border-slate-100 rounded-[1.5rem] p-6 space-y-5 mb-6">
                       <div className="relative z-10 mb-2">
                         <div className="flex gap-2">
                           <div className="relative flex-1">
-                            <input 
-                              type="text" 
-                              placeholder="Search for an address..." 
+                            <input
+                              type="text"
+                              placeholder="Search for an address..."
                               value={searchQuery}
-                              onChange={e => setSearchQuery(e.target.value)}
+                              onChange={(e) => setSearchQuery(e.target.value)}
                               className="w-full bg-white border border-slate-200/60 text-slate-900 text-sm font-semibold rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
                             />
-                            {isSearching && <span className="absolute right-3 top-3.5 text-xs text-slate-400">Searching...</span>}
+                            {isSearching && (
+                              <span className="absolute right-3 top-3.5 text-xs text-slate-400">
+                                Searching...
+                              </span>
+                            )}
                           </div>
-                          <button 
-                            type="button" 
-                            onClick={handleFetchLocation} 
+                          <button
+                            type="button"
+                            onClick={handleFetchLocation}
                             disabled={isFetchingLocation}
                             className="flex-shrink-0 flex items-center justify-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 py-3 px-4 rounded-xl transition-colors disabled:opacity-50"
                           >
                             <MapPin className="w-4 h-4" />
-                            {isFetchingLocation ? 'Locating...' : 'Use Location'}
+                            {isFetchingLocation
+                              ? "Locating..."
+                              : "Use Location"}
                           </button>
                         </div>
-                        
+
                         {showSearchResults && searchResults.length > 0 && (
                           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
                             {searchResults.map((result: any, idx: number) => (
@@ -449,8 +554,16 @@ export default function CheckoutPage() {
                                 onClick={() => handleSelectSearchResult(result)}
                                 className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-sm text-slate-700 transition-colors"
                               >
-                                <span className="font-bold text-slate-900 block">{result.name || (result.address && (result.address.road || result.address.suburb)) || 'Unknown Address'}</span>
-                                <span className="text-xs text-slate-500 block truncate mt-0.5">{result.display_name}</span>
+                                <span className="font-bold text-slate-900 block">
+                                  {result.name ||
+                                    (result.address &&
+                                      (result.address.road ||
+                                        result.address.suburb)) ||
+                                    "Unknown Address"}
+                                </span>
+                                <span className="text-xs text-slate-500 block truncate mt-0.5">
+                                  {result.display_name}
+                                </span>
                               </button>
                             ))}
                           </div>
@@ -459,7 +572,9 @@ export default function CheckoutPage() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Label (e.g. Home, Work)</label>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                            Label (e.g. Home, Work)
+                          </label>
                           <input
                             type="text"
                             value={addressTitle}
@@ -469,7 +584,9 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Country</label>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                            Country
+                          </label>
                           <input
                             type="text"
                             value={country}
@@ -481,7 +598,9 @@ export default function CheckoutPage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Street Address</label>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                          Street Address
+                        </label>
                         <input
                           type="text"
                           placeholder="House No, Apartment name, street details"
@@ -494,7 +613,9 @@ export default function CheckoutPage() {
 
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">City</label>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                            City
+                          </label>
                           <input
                             type="text"
                             value={city}
@@ -504,7 +625,9 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">State</label>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                            State
+                          </label>
                           <input
                             type="text"
                             value={state}
@@ -514,7 +637,9 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Zip Code</label>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                            Zip Code
+                          </label>
                           <input
                             type="text"
                             value={zipCode}
@@ -526,7 +651,7 @@ export default function CheckoutPage() {
                       </div>
 
                       <div className="pt-2">
-                        <button 
+                        <button
                           type="submit"
                           className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm py-3 px-8 rounded-full transition-all"
                         >
@@ -541,24 +666,33 @@ export default function CheckoutPage() {
               {/* Addresses List */}
               <div className="space-y-4">
                 {addresses.map((addr) => (
-                  <label 
+                  <label
                     key={addr.id}
                     className={`flex items-start gap-5 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                      selectedAddressId === addr.id 
-                        ? 'border-brand-500 bg-brand-50/30 shadow-sm' 
-                        : 'border-slate-100 hover:border-slate-200 bg-white'
+                      selectedAddressId === addr.id
+                        ? "border-brand-500 bg-brand-50/30 shadow-sm"
+                        : "border-slate-100 hover:border-slate-200 bg-white"
                     }`}
                   >
-                    <div className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
-                      selectedAddressId === addr.id ? 'bg-brand-600' : 'bg-slate-200'
-                    }`}>
-                      {selectedAddressId === addr.id && <div className="w-2 h-2 bg-white rounded-full" />}
+                    <div
+                      className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
+                        selectedAddressId === addr.id
+                          ? "bg-brand-600"
+                          : "bg-slate-200"
+                      }`}
+                    >
+                      {selectedAddressId === addr.id && (
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      )}
                     </div>
-                    
+
                     <div className="text-sm">
-                      <span className="font-extrabold text-slate-900 block tracking-tight">{addr.title}</span>
+                      <span className="font-extrabold text-slate-900 block tracking-tight">
+                        {addr.title}
+                      </span>
                       <span className="text-slate-500 mt-1 block font-medium leading-relaxed">
-                        {addr.street}, {addr.city}, {addr.state} - {addr.zipCode}, {addr.country}
+                        {addr.street}, {addr.city}, {addr.state} -{" "}
+                        {addr.zipCode}, {addr.country}
                       </span>
                     </div>
                   </label>
@@ -569,76 +703,102 @@ export default function CheckoutPage() {
             {/* Payment Method selection */}
             <div className="bg-white rounded-[2rem] border border-slate-100/50 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-6">
               <h3 className="font-extrabold text-slate-900 text-xl tracking-tight flex items-center gap-3">
-                <span className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900">2</span>
+                <span className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-900">
+                  2
+                </span>
                 Payment Method
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                
                 {/* Cash on Delivery */}
-                <div 
-                  onClick={() => setPaymentMethod('COD')}
+                <div
+                  onClick={() => setPaymentMethod("COD")}
                   className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                    paymentMethod === 'COD' 
-                      ? 'border-brand-500 bg-brand-50/30 shadow-sm' 
-                      : 'border-slate-100 hover:border-slate-200 bg-white'
+                    paymentMethod === "COD"
+                      ? "border-brand-500 bg-brand-50/30 shadow-sm"
+                      : "border-slate-100 hover:border-slate-200 bg-white"
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
-                    paymentMethod === 'COD' ? 'bg-brand-600' : 'bg-slate-200'
-                  }`}>
-                    {paymentMethod === 'COD' && <div className="w-2 h-2 bg-white rounded-full" />}
+                  <div
+                    className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
+                      paymentMethod === "COD" ? "bg-brand-600" : "bg-slate-200"
+                    }`}
+                  >
+                    {paymentMethod === "COD" && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
                   </div>
                   <div>
                     <span className="font-extrabold text-slate-900 text-sm block flex items-center gap-2">
                       <Wallet className="w-4 h-4 text-slate-400" />
                       Cash on Delivery
                     </span>
-                    <span className="text-slate-500 text-xs mt-1 block font-medium">Pay via cash or UPI to the delivery executive.</span>
+                    <span className="text-slate-500 text-xs mt-1 block font-medium">
+                      Pay via cash or UPI to the delivery executive.
+                    </span>
                   </div>
                 </div>
 
                 {/* Online Payment */}
-                <div 
-                  onClick={() => setPaymentMethod('PhonePe')}
+                <div
+                  onClick={() => setPaymentMethod("PhonePe")}
                   className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                    paymentMethod === 'PhonePe' 
-                      ? 'border-brand-500 bg-brand-50/30 shadow-sm' 
-                      : 'border-slate-100 hover:border-slate-200 bg-white'
+                    paymentMethod === "PhonePe"
+                      ? "border-brand-500 bg-brand-50/30 shadow-sm"
+                      : "border-slate-100 hover:border-slate-200 bg-white"
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
-                    paymentMethod === 'PhonePe' ? 'bg-brand-600' : 'bg-slate-200'
-                  }`}>
-                    {paymentMethod === 'PhonePe' && <div className="w-2 h-2 bg-white rounded-full" />}
+                  <div
+                    className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center transition-colors ${
+                      paymentMethod === "PhonePe"
+                        ? "bg-brand-600"
+                        : "bg-slate-200"
+                    }`}
+                  >
+                    {paymentMethod === "PhonePe" && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
                   </div>
                   <div>
                     <span className="font-extrabold text-slate-900 text-sm block flex items-center gap-2">
                       <CreditCard className="w-4 h-4 text-slate-400" />
                       PhonePe (Online)
-                      <span className="bg-brand-100 text-brand-700 text-[9px] px-1.5 py-0.5 rounded-full">Secure</span>
+                      <span className="bg-brand-100 text-brand-700 text-[9px] px-1.5 py-0.5 rounded-full">
+                        Secure
+                      </span>
                     </span>
-                    <span className="text-slate-500 text-xs mt-1 block font-medium">Credit/Debit Cards, UPI, Netbanking via PhonePe.</span>
+                    <span className="text-slate-500 text-xs mt-1 block font-medium">
+                      Credit/Debit Cards, UPI, Netbanking via PhonePe.
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* RIGHT: INVOICE BREAKDOWN SUMMARY */}
           <div className="space-y-6">
             <div className="bg-white rounded-[2rem] border border-slate-100/50 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-6 sticky top-28">
-              
               <h3 className="font-extrabold text-slate-900 text-base tracking-tight border-b border-slate-100 pb-4">
                 Order Summary
               </h3>
 
               <div className="space-y-4 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between items-start text-sm">
-                    <span className="text-slate-600 font-medium pr-4 leading-tight">{item.name} <span className="text-slate-400">x{item.quantity}</span></span>
-                    <span className="font-bold text-slate-900">₹{formatCurrency(((item.discountPrice || item.price) * item.quantity))}</span>
+                  <div
+                    key={item.id}
+                    className="flex justify-between items-start text-sm"
+                  >
+                    <span className="text-slate-600 font-medium pr-4 leading-tight">
+                      {item.name}{" "}
+                      <span className="text-slate-400">x{item.quantity}</span>
+                    </span>
+                    <span className="font-bold text-slate-900">
+                      ₹
+                      {formatCurrency(
+                        (item.discountPrice || item.price) * item.quantity,
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -646,7 +806,9 @@ export default function CheckoutPage() {
               <div className="border-t border-slate-100 pt-6 space-y-4 text-sm font-semibold text-slate-500">
                 <div className="flex justify-between">
                   <span>Total MRP</span>
-                  <span className="text-slate-900">₹{formatCurrency(subtotal)}</span>
+                  <span className="text-slate-900">
+                    ₹{formatCurrency(subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-emerald-600">
                   <span>Dosebox Discount</span>
@@ -660,74 +822,79 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between font-bold text-slate-800">
                   <span>Cart Total</span>
-                  <span className="text-slate-900">₹{formatCurrency(subtotal - savings)}</span>
+                  <span className="text-slate-900">
+                    ₹{formatCurrency(subtotal - savings)}
+                  </span>
                 </div>
-                
-                <div className="pt-2">
-                  <div 
-                    className="flex justify-between items-center cursor-pointer" 
-                    onClick={() => setShowAdditionalCharges(!showAdditionalCharges)}
-                  >
-                    <span className="flex items-center gap-1">
-                      Additional Charges
-                      {showAdditionalCharges ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </span>
-                    <span className="text-slate-900">₹{formatCurrency(gstAmount + ((subtotal - savings) > 500 ? 0 : 50))}</span>
+
+                <div className="pt-2 border-t border-slate-100 mt-2 space-y-3">
+                  <div className="flex justify-between">
+                    <span>GST (18%)</span>
+                    <span className="text-slate-900">₹{formatCurrency(gstAmount)}</span>
                   </div>
-                  
-                  {showAdditionalCharges && (
-                    <div className="pl-4 mt-3 space-y-3 text-xs text-slate-400 border-l-2 border-slate-100">
-                      <div className="flex justify-between">
-                        <span>Estimated GST</span>
-                        <span>₹{formatCurrency(gstAmount)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Delivery Charges</span>
-                        <span>{(subtotal - savings) > 500 ? 'Free' : '₹50.00'}</span>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span>Delivery Charges</span>
+                    <span className="text-slate-900">
+                      {subtotal - savings > 500 ? "Free" : "₹50.00"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               <div className="border-t border-slate-100 pt-6 flex justify-between items-baseline">
-                <span className="font-extrabold text-slate-900 text-lg">Order Total</span>
-                <span className="font-black text-slate-900 text-lg tracking-tight">₹{formatCurrency(totalAmount)}</span>
+                <span className="font-extrabold text-slate-900 text-lg">
+                  Order Total
+                </span>
+                <span className="font-black text-slate-900 text-lg tracking-tight">
+                  ₹{formatCurrency(totalAmount)}
+                </span>
               </div>
-              
-              {user && currentTokens > 0 && paymentMethod === 'PhonePe' && (
+
+              {user && currentTokens > 0 && paymentMethod === "PhonePe" && (
                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mt-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="flex items-center gap-1.5 font-bold text-amber-700 text-sm">
                       <Sparkles className="w-4 h-4" /> DoseBox Tokens
                     </span>
-                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Balance: {currentTokens} Tokens</span>
+                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                      Balance: {currentTokens} Tokens
+                    </span>
                   </div>
-                  
+
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={useDoseboxTokens}
-                      onChange={(e) => handleToggleDoseboxTokens(e.target.checked)}
-                      className="w-4 h-4 text-brand-600 border-amber-300 rounded focus:ring-brand-500 bg-white" 
+                      onChange={(e) =>
+                        handleToggleDoseboxTokens(e.target.checked)
+                      }
+                      className="w-4 h-4 text-brand-600 border-amber-300 rounded focus:ring-brand-500 bg-white"
                     />
-                    <span className="text-sm font-semibold text-amber-800">Use tokens for this order</span>
+                    <span className="text-sm font-semibold text-amber-800">
+                      Use tokens for this order
+                    </span>
                   </label>
-                  
+
                   {useDoseboxTokens && (
                     <div className="mt-3 pt-3 border-t border-amber-200/50">
                       <div className="flex flex-col gap-2 mb-3">
-                        <label className="text-xs text-amber-700 font-semibold">Points to Apply</label>
+                        <label className="text-xs text-amber-700 font-semibold">
+                          Points to Apply
+                        </label>
                         <input
                           type="number"
                           min="0"
                           value={pointsInput}
                           onChange={(e) => setPointsInput(e.target.value)}
-                          className={`w-full sm:w-1/2 p-2 border ${pointsError ? 'border-red-400 bg-red-50' : 'border-amber-300'} rounded-lg text-sm`}
+                          className={`w-full sm:w-1/2 p-2 border ${pointsError ? "border-red-400 bg-red-50" : "border-amber-300"} rounded-lg text-sm`}
                         />
-                        {pointsError && <span className="text-xs text-red-500 font-bold">{pointsError}</span>}
+                        {pointsError && (
+                          <span className="text-xs text-red-500 font-bold">
+                            {pointsError}
+                          </span>
+                        )}
                       </div>
-                      
+
                       {!pointsError && (
                         <div className="flex justify-between text-sm font-bold text-amber-600">
                           <span>Tokens Used ({pointsUsed})</span>
@@ -740,8 +907,12 @@ export default function CheckoutPage() {
               )}
 
               <div className="border-t border-slate-100 mt-4 pt-4 flex justify-between items-baseline">
-                <span className="font-extrabold text-slate-900 text-lg">Payable</span>
-                <span className="font-black text-brand-600 text-2xl tracking-tight">₹{formatCurrency(finalPayable)}</span>
+                <span className="font-extrabold text-slate-900 text-lg">
+                  Payable
+                </span>
+                <span className="font-black text-brand-600 text-2xl tracking-tight">
+                  ₹{formatCurrency(finalPayable)}
+                </span>
               </div>
 
               <button
@@ -762,25 +933,24 @@ export default function CheckoutPage() {
                 )}
               </button>
               <p className="text-center text-xs font-semibold text-slate-400 mt-4">
-                By placing your order, you agree to our Terms of Service and Privacy Policy.
+                By placing your order, you agree to our Terms of Service and
+                Privacy Policy.
               </p>
             </div>
           </div>
-
         </div>
-
       </div>
 
       {/* Success & Failed Modals */}
       <AnimatePresence>
         {(orderComplete || paymentFailed) && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -792,26 +962,37 @@ export default function CheckoutPage() {
                   <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Order Confirmed!</h2>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">
+                    Order Confirmed!
+                  </h2>
                   <p className="text-slate-500 text-sm mb-4 px-4">
-                    Thank you! Your order {createdOrderId ? <strong className="text-slate-900">#OD-{createdOrderId}</strong> : ''} has been received and is being prepared.
+                    Thank you! Your order{" "}
+                    {createdOrderId ? (
+                      <strong className="text-slate-900">
+                        #OD-{createdOrderId}
+                      </strong>
+                    ) : (
+                      ""
+                    )}{" "}
+                    has been received and is being prepared.
                   </p>
                   {pointsUsed > 0 && (
                     <div className="mb-6 mx-auto bg-brand-50 border border-brand-100 rounded-lg p-3 inline-block">
                       <span className="text-sm font-bold text-brand-700 flex items-center justify-center gap-2">
-                        <Sparkles className="w-4 h-4" /> {pointsUsed} DoseBox Tokens Applied
+                        <Sparkles className="w-4 h-4" /> {pointsUsed} DoseBox
+                        Tokens Applied
                       </span>
                     </div>
                   )}
                   <div className="space-y-3">
-                    <Link 
-                      href="/account/orders" 
+                    <Link
+                      href="/account/orders"
                       className="block w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-lg shadow-brand-500/20"
                     >
                       Track Order Status
                     </Link>
-                    <Link 
-                      href="/medicines" 
+                    <Link
+                      href="/medicines"
                       className="block w-full bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3.5 px-6 rounded-xl transition-colors"
                     >
                       Continue Shopping
@@ -822,15 +1003,28 @@ export default function CheckoutPage() {
                 <>
                   <div className="absolute top-0 left-0 w-full h-2 bg-rose-500" />
                   <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                    <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-10 h-10"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Payment Failed</h2>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">
+                    Payment Failed
+                  </h2>
                   <p className="text-slate-500 text-sm mb-8 px-4">
-                    Your payment was cancelled or failed to process. Please try again using a different payment method.
+                    Your payment was cancelled or failed to process. Please try
+                    again using a different payment method.
                   </p>
-                  <button 
+                  <button
                     onClick={() => setPaymentFailed(false)}
                     className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-lg"
                   >
@@ -842,7 +1036,6 @@ export default function CheckoutPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

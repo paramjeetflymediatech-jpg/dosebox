@@ -22,7 +22,8 @@ const palette = {
   primary: '#1F5C52',
   primaryDark: '#123B34',
   accent: '#E3A857',
-  line: '#DCE6E1'};
+  line: '#DCE6E1'
+};
 
 export default function ResetPasswordScreen({ navigation, route }) {
   const { email, otp } = route.params;
@@ -53,7 +54,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
 
       if (data.success) {
         Alert.alert(
-          'Success', 
+          'Success',
           'Your password has been reset successfully. Please log in with your new password.',
           [{ text: 'Log In', onPress: () => navigation.navigate('Login') }]
         );
@@ -63,7 +64,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
     } catch (error) {
       console.error('Reset password error:', error);
       Alert.alert(
-        'Error', 
+        'Error',
         error.response?.data?.message || 'Something went wrong. Please try again.'
       );
     } finally {
@@ -73,15 +74,15 @@ export default function ResetPasswordScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.contentWrapper}>
             <View style={styles.headerContainer}>
-              <TouchableOpacity 
-                onPress={() => navigation.goBack()} 
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
                 style={styles.backButton}
                 hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
               >
@@ -116,9 +117,9 @@ export default function ResetPasswordScreen({ navigation, route }) {
                 />
               </View>
 
-              <TouchableOpacity 
-                style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} 
-                onPress={handleResetPassword} 
+              <TouchableOpacity
+                style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+                onPress={handleResetPassword}
                 disabled={loading}
               >
                 {loading ? (
@@ -138,19 +139,24 @@ export default function ResetPasswordScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.bg},
+    backgroundColor: palette.bg
+  },
   keyboardView: {
-    flex: 1},
+    flex: 1
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24},
+    padding: 24
+  },
   contentWrapper: {
     width: '100%',
     maxWidth: 400,
-    alignSelf: 'center'},
+    alignSelf: 'center'
+  },
   headerContainer: {
-    marginBottom: 40},
+    marginBottom: 40
+  },
   backButton: {
     width: 40,
     height: 40,
@@ -160,28 +166,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: palette.line},
+    borderColor: palette.line
+  },
   backIcon: {
     fontSize: 20,
-    color: palette.ink},
+    color: palette.ink
+  },
   title: {
     fontSize: 36,
     color: palette.ink,
     marginBottom: 8,
     fontWeight: '700',
-    letterSpacing: -1},
+    letterSpacing: -1
+  },
   subtitle: {
     fontSize: 16,
     color: palette.inkMuted,
-    lineHeight: 24},
+    lineHeight: 24
+  },
   formContainer: {
-    gap: 20},
+    gap: 20
+  },
   inputGroup: {
-    gap: 8},
+    gap: 8
+  },
   label: {
     fontSize: 14,
     color: palette.ink,
-    fontWeight: '600'},
+    fontWeight: '600'
+  },
   input: {
     backgroundColor: palette.surface,
     borderWidth: 1,
@@ -189,17 +202,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: palette.ink},
+    color: palette.ink
+  },
   primaryButton: {
     backgroundColor: palette.primary,
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
-    marginTop: 12},
+    marginTop: 12
+  },
   primaryButtonDisabled: {
-    opacity: 0.7},
+    opacity: 0.7
+  },
   primaryButtonText: {
     color: palette.surface,
     fontSize: 16,
     fontWeight: '600',
-    letterSpacing: 0.5}});
+    letterSpacing: 0.5
+  }
+});

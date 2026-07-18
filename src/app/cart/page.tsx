@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { 
-  Trash2, AlertCircle, FileText, CheckCircle, Upload, ArrowRight, ArrowLeft, Percent, ShieldCheck, Sparkles, ChevronDown, ChevronUp
+  Trash2, AlertCircle, FileText, CheckCircle, Upload, ArrowRight, ArrowLeft, Percent, ShieldCheck, Sparkles, ChevronDown, ChevronUp, X
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,8 @@ export default function CartPage() {
   const [scanResults, setScanResults] = useState<any[]>([]);
   const [showScanResults, setShowScanResults] = useState(false);
   const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const addScannedToCart = (med: any) => {
     let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
@@ -93,12 +95,46 @@ export default function CartPage() {
     }
   };
 
+  const handleFileSelection = (file: File) => {
+    setPrescriptionFile(file);
+    setUploadSuccess(false);
+    setPrescriptionId(null);
+    if (file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setPrescriptionFile(e.target.files[0]);
-      setUploadSuccess(false);
-      setPrescriptionId(null);
+      handleFileSelection(e.target.files[0]);
     }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelection(e.dataTransfer.files[0]);
+    }
+  };
+
+  const clearFile = () => {
+    setPrescriptionFile(null);
+    setPreviewUrl(null);
+    setUploadSuccess(false);
+    setPrescriptionId(null);
   };
 
   const handlePrescriptionUpload = async () => {
@@ -108,7 +144,7 @@ export default function CartPage() {
     }
 
     if (!user) {
-      toast.error('Authentication Required: Please sign in to upload prescriptions.');
+      toast.error('Please sign in to upload prescriptions.');
       return;
     }
 
@@ -268,24 +304,63 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="flex-1 w-full relative">
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
-                      onChange={handleFileChange}
-                      className="w-full text-sm text-slate-500 bg-white border border-brand-200 rounded-full py-2 px-4 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:bg-brand-100 file:text-brand-700 file:font-bold hover:file:bg-brand-200 transition-all outline-none"
-                    />
-                  </div>
-                  {prescriptionFile && (
-                    <button
-                      onClick={handlePrescriptionUpload}
-                      disabled={uploading || uploadSuccess}
-                      className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-3 px-8 rounded-full flex items-center gap-2 transition-all shadow-sm w-full sm:w-auto justify-center disabled:opacity-50"
+                <div className="flex flex-col space-y-4">
+                  {!prescriptionFile ? (
+                    <div 
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${isDragging ? 'border-brand-500 bg-brand-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}
                     >
-                      {uploading ? 'Processing...' : uploadSuccess ? 'Verified' : 'Upload'}
-                      {uploadSuccess ? <CheckCircle className="w-4 h-4 text-emerald-300" /> : <Upload className="w-4 h-4" />}
-                    </button>
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center gap-3">
+                        <Upload className={`w-8 h-8 ${isDragging ? 'text-brand-500' : 'text-slate-400'}`} />
+                        <p className="text-sm font-semibold text-slate-700">
+                          Drag & drop your prescription here or <span className="text-brand-600">click to browse</span>
+                        </p>
+                        <p className="text-xs font-medium text-slate-500">
+                          Supported formats: JPG, PNG, PDF (Max 5MB)<br/>
+                          Make sure the Doctor's name and Patient's name are clearly visible.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                      {previewUrl ? (
+                        <img src={previewUrl} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center shrink-0">
+                          <FileText className="w-8 h-8 text-slate-400" />
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0 text-center sm:text-left">
+                        <p className="text-sm font-bold text-slate-800 truncate">{prescriptionFile.name}</p>
+                        <p className="text-xs font-medium text-slate-500">{(prescriptionFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto mt-4 sm:mt-0">
+                        <button
+                          onClick={clearFile}
+                          className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                        >
+                          Change
+                        </button>
+                        <button
+                          onClick={handlePrescriptionUpload}
+                          disabled={uploading || uploadSuccess}
+                          className="flex-1 sm:flex-none bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-2 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+                        >
+                          {uploading ? 'Processing...' : uploadSuccess ? 'Verified' : 'Upload'}
+                          {uploadSuccess ? <CheckCircle className="w-4 h-4 text-emerald-300" /> : <Upload className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -422,30 +497,15 @@ export default function CartPage() {
                     <span className="text-slate-900">₹{formatCurrency(subtotal - savings)}</span>
                   </div>
 
-                  <div className="pt-2">
-                    <div 
-                      className="flex justify-between items-center cursor-pointer" 
-                      onClick={() => setShowAdditionalCharges(!showAdditionalCharges)}
-                    >
-                      <span className="flex items-center gap-1">
-                        Additional Charges
-                        {showAdditionalCharges ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </span>
-                      <span className="text-slate-900">₹{formatCurrency(gstAmount + ((subtotal - savings) > 500 ? 0 : 50))}</span>
+                  <div className="pt-2 border-t border-slate-100 mt-2 space-y-3">
+                    <div className="flex justify-between">
+                      <span>GST (18%)</span>
+                      <span className="text-slate-900">₹{formatCurrency(gstAmount)}</span>
                     </div>
-                    
-                    {showAdditionalCharges && (
-                      <div className="pl-4 mt-3 space-y-3 text-xs text-slate-400 border-l-2 border-slate-100">
-                        <div className="flex justify-between">
-                          <span>Estimated GST</span>
-                          <span>₹{formatCurrency(gstAmount)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Delivery Charges</span>
-                          <span>{(subtotal - savings) > 500 ? 'Free' : '₹50.00'}</span>
-                        </div>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span>Delivery Charges</span>
+                      <span className="text-slate-900">{(subtotal - savings) > 500 ? 'Free' : '₹50.00'}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -469,7 +529,7 @@ export default function CartPage() {
                   onClick={(e) => {
                     if (!user) {
                       e.preventDefault();
-                      alert('Please sign in to proceed with checkout.');
+                      toast.error('Please sign in to proceed with checkout.');
                       const signInBtn = document.querySelector('button[class*="bg-slate-900"]');
                       if (signInBtn) (signInBtn as HTMLButtonElement).click();
                     }

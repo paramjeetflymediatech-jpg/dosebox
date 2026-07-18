@@ -73,7 +73,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data?.success) {
-        setBlog({ ...blog, coverImage: 'http://localhost:5000' + res.data.fileUrl });
+        setBlog({ ...blog, coverImage: (process.env.NEXT_PUBLIC_APP_URL || '') + res.data.fileUrl });
       }
     } catch (err) {
       console.error('Failed to upload', err);

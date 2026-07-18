@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const fileName = `banner-${Date.now()}${ext}`;
       const filePath = path.join(uploadDir, fileName);
       await writeFile(filePath, buffer);
-      updateData.image = `/uploads/banners/${fileName}`;
+      updateData.image = `/api/file/banners/${fileName}`;
     } else if (typeof imageFile === 'string' && imageFile) {
       updateData.image = imageFile;
     }
