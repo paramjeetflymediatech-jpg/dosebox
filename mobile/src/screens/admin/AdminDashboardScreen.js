@@ -64,44 +64,44 @@ export default function AdminDashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
+          {/* Full Width Revenue Card */}
+          <View style={[styles.statCard, { width: '100%', backgroundColor: '#1F5C52', borderColor: '#1F5C52' }]}>
             <View style={styles.statHeader}>
-              <Text style={styles.statTitle}>Total Revenue</Text>
-              <View style={[styles.iconBox, { backgroundColor: '#D1FAE5' }]}><Text style={styles.icon}>💰</Text></View>
+              <View>
+                <Text style={[styles.statTitle, { color: '#D1FAE5' }]}>Total Revenue</Text>
+                <Text style={[styles.statValue, { color: '#fff', fontSize: rm(36) }]}>₹{formatCurrency(kpis?.totalRevenue)}</Text>
+              </View>
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}><Text style={styles.icon}>💸</Text></View>
             </View>
-            <Text style={styles.statValue}>₹{formatCurrency(kpis?.totalRevenue)}</Text>
           </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Text style={styles.statTitle}>Total Orders</Text>
-              <View style={[styles.iconBox, { backgroundColor: '#DBEAFE' }]}><Text style={styles.icon}>🛍️</Text></View>
+          {/* 2-Column Grid for other stats */}
+          <View style={styles.gridRow}>
+            <View style={styles.gridCard}>
+              <View style={[styles.iconBox, { backgroundColor: '#DBEAFE', marginBottom: rv(12) }]}><Text style={styles.icon}>🛍️</Text></View>
+              <Text style={styles.gridValue}>{kpis?.totalOrders?.toLocaleString() || 0}</Text>
+              <Text style={styles.gridTitle}>Total Orders</Text>
             </View>
-            <Text style={styles.statValue}>{kpis?.totalOrders?.toLocaleString() || 0}</Text>
+
+            <View style={styles.gridCard}>
+              <View style={[styles.iconBox, { backgroundColor: '#F3E8FF', marginBottom: rv(12) }]}><Text style={styles.icon}>👥</Text></View>
+              <Text style={styles.gridValue}>{kpis?.totalCustomers?.toLocaleString() || 0}</Text>
+              <Text style={styles.gridTitle}>Customers</Text>
+            </View>
           </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Text style={styles.statTitle}>Customers</Text>
-              <View style={[styles.iconBox, { backgroundColor: '#F3E8FF' }]}><Text style={styles.icon}>👥</Text></View>
+          <View style={styles.gridRow}>
+            <View style={styles.gridCard}>
+              <View style={[styles.iconBox, { backgroundColor: '#FFE4E6', marginBottom: rv(12) }]}><Text style={styles.icon}>⚠️</Text></View>
+              <Text style={[styles.gridValue, { color: '#E11D48' }]}>{kpis?.inventoryAlerts || 0}</Text>
+              <Text style={styles.gridTitle}>Inventory Alerts</Text>
             </View>
-            <Text style={styles.statValue}>{kpis?.totalCustomers?.toLocaleString() || 0}</Text>
-          </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Text style={styles.statTitle}>Inventory Alerts</Text>
-              <View style={[styles.iconBox, { backgroundColor: '#FFE4E6' }]}><Text style={styles.icon}>⚠️</Text></View>
+            <View style={styles.gridCard}>
+              <View style={[styles.iconBox, { backgroundColor: '#FEF3C7', marginBottom: rv(12) }]}><Text style={styles.icon}>⭐</Text></View>
+              <Text style={styles.gridValue}>{kpis?.totalTokens?.toLocaleString() || 0}</Text>
+              <Text style={styles.gridTitle}>Total Tokens</Text>
             </View>
-            <Text style={[styles.statValue, { color: '#E11D48' }]}>{kpis?.inventoryAlerts || 0} Items</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Text style={styles.statTitle}>Total Tokens</Text>
-              <View style={[styles.iconBox, { backgroundColor: '#FEF3C7' }]}><Text style={styles.icon}>⭐</Text></View>
-            </View>
-            <Text style={styles.statValue}>{kpis?.totalTokens?.toLocaleString() || 0}</Text>
           </View>
         </View>
       </ScrollView>
@@ -115,17 +115,26 @@ const styles = StyleSheet.create({
   loadingText: { marginTop: rv(12), color: '#64748B', fontSize: rm(15), fontWeight: '500' },
   content: { padding: spacing.md, paddingBottom: rv(100) },
   header: { marginBottom: rv(24), marginTop: rv(8) },
-  headerTitle: { fontSize: rm(26), fontWeight: '800', color: '#0F172A', letterSpacing: -0.5, marginBottom: rv(4) },
+  headerTitle: { fontSize: rm(28), fontWeight: '900', color: '#0F172A', letterSpacing: -1, marginBottom: rv(4) },
   headerSubtitle: { fontSize: rm(15), color: '#64748B', fontWeight: '500' },
   statsContainer: { gap: rv(16) },
   statCard: {
-    backgroundColor: '#fff', borderRadius: radius.xl, padding: spacing.xl,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    backgroundColor: '#fff', borderRadius: radius.xl + 4, padding: spacing.xl,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 8,
     borderWidth: 1, borderColor: '#F1F5F9'
   },
-  statHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rv(12) },
-  statTitle: { fontSize: rm(15), fontWeight: '600', color: '#64748B' },
-  iconBox: { width: rv(44), height: rv(44), borderRadius: rv(12), alignItems: 'center', justifyContent: 'center' },
-  icon: { fontSize: rm(20) },
-  statValue: { fontSize: rm(32), fontWeight: '800', color: '#0F172A', letterSpacing: -1 },
+  statHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  statTitle: { fontSize: rm(14), fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: '#64748B', marginBottom: rv(6) },
+  statValue: { fontSize: rm(32), fontWeight: '900', color: '#0F172A', letterSpacing: -1 },
+  iconBox: { width: rv(48), height: rv(48), borderRadius: rv(16), alignItems: 'center', justifyContent: 'center' },
+  icon: { fontSize: rm(22) },
+  
+  gridRow: { flexDirection: 'row', justifyContent: 'space-between', gap: rv(16) },
+  gridCard: {
+    flex: 1, backgroundColor: '#fff', borderRadius: radius.xl + 4, padding: spacing.lg,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 4,
+    borderWidth: 1, borderColor: '#F1F5F9'
+  },
+  gridValue: { fontSize: rm(26), fontWeight: '900', color: '#0F172A', letterSpacing: -0.5, marginBottom: rv(4) },
+  gridTitle: { fontSize: rm(13), fontWeight: '600', color: '#64748B' },
 });

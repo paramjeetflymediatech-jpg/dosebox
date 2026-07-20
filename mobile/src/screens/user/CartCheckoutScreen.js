@@ -170,6 +170,7 @@ export default function CartCheckoutScreen({ navigation }) {
           const country = address.country || '';
           
           const newAddress = {
+            id: 'current_loc',
             title: 'Current Location',
             street: streetName,
             city: city,
@@ -523,7 +524,7 @@ export default function CartCheckoutScreen({ navigation }) {
                 <View style={{ backgroundColor: '#F8FAFC', padding: rs(16), borderRadius: radius.md, borderWidth: 1, borderColor: '#E2E8F0' }}>
                   <Text style={{ fontSize: rm(14), color: C.text, lineHeight: rv(20) }}>
                     {selectedAddress
-                      ? `${selectedAddress.title ? `${selectedAddress.title} — ` : ''}${selectedAddress.street}${selectedAddress.city ? `, ${selectedAddress.city}` : ''}${selectedAddress.zipCode ? ` ${selectedAddress.zipCode}` : ''}`
+                      ? `${selectedAddress.id !== 'current_loc' && selectedAddress.title ? `${selectedAddress.title} — ` : ''}${selectedAddress.street}${selectedAddress.city ? `, ${selectedAddress.city}` : ''}${selectedAddress.zipCode ? ` ${selectedAddress.zipCode}` : ''}`
                       : 'No address selected. Please select one or fetch current.'}
                   </Text>
                 </View>
@@ -540,7 +541,7 @@ export default function CartCheckoutScreen({ navigation }) {
                 <View style={[styles.paymentCard, { padding: rs(16), marginBottom: rv(16) }]}>
                   <Text style={{ fontSize: rm(14), color: C.text, lineHeight: rv(20) }}>
                     {selectedAddress
-                      ? `${selectedAddress.title ? `${selectedAddress.title} — ` : ''}${selectedAddress.street}${selectedAddress.city ? `, ${selectedAddress.city}` : ''}${selectedAddress.zipCode ? ` ${selectedAddress.zipCode}` : ''}`
+                      ? `${selectedAddress.id !== 'current_loc' && selectedAddress.title ? `${selectedAddress.title} — ` : ''}${selectedAddress.street}${selectedAddress.city ? `, ${selectedAddress.city}` : ''}${selectedAddress.zipCode ? ` ${selectedAddress.zipCode}` : ''}`
                       : 'No address selected.'}
                   </Text>
                 </View>

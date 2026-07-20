@@ -72,64 +72,83 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Dashboard Overview</h1>
-          <p className="text-slate-500 mt-1 font-medium">Welcome back, {user?.name}</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Dashboard Overview</h1>
+          <p className="text-slate-500 mt-2 font-medium text-lg">Welcome back, {user?.name}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
-          <div>
-            <p className="text-sm font-semibold text-slate-500 mb-1">Total Revenue</p>
-            <h3 className="text-2xl font-black text-slate-800">₹{formatCurrency(kpis?.totalRevenue || 0)}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-100 transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="w-14 h-14 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <DollarSign className="w-7 h-7 text-emerald-600 drop-shadow-sm" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <DollarSign className="w-6 h-6 text-emerald-600" />
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
-          <div>
-            <p className="text-sm font-semibold text-slate-500 mb-1">Total Orders</p>
-            <h3 className="text-2xl font-black text-slate-800">{kpis?.totalOrders.toLocaleString()}</h3>
-          </div>
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <ShoppingBag className="w-6 h-6 text-blue-600" />
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-slate-500 mb-1 tracking-wide uppercase">Total Revenue</p>
+            <h3 className="text-3xl font-black text-slate-800 tracking-tight">₹{formatCurrency(kpis?.totalRevenue || 0)}</h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
-          <div>
-            <p className="text-sm font-semibold text-slate-500 mb-1">Customers</p>
-            <h3 className="text-2xl font-black text-slate-800">{kpis?.totalCustomers.toLocaleString()}</h3>
+
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-100 transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <ShoppingBag className="w-7 h-7 text-blue-600 drop-shadow-sm" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Users className="w-6 h-6 text-purple-600" />
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
-          <div>
-            <p className="text-sm font-semibold text-slate-500 mb-1">Inventory Alerts</p>
-            <h3 className="text-2xl font-black text-rose-600">{kpis?.inventoryAlerts} Items</h3>
-          </div>
-          <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <AlertTriangle className="w-6 h-6 text-rose-600" />
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-slate-500 mb-1 tracking-wide uppercase">Total Orders</p>
+            <h3 className="text-3xl font-black text-slate-800 tracking-tight">{kpis?.totalOrders.toLocaleString()}</h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-brand-200 transition-colors">
-          <div>
-            <p className="text-sm font-semibold text-slate-500 mb-1">Total Tokens</p>
-            <h3 className="text-2xl font-black text-amber-600">{kpis?.totalTokens?.toLocaleString() || '0'}</h3>
+
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-100 transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100/50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <Users className="w-7 h-7 text-purple-600 drop-shadow-sm" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <DollarSign className="w-6 h-6 text-amber-600" />
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-slate-500 mb-1 tracking-wide uppercase">Customers</p>
+            <h3 className="text-3xl font-black text-slate-800 tracking-tight">{kpis?.totalCustomers.toLocaleString()}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-100 transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="w-14 h-14 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <AlertTriangle className="w-7 h-7 text-rose-600 drop-shadow-sm" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-slate-500 mb-1 tracking-wide uppercase">Inventory Alerts</p>
+            <h3 className="text-3xl font-black text-rose-600 tracking-tight">{kpis?.inventoryAlerts} Items</h3>
+          </div>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-100 transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <DollarSign className="w-7 h-7 text-amber-600 drop-shadow-sm" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-slate-500 mb-1 tracking-wide uppercase">Total Tokens</p>
+            <h3 className="text-3xl font-black text-amber-600 tracking-tight">{kpis?.totalTokens?.toLocaleString() || '0'}</h3>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Revenue Trend</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white">
+          <h3 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2"><DollarSign className="w-6 h-6 text-emerald-500"/> Revenue Trend</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueChart}>
@@ -151,8 +170,8 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Customer Growth</h3>
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white">
+          <h3 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2"><Users className="w-6 h-6 text-purple-500"/> Customer Growth</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={growthChart}>

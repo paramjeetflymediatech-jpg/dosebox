@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import api from '../../services/api';
 
@@ -27,7 +29,9 @@ export default function AlertsScreen({ navigation }) {
     try {
       const res = await api.get('/account/alerts');
       if (res.data?.success) {
-        setAlerts(res.data.data || []);
+        const data = res.data.data || [];
+        setAlerts(data);
+        DeviceEventEmitter.emit('alerts_updated', data.some(a => !a.read));
       }
     } catch (e) {
       console.log('Failed to fetch alerts', e);
@@ -51,6 +55,7 @@ export default function AlertsScreen({ navigation }) {
       const res = await api.put('/account/alerts');
       if (res.data?.success) {
         setAlerts(alerts.map(a => ({ ...a, read: true })));
+        DeviceEventEmitter.emit('alerts_updated', false);
       }
     } catch (e) {
       console.log('Failed to mark alerts as read', e);
@@ -61,7 +66,9 @@ export default function AlertsScreen({ navigation }) {
     if (!item.read) {
       try {
         await api.put('/account/alerts', { alertId: item.id });
-        setAlerts(alerts.map(a => a.id === item.id ? { ...a, read: true } : a));
+        const newAlerts = alerts.map(a => a.id === item.id ? { ...a, read: true } : a);
+        setAlerts(newAlerts);
+        DeviceEventEmitter.emit('alerts_updated', newAlerts.some(a => !a.read));
       } catch (e) {}
     }
 
@@ -100,7 +107,12 @@ export default function AlertsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alerts</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: rs(12) }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Alerts</Text>
+        </View>
         <TouchableOpacity onPress={markAllRead}>
           <Text style={styles.markAll}>Mark all read</Text>
         </TouchableOpacity>

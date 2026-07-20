@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions, FlatList } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -32,8 +32,11 @@ export default function MedicineDetailScreen({ navigation, route }) {
   const [qty, setQty] = useState(1);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    
     if (initialMedicine?.id) {
       api.get(`/medicines/${initialMedicine.id}`)
         .then(res => {
@@ -95,7 +98,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
         <View style={{ width: rs(24) }} />
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(100) }} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollViewRef} style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(100) }} showsVerticalScrollIndicator={false}>
         
         {/* ── IMAGE SECTION ── */}
         <View style={styles.imageWrap}>

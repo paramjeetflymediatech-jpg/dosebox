@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Platform, TouchableOpacity, DeviceEventEmitter } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,7 @@ import CartCheckoutScreen from '../screens/user/CartCheckoutScreen';
 import ProceedScreen from '../screens/user/ProceedScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 
+import api from '../services/api';
 import { rs, rv, rm, TAB_BAR_HEIGHT } from '../utils/responsive';
 
 const Tab = createBottomTabNavigator();
@@ -18,16 +19,36 @@ const Tab = createBottomTabNavigator();
 const ACTIVE_COLOR = '#0852A1';
 const INACTIVE_COLOR = '#6B7280';
 
-function TabIcon({ iconName, color, focused }) {
+function TabIcon({ iconName, color, focused, hasDot }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
       <Ionicons name={iconName} size={rs(22)} color={color} />
+      {hasDot && <View style={styles.badgeDot} />}
     </View>
   );
 }
 
 export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    const checkAlerts = async () => {
+      try {
+        const res = await api.get('/account/alerts');
+        if (res.data?.success) {
+          setHasUnread(res.data.data.some(a => !a.read));
+        }
+      } catch (e) {}
+    };
+    checkAlerts();
+
+    const sub = DeviceEventEmitter.addListener('alerts_updated', (status) => {
+      setHasUnread(status);
+    });
+
+    return () => sub.remove();
+  }, []);
 
   // Height accounts for safe-area bottom (gesture bar on Android / home bar on iOS)
   const tabBarHeight = TAB_BAR_HEIGHT + insets.bottom;
@@ -66,7 +87,7 @@ export default function MainTabNavigator() {
         options={{
           tabBarLabel: 'Alert',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon iconName={focused ? 'notifications' : 'notifications-outline'} color={color} focused={focused} />
+            <TabIcon iconName={focused ? 'notifications' : 'notifications-outline'} color={color} focused={focused} hasDot={hasUnread} />
           ),
         }}
       />
@@ -128,5 +149,16 @@ const styles = StyleSheet.create({
   },
   iconWrapActive: {
     backgroundColor: '#E8F0FE',
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: rs(8),
+    right: rs(8),
+    width: rs(8),
+    height: rs(8),
+    borderRadius: rs(4),
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
 });

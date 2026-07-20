@@ -15,6 +15,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { rs, rv, rm, isTablet, spacing, radius } from '../../utils/responsive';
 import { useCart } from '../../context/CartContext';
@@ -69,7 +70,7 @@ const AnimatedQuickLink = ({ item, onPress }) => {
 
   return (
     <Animated.View style={[styles.quickCard, { backgroundColor: item.bg, transform: [{ scale }] }]}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
         activeOpacity={0.8}
         onPressIn={handlePressIn}
@@ -127,7 +128,7 @@ export default function HomeScreen({ navigation }) {
       const interval = setInterval(() => {
         let nextIndex = currentBannerIndexRef.current + 1;
         if (nextIndex >= banners.length) nextIndex = 0;
-        
+
         bannerListRef.current?.scrollToIndex({
           index: nextIndex,
           animated: true,
@@ -183,6 +184,14 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleFetchCurrentLocation = async () => {
+    const token = await AsyncStorage.getItem('accessToken');
+    if (!token) {
+      setShowLocationModal(false);
+      AlertService.show({ type: 'error', title: 'Login Required', message: 'Please login to use your current location.' });
+      navigation.navigate('Login');
+      return;
+    }
+
     const hasPermission = await PermissionsService.requestLocationPermission();
     if (!hasPermission) return;
 
@@ -240,10 +249,10 @@ export default function HomeScreen({ navigation }) {
   const renderCategoryCard = ({ item: cat, index }) => {
     const icon = cat.icon || cat.name?.charAt(0).toUpperCase() || '✨';
     const imageUrl = getFullImageUrl(cat.image);
-    
+
     return (
-      <TouchableOpacity 
-        style={styles.catCard} 
+      <TouchableOpacity
+        style={styles.catCard}
         activeOpacity={0.8}
         onPress={() => navigation.navigate('SearchScreen', { query: cat.name, categorySlug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-') })}
       >
@@ -269,20 +278,20 @@ export default function HomeScreen({ navigation }) {
     const bgColors = ['#E0F2FE', '#DCFCE7', '#FEE2E2', '#FEF3C7'];
     const textColors = ['#0284C7', '#16A34A', '#DC2626', '#D97706'];
     const colorIdx = post.id % bgColors.length;
-    
+
     const bgColor = post.color || bgColors[colorIdx];
     const textColor = post.text || textColors[colorIdx];
-    
+
     // Format date if it's a real timestamp
-    const dateStr = post.createdAt 
+    const dateStr = post.createdAt
       ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : post.date;
 
     const imageUrl = getFullImageUrl(post.coverImage);
 
     return (
-      <TouchableOpacity 
-        style={styles.blogCard} 
+      <TouchableOpacity
+        style={styles.blogCard}
         activeOpacity={0.8}
         onPress={() => navigation.navigate('BlogDetail', { blogId: post.id })}
       >
@@ -321,7 +330,11 @@ export default function HomeScreen({ navigation }) {
           <View style={{ flex: 1, marginRight: rs(4) }}>
             <Text style={styles.locationLabel}>Delivering to</Text>
             <Text style={styles.locationValue} numberOfLines={1}>
-              {selectedAddress ? `${selectedAddress.title}, ${selectedAddress.city}` : 'Select Location'}
+              {selectedAddress
+                ? (selectedAddress.id === 'current_loc' && selectedAddress.street
+                  ? `${selectedAddress.street}, ${selectedAddress.city}`
+                  : `${selectedAddress.title}, ${selectedAddress.city}`)
+                : 'Select Location'}
             </Text>
           </View>
           <Ionicons name="chevron-down" size={16} color={C.sub} />
@@ -347,7 +360,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* ── BANNERS ── */}
         {banners.length > 0 && (
-          <View style={{ marginBottom: rv(16), marginHorizontal: spacing.md, borderRadius: radius.xl, overflow: 'hidden' }}>
+          <View style={{ marginBottom: rv(16), marginHorizontal: spacing.md, overflow: 'hidden' }}>
             <FlatList
               ref={bannerListRef}
               data={banners}
@@ -361,18 +374,18 @@ export default function HomeScreen({ navigation }) {
                 setActiveBannerIndex(newIndex);
               }}
               renderItem={({ item }) => (
-                <TouchableOpacity 
-                  activeOpacity={0.9} 
+                <TouchableOpacity
+                  activeOpacity={0.9}
                   onPress={() => {
                     if (item.link) {
                       navigation.navigate(item.link);
                     }
                   }}
                 >
-                  <Image 
-                    source={{ uri: getFullImageUrl(item.image) }} 
-                    style={{ width: bannerWidth, height: bannerHeight, borderRadius: radius.xl, backgroundColor: C.border }} 
-                    resizeMode="contain" 
+                  <Image
+                    source={{ uri: getFullImageUrl(item.image) }}
+                    style={{ width: bannerWidth, height: bannerHeight, backgroundColor: C.border }}
+                    resizeMode="cover"
                   />
                 </TouchableOpacity>
               )}
@@ -380,15 +393,15 @@ export default function HomeScreen({ navigation }) {
             {banners.length > 1 && (
               <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: rv(8), left: 0, right: 0 }}>
                 {banners.map((_, idx) => (
-                  <View 
-                    key={idx} 
+                  <View
+                    key={idx}
                     style={{
                       width: activeBannerIndex === idx ? rs(16) : rs(6),
                       height: rs(6),
                       borderRadius: rs(3),
                       backgroundColor: activeBannerIndex === idx ? C.primary : 'rgba(255,255,255,0.5)',
                       marginHorizontal: rs(3),
-                    }} 
+                    }}
                   />
                 ))}
               </View>
@@ -399,15 +412,15 @@ export default function HomeScreen({ navigation }) {
         {/* Quick Links */}
         <View style={styles.quickGrid}>
           {quickLinks.map((item) => (
-            <AnimatedQuickLink 
-              key={item.id} 
-              item={item} 
-              onPress={() => navigation.navigate(item.route)} 
+            <AnimatedQuickLink
+              key={item.id}
+              item={item}
+              onPress={() => navigation.navigate(item.route)}
             />
           ))}
         </View>
 
-     
+
         {loadingData ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: rv(40) }} />
         ) : (
@@ -526,7 +539,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-           {/* ── OUR STATS ── */}
+        {/* ── OUR STATS ── */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>50k+</Text>
@@ -545,7 +558,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
 
-         {/* ── FEATURES SECTION ── */}
+        {/* ── FEATURES SECTION ── */}
         <View style={styles.featuresSection}>
           <View style={[styles.featureItem, { marginTop: rv(12) }]}>
             <Ionicons name="ribbon-outline" size={rm(32)} color={C.text} style={styles.featureIcon} />
@@ -580,9 +593,9 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity 
-              style={styles.locationFetchBtn} 
-              onPress={handleFetchCurrentLocation} 
+            <TouchableOpacity
+              style={styles.locationFetchBtn}
+              onPress={handleFetchCurrentLocation}
               disabled={fetchingLocation}
               activeOpacity={0.7}
             >
@@ -590,7 +603,7 @@ export default function HomeScreen({ navigation }) {
                 <ActivityIndicator color={C.primary} size="small" />
               ) : (
                 <>
-                  <Ionicons name="locate" size={18} color={C.primary} style={{marginRight: 6}} />
+                  <Ionicons name="locate" size={18} color={C.primary} style={{ marginRight: 6 }} />
                   <Text style={styles.locationFetchText}>Use Current Location</Text>
                 </>
               )}
@@ -645,7 +658,7 @@ const styles = StyleSheet.create({
   quickCard: { flex: 1, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', paddingVertical: rv(14), elevation: 0 },
   quickIconWrap: { marginBottom: rv(6), alignItems: 'center', justifyContent: 'center' },
   quickLabel: { fontSize: rm(12), fontWeight: '600', color: C.text, letterSpacing: -0.2 },
-  
+
   /* Stats Section */
   statsContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.white, marginHorizontal: spacing.md, marginTop: rv(8), marginBottom: rv(12), paddingVertical: rv(16), paddingHorizontal: spacing.lg, borderRadius: radius.xl, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, borderWidth: 1, borderColor: C.border },
   statBox: { alignItems: 'center', flex: 1 },

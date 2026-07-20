@@ -74,7 +74,12 @@ export default function BrowseMedicinesScreen({ navigation }) {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: rs(12) }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="arrow-back" size={rs(24)} color={C.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Explore</Text>
+        </View>
       </View>
 
       <ScrollView 
