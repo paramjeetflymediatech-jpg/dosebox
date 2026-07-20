@@ -45,6 +45,7 @@ export default function LoginScreen({ navigation, route }) {
   const handleGoogleLogin = async () => {
     try {
       await GoogleSignin.hasPlayServices();
+      try { await GoogleSignin.signOut(); } catch (e) {} // Force account picker
       const userInfo = await GoogleSignin.signIn();
       
       if (userInfo.type === 'cancelled') {

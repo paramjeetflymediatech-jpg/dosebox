@@ -107,8 +107,7 @@ export async function GET(req: NextRequest) {
       include: includeOptions,
       order,
       limit: limitNum,
-      offset,
-      distinct: true
+      offset
     });
 
     const totalPages = Math.ceil(count / limitNum);

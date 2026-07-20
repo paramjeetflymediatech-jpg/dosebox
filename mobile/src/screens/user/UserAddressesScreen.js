@@ -82,10 +82,14 @@ export default function UserAddressesScreen({ navigation }) {
       },
       (error) => {
         console.error('Geolocation error:', error);
-        AlertService.show({ type: 'error', title: 'Error', message: 'Failed to get current position.' });
+        if (error.code === 2) {
+          AlertService.show({ type: 'error', title: 'GPS Disabled', message: 'Please turn on Location (GPS) in your phone settings.' });
+        } else {
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to get current position. Make sure GPS is enabled.' });
+        }
         setFetchingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
     );
   };
 

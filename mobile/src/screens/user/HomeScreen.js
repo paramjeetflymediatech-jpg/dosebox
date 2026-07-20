@@ -21,6 +21,9 @@ import MedicineCard from '../../components/MedicineCard';
 import { useLocation } from '../../context/LocationContext';
 import api from '../../services/api';
 import { getFullImageUrl } from '../../utils/image';
+import Geolocation from '@react-native-community/geolocation';
+import PermissionsService from '../../services/PermissionsService';
+import { AlertService } from '../../services/AlertService';
 
 // ─── Color Tokens ────────────────────────────────────────────
 const C = {
@@ -65,6 +68,7 @@ export default function HomeScreen({ navigation }) {
   // Banner logic
   const bannerListRef = useRef(null);
   const currentBannerIndexRef = useRef(0);
+  const [fetchingLocation, setFetchingLocation] = useState(false);
   const { width: windowWidth } = Dimensions.get('window');
   const bannerWidth = windowWidth - spacing.md * 2;
   const bannerHeight = bannerWidth * 0.45;
@@ -138,6 +142,57 @@ export default function HomeScreen({ navigation }) {
   const handleOpenLocation = () => {
     fetchAddresses();
     setShowLocationModal(true);
+  };
+
+  const handleFetchCurrentLocation = async () => {
+    const hasPermission = await PermissionsService.requestLocationPermission();
+    if (!hasPermission) return;
+
+    setFetchingLocation(true);
+    Geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+            headers: {
+              'User-Agent': 'DoseboxApp/1.0',
+              'Accept-Language': 'en-US,en;q=0.9'
+            }
+          });
+          const data = await res.json();
+          if (data && data.address) {
+            const addr = data.address;
+            const newAddress = {
+              id: 'current_loc',
+              title: 'Current Location',
+              street: addr.road || addr.suburb || addr.neighbourhood || '',
+              city: addr.city || addr.town || addr.village || addr.county || '',
+              state: addr.state || '',
+              zipCode: addr.postcode || '',
+              country: addr.country || 'India'
+            };
+            selectAddress(newAddress);
+            setShowLocationModal(false);
+            AlertService.show({ type: 'success', title: 'Location Updated', message: 'Delivery location set to your current position.' });
+          }
+        } catch (err) {
+          console.error('Geocoding error:', err);
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to reverse geocode location.' });
+        } finally {
+          setFetchingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        if (error.code === 2) {
+          AlertService.show({ type: 'error', title: 'GPS Disabled', message: 'Please turn on Location (GPS) in your phone settings.' });
+        } else {
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to get current position. Make sure GPS is enabled.' });
+        }
+        setFetchingLocation(false);
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+    );
   };
 
   const renderMedicineCard = ({ item: med }) => {
@@ -486,6 +541,22 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
+            <TouchableOpacity 
+              style={styles.locationFetchBtn} 
+              onPress={handleFetchCurrentLocation} 
+              disabled={fetchingLocation}
+              activeOpacity={0.7}
+            >
+              {fetchingLocation ? (
+                <ActivityIndicator color={C.primary} size="small" />
+              ) : (
+                <>
+                  <Ionicons name="locate" size={18} color={C.primary} style={{marginRight: 6}} />
+                  <Text style={styles.locationFetchText}>Use Current Location</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
             {loadingAddresses ? (
               <ActivityIndicator size="large" color={C.primary} style={{ marginVertical: rv(32) }} />
             ) : addresses.length === 0 ? (
@@ -622,4 +693,6 @@ const styles = StyleSheet.create({
   blogMetaRow: { flexDirection: 'row', alignItems: 'center' },
   blogMeta: { fontSize: rm(11), color: C.sub, fontWeight: '500' },
   blogMetaDot: { fontSize: rm(11), color: '#CBD5E1', marginHorizontal: rv(6) },
+  locationFetchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E6FFFA', paddingVertical: rv(12), borderRadius: radius.md, marginBottom: rv(16), borderWidth: 1, borderColor: '#B2EBE3' },
+  locationFetchText: { color: C.primary, fontSize: rm(14), fontWeight: '600' }
 });

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions, FlatList } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCart } from '../../context/CartContext';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { getFullImageUrl } from '../../utils/image';
+import MedicineCard from '../../components/MedicineCard';
 import RenderHtml from 'react-native-render-html';
 import api from '../../services/api';
 
@@ -30,6 +31,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
   const [medicine, setMedicine] = useState(initialMedicine);
   const [qty, setQty] = useState(1);
   const [loadingDetails, setLoadingDetails] = useState(true);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     if (initialMedicine?.id) {
@@ -41,6 +43,15 @@ export default function MedicineDetailScreen({ navigation, route }) {
         })
         .catch(err => console.log('Error fetching detailed medicine data:', err))
         .finally(() => setLoadingDetails(false));
+
+      // Fetch related products
+      api.get('/medicines?limit=6')
+        .then(res => {
+          if (res.data?.success) {
+            setRelatedProducts(res.data.data.filter(m => m.id !== initialMedicine.id).slice(0, 5));
+          }
+        })
+        .catch(err => console.log('Error fetching related medicines:', err));
     } else {
       setLoadingDetails(false);
     }
@@ -159,6 +170,23 @@ export default function MedicineDetailScreen({ navigation, route }) {
             />
           </View>
         ))}
+
+        {/* ── RELATED PRODUCTS ── */}
+        {relatedProducts.length > 0 && (
+          <View style={[styles.section, { paddingRight: 0, backgroundColor: 'transparent' }]}>
+            <Text style={styles.sectionTitle}>Related Products</Text>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={relatedProducts}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <MedicineCard med={item} containerStyle={{ marginRight: rs(12), width: rs(160) }} />
+              )}
+              contentContainerStyle={{ paddingRight: spacing.md }}
+            />
+          </View>
+        )}
       </ScrollView>
 
       {/* ── BOTTOM STICKY BAR ── */}
