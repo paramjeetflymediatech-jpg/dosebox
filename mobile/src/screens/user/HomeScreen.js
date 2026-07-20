@@ -12,6 +12,7 @@ import {
   StatusBar,
   Dimensions,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -47,6 +48,43 @@ const CATEGORY_GRADIENTS = [
   ['#3ea8b0', '#5dc8d0'],
 ];
 
+const AnimatedQuickLink = ({ item, onPress }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.92,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 4,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={[styles.quickCard, { backgroundColor: item.bg, transform: [{ scale }] }]}>
+      <TouchableOpacity 
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
+        activeOpacity={0.8}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+      >
+        <View style={styles.quickIconWrap}>
+          <Ionicons name={item.icon} size={26} color={item.color} />
+        </View>
+        <Text style={styles.quickLabel}>{item.label}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 export default function HomeScreen({ navigation }) {
   const { totalQty, addToCart } = useCart();
   const { selectedAddress, selectAddress } = useLocation();
@@ -74,10 +112,10 @@ export default function HomeScreen({ navigation }) {
   const bannerHeight = bannerWidth * 0.45;
 
   const quickLinks = [
-    { id: 1, label: 'Medicines', emoji: '💊', bg: '#EEF8F6', route: 'ExploreTab' },
-    { id: 2, label: 'Consult', emoji: '🩺', bg: '#FFF7E6', route: 'HomeTab' },
-    { id: 3, label: 'Prescription', emoji: '📋', bg: '#F0EEFF', route: 'UploadPrescription' },
-    { id: 4, label: 'My Orders', emoji: '📦', bg: '#FFF0F0', route: 'Proceed' },
+    { id: 1, label: 'Medicines', icon: 'medical-outline', color: '#0F766E', bg: '#EEF8F6', route: 'ExploreTab' },
+    { id: 2, label: 'Consult', icon: 'chatbubbles-outline', color: '#B45309', bg: '#FFF7E6', route: 'HomeTab' },
+    { id: 3, label: 'Prescription', icon: 'document-text-outline', color: '#4338CA', bg: '#F0EEFF', route: 'UploadPrescription' },
+    { id: 4, label: 'My Orders', icon: 'cube-outline', color: '#BE123C', bg: '#FFF0F0', route: 'Proceed' },
   ];
 
   useEffect(() => {
@@ -361,10 +399,11 @@ export default function HomeScreen({ navigation }) {
         {/* Quick Links */}
         <View style={styles.quickGrid}>
           {quickLinks.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.quickCard, { backgroundColor: item.bg }]} onPress={() => navigation.navigate(item.route)} activeOpacity={0.75}>
-              <Text style={styles.quickEmoji}>{item.emoji}</Text>
-              <Text style={styles.quickLabel}>{item.label}</Text>
-            </TouchableOpacity>
+            <AnimatedQuickLink 
+              key={item.id} 
+              item={item} 
+              onPress={() => navigation.navigate(item.route)} 
+            />
           ))}
         </View>
 
@@ -604,7 +643,7 @@ const styles = StyleSheet.create({
 
   quickGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: rv(24), gap: rs(10), paddingHorizontal: spacing.md },
   quickCard: { flex: 1, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', paddingVertical: rv(14), elevation: 0 },
-  quickEmoji: { fontSize: rs(24), marginBottom: rv(6) },
+  quickIconWrap: { marginBottom: rv(6), alignItems: 'center', justifyContent: 'center' },
   quickLabel: { fontSize: rm(12), fontWeight: '600', color: C.text, letterSpacing: -0.2 },
   
   /* Stats Section */

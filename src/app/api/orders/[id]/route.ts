@@ -5,6 +5,7 @@ import { Order, Notification, User, Address, OrderItem, Medicine } from '../../.
 import { sendOrderStatusEmail, sendOrderCancelledEmail } from '../../../../lib/email';
 import { initiatePhonePeRefund } from '../../payments/phonepe/refund/route';
 import { getLogisticsProvider } from '../../../../lib/logistics';
+import { sendPushNotification } from '../../../../lib/push';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -130,11 +131,18 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
       await order.save();
       
       if (status || trackingMessage) {
+        const title = 'Order Update';
+        const msg = `Your order #OD-${order.id} has an update: ${status || order.status}`;
+        
         await Notification.create({
           userId: order.userId,
-          title: 'Order Update',
-          message: `Your order #OD-${order.id} has an update: ${status || order.status}`
+          title,
+          message: msg
         });
+
+        if (user.fcmToken) {
+          await sendPushNotification(user.fcmToken, title, msg, { orderId: String(order.id) });
+        }
       }
     }
 

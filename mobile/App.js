@@ -27,6 +27,18 @@ export default function App() {
         if (token) {
           const AsyncStorage = require('@react-native-async-storage/async-storage').default;
           await AsyncStorage.setItem('fcmToken', token);
+          
+          // Send to backend if logged in
+          try {
+            const api = require('./src/services/api').default;
+            const accessToken = await AsyncStorage.getItem('accessToken');
+            if (accessToken) {
+              await api.put('/account/fcm-token', { fcmToken: token });
+              console.log('FCM token sent to backend');
+            }
+          } catch (e) {
+            console.log('Failed to send FCM token to backend', e);
+          }
         }
       }
     };

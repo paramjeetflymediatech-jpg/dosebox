@@ -79,8 +79,9 @@ export interface UserAttributes {
   address?: string;
   resetOtp?: string | null;
   resetOtpExpires?: Date | null;
+  fcmToken?: string | null;
 }
-export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'doseboxTokens' | 'tokenRefundCount' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires'>> implements UserAttributes {
+export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'doseboxTokens' | 'tokenRefundCount' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires' | 'fcmToken'>> implements UserAttributes {
   declare id: number;
   declare name: string;
   declare email: string;
@@ -101,6 +102,7 @@ export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 
   declare role?: Role;
   declare resetOtp?: string | null;
   declare resetOtpExpires?: Date | null;
+  declare fcmToken?: string | null;
 }
 User.init(
   {
@@ -123,6 +125,7 @@ User.init(
     address: { type: DataTypes.TEXT, allowNull: true },
     resetOtp: { type: DataTypes.STRING, allowNull: true },
     resetOtpExpires: { type: DataTypes.DATE, allowNull: true },
+    fcmToken: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: 'User', tableName: 'users', timestamps: true }
 );

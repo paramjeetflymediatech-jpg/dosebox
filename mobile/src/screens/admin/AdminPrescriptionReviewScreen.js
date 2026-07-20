@@ -162,7 +162,7 @@ export default function AdminPrescriptionReviewScreen({ route, navigation }) {
       )}
       <View style={styles.searchResultText}>
         <Text style={styles.searchResultTitle} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.searchResultSub}>₹{(item.discountPrice || item.price).toFixed(2)} • Stock: {item.stock}</Text>
+        <Text style={styles.searchResultSub}>₹{Number(item.discountPrice || item.price || 0).toFixed(2)} • Stock: {item.stock}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -232,7 +232,7 @@ export default function AdminPrescriptionReviewScreen({ route, navigation }) {
                   )}
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.productName}>{item.product.name}</Text>
-                    <Text style={styles.productPrice}>₹{(item.product.discountPrice || item.product.price).toFixed(2)}</Text>
+                    <Text style={styles.productPrice}>₹{Number(item.product.discountPrice || item.product.price || 0).toFixed(2)}</Text>
                   </View>
                   
                   <View style={styles.qtyControls}>
