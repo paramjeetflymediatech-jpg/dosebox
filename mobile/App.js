@@ -23,7 +23,11 @@ export default function App() {
     const initPushNotifications = async () => {
       const hasPermission = await PushNotificationService.requestUserPermission();
       if (hasPermission) {
-        await PushNotificationService.getFCMToken();
+        const token = await PushNotificationService.getFCMToken();
+        if (token) {
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          await AsyncStorage.setItem('fcmToken', token);
+        }
       }
     };
 

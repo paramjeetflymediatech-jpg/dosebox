@@ -37,7 +37,7 @@ export default function LoginScreen({ navigation, route }) {
 
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: '73308780119-l6f0l7j1qttf8hdcrfjlbvurlst034un.apps.googleusercontent.com',
+      webClientId: '680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com',
       offlineAccess: true,
     });
   }, []);
@@ -46,9 +46,18 @@ export default function LoginScreen({ navigation, route }) {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      const user = userInfo.user;
+      
+      if (userInfo.type === 'cancelled') {
+        return;
+      }
+      
+      const user = userInfo.data ? userInfo.data.user : userInfo.user;
+      if (!user) {
+        throw new Error('Unable to retrieve user data from Google');
+      }
 
       setLoading(true);
+      const fcmToken = await AsyncStorage.getItem('fcmToken');
       const payload = {
         googleId: user.id,
         email: user.email,
@@ -56,6 +65,7 @@ export default function LoginScreen({ navigation, route }) {
         avatar: user.photo,
         device_platform: Platform.OS,
         device_id: 'device_' + Math.random().toString(36).substring(7),
+        push_token: fcmToken || '',
         app_version: '0.0.1'
       };
 
@@ -118,11 +128,13 @@ export default function LoginScreen({ navigation, route }) {
 
     setLoading(true);
     try {
+      const fcmToken = await AsyncStorage.getItem('fcmToken');
       const payload = {
         email: email.trim(),
         password,
         device_platform: Platform.OS,
         device_id: 'device_' + Math.random().toString(36).substring(7),
+        push_token: fcmToken || '',
         app_version: '0.0.1'
       };
 

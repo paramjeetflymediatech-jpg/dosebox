@@ -102,9 +102,9 @@ export default function HomeScreen({ navigation }) {
     setLoadingData(true);
     try {
       const [catRes, recRes, trendRes, bannersRes, blogsRes] = await Promise.all([
-        api.get('/medicines/categories'),
+        api.get('/medicines/categories').catch(() => ({ data: { success: false } })),
         api.get('/medicines/recommendations').catch(() => ({ data: { success: false } })),
-        api.get('/medicines?limit=5'),
+        api.get('/medicines?limit=5').catch(() => ({ data: { success: false } })),
         api.get('/banners').catch(() => ({ data: { success: false } })),
         api.get('/blogs').catch(() => ({ data: { success: false } }))
       ]);

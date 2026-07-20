@@ -22,6 +22,7 @@ import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import api from '../../services/api';
 import { getFullImageUrl } from '../../utils/image';
 import PermissionsService from '../../services/PermissionsService';
+import Geolocation from '@react-native-community/geolocation';
 
 const C = {
   primary: '#1F5C52',
@@ -143,41 +144,54 @@ export default function CartCheckoutScreen({ navigation }) {
     if (!hasPermission) return;
 
     setIsFetchingLocation(true);
-    try {
-      let data = null;
-      try {
-        const response = await fetch('https://ipapi.co/json/');
-        if (!response.ok) throw new Error('ipapi failed');
-        data = await response.json();
-        if (data.error) throw new Error(data.reason || 'ipapi error');
-      } catch (e) {
-        // Fallback to ipinfo.io if ipapi fails (e.g. rate limit on physical device)
-        const fbResponse = await fetch('https://ipinfo.io/json');
-        if (!fbResponse.ok) throw new Error('ipinfo failed');
-        const fbData = await fbResponse.json();
-        data = {
-          city: fbData.city,
-          region: fbData.region,
-          postal: fbData.postal,
-          country_name: fbData.country === 'IN' ? 'India' : fbData.country === 'US' ? 'United States' : fbData.country
-        };
-      }
-      
-      const newAddress = {
-        title: 'Current Location',
-        street: `${data.city || 'Unknown'} Area`,
-        city: data.city || '',
-        state: data.region || '',
-        zipCode: data.postal || '',
-        country: data.country_name || '',
-      };
-      selectAddress(newAddress);
-    } catch (error) {
-      console.error('Fetch Location Error:', error);
-      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to fetch location automatically. Please enter manually.' });
-    } finally {
-      setIsFetchingLocation(false);
-    }
+    
+    Geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          
+          // Use OpenStreetMap Nominatim for free reverse geocoding
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`, {
+            headers: {
+              'User-Agent': 'DoseBoxApp/1.0',
+              'Accept-Language': 'en-US,en;q=0.9'
+            }
+          });
+          
+          if (!response.ok) throw new Error('Reverse geocoding failed');
+          const data = await response.json();
+          
+          const address = data.address || {};
+          
+          const streetName = address.road || address.pedestrian || address.neighbourhood || address.suburb || 'Unknown Street';
+          const city = address.city || address.town || address.village || address.county || '';
+          const state = address.state || '';
+          const zipCode = address.postcode || '';
+          const country = address.country || '';
+          
+          const newAddress = {
+            title: 'Current Location',
+            street: streetName,
+            city: city,
+            state: state,
+            zipCode: zipCode,
+            country: country,
+          };
+          selectAddress(newAddress);
+        } catch (error) {
+          console.error('Geocoding error:', error);
+          AlertService.show({ type: 'error', title: 'Error', message: 'Could not get address from location.' });
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation Error:', error);
+        AlertService.show({ type: 'error', title: 'Location Error', message: error.message || 'Failed to fetch device location.' });
+        setIsFetchingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
   };
 
   const handlePlaceOrder = async () => {

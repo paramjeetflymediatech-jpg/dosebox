@@ -12,7 +12,20 @@
           "package_name": "com.doseboxmobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "680555726982-73f368k1095n2j2brc8hsio4hd4s0vn4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.doseboxmobile",
+            "certificate_hash": "18c5ccae8820aaf258daaa8645860100dbec1cd7"
+          }
+        },
+        {
+          "client_id": "680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD3HHpM6wt1J5AWlS3CbuFNNDh_q9HtVdM"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -55,17 +55,16 @@ class PermissionsService {
     if (Platform.OS !== 'android') return true;
 
     try {
-      const granted = await PermissionsAndroid.request(
+      const permissions = [
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Permission',
-          message: 'DoseBox needs access to your location to automatically fetch your delivery address.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      ];
+      const granted = await PermissionsAndroid.requestMultiple(permissions);
+      
+      const fineGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
+      const coarseGranted = granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
+
+      if (fineGranted || coarseGranted) {
         return true;
       } else {
         AlertService.show({
