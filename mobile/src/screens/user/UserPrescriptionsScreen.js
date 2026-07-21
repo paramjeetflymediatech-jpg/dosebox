@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image, Modal, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
+import { getFullImageUrl } from '../../utils/image';
+import { AlertService } from '../../services/AlertService';
 
 export default function UserPrescriptionsScreen({ navigation }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [viewImageUri, setViewImageUri] = useState(null);
   
   const { addToCart, setVerifiedCart } = useCart();
@@ -19,6 +22,12 @@ export default function UserPrescriptionsScreen({ navigation }) {
     });
     return unsubscribe;
   }, [navigation]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchPrescriptions();
+    setRefreshing(false);
+  };
 
   const fetchPrescriptions = async () => {
     try {
@@ -42,10 +51,10 @@ export default function UserPrescriptionsScreen({ navigation }) {
             if (res.data?.success) {
               setPrescriptions(prev => prev.filter(p => p.id !== id));
             } else {
-              Alert.alert('Error', res.data?.message || 'Failed to delete');
+              AlertService.show({ type: 'error', title: 'Error', message: res.data?.message || 'Failed to delete' });
             }
           } catch (err) {
-            Alert.alert('Error', 'Failed to delete prescription');
+            AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete prescription' });
           }
       }},
     ]);
@@ -57,7 +66,8 @@ export default function UserPrescriptionsScreen({ navigation }) {
     const verifiedItems = draftCart.items.map(item => ({
       id: item.medicine.id,
       name: item.medicine.name,
-      price: item.medicine.discountPrice || item.medicine.price,
+      price: item.medicine.price,
+      discountPrice: item.medicine.discountPrice || null,
       qty: item.quantity,
       image: item.medicine.images?.[0] || '',
       prescriptionRequired: item.medicine.requiresPrescription || true,
@@ -65,7 +75,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
 
     if (verifiedItems.length > 0) {
       setVerifiedCart(verifiedItems, prescriptionId);
-      Alert.alert('Success', 'Verified prescription medicines loaded into cart');
+      AlertService.show({ type: 'success', title: 'Success', message: 'Verified prescription medicines loaded into cart' });
       navigation.navigate('CartCheckout');
     }
   };
@@ -99,7 +109,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
         {item.pharmacistNotes ? <Text style={styles.notesText} numberOfLines={2}>Notes: {item.pharmacistNotes}</Text> : null}
         
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setViewImageUri(item.fileUrl)}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setViewImageUri(getFullImageUrl(item.fileUrl))}>
             <Ionicons name="eye-outline" size={16} color="#0D1B2A" />
             <Text style={styles.actionText}>View</Text>
           </TouchableOpacity>
@@ -136,25 +146,27 @@ export default function UserPrescriptionsScreen({ navigation }) {
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#1F5C52" />
         </View>
-      ) : prescriptions.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyTitle}>No Prescriptions Found</Text>
-          <Text style={styles.emptySub}>Upload a prescription to get started</Text>
-          <TouchableOpacity 
-            style={styles.primaryBtn}
-            onPress={() => navigation.navigate('UploadPrescription')}
-          >
-            <Text style={styles.primaryBtnText}>Upload Prescription</Text>
-          </TouchableOpacity>
-        </View>
       ) : (
         <FlatList
           data={prescriptions}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={prescriptions.length === 0 ? [styles.list, { flex: 1 }] : styles.list}
           ItemSeparatorComponent={() => <View style={{ height: rv(12) }} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F5C52']} />}
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Text style={styles.emptyIcon}>📋</Text>
+              <Text style={styles.emptyTitle}>No Prescriptions Found</Text>
+              <Text style={styles.emptySub}>Upload a prescription to get started</Text>
+              <TouchableOpacity 
+                style={styles.primaryBtn}
+                onPress={() => navigation.navigate('UploadPrescription')}
+              >
+                <Text style={styles.primaryBtnText}>Upload Prescription</Text>
+              </TouchableOpacity>
+            </View>
+          }
         />
       )}
 

@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminGlobalSEOScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -39,7 +40,7 @@ export default function AdminGlobalSEOScreen({ navigation }) {
       }
     } catch (err) {
       console.log('Error loading Global SEO:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to load Global SEO'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to load Global SEO' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,25 +79,25 @@ export default function AdminGlobalSEOScreen({ navigation }) {
       loadData();
     } catch (err) {
       console.log('Failed to save Global SEO:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Global SEO'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Global SEO' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Delete', 'Are you sure you want to delete this item?', [
+    AlertService.show({ type: 'warning', title: 'Delete', message: 'Are you sure you want to delete this item?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
             await api.delete('/admin/settings/seo/' + id);
             setData(data.filter(item => item.id !== id));
           } catch (err) {
-            setTimeout(() => Alert.alert('Error', 'Failed to delete item'), 100);
+            AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete item' });
           }
         } 
       }
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => (

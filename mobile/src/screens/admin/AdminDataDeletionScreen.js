@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminDataDeletionScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -50,36 +51,36 @@ export default function AdminDataDeletionScreen({ navigation }) {
     try {
       const res = await api.patch(`/admin/data-deletion/${selectedRequest.id}`, { status });
       if (res.data?.success) {
-        Alert.alert('Success', `Status updated to ${status}`);
+        AlertService.show({ type: 'success', title: 'Success', message: `Status updated to ${status}` });
         loadData();
         setModalVisible(false);
       } else {
-        Alert.alert('Error', res.data?.message || 'Failed to update request');
+        AlertService.show({ type: 'error', title: 'Error', message: res.data?.message || 'Failed to update request' });
       }
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.message || err.message);
+      AlertService.show({ type: 'error', title: 'Error', message: err.response?.data?.message || err.message });
     } finally {
       setUpdating(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Confirm Delete', 'Are you sure you want to delete this request record? This cannot be undone.', [
+    AlertService.show({ type: 'warning', title: 'Confirm Delete', message: 'Are you sure you want to delete this request record? This cannot be undone.', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           const res = await api.delete(`/admin/data-deletion/${id}`);
           if (res.data?.success) {
-            Alert.alert('Deleted', 'Request deleted successfully');
+            AlertService.show({ type: 'info', title: 'Deleted', message: 'Request deleted successfully' });
             loadData();
           } else {
-            Alert.alert('Error', res.data?.message || 'Failed to delete');
+            AlertService.show({ type: 'error', title: 'Error', message: res.data?.message || 'Failed to delete' });
           }
         } catch (err) {
-          Alert.alert('Error', err.response?.data?.message || err.message);
+          AlertService.show({ type: 'error', title: 'Error', message: err.response?.data?.message || err.message });
         }
       }}
-    ]);
+    ]});
   };
 
   const openDetails = (req) => {

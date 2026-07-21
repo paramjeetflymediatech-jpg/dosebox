@@ -467,15 +467,16 @@ Return ONLY JSON.
      // ============================================
 
 
-     const medicineCatalog = await Medicine.findAll();
+     const medicineCatalog = await Medicine.findAll({
+       attributes: ['id', 'name', 'genericName', 'composition', 'manufacturer', 'price', 'discountPrice', 'stock', 'images'],
+       raw: true
+     });
      const matchedResults = [];
      let overallConfidence = 1;
      let hasLowConfidence = false;
      // ============================================
      // Process Each Medicine
      // ============================================
-
-
 
 
      for (const item of medicinesList) {

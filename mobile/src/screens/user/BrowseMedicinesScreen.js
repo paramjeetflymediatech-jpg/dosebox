@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -53,22 +54,30 @@ const MENU_SECTIONS = [
 export default function BrowseMedicinesScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await api.get('/categories');
-        if (res.data?.success) {
-          setCategories(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCategories();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCategories();
+    setRefreshing(false);
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories');
+      if (res.data?.success) {
+        setCategories(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -86,6 +95,7 @@ export default function BrowseMedicinesScreen({ navigation }) {
         style={styles.scroll} 
         contentContainerStyle={styles.content} 
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
       >
         <Text style={styles.sectionTitle}>Medicine Categories</Text>
         {loading ? (

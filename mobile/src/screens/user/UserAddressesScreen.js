@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
@@ -11,6 +11,7 @@ import PermissionsService from '../../services/PermissionsService';
 export default function UserAddressesScreen({ navigation }) {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -31,6 +32,12 @@ export default function UserAddressesScreen({ navigation }) {
   useEffect(() => {
     fetchAddresses();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchAddresses();
+    setRefreshing(false);
+  };
 
   const fetchAddresses = async () => {
     try {
@@ -208,19 +215,21 @@ export default function UserAddressesScreen({ navigation }) {
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#0c888d" />
         </View>
-      ) : addresses.length === 0 ? (
-        <View style={styles.center}>
-          <Ionicons name="map-outline" size={48} color="#94a3b8" style={{marginBottom: 16}} />
-          <Text style={styles.emptyTitle}>No Addresses Found</Text>
-          <Text style={styles.emptySub}>You haven't saved any delivery addresses yet.</Text>
-        </View>
       ) : (
         <FlatList
           data={addresses}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={addresses.length === 0 ? [styles.list, { flex: 1 }] : styles.list}
           ItemSeparatorComponent={() => <View style={{ height: rv(12) }} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0c888d']} />}
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Ionicons name="map-outline" size={48} color="#94a3b8" style={{marginBottom: 16}} />
+              <Text style={styles.emptyTitle}>No Addresses Found</Text>
+              <Text style={styles.emptySub}>You haven't saved any delivery addresses yet.</Text>
+            </View>
+          }
         />
       )}
       

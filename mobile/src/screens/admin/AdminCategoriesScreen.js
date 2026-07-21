@@ -11,6 +11,7 @@ import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
 import { getFullImageUrl } from '../../utils/image';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminCategoriesScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -58,11 +59,11 @@ export default function AdminCategoriesScreen({ navigation }) {
       if (res.data?.success) {
         setFormData(prev => ({ ...prev, image: res.data.fileUrl }));
       } else {
-        setTimeout(() => Alert.alert('Error', res.data?.message || 'Failed to upload image'), 100);
+        AlertService.show({ type: 'error', title: 'Error', message: res.data?.message || 'Failed to upload image' });
       }
     } catch (e) {
       console.log('Upload error:', e);
-      setTimeout(() => Alert.alert('Error', 'Failed to upload image'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to upload image' });
     } finally {
       setUploadingImage(false);
     }
@@ -112,42 +113,52 @@ export default function AdminCategoriesScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!formData.name || !formData.slug) {
-      setTimeout(() => Alert.alert('Error', 'Name and Slug are required'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Name and Slug are required' });
       return;
     }
     setSaving(true);
     try {
-      const payload = { ...formData };
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name || '');
+      formDataToSend.append('slug', formData.slug || '');
+      formDataToSend.append('description', formData.description || '');
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
       
+      const config = {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      };
+
       if (isEditing) {
-        await api.put(`/admin/categories/${currentId}`, payload);
-        Alert.alert('Success', 'Category updated successfully');
+        await api.put(`/admin/categories/${currentId}`, formDataToSend, config);
+        AlertService.show({ type: 'success', title: 'Success', message: 'Category updated successfully' });
       } else {
-        await api.post('/admin/categories', payload);
-        Alert.alert('Success', 'Category created successfully');
+        await api.post('/admin/categories', formDataToSend, config);
+        AlertService.show({ type: 'success', title: 'Success', message: 'Category created successfully' });
       }
       setModalVisible(false);
       loadData();
     } catch (err) {
       console.log('Save error:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Category'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Category' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Confirm', 'Delete this category?', [
+    AlertService.show({ type: 'warning', title: 'Confirm', message: 'Delete this category?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           await api.delete(`/admin/categories/${id}`);
           loadData();
         } catch (err) {
-          setTimeout(() => Alert.alert('Error', 'Failed to delete'), 100);
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete' });
         }
       }}
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => (

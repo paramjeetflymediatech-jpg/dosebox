@@ -11,7 +11,8 @@ import {
   Modal,
   TextInput,
   Image,
-  Alert
+  Alert,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -51,6 +52,7 @@ const getRichTimeline = (order, timeline) => {
   ];
 
   let maxCompletedIndex = 0;
+  if (order.status === 'Payment Pending') maxCompletedIndex = -1;
   if (order.status === 'Confirmed') maxCompletedIndex = Math.max(maxCompletedIndex, 1);
   if (order.status === 'Packed') maxCompletedIndex = Math.max(maxCompletedIndex, 3);
   if (order.status === 'Shipped') maxCompletedIndex = Math.max(maxCompletedIndex, 4);
@@ -95,30 +97,42 @@ export default function OrderTrackingScreen({ route, navigation }) {
   const [isClaimMode, setIsClaimMode] = useState(false);
   const [tokenRefundCount, setTokenRefundCount] = useState(0);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOrderData = async () => {
+    await Promise.all([
+      api.get('/orders').then(res => {
+        if (res.data?.success) {
+          const updated = res.data.data.find(o => o.id === order.id);
+          if (updated) setOrder(updated);
+        }
+      }).catch(()=>{}),
+      api.get('/account/profile').then(res => {
+        if (res.data?.success) setTokenRefundCount(res.data.data.tokenRefundCount || 0);
+      }).catch(()=>{})
+    ]);
+
+    if (order.trackingId && order.status !== 'Cancelled') {
+      setLoadingTracking(true);
+      await api.get(`/orders/${order.id}/track`).then(res => {
+        if (res.data?.success && res.data.data) setLiveTracking(res.data.data);
+      }).finally(() => setLoadingTracking(false)).catch(()=>{});
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchOrderData();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     if (!order) {
       Alert.alert('Error', 'No order details available.');
       navigation.goBack();
       return;
     }
-
-    api.get('/orders').then(res => {
-      if (res.data?.success) {
-        const updated = res.data.data.find(o => o.id === order.id);
-        if (updated) setOrder(updated);
-      }
-    });
-
-    api.get('/account/profile').then(res => {
-      if (res.data?.success) setTokenRefundCount(res.data.data.tokenRefundCount || 0);
-    });
-
-    if (order.trackingId && order.status !== 'Cancelled') {
-      setLoadingTracking(true);
-      api.get(`/orders/${order.id}/track`).then(res => {
-        if (res.data?.success && res.data.data) setLiveTracking(res.data.data);
-      }).finally(() => setLoadingTracking(false));
-    }
+    fetchOrderData();
   }, [order?.id]);
 
   if (!order) return <View style={styles.container} />;
@@ -195,6 +209,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
     if (status === 'Cancelled') return { bg: C.dangerLight, text: C.danger };
     if (status === 'Delivered') return { bg: C.successLight, text: C.success };
     if (status === 'Shipped' || status === 'Out For Delivery') return { bg: C.blueLight, text: C.blue };
+    if (status === 'Payment Pending') return { bg: C.dangerLight, text: C.danger };
     return { bg: C.warningLight, text: C.warning };
   };
   
@@ -210,7 +225,12 @@ export default function OrderTrackingScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>Order #{order.id}</Text>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: rv(80) }} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scroll} 
+        contentContainerStyle={{ paddingBottom: rv(80) }} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
+      >
 
         {/* Top Info Card */}
         <View style={[styles.card, styles.shadow]}>

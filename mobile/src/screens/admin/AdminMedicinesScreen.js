@@ -11,6 +11,7 @@ import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
 import { getFullImageUrl } from '../../utils/image';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminMedicinesScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -105,11 +106,11 @@ export default function AdminMedicinesScreen({ navigation }) {
       if (res.data?.success) {
         setFormData(prev => ({ ...prev, images: res.data.fileUrl }));
       } else {
-        setTimeout(() => Alert.alert('Error', res.data?.message || 'Failed to upload image'), 100);
+        AlertService.show({ type: 'error', title: 'Error', message: res.data?.message || 'Failed to upload image' });
       }
     } catch (e) {
       console.log('Upload error:', e);
-      setTimeout(() => Alert.alert('Error', 'Failed to upload image'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to upload image' });
     } finally {
       setUploadingImage(false);
     }
@@ -164,7 +165,7 @@ export default function AdminMedicinesScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!formData.name || !formData.genericName || !formData.categoryId || !formData.brandId || !formData.price) {
-      setTimeout(() => Alert.alert('Error', 'Please fill all required fields (*)'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Please fill all required fields (*)' });
       return;
     }
     setSaving(true);
@@ -179,33 +180,33 @@ export default function AdminMedicinesScreen({ navigation }) {
       
       if (isEditing) {
         await api.put(`/medicines/${currentId}`, payload);
-        Alert.alert('Success', 'Medicine updated successfully');
+        AlertService.show({ type: 'success', title: 'Success', message: 'Medicine updated successfully' });
       } else {
         await api.post('/medicines', payload);
-        Alert.alert('Success', 'Medicine created successfully');
+        AlertService.show({ type: 'success', title: 'Success', message: 'Medicine created successfully' });
       }
       setModalVisible(false);
       loadData();
     } catch (err) {
       console.log('Save error:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Medicine'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Medicine' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Confirm', 'Delete this medicine?', [
+    AlertService.show({ type: 'warning', title: 'Confirm', message: 'Delete this medicine?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           await api.delete(`/medicines/${id}`);
           loadData();
         } catch (err) {
-          setTimeout(() => Alert.alert('Error', 'Failed to delete'), 100);
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete' });
         }
       }}
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => {

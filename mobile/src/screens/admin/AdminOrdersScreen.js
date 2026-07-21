@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminOrdersScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -39,7 +40,7 @@ export default function AdminOrdersScreen({ navigation }) {
       }
     } catch (err) {
       console.log('Error loading Orders:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to load Orders'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to load Orders' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,25 +79,25 @@ export default function AdminOrdersScreen({ navigation }) {
       loadData();
     } catch (err) {
       console.log('Failed to save Orders:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Orders'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Orders' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Delete', 'Are you sure you want to delete this item?', [
+    AlertService.show({ type: 'warning', title: 'Delete', message: 'Are you sure you want to delete this item?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
             await api.delete('/orders/' + id);
             setData(data.filter(item => item.id !== id));
           } catch (err) {
-            setTimeout(() => Alert.alert('Error', 'Failed to delete item'), 100);
+            AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete item' });
           }
         } 
       }
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => {
@@ -215,7 +216,7 @@ export default function AdminOrdersScreen({ navigation }) {
             <ScrollView contentContainerStyle={styles.formScroll}>
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>Order Status *</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8, paddingRight: 16 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                   {['Pending', 'Confirmed', 'Prescription Review', 'Packed', 'Shipped', 'Out For Delivery', 'Delivered', 'Cancelled'].map(s => (
                     <TouchableOpacity 
                       key={s}
@@ -225,11 +226,11 @@ export default function AdminOrdersScreen({ navigation }) {
                       <Text style={[styles.statusPillText, formData.status === s ? styles.statusPillTextActive : null]}>{s}</Text>
                     </TouchableOpacity>
                   ))}
-                </ScrollView>
+                </View>
               </View>
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>Payment Status *</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8, paddingRight: 16 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                   {['Unpaid', 'Paid', 'Failed'].map(s => (
                     <TouchableOpacity 
                       key={s}
@@ -239,7 +240,7 @@ export default function AdminOrdersScreen({ navigation }) {
                       <Text style={[styles.statusPillText, formData.paymentStatus === s ? styles.statusPillTextActive : null]}>{s}</Text>
                     </TouchableOpacity>
                   ))}
-                </ScrollView>
+                </View>
               </View>
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>Tracking Number</Text>

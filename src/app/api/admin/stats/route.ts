@@ -1,15 +1,15 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  User, Medicine, Order, Prescription, Category, Brand, 
-  Banner, Coupon, Blog, Doctor, Appointment, Faq, Supplier 
+import {
+  User, Medicine, Order, Prescription, Category, Brand,
+  Banner, Coupon, Blog, Doctor, Appointment, Faq, Supplier
 } from '../../../../models';
 
 export async function GET(req: NextRequest) {
   try {
     const [
-      users, medicines, orders, prescriptions, 
-      categories, brands, banners, coupons, 
+      users, medicines, orders, prescriptions,
+      categories, brands, banners, coupons,
       blogs, doctors, appointments, faqs, suppliers
     ] = await Promise.all([
       User.count().catch(() => 0),

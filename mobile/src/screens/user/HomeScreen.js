@@ -13,6 +13,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -103,6 +104,7 @@ export default function HomeScreen({ navigation }) {
   const [blogs, setBlogs] = useState([]);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Banner logic
   const bannerListRef = useRef(null);
@@ -114,7 +116,7 @@ export default function HomeScreen({ navigation }) {
 
   const quickLinks = [
     { id: 1, label: 'Medicines', icon: 'medical-outline', color: '#0F766E', bg: '#EEF8F6', route: 'ExploreTab' },
-    { id: 2, label: 'Consult', icon: 'chatbubbles-outline', color: '#B45309', bg: '#FFF7E6', route: 'HomeTab' },
+    { id: 2, label: 'Consult', icon: 'chatbubbles-outline', color: '#B45309', bg: '#FFF7E6', route: 'UserConsultations' },
     { id: 3, label: 'Prescription', icon: 'document-text-outline', color: '#4338CA', bg: '#F0EEFF', route: 'UploadPrescription' },
     { id: 4, label: 'My Orders', icon: 'cube-outline', color: '#BE123C', bg: '#FFF0F0', route: 'Proceed' },
   ];
@@ -140,6 +142,12 @@ export default function HomeScreen({ navigation }) {
       return () => clearInterval(interval);
     }
   }, [banners.length]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchHomeData();
+    setRefreshing(false);
+  };
 
   const fetchHomeData = async () => {
     setLoadingData(true);
@@ -356,7 +364,12 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.searchText}>Search medicines, symptoms...</Text>
       </TouchableOpacity>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + rv(100) }]} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scroll} 
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + rv(100) }]} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
+      >
 
         {/* ── BANNERS ── */}
         {banners.length > 0 && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import api from '../../services/api';
@@ -8,10 +8,17 @@ import { getFullImageUrl } from '../../utils/image';
 export default function BlogScreen({ navigation }) {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadBlogs();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadBlogs();
+    setRefreshing(false);
+  };
 
   const loadBlogs = async () => {
     try {
@@ -86,8 +93,9 @@ export default function BlogScreen({ navigation }) {
           data={blogs}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderBlog}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={blogs.length === 0 ? [styles.content, { flex: 1 }] : styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0c888d']} />}
           ListEmptyComponent={
             <Text style={{ textAlign: 'center', color: '#64748B', marginTop: rv(40) }}>No blogs found.</Text>
           }

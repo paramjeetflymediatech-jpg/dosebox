@@ -24,7 +24,7 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/orders');
+      const res = await api.get('/orders?limit=1000');
       if (res.data?.success) {
         setOrders(res.data.data);
       }

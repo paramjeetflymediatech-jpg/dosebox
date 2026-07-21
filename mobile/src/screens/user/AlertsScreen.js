@@ -108,7 +108,11 @@ export default function AlertsScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: rs(12) }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity 
+            onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('HomeTab')} 
+            style={{ marginRight: rs(12) }} 
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Alerts</Text>

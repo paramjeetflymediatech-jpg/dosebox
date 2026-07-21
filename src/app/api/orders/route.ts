@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
       }
 
       if (medicine.stock < item.quantity) {
-        return NextResponse.json({ 
-          success: false, 
-          message: `Insufficient stock for ${medicine.name}. Available: ${medicine.stock}` 
+        return NextResponse.json({
+          success: false,
+          message: `Insufficient stock for ${medicine.name}. Available: ${medicine.stock}`
         }, { status: 400 });
       }
 
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
       const price = Number(medicine.price);
       const discPrice = medicine.discountPrice ? Number(medicine.discountPrice) : price;
-      
+
       subtotal += price * item.quantity;
       totalSavings += (price - discPrice) * item.quantity;
 
@@ -85,12 +85,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    let orderStatus = 'Confirmed';
+    let orderStatus = paymentMethod === 'PhonePe' ? 'Payment Pending' : 'Confirmed';
     if (requiresPrescription) {
       if (!prescriptionId) {
-        return NextResponse.json({ 
-          success: false, 
-          message: 'Order contains prescription-required medicines. Please upload and attach a prescription.' 
+        return NextResponse.json({
+          success: false,
+          message: 'Order contains prescription-required medicines. Please upload and attach a prescription.'
         }, { status: 400 });
       }
 
@@ -102,9 +102,9 @@ export async function POST(req: NextRequest) {
       if (prescription.status === 'Pending' || prescription.status === 'Processing') {
         orderStatus = 'Prescription Review';
       } else if (prescription.status === 'Rejected') {
-        return NextResponse.json({ 
-          success: false, 
-          message: 'The selected prescription was rejected. Please upload a valid one.' 
+        return NextResponse.json({
+          success: false,
+          message: 'The selected prescription was rejected. Please upload a valid one.'
         }, { status: 400 });
       }
     }
@@ -136,9 +136,9 @@ export async function POST(req: NextRequest) {
     const userRecord = await User.findByPk(userId);
     if (useDoseboxTokens && userRecord && (userRecord.doseboxTokens || 0) > 0) {
       if (doseboxTokensToUse !== undefined) {
-         pointsUsed = Math.min(Number(doseboxTokensToUse), userRecord.doseboxTokens || 0, finalAmount);
+        pointsUsed = Math.min(Number(doseboxTokensToUse), userRecord.doseboxTokens || 0, finalAmount);
       } else {
-         pointsUsed = Math.min(userRecord.doseboxTokens || 0, finalAmount);
+        pointsUsed = Math.min(userRecord.doseboxTokens || 0, finalAmount);
       }
       finalAmount = Math.max(0, finalAmount - pointsUsed);
     }
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
             console.log(`Subject: Urgent: Restock Request for ${entry.medicine.name}`);
             console.log(`Message: Dear ${supplier.name}, the medicine "${entry.medicine.name}" has gone out of stock. Please supply more inventory. Current stock: ${newStock}.`);
             console.log(`======================================================\n`);
-            
+
             // Optionally create an admin notification in system
             await Notification.create({
               userId: 1, // Assumes Admin user ID is 1 (or can be broadcast to admins)
@@ -198,8 +198,8 @@ export async function POST(req: NextRequest) {
             });
           }
         } else {
-           // Admin notification if no supplier is linked
-           await Notification.create({
+          // Admin notification if no supplier is linked
+          await Notification.create({
             userId: 1,
             title: 'Out of Stock (No Supplier)',
             message: `${entry.medicine.name} is out of stock but has no linked supplier.`
@@ -248,7 +248,7 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = (page - 1) * limit;
-    
+
     // If admin, superadmin or pharmacist
     if (userAuth.roleName === 'Admin' || userAuth.roleName === 'SuperAdmin' || userAuth.roleName === 'Pharmacist') {
       const status = searchParams.get('status');
@@ -270,8 +270,8 @@ export async function GET(req: NextRequest) {
         offset
       });
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         data: orders,
         pagination: {
           totalItems: count,
@@ -293,8 +293,8 @@ export async function GET(req: NextRequest) {
         offset
       });
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         data: orders,
         pagination: {
           totalItems: count,

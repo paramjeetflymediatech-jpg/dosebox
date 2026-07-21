@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "set NODE_OPTIONS=--max_old_space_size=8192 && next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "db:migrate": "npx tsx force-sync.ts",

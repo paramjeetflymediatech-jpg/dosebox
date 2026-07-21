@@ -9,6 +9,7 @@ import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
 import { getFullImageUrl } from '../../utils/image';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminUsersScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -40,7 +41,7 @@ export default function AdminUsersScreen({ navigation }) {
       }
     } catch (err) {
       console.log('Error loading Users:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to load Users'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to load Users' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,25 +81,25 @@ export default function AdminUsersScreen({ navigation }) {
       loadData();
     } catch (err) {
       console.log('Failed to save Users:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Users'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Users' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Delete', 'Are you sure you want to delete this item?', [
+    AlertService.show({ type: 'warning', title: 'Delete', message: 'Are you sure you want to delete this item?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
             await api.delete('/admin/users/' + id);
             setData(data.filter(item => item.id !== id));
           } catch (err) {
-            setTimeout(() => Alert.alert('Error', 'Failed to delete item'), 100);
+            AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete item' });
           }
         } 
       }
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => {

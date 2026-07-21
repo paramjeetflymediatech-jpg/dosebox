@@ -11,6 +11,7 @@ import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
 import { getFullImageUrl } from '../../utils/image';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminBrandsScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -57,11 +58,11 @@ export default function AdminBrandsScreen({ navigation }) {
       if (res.data?.success) {
         setFormData(prev => ({ ...prev, logo: res.data.fileUrl }));
       } else {
-        setTimeout(() => Alert.alert('Error', res.data?.message || 'Failed to upload image'), 100);
+        AlertService.show({ type: 'error', title: 'Error', message: res.data?.message || 'Failed to upload image' });
       }
     } catch (e) {
       console.log('Upload error:', e);
-      setTimeout(() => Alert.alert('Error', 'Failed to upload image'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to upload image' });
     } finally {
       setUploadingImage(false);
     }
@@ -111,7 +112,7 @@ export default function AdminBrandsScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!formData.name || !formData.slug) {
-      setTimeout(() => Alert.alert('Error', 'Name and Slug are required'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Name and Slug are required' });
       return;
     }
     setSaving(true);
@@ -120,33 +121,33 @@ export default function AdminBrandsScreen({ navigation }) {
       
       if (isEditing) {
         await api.put(`/admin/brands/${currentId}`, payload);
-        Alert.alert('Success', 'Brand updated successfully');
+        AlertService.show({ type: 'success', title: 'Success', message: 'Brand updated successfully' });
       } else {
         await api.post('/admin/brands', payload);
-        Alert.alert('Success', 'Brand created successfully');
+        AlertService.show({ type: 'success', title: 'Success', message: 'Brand created successfully' });
       }
       setModalVisible(false);
       loadData();
     } catch (err) {
       console.log('Save error:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Brand'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Brand' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Confirm', 'Delete this brand?', [
+    AlertService.show({ type: 'warning', title: 'Confirm', message: 'Delete this brand?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
         try {
           await api.delete(`/admin/brands/${id}`);
           loadData();
         } catch (err) {
-          setTimeout(() => Alert.alert('Error', 'Failed to delete'), 100);
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete' });
         }
       }}
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => (

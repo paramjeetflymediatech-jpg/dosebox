@@ -12,12 +12,10 @@ if (!getApps().length) {
       });
       console.log('Firebase Admin initialized successfully using service account JSON');
     } else {
-      console.warn('FIREBASE_SERVICE_ACCOUNT_KEY is not defined. Push notifications will not work.');
-      // Initialize with default application credentials if running on GCP
-      initializeApp();
+      console.warn('FIREBASE_SERVICE_ACCOUNT_KEY is not defined. Push notifications will be skipped.');
     }
   } catch (error) {
-    console.error('Failed to initialize Firebase Admin:', error);
+    console.error('Failed to initialize Firebase Admin (Check your .env for invalid JSON):', error);
   }
 }
 
@@ -25,6 +23,11 @@ if (!getApps().length) {
  * Send a push notification to a specific device via FCM Token
  */
 export async function sendPushNotification(token: string, title: string, body: string, data?: any) {
+  if (!getApps().length) {
+    console.warn('Skipping push notification because Firebase Admin is not initialized.');
+    return { success: false, error: 'Firebase not initialized' };
+  }
+
   if (!token) return { success: false, error: 'No token provided' };
   
   try {

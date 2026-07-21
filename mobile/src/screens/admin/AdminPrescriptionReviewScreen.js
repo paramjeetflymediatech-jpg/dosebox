@@ -58,16 +58,27 @@ export default function AdminPrescriptionReviewScreen({ route, navigation }) {
   const handleSelectProduct = (product) => {
     const newItems = [...items];
     if (editingItemIndex !== null) {
+      const existingIndex = items.findIndex((i, idx) => i.product?.id === product.id && idx !== editingItemIndex);
+      if (existingIndex !== -1) {
+        AlertService.show({ type: 'error', title: 'Duplicate', message: 'This medicine is already mapped in the cart.' });
+        return;
+      }
       newItems[editingItemIndex].product = product;
       newItems[editingItemIndex].matchType = 'alternative';
     } else {
-      newItems.push({
-        id: Math.random().toString(),
-        extractedName: 'Manual Entry',
-        requestedQuantity: 1,
-        product: product,
-        matchType: 'none'
-      });
+      const existingIndex = items.findIndex(i => i.product?.id === product.id);
+      if (existingIndex !== -1) {
+        newItems[existingIndex].requestedQuantity += 1;
+        AlertService.show({ type: 'success', title: 'Updated', message: 'Increased quantity of existing medicine.' });
+      } else {
+        newItems.push({
+          id: Math.random().toString(),
+          extractedName: 'Manual Entry',
+          requestedQuantity: 1,
+          product: product,
+          matchType: 'none'
+        });
+      }
     }
     setItems(newItems);
     setSearchModalVisible(false);

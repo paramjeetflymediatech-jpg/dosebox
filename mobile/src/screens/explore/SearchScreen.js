@@ -10,7 +10,8 @@ import {
   Keyboard,
   ActivityIndicator,
   FlatList,
-  Animated
+  Animated,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -55,6 +56,7 @@ export default function SearchScreen({ navigation, route }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const initialCategorySlug = route.params?.categorySlug || null;
 
@@ -87,6 +89,16 @@ export default function SearchScreen({ navigation, route }) {
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (searchResults !== null) {
+      await performSearch(searchQuery, 1, false);
+    } else {
+      await fetchTopSelling();
+    }
+    setRefreshing(false);
+  };
 
   const performSearch = async (query, targetPage = 1, isLoadMore = false) => {
     if (isLoadMore) setIsLoadingMore(true);
@@ -236,6 +248,7 @@ export default function SearchScreen({ navigation, route }) {
               onEndReachedThreshold={0.3}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
               ListHeaderComponent={
                 <Text style={[styles.sectionTitle, { marginHorizontal: spacing.sm, marginTop: rv(12), marginBottom: rv(8) }]}>
                   {route.params?.showAll && !searchQuery ? 'All Medicines' : 'Search Results'}
@@ -252,7 +265,13 @@ export default function SearchScreen({ navigation, route }) {
           )}
         </View>
       ) : (
-        <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(40) }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView 
+          style={styles.scroll} 
+          contentContainerStyle={{ paddingBottom: insets.bottom + rv(40) }} 
+          showsVerticalScrollIndicator={false} 
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
+        >
           {/* ── RECENT SEARCHES ── */}
           {recentSearches.length > 0 && (
             <View style={styles.section}>

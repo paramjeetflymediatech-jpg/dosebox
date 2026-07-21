@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -28,21 +28,28 @@ const MODULES = [
 export default function AdminModulesScreen({ navigation }) {
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchCounts = async () => {
+    try {
+      const res = await api.get('/admin/stats');
+      if (res.data?.success) {
+        setCounts(res.data.data);
+      }
+    } catch (err) {
+      console.log('Error fetching stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCounts();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const res = await api.get('/admin/stats');
-        if (res.data?.success) {
-          setCounts(res.data.data);
-        }
-      } catch (err) {
-        console.log('Error fetching stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     // Refresh stats when the screen is focused
     const unsubscribe = navigation.addListener('focus', () => {
       fetchCounts();
@@ -57,7 +64,11 @@ export default function AdminModulesScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Admin Modules</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F5C52']} />}
+      >
         <Text style={styles.sectionTitle}>Manage Platform</Text>
         <View style={styles.listContainer}>
           {MODULES.map(mod => {

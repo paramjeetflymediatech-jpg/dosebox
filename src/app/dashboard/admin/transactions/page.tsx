@@ -17,7 +17,7 @@ export default function AdminTransactionsPage() {
     const fetchTransactions = async () => {
       setLoading(true);
       try {
-        const res = await api.get('/orders');
+        const res = await api.get('/orders?limit=1000');
         if (res.data?.success) {
           // Sort by latest first
           const sorted = res.data.data.sort((a: any, b: any) => 

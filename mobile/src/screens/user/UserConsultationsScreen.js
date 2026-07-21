@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
@@ -7,10 +7,17 @@ import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 export default function UserConsultationsScreen({ navigation }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchAppointments();
+    setRefreshing(false);
+  };
 
   const fetchAppointments = async () => {
     try {
@@ -73,19 +80,21 @@ export default function UserConsultationsScreen({ navigation }) {
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#1F5C52" />
         </View>
-      ) : appointments.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyIcon}>🩺</Text>
-          <Text style={styles.emptyTitle}>No Consultations Found</Text>
-          <Text style={styles.emptySub}>You haven't booked any doctor consultations yet.</Text>
-        </View>
       ) : (
         <FlatList
           data={appointments}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={appointments.length === 0 ? [styles.list, { flex: 1 }] : styles.list}
           ItemSeparatorComponent={() => <View style={{ height: rv(12) }} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F5C52']} />}
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Text style={styles.emptyIcon}>🩺</Text>
+              <Text style={styles.emptyTitle}>No Consultations Found</Text>
+              <Text style={styles.emptySub}>You haven't booked any doctor consultations yet.</Text>
+            </View>
+          }
         />
       )}
     </SafeAreaView>

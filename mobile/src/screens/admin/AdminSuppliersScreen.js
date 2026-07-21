@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import { AlertService } from '../../services/AlertService';
 
 export default function AdminSuppliersScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -39,7 +40,7 @@ export default function AdminSuppliersScreen({ navigation }) {
       }
     } catch (err) {
       console.log('Error loading Suppliers:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to load Suppliers'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to load Suppliers' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,25 +79,25 @@ export default function AdminSuppliersScreen({ navigation }) {
       loadData();
     } catch (err) {
       console.log('Failed to save Suppliers:', err);
-      setTimeout(() => Alert.alert('Error', 'Failed to save Suppliers'), 100);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save Suppliers' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id) => {
-    Alert.alert('Delete', 'Are you sure you want to delete this item?', [
+    AlertService.show({ type: 'warning', title: 'Delete', message: 'Are you sure you want to delete this item?', buttons: [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
             await api.delete('/admin/suppliers/' + id);
             setData(data.filter(item => item.id !== id));
           } catch (err) {
-            setTimeout(() => Alert.alert('Error', 'Failed to delete item'), 100);
+            AlertService.show({ type: 'error', title: 'Error', message: 'Failed to delete item' });
           }
         } 
       }
-    ]);
+    ]});
   };
 
   const renderItem = ({ item }) => (

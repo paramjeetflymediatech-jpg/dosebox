@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
@@ -22,10 +22,17 @@ export default function UserRewardsScreen({ navigation }) {
   const [history, setHistory] = useState([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchRewards();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchRewards();
+    setRefreshing(false);
+  };
 
   const fetchRewards = async () => {
     try {
@@ -107,24 +114,26 @@ export default function UserRewardsScreen({ navigation }) {
           <View style={styles.center}>
             <ActivityIndicator size="large" color={C.primary} />
           </View>
-        ) : history.length === 0 ? (
-          <View style={styles.center}>
-            <View style={styles.emptyIconWrap}>
-              <Ionicons name="gift-outline" size={rm(48)} color={C.primary} />
-            </View>
-            <Text style={styles.emptyTitle}>No Transactions Yet</Text>
-            <Text style={styles.emptySub}>Earn Dosebox tokens by placing your first order and referring friends!</Text>
-            <TouchableOpacity style={styles.earnBtn} onPress={() => navigation.navigate('Home')}>
-              <Text style={styles.earnBtnText}>Start Earning</Text>
-            </TouchableOpacity>
-          </View>
         ) : (
           <FlatList
             data={history}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={history.length === 0 ? [styles.list, { flex: 1 }] : styles.list}
             showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
+            ListEmptyComponent={
+              <View style={styles.center}>
+                <View style={styles.emptyIconWrap}>
+                  <Ionicons name="gift-outline" size={rm(48)} color={C.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>No Transactions Yet</Text>
+                <Text style={styles.emptySub}>Earn Dosebox tokens by placing your first order and referring friends!</Text>
+                <TouchableOpacity style={styles.earnBtn} onPress={() => navigation.navigate('Home')}>
+                  <Text style={styles.earnBtnText}>Start Earning</Text>
+                </TouchableOpacity>
+              </View>
+            }
           />
         )}
       </View>
