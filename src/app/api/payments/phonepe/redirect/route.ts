@@ -249,9 +249,15 @@ async function handleRedirect(req: NextRequest) {
     const statusResponse = await phonePeClient.getOrderStatus(merchantOrderId);
     console.log('PhonePe order status response:', JSON.stringify(statusResponse));
 
+    const statusResponseAny = statusResponse as any;
     const paymentSuccess =
-      statusResponse?.state === 'COMPLETED' ||
-      statusResponse?.paymentDetails?.[0]?.state === 'COMPLETED';
+      statusResponseAny?.success === true ||
+      statusResponseAny?.code === 'PAYMENT_SUCCESS' ||
+      statusResponseAny?.state === 'COMPLETED' ||
+      statusResponseAny?.state === 'SUCCESS' ||
+      statusResponseAny?.data?.state === 'COMPLETED' ||
+      statusResponseAny?.data?.state === 'SUCCESS' ||
+      statusResponseAny?.paymentDetails?.[0]?.state === 'COMPLETED';
 
     if (paymentSuccess) {
       if (order.paymentStatus !== 'Paid') {

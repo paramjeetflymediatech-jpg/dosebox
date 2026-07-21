@@ -44,7 +44,11 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
   const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
 
   return (
-    <View style={[styles.medCardContainer, containerStyle]}>
+    <TouchableOpacity 
+      style={[styles.medCardContainer, containerStyle]}
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('MedicineDetail', { medicine: med })}
+    >
       <View style={[styles.medCardHeader, compact && { top: rv(8), left: rs(8), right: rs(8) }]}>
         {med.prescriptionRequired ? (
           <View style={[styles.rxBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
@@ -58,17 +62,15 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
         )}
       </View>
 
-      <TouchableOpacity 
+      <View 
         style={[styles.medImageWrap, compact && { height: rv(80), marginTop: rv(16) }]} 
-        activeOpacity={0.8}
-        onPress={() => navigation.navigate('MedicineDetail', { medicine: med })}
       >
         {displayImage ? (
           <Image source={{ uri: displayImage }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
         ) : (
           <Ionicons name="medical" size={compact ? 30 : 40} color="#E2E8F0" />
         )}
-      </TouchableOpacity>
+      </View>
 
       <View style={styles.medDetails}>
         <Text style={[styles.medBrandText, compact && { fontSize: rm(8) }]} numberOfLines={1}>
@@ -100,7 +102,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

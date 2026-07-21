@@ -51,7 +51,8 @@ export async function GET(req: NextRequest) {
         { name: { [Op.like]: `%${search}%` } },
         { genericName: { [Op.like]: `%${search}%` } },
         { composition: { [Op.like]: `%${search}%` } },
-        { manufacturer: { [Op.like]: `%${search}%` } }
+        { manufacturer: { [Op.like]: `%${search}%` } },
+        { '$categoryDetail.name$': { [Op.like]: `%${search}%` } }
       ];
     }
 

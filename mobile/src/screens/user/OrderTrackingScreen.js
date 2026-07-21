@@ -66,9 +66,9 @@ const getRichTimeline = (order, timeline) => {
   if (timelineDescList.some(d => d.includes('out for delivery'))) maxCompletedIndex = Math.max(maxCompletedIndex, 6);
 
   return steps.map((step, index) => {
-    const explicitEvent = timeline.find(t => 
-       (t.desc && t.desc.toLowerCase().includes(step.toLowerCase())) || 
-       (t.status && t.status.toLowerCase().includes(step.toLowerCase()))
+    const explicitEvent = timeline.find(t =>
+      (t.desc && t.desc.toLowerCase().includes(step.toLowerCase())) ||
+      (t.status && t.status.toLowerCase().includes(step.toLowerCase()))
     );
 
     let isCompleted = index <= maxCompletedIndex || !!explicitEvent;
@@ -86,10 +86,10 @@ const getRichTimeline = (order, timeline) => {
 export default function OrderTrackingScreen({ route, navigation }) {
   const [order, setOrder] = useState(route?.params?.order || null);
   const insets = useSafeAreaInsets();
-  
+
   const [liveTracking, setLiveTracking] = useState(null);
   const [loadingTracking, setLoadingTracking] = useState(false);
-  
+
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [refundMethod, setRefundMethod] = useState('bank');
@@ -106,17 +106,17 @@ export default function OrderTrackingScreen({ route, navigation }) {
           const updated = res.data.data.find(o => o.id === order.id);
           if (updated) setOrder(updated);
         }
-      }).catch(()=>{}),
+      }).catch(() => { }),
       api.get('/account/profile').then(res => {
         if (res.data?.success) setTokenRefundCount(res.data.data.tokenRefundCount || 0);
-      }).catch(()=>{})
+      }).catch(() => { })
     ]);
 
     if (order.trackingId && order.status !== 'Cancelled') {
       setLoadingTracking(true);
       await api.get(`/orders/${order.id}/track`).then(res => {
         if (res.data?.success && res.data.data) setLiveTracking(res.data.data);
-      }).finally(() => setLoadingTracking(false)).catch(()=>{});
+      }).finally(() => setLoadingTracking(false)).catch(() => { });
     }
   };
 
@@ -138,7 +138,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
   if (!order) return <View style={styles.container} />;
 
   let timeline = [];
-  try { timeline = JSON.parse(order.trackingTimeline || '[]'); } catch(e){}
+  try { timeline = JSON.parse(order.trackingTimeline || '[]'); } catch (e) { }
   const richTimeline = getRichTimeline(order, timeline);
 
   const handleOpenCancel = (isClaim = false) => {
@@ -212,7 +212,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
     if (status === 'Payment Pending') return { bg: C.dangerLight, text: C.danger };
     return { bg: C.warningLight, text: C.warning };
   };
-  
+
   const statusColors = getStatusColor(order.status);
 
   return (
@@ -225,136 +225,136 @@ export default function OrderTrackingScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>Order #{order.id}</Text>
       </View>
 
-      <ScrollView 
-        style={styles.scroll} 
-        contentContainerStyle={{ paddingBottom: rv(80) }} 
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + rv(120) }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
       >
 
         {/* Top Info Card */}
         <View style={[styles.card, styles.shadow]}>
-           <View style={styles.infoRow}>
-             <View>
-               <Text style={styles.infoLabel}>Status</Text>
-               <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
-                 <View style={[styles.statusDot, { backgroundColor: statusColors.text }]} />
-                 <Text style={[styles.statusText, { color: statusColors.text }]}>{order.status}</Text>
-               </View>
-             </View>
-             <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.infoLabel}>Total Amount</Text>
-                <Text style={styles.infoValue}>₹{order.finalAmount}</Text>
-             </View>
-           </View>
-           <View style={styles.divider} />
-           <View style={styles.infoRow}>
-             <View>
-                <Text style={styles.infoLabel}>Order Date</Text>
-                <Text style={styles.infoDate}>{new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
-             </View>
-             <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.infoLabel}>Payment</Text>
-                <Text style={styles.infoDate}>{order.paymentMethod}</Text>
-             </View>
-           </View>
+          <View style={styles.infoRow}>
+            <View>
+              <Text style={styles.infoLabel}>Status</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
+                <View style={[styles.statusDot, { backgroundColor: statusColors.text }]} />
+                <Text style={[styles.statusText, { color: statusColors.text }]}>{order.status}</Text>
+              </View>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.infoLabel}>Total Amount</Text>
+              <Text style={styles.infoValue}>₹{order.finalAmount}</Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <View>
+              <Text style={styles.infoLabel}>Order Date</Text>
+              <Text style={styles.infoDate}>{new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.infoLabel}>Payment</Text>
+              <Text style={styles.infoDate}>{order.paymentMethod}</Text>
+            </View>
+          </View>
         </View>
 
         {/* Timeline */}
         <View style={[styles.card, styles.shadow, { marginBottom: rv(20) }]}>
           <Text style={styles.sectionTitle}>Tracking Timeline</Text>
-          
+
           {loadingTracking && (
-             <View style={styles.loadingBox}>
-                <ActivityIndicator size="small" color={C.primary} />
-                <Text style={styles.loadingText}>Fetching Live Tracking...</Text>
-             </View>
+            <View style={styles.loadingBox}>
+              <ActivityIndicator size="small" color={C.primary} />
+              <Text style={styles.loadingText}>Fetching Live Tracking...</Text>
+            </View>
           )}
 
           {liveTracking && liveTracking.checkpoints && liveTracking.checkpoints.length > 0 && (
-             <View style={styles.liveTrackingBox}>
-                <View style={styles.liveTrackingHeader}>
-                  <Ionicons name="location" size={16} color={C.blue} />
-                  <Text style={styles.liveTrackingTitle}>Live Tracking ({liveTracking.courier})</Text>
-                </View>
-                <Text style={styles.liveTrackingAWB}>AWB: {liveTracking.trackingId}</Text>
-                
-                {liveTracking.checkpoints.map((cp, idx) => (
-                  <View key={idx} style={styles.timelineRow}>
-                    <View style={styles.timelineIconBox}>
-                      {idx === 0 ? (
-                        <View style={styles.timelineDotActive}>
-                           <View style={[styles.timelineDotInner, { backgroundColor: C.blue }]} />
-                        </View>
-                      ) : (
-                        <Ionicons name="checkmark-circle" size={rs(20)} color={C.success} />
-                      )}
-                      {idx < liveTracking.checkpoints.length - 1 && <View style={[styles.timelineLine, { backgroundColor: C.success }]} />}
-                    </View>
-                    <View style={styles.timelineContent}>
-                      <Text style={[styles.timelineStep, { color: idx === 0 ? C.blue : C.textMain }]}>{cp.status}</Text>
-                      <Text style={styles.timelineTime}>{new Date(cp.time).toLocaleString()}</Text>
-                      {cp.desc ? <Text style={styles.timelineDesc}>{cp.desc}</Text> : null}
-                    </View>
+            <View style={styles.liveTrackingBox}>
+              <View style={styles.liveTrackingHeader}>
+                <Ionicons name="location" size={16} color={C.blue} />
+                <Text style={styles.liveTrackingTitle}>Live Tracking ({liveTracking.courier})</Text>
+              </View>
+              <Text style={styles.liveTrackingAWB}>AWB: {liveTracking.trackingId}</Text>
+
+              {liveTracking.checkpoints.map((cp, idx) => (
+                <View key={idx} style={styles.timelineRow}>
+                  <View style={styles.timelineIconBox}>
+                    {idx === 0 ? (
+                      <View style={styles.timelineDotActive}>
+                        <View style={[styles.timelineDotInner, { backgroundColor: C.blue }]} />
+                      </View>
+                    ) : (
+                      <Ionicons name="checkmark-circle" size={rs(20)} color={C.success} />
+                    )}
+                    {idx < liveTracking.checkpoints.length - 1 && <View style={[styles.timelineLine, { backgroundColor: C.success }]} />}
                   </View>
-                ))}
-             </View>
+                  <View style={styles.timelineContent}>
+                    <Text style={[styles.timelineStep, { color: idx === 0 ? C.blue : C.textMain }]}>{cp.status}</Text>
+                    <Text style={styles.timelineTime}>{new Date(cp.time).toLocaleString()}</Text>
+                    {cp.desc ? <Text style={styles.timelineDesc}>{cp.desc}</Text> : null}
+                  </View>
+                </View>
+              ))}
+            </View>
           )}
 
           {!liveTracking && (
-             <View style={{ marginTop: rv(12) }}>
-               {order.status === 'Cancelled' ? (
-                  <View>
-                    <View style={styles.timelineRow}>
-                      <View style={styles.timelineIconBox}>
-                         <Ionicons name="checkmark-circle" size={rs(20)} color={C.success} />
-                         <View style={[styles.timelineLine, { backgroundColor: C.border }]} />
-                      </View>
-                      <View style={styles.timelineContent}>
-                        <Text style={styles.timelineStep}>Order Placed</Text>
-                      </View>
+            <View style={{ marginTop: rv(12) }}>
+              {order.status === 'Cancelled' ? (
+                <View>
+                  <View style={styles.timelineRow}>
+                    <View style={styles.timelineIconBox}>
+                      <Ionicons name="checkmark-circle" size={rs(20)} color={C.success} />
+                      <View style={[styles.timelineLine, { backgroundColor: C.border }]} />
                     </View>
-                    <View style={styles.timelineRow}>
-                      <View style={styles.timelineIconBox}>
-                         <Ionicons name="close-circle" size={rs(20)} color={C.danger} />
-                      </View>
-                      <View style={[styles.timelineContent, { borderBottomWidth: 0 }]}>
-                        
-                        <Text style={[styles.timelineStep, { color: C.danger }]}>Order Cancelled</Text>
-                        {order.cancelReason ? <Text style={[styles.timelineDesc, { backgroundColor: C.dangerLight, color: C.danger }]}>Reason: {order.cancelReason}</Text> : null}
-                      </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineStep}>Order Placed</Text>
                     </View>
                   </View>
-               ) : (
-                 richTimeline.map((item, idx) => {
-                   if (!item.isCompleted && !item.isActive && order.status === 'Delivered') return null;
-                   const isLast = idx === richTimeline.length - 1 || (!richTimeline[idx+1]?.isCompleted && !richTimeline[idx+1]?.isActive && order.status === 'Delivered');
+                  <View style={styles.timelineRow}>
+                    <View style={styles.timelineIconBox}>
+                      <Ionicons name="close-circle" size={rs(20)} color={C.danger} />
+                    </View>
+                    <View style={[styles.timelineContent, { borderBottomWidth: 0 }]}>
 
-                   return (
-                     <View key={idx} style={[styles.timelineRow, (!item.isCompleted && !item.isActive) && { opacity: 0.4 }]}>
-                       <View style={styles.timelineIconBox}>
-                         {item.isCompleted && !item.isActive ? (
-                            <Ionicons name="checkmark-circle" size={rs(20)} color={C.success} />
-                         ) : item.isActive ? (
-                            <View style={styles.timelineDotActive}>
-                               <View style={styles.timelineDotInner} />
-                            </View>
-                         ) : (
-                            <View style={styles.timelineDotEmpty} />
-                         )}
-                         
-                         {!isLast && <View style={[styles.timelineLine, { backgroundColor: item.isCompleted ? C.success : C.border }]} />}
-                       </View>
-                       <View style={[styles.timelineContent, isLast && { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                         <Text style={[styles.timelineStep, { color: item.isActive ? C.primary : C.textMain }]}>{item.step}</Text>
-                         {item.time ? <Text style={styles.timelineTime}>{new Date(item.time).toLocaleString()}</Text> : null}
-                         {item.desc ? <Text style={styles.timelineDesc}>{item.desc}</Text> : null}
-                       </View>
-                     </View>
-                   )
-                 })
-               )}
-             </View>
+                      <Text style={[styles.timelineStep, { color: C.danger }]}>Order Cancelled</Text>
+                      {order.cancelReason ? <Text style={[styles.timelineDesc, { backgroundColor: C.dangerLight, color: C.danger }]}>Reason: {order.cancelReason}</Text> : null}
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                richTimeline.map((item, idx) => {
+                  if (!item.isCompleted && !item.isActive && order.status === 'Delivered') return null;
+                  const isLast = idx === richTimeline.length - 1 || (!richTimeline[idx + 1]?.isCompleted && !richTimeline[idx + 1]?.isActive && order.status === 'Delivered');
+
+                  return (
+                    <View key={idx} style={[styles.timelineRow, (!item.isCompleted && !item.isActive) && { opacity: 0.4 }]}>
+                      <View style={styles.timelineIconBox}>
+                        {item.isCompleted && !item.isActive ? (
+                          <Ionicons name="checkmark-circle" size={rs(20)} color={C.success} />
+                        ) : item.isActive ? (
+                          <View style={styles.timelineDotActive}>
+                            <View style={styles.timelineDotInner} />
+                          </View>
+                        ) : (
+                          <View style={styles.timelineDotEmpty} />
+                        )}
+
+                        {!isLast && <View style={[styles.timelineLine, { backgroundColor: item.isCompleted ? C.success : C.border }]} />}
+                      </View>
+                      <View style={[styles.timelineContent, isLast && { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                        <Text style={[styles.timelineStep, { color: item.isActive ? C.primary : C.textMain }]}>{item.step}</Text>
+                        {item.time ? <Text style={styles.timelineTime}>{new Date(item.time).toLocaleString()}</Text> : null}
+                        {item.desc ? <Text style={styles.timelineDesc}>{item.desc}</Text> : null}
+                      </View>
+                    </View>
+                  )
+                })
+              )}
+            </View>
           )}
         </View>
 
@@ -362,16 +362,21 @@ export default function OrderTrackingScreen({ route, navigation }) {
         <View style={[styles.card, styles.shadow, { marginBottom: rv(20) }]}>
           <Text style={styles.sectionTitle}>Ordered Items</Text>
           {order.items?.map((item, index) => (
-             <View key={item.id} style={[styles.itemRow, index === order.items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
-               <View style={styles.itemImgWrapper}>
-                 <Image source={{ uri: getImg(item) }} style={styles.itemImg} resizeMode="contain" />
-               </View>
-               <View style={{ flex: 1 }}>
-                 <Text style={styles.itemName} numberOfLines={2}>{item.medicine?.name || 'Item'}</Text>
-                 <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
-               </View>
-               <Text style={styles.itemTotal}>₹{Number(item.price) * item.quantity}</Text>
-             </View>
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.itemRow, index === order.items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}
+              onPress={() => navigation.navigate('MedicineDetail', { medicine: item.medicine })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.itemImgWrapper}>
+                <Image source={{ uri: getImg(item) }} style={styles.itemImg} resizeMode="contain" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemName} numberOfLines={2}>{item.medicine?.name || 'Item'}</Text>
+                <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+              </View>
+              <Text style={styles.itemTotal}>₹{Number(item.price) * item.quantity}</Text>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -394,82 +399,82 @@ export default function OrderTrackingScreen({ route, navigation }) {
 
       {/* Cancel/Claim Modal */}
       <Modal visible={cancelModalOpen} animationType="slide" transparent={true} onRequestClose={() => setCancelModalOpen(false)}>
-         <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
-               <View style={styles.modalDragHandle} />
-               <View style={styles.modalHeader}>
-                 <Text style={styles.modalTitle}>{isClaimMode ? 'Claim Your Refund' : 'Cancel Order'}</Text>
-                 <TouchableOpacity onPress={() => setCancelModalOpen(false)} style={styles.modalCloseBtn}>
-                   <Ionicons name="close" size={20} color={C.textMain}/>
-                 </TouchableOpacity>
-               </View>
-               
-               <ScrollView style={{ maxHeight: '80%' }} showsVerticalScrollIndicator={false}>
-                 {!isClaimMode && (
-                   <View style={styles.modalSection}>
-                     <Text style={styles.modalLabel}>Reason for Cancellation</Text>
-                     <TextInput 
-                       style={styles.textArea} 
-                       multiline 
-                       numberOfLines={3} 
-                       placeholder="Tell us why you are cancelling..." 
-                       placeholderTextColor={C.textSub}
-                       value={cancelReason} 
-                       onChangeText={setCancelReason} 
-                     />
-                   </View>
-                 )}
-
-                 <View style={styles.modalSection}>
-                   <Text style={styles.modalLabel}>Select Refund Method</Text>
-                   
-                   {!isCOD && (
-                     <TouchableOpacity style={[styles.refundOption, refundMethod === 'bank' && styles.refundActive]} onPress={() => setRefundMethod('bank')}>
-                        <View style={[styles.radio, refundMethod === 'bank' && styles.radioActive]}>{refundMethod === 'bank' && <View style={styles.radioInner}/>}</View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.refundTitle}>Original Payment Method</Text>
-                          <Text style={styles.refundDesc}>Refund to bank/card in 5-7 days.</Text>
-                        </View>
-                     </TouchableOpacity>
-                   )}
-
-                   {!isClaimMode && isCOD && tokenRefundCount >= 2 && (
-                     <TouchableOpacity style={[styles.refundOption, refundMethod === 'bank' && styles.refundActive]} onPress={() => setRefundMethod('bank')}>
-                        <View style={[styles.radio, refundMethod === 'bank' && styles.radioActive]}>{refundMethod === 'bank' && <View style={styles.radioInner}/>}</View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.refundTitle}>Cancel Order</Text>
-                          {/* <Text style={styles.refundDesc}>As this is a COD order, no payment needs to be refunded.</Text> */}
-                          {/* <Text style={styles.warningText}>Note: 2-time bonus token limit exhausted.</Text> */}
-                        </View>
-                     </TouchableOpacity>
-                   )}
-
-                   {!hideTokensForCOD && (
-                     <TouchableOpacity style={[styles.refundOption, refundMethod === 'tokens' && { borderColor: C.warning, backgroundColor: C.warningLight }]} onPress={() => setRefundMethod('tokens')}>
-                        <View style={[styles.radio, refundMethod === 'tokens' && { borderColor: C.warning }]}>{refundMethod === 'tokens' && <View style={[styles.radioInner, { backgroundColor: C.warning }]}/>}</View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.refundTitle, { color: '#B45309' }]}>DoseBox Tokens</Text>
-                          <Text style={[styles.refundDesc, { color: '#D97706' }]}>
-                             {isCOD 
-                               ? `Get ${Number(order.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.` 
-                               : `Get ₹${order.finalAmount} + ${Number(order.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.`}
-                          </Text>
-                          {!isClaimMode && <Text style={styles.warningText}>Note: Limit 2 times per lifetime.</Text>}
-                        </View>
-                     </TouchableOpacity>
-                   )}
-                 </View>
-               </ScrollView>
-
-               <TouchableOpacity 
-                  style={[styles.submitBtn, isSubmittingCancel && { opacity: 0.7 }]} 
-                  onPress={submitCancel}
-                  disabled={isSubmittingCancel}
-               >
-                 {isSubmittingCancel ? <ActivityIndicator color={C.white} /> : <Text style={styles.submitBtnText}>{isClaimMode ? 'Claim Refund' : 'Confirm Cancel'}</Text>}
-               </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalDragHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{isClaimMode ? 'Claim Your Refund' : 'Cancel Order'}</Text>
+              <TouchableOpacity onPress={() => setCancelModalOpen(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={C.textMain} />
+              </TouchableOpacity>
             </View>
-         </View>
+
+            <ScrollView style={{ maxHeight: '80%' }} showsVerticalScrollIndicator={false}>
+              {!isClaimMode && (
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalLabel}>Reason for Cancellation</Text>
+                  <TextInput
+                    style={styles.textArea}
+                    multiline
+                    numberOfLines={3}
+                    placeholder="Tell us why you are cancelling..."
+                    placeholderTextColor={C.textSub}
+                    value={cancelReason}
+                    onChangeText={setCancelReason}
+                  />
+                </View>
+              )}
+
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Select Refund Method</Text>
+
+                {!isCOD && (
+                  <TouchableOpacity style={[styles.refundOption, refundMethod === 'bank' && styles.refundActive]} onPress={() => setRefundMethod('bank')}>
+                    <View style={[styles.radio, refundMethod === 'bank' && styles.radioActive]}>{refundMethod === 'bank' && <View style={styles.radioInner} />}</View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.refundTitle}>Original Payment Method</Text>
+                      <Text style={styles.refundDesc}>Refund to bank/card in 5-7 days.</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                {!isClaimMode && isCOD && tokenRefundCount >= 2 && (
+                  <TouchableOpacity style={[styles.refundOption, refundMethod === 'bank' && styles.refundActive]} onPress={() => setRefundMethod('bank')}>
+                    <View style={[styles.radio, refundMethod === 'bank' && styles.radioActive]}>{refundMethod === 'bank' && <View style={styles.radioInner} />}</View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.refundTitle}>Cancel Order</Text>
+                      {/* <Text style={styles.refundDesc}>As this is a COD order, no payment needs to be refunded.</Text> */}
+                      {/* <Text style={styles.warningText}>Note: 2-time bonus token limit exhausted.</Text> */}
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                {!hideTokensForCOD && (
+                  <TouchableOpacity style={[styles.refundOption, refundMethod === 'tokens' && { borderColor: C.warning, backgroundColor: C.warningLight }]} onPress={() => setRefundMethod('tokens')}>
+                    <View style={[styles.radio, refundMethod === 'tokens' && { borderColor: C.warning }]}>{refundMethod === 'tokens' && <View style={[styles.radioInner, { backgroundColor: C.warning }]} />}</View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.refundTitle, { color: '#B45309' }]}>DoseBox Tokens</Text>
+                      <Text style={[styles.refundDesc, { color: '#D97706' }]}>
+                        {isCOD
+                          ? `Get ${Number(order.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.`
+                          : `Get ₹${order.finalAmount} + ${Number(order.finalAmount) < 500 ? '50' : '100'} Bonus Tokens instantly.`}
+                      </Text>
+                      {!isClaimMode && <Text style={styles.warningText}>Note: Limit 2 times per lifetime.</Text>}
+                    </View>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.submitBtn, isSubmittingCancel && { opacity: 0.7 }]}
+              onPress={submitCancel}
+              disabled={isSubmittingCancel}
+            >
+              {isSubmittingCancel ? <ActivityIndicator color={C.white} /> : <Text style={styles.submitBtnText}>{isClaimMode ? 'Claim Refund' : 'Confirm Cancel'}</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -481,20 +486,20 @@ const styles = StyleSheet.create({
   backBtn: { width: rs(40), height: rs(40), borderRadius: 999, backgroundColor: C.white, alignItems: 'center', justifyContent: 'center', marginRight: rs(12), shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   headerTitle: { flex: 1, fontSize: rm(18), fontWeight: '800', color: C.textMain, letterSpacing: -0.5 },
   scroll: { flex: 1, padding: spacing.md },
-  
+
   card: { backgroundColor: C.white, borderRadius: 20, padding: spacing.lg, marginBottom: rv(16) },
   shadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 16, elevation: 1 },
-  
+
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   divider: { height: 1, backgroundColor: C.border, marginVertical: rv(16) },
   infoLabel: { fontSize: rm(13), color: C.textSub, fontWeight: '500', marginBottom: rv(4) },
   infoValue: { fontSize: rm(20), color: C.textMain, fontWeight: '800' },
   infoDate: { fontSize: rm(14), color: C.textMain, fontWeight: '600' },
-  
+
   statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: rs(10), paddingVertical: rv(4), borderRadius: 999, alignSelf: 'flex-start' },
   statusDot: { width: rs(6), height: rs(6), borderRadius: rs(3), marginRight: rs(6) },
   statusText: { fontSize: rm(12), fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  
+
   actionRow: { flexDirection: 'row', gap: rs(12), marginBottom: rv(16) },
   cancelBtn: { flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.dangerLight, padding: rv(16), borderRadius: 999, alignItems: 'center' },
   cancelBtnText: { color: C.danger, fontWeight: '700', fontSize: rm(15) },
@@ -516,7 +521,7 @@ const styles = StyleSheet.create({
 
   loadingBox: { padding: rv(24), alignItems: 'center', backgroundColor: C.bg, borderRadius: 16 },
   loadingText: { fontSize: rm(13), fontWeight: '600', color: C.textSub, marginTop: rv(12) },
-  
+
   liveTrackingBox: { backgroundColor: C.blueLight, padding: spacing.lg, borderRadius: 16, marginBottom: rv(24), borderWidth: 1, borderColor: '#DBEAFE' },
   liveTrackingHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: rv(4) },
   liveTrackingTitle: { fontSize: rm(13), fontWeight: '800', color: C.blue, textTransform: 'uppercase', letterSpacing: 0.5, marginLeft: 6 },

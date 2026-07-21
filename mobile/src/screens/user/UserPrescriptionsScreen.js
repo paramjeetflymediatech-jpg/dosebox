@@ -106,6 +106,21 @@ export default function UserPrescriptionsScreen({ navigation }) {
             year: 'numeric', month: 'short', day: 'numeric',
           })}
         </Text>
+        
+        {(!item.status || item.status.toLowerCase() === 'pending') && (
+          <View style={styles.infoBanner}>
+            <Ionicons name="information-circle" size={18} color="#0284C7" />
+            <Text style={styles.infoBannerText}>Your prescription is being reviewed by our pharmacist. We will notify you once medicines are added.</Text>
+          </View>
+        )}
+
+        {item.status?.toLowerCase() === 'rejected' && (
+          <View style={[styles.infoBanner, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+            <Ionicons name="alert-circle" size={18} color="#DC2626" />
+            <Text style={[styles.infoBannerText, { color: '#B91C1C' }]}>This prescription was rejected. Please review the notes below or upload a clearer image.</Text>
+          </View>
+        )}
+
         {item.pharmacistNotes ? <Text style={styles.notesText} numberOfLines={2}>Notes: {item.pharmacistNotes}</Text> : null}
         
         <View style={styles.actionsRow}>
@@ -120,10 +135,19 @@ export default function UserPrescriptionsScreen({ navigation }) {
         </View>
 
         {hasDraftItems && (
-          <TouchableOpacity style={styles.proceedBtn} onPress={() => handleProceed(item.draftCart, item.id)}>
-            <Text style={styles.proceedBtnText}>Proceed to Order</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.draftItemsContainer}>
+            <Text style={styles.draftItemsTitle}>Medicines Added by Pharmacist:</Text>
+            {item.draftCart.items.map((cartItem, idx) => (
+              <View key={idx} style={styles.draftItemRow}>
+                <Text style={styles.draftItemName} numberOfLines={1}>• {cartItem.medicine?.name}</Text>
+                <Text style={styles.draftItemQty}>Qty: {cartItem.quantity}</Text>
+              </View>
+            ))}
+            <TouchableOpacity style={styles.proceedBtn} onPress={() => handleProceed(item.draftCart, item.id)}>
+              <Text style={styles.proceedBtnText}>Proceed to Order</Text>
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     );
@@ -219,11 +243,22 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: rs(10), paddingVertical: rv(4), borderRadius: radius.full },
   statusText: { fontSize: rm(12), fontWeight: '700', textTransform: 'capitalize' },
   dateText: { fontSize: rm(13), color: '#64748B', marginBottom: rv(8) },
-  notesText: { fontSize: rm(14), color: '#475569', marginTop: rv(4), backgroundColor: '#F1F5F9', padding: rs(8), borderRadius: radius.sm },
+  notesText: { fontSize: rm(14), color: '#475569', marginTop: rv(8), backgroundColor: '#F1F5F9', padding: rs(10), borderRadius: radius.sm },
+  
+  infoBanner: { flexDirection: 'row', backgroundColor: '#F0F9FF', borderColor: '#BAE6FD', borderWidth: 1, padding: 10, borderRadius: 8, marginTop: 12, alignItems: 'center' },
+  infoBannerText: { fontSize: 13, color: '#0369A1', flex: 1, marginLeft: 8, lineHeight: 18 },
+
   actionsRow: { flexDirection: 'row', gap: rs(12), marginTop: rv(12), paddingTop: rv(12), borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: rs(4), paddingVertical: rv(4) },
-  actionText: { fontSize: rm(14), fontWeight: '500', color: '#0D1B2A' },
-  proceedBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: rs(8), backgroundColor: '#1F5C52', paddingVertical: rv(12), borderRadius: radius.md, marginTop: rv(12) },
+  actionText: { fontSize: 13, fontWeight: '600', color: '#0D1B2A', marginLeft: 6 },
+  
+  draftItemsContainer: { backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, marginTop: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  draftItemsTitle: { fontSize: 13, fontWeight: '700', color: '#1F5C52', marginBottom: 8 },
+  draftItemRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' },
+  draftItemName: { fontSize: 13, color: '#334155', flex: 1, marginRight: 8, fontWeight: '500' },
+  draftItemQty: { fontSize: 13, color: '#64748B', fontWeight: '600' },
+
+  proceedBtn: { flexDirection: 'row', backgroundColor: '#1F5C52', paddingVertical: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
   proceedBtnText: { color: '#fff', fontWeight: '600', fontSize: rm(14) },
   emptyIcon: { fontSize: rm(48), marginBottom: rv(16) },
   emptyTitle: { fontSize: rm(18), fontWeight: '700', color: '#1E293B', marginBottom: rv(8) },

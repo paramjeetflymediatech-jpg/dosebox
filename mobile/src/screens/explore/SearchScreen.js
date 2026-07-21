@@ -78,10 +78,16 @@ export default function SearchScreen({ navigation, route }) {
   // Live search with debounce
   useEffect(() => {
     if (!searchQuery.trim()) {
+      if (route.params?.showAll) {
+        const delayDebounceFn = setTimeout(() => {
+          performSearch('', 1, false);
+        }, 400);
+        return () => clearTimeout(delayDebounceFn);
+      }
       setSearchResults(null);
       return;
     }
-    if (searchQuery === route.params?.query && searchResults !== null) return;
+    if (searchQuery === route.params?.query && searchResults !== null && !route.params?.showAll) return;
 
     const delayDebounceFn = setTimeout(() => {
       performSearch(searchQuery.trim(), 1, false);
@@ -106,7 +112,7 @@ export default function SearchScreen({ navigation, route }) {
     
     try {
       let url = `/medicines?search=${encodeURIComponent(query)}&limit=16&page=${targetPage}`;
-      if (!isLoadMore && initialCategorySlug && query === route.params?.query) {
+      if (initialCategorySlug && query === route.params?.query) {
          url = `/medicines?category=${encodeURIComponent(initialCategorySlug)}&limit=16&page=${targetPage}`;
       }
       

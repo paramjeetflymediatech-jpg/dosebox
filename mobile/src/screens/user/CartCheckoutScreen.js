@@ -178,6 +178,13 @@ export default function CartCheckoutScreen({ navigation }) {
             zipCode: zipCode,
             country: country,
           };
+          
+          setManualStreet(streetName);
+          setManualCity(city);
+          setManualState(state);
+          setManualZip(zipCode);
+          setAddressTitle('Current Location');
+          
           selectAddress(newAddress);
         } catch (error) {
           console.error('Geocoding error:', error);
@@ -311,17 +318,23 @@ export default function CartCheckoutScreen({ navigation }) {
                 <Text style={styles.sectionLabel}>Cart Items</Text>
                 {items.map((item) => (
                   <View key={item.id} style={styles.cartRow}>
-                    <View style={[styles.cartItemIcon, { padding: 0, overflow: 'hidden' }]}>
-                      {item.image ? (
-                         <Image source={{ uri: getFullImageUrl(item.image) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                      ) : (
-                         <Text style={{ fontSize: rs(22) }}>💊</Text>
-                      )}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <Text style={styles.itemPrice}>₹{item.price}</Text>
-                    </View>
+                    <TouchableOpacity 
+                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => navigation.navigate('MedicineDetail', { medicine: item })}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.cartItemIcon, { padding: 0, overflow: 'hidden' }]}>
+                        {item.image ? (
+                           <Image source={{ uri: getFullImageUrl(item.image) }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                        ) : (
+                           <Text style={{ fontSize: rs(22) }}>💊</Text>
+                        )}
+                      </View>
+                      <View style={{ flex: 1, paddingRight: rs(8) }}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <Text style={styles.itemPrice}>₹{item.price}</Text>
+                      </View>
+                    </TouchableOpacity>
                     <View style={styles.qtyContainer}>
                       <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.qtyBtn}>
                         <Ionicons name="remove" size={16} color={C.text} />
