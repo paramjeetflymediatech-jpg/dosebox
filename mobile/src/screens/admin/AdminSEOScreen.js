@@ -2,7 +2,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, FlatList, 
-  ActivityIndicator, Modal, TextInput, Alert, RefreshControl 
+  ActivityIndicator, Modal, TextInput, Alert, RefreshControl, ScrollView 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -193,12 +193,7 @@ export default function AdminSEOScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            <FlatList
-              data={[{}]} 
-              keyExtractor={() => 'form'}
-              contentContainerStyle={styles.formScroll}
-              renderItem={() => (
-                <View>
+            <ScrollView contentContainerStyle={styles.formScroll}>
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>Route Path *</Text>
                 <TextInput
@@ -235,9 +230,7 @@ export default function AdminSEOScreen({ navigation }) {
                   numberOfLines={4}
                 />
               </View>
-                </View>
-              )}
-            />
+            </ScrollView>
 
             <View style={styles.modalFooter}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>

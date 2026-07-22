@@ -753,6 +753,12 @@ export default function CartCheckoutScreen({ navigation }) {
                       <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.text }]}>Cart Total</Text>
                       <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
                     </View>
+                    {couponDiscount > 0 && (
+                      <View style={styles.summaryRow}>
+                        <Text style={[styles.summaryLabel, { color: '#166534' }]}>Promo Discount</Text>
+                        <Text style={[styles.summaryValue, { color: '#166534' }]}>-₹{couponDiscount.toFixed(2)}</Text>
+                      </View>
+                    )}
                     <View style={styles.summaryRow}>
                       <Text style={styles.summaryLabel}>GST (18%)</Text>
                       <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>

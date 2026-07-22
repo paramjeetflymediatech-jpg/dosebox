@@ -8,7 +8,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../../config/env';
+import { AlertService } from '../../services/AlertService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../services/api';
@@ -64,6 +69,44 @@ export default function ProceedScreen({ navigation }) {
       // show empty state
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      const url = `${API_URL}/orders/${orderId}/invoice`;
+
+      const { dirs } = ReactNativeBlobUtil.fs;
+      const fileName = `Invoice_OD-${orderId}.pdf`;
+      const path = Platform.OS === 'ios' ? `${dirs.DocumentDir}/${fileName}` : `${dirs.DownloadDir}/${fileName}`;
+
+      AlertService.show({ type: 'info', title: 'Downloading', message: 'Invoice is downloading...' });
+
+      const res = await ReactNativeBlobUtil.config({
+        fileCache: true,
+        path: path,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          path: path,
+          description: 'Downloading Invoice',
+          title: fileName,
+          mime: 'application/pdf',
+        }
+      }).fetch('GET', url, {
+        Authorization: `Bearer ${token}`
+      });
+
+      if (Platform.OS === 'ios') {
+        ReactNativeBlobUtil.ios.previewDocument(res.path());
+      } else {
+        AlertService.show({ type: 'success', title: 'Success', message: 'Invoice downloaded successfully' });
+      }
+
+    } catch (err) {
+      console.log('Download error:', err);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to download invoice' });
     }
   };
 
@@ -135,6 +178,14 @@ export default function ProceedScreen({ navigation }) {
                 onPress={() => navigation.navigate('OrderTracking', { order: item, autoOpenClaim: true })}
               >
                 <Text style={{ color: C.white, fontWeight: 'bold', fontSize: rm(12) }}>Claim Refund</Text>
+              </TouchableOpacity>
+            )}
+            {displayStatus === 'Delivered' && (
+              <TouchableOpacity 
+                style={{ backgroundColor: C.successLight, paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: 20, borderWidth: 1, borderColor: C.success }}
+                onPress={() => handleDownloadInvoice(item.id)}
+              >
+                <Text style={{ color: C.success, fontWeight: 'bold', fontSize: rm(12) }}>Download Invoice</Text>
               </TouchableOpacity>
             )}
           </View>

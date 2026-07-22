@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    if (body.code) body.code = body.code.trim().toUpperCase();
     const coupon = await Coupon.create(body);
     return NextResponse.json({ success: true, message: 'Coupon added', data: coupon }, { status: 201 });
   } catch (error: any) {

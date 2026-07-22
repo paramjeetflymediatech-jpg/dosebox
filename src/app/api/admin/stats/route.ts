@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
+import { Op } from 'sequelize';
 import {
   User, Medicine, Order, Prescription, Category, Brand,
-  Banner, Coupon, Blog, Doctor, Appointment, Faq, Supplier
+  Banner, Coupon, Blog, Doctor, Appointment, Faq, Supplier,
+  DoseboxTokenTransaction, Payment, PageMeta, DataDeletionRequest
 } from '../../../../models';
 
 export async function GET(req: NextRequest) {
@@ -10,7 +12,8 @@ export async function GET(req: NextRequest) {
     const [
       users, medicines, orders, prescriptions,
       categories, brands, banners, coupons,
-      blogs, doctors, appointments, faqs, suppliers
+      blogs, doctors, appointments, faqs, suppliers,
+      rewards, transactions, seo, dataDeletion
     ] = await Promise.all([
       User.count().catch(() => 0),
       Medicine.count().catch(() => 0),
@@ -24,7 +27,11 @@ export async function GET(req: NextRequest) {
       Doctor.count().catch(() => 0),
       Appointment.count().catch(() => 0),
       Faq.count().catch(() => 0),
-      Supplier.count().catch(() => 0)
+      Supplier.count().catch(() => 0),
+      DoseboxTokenTransaction.count().catch(() => 0),
+      Order.count({ where: { transactionId: { [Op.not]: null } as any } }).catch(() => 0),
+      PageMeta.count().catch(() => 0),
+      DataDeletionRequest.count().catch(() => 0)
     ]);
 
     const data = {
@@ -41,9 +48,10 @@ export async function GET(req: NextRequest) {
       appointments,
       faqs,
       suppliers,
-      rewards: 0,
-      transactions: 0,
-      seo: 0
+      rewards: rewards || 0,
+      transactions: transactions || 0,
+      seo: seo || 0,
+      dataDeletion: dataDeletion || 0
     };
 
     return NextResponse.json({ success: true, data }, { status: 200 });

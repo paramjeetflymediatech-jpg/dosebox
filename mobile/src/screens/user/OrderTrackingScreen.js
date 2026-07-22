@@ -20,6 +20,9 @@ import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { getFullImageUrl } from '../../utils/image';
 import { AlertService } from '../../services/AlertService';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../../config/env';
 
 const C = {
   primary: '#1F5C52',
@@ -134,6 +137,44 @@ export default function OrderTrackingScreen({ route, navigation }) {
     setRefreshing(true);
     await fetchOrderData();
     setRefreshing(false);
+  };
+
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      const url = `${API_URL}/orders/${orderId}/invoice`;
+
+      const { dirs } = ReactNativeBlobUtil.fs;
+      const fileName = `Invoice_OD-${orderId}.pdf`;
+      const path = Platform.OS === 'ios' ? `${dirs.DocumentDir}/${fileName}` : `${dirs.DownloadDir}/${fileName}`;
+
+      AlertService.show({ type: 'info', title: 'Downloading', message: 'Invoice is downloading...' });
+
+      const res = await ReactNativeBlobUtil.config({
+        fileCache: true,
+        path: path,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          path: path,
+          description: 'Downloading Invoice',
+          title: fileName,
+          mime: 'application/pdf',
+        }
+      }).fetch('GET', url, {
+        Authorization: `Bearer ${token}`
+      });
+
+      if (Platform.OS === 'ios') {
+        ReactNativeBlobUtil.ios.previewDocument(res.path());
+      } else {
+        AlertService.show({ type: 'success', title: 'Success', message: 'Invoice downloaded successfully' });
+      }
+
+    } catch (err) {
+      console.log('Download error:', err);
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to download invoice' });
+    }
   };
 
   useEffect(() => {
@@ -278,6 +319,18 @@ export default function OrderTrackingScreen({ route, navigation }) {
               <Text style={styles.infoDate}>{order.paymentMethod}</Text>
             </View>
           </View>
+          {order.status === 'Delivered' && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity 
+                style={{ backgroundColor: C.successLight, padding: rv(12), borderRadius: radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                onPress={() => handleDownloadInvoice(order.id)}
+              >
+                <Ionicons name="document-text-outline" size={20} color={C.success} style={{ marginRight: 8 }} />
+                <Text style={{ color: C.success, fontWeight: '700', fontSize: rm(14) }}>Download Invoice</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* Timeline */}

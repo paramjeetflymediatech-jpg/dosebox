@@ -19,6 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const body = await req.json();
+    if (body.code) body.code = body.code.trim().toUpperCase();
     const coupon = await Coupon.findByPk(id);
     if (!coupon) {
       return NextResponse.json({ success: false, message: 'Coupon not found' }, { status: 404 });

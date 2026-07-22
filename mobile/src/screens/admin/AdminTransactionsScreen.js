@@ -35,7 +35,9 @@ export default function AdminTransactionsScreen({ navigation }) {
       if (res.data?.success) {
         let items = res.data.data;
         if (Array.isArray(items)) {
-          items = items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          items = items
+            .filter(o => o.transactionId != null)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           setData(items);
         } else {
           setData([]);

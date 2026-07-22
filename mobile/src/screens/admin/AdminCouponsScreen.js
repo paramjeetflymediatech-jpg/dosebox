@@ -62,7 +62,9 @@ export default function AdminCouponsScreen({ navigation }) {
     setFormData({
       code: item ? (item.code !== undefined ? String(item.code) : '') : '',
       discountValue: item ? (item.discountValue !== undefined ? String(item.discountValue) : '') : '',
-      description: item ? (item.description !== undefined ? String(item.description) : '') : '',
+      discountType: item ? (item.discountType || 'Percentage') : 'Percentage',
+      minOrderValue: item ? (item.minOrderValue !== undefined ? String(item.minOrderValue) : '0') : '0',
+      expiryDate: item ? (item.expiryDate ? new Date(item.expiryDate).toISOString().split('T')[0] : '') : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
     setModalVisible(true);
   };
@@ -105,7 +107,8 @@ export default function AdminCouponsScreen({ navigation }) {
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle}>{item.code || 'Untitled'}</Text>
         <Text style={styles.cardSubtitle} numberOfLines={2}>
-          {item.description || "Discount: " + item.discountValue || 'No description available'}
+          Discount: {item.discountValue} {item.discountType === 'Percentage' ? '%' : '₹'}
+          {"\n"}Expires: {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
         </Text>
       </View>
       <View style={styles.cardActions}>
@@ -224,15 +227,34 @@ export default function AdminCouponsScreen({ navigation }) {
                 />
               </View>
               <View style={styles.fieldBox}>
-                <Text style={styles.fieldLabel}>Description</Text>
+                <Text style={styles.fieldLabel}>Discount Type</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
-                  value={String(formData.description || '')}
-                  onChangeText={txt => setFormData({...formData, description: txt})}
-                  placeholder="Enter description"
+                  style={[styles.input, null]}
+                  value={String(formData.discountType || '')}
+                  onChangeText={txt => setFormData({...formData, discountType: txt})}
+                  placeholder="Percentage or Fixed"
                   placeholderTextColor="#94A3B8"
-                  multiline={true}
-                  numberOfLines={4}
+                />
+              </View>
+              <View style={styles.fieldBox}>
+                <Text style={styles.fieldLabel}>Min Order Value</Text>
+                <TextInput
+                  style={[styles.input, null]}
+                  value={String(formData.minOrderValue || '')}
+                  onChangeText={txt => setFormData({...formData, minOrderValue: txt})}
+                  placeholder="e.g. 500"
+                  keyboardType="numeric"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+              <View style={styles.fieldBox}>
+                <Text style={styles.fieldLabel}>Expiry Date (YYYY-MM-DD) *</Text>
+                <TextInput
+                  style={[styles.input, null]}
+                  value={String(formData.expiryDate || '')}
+                  onChangeText={txt => setFormData({...formData, expiryDate: txt})}
+                  placeholder="2024-12-31"
+                  placeholderTextColor="#94A3B8"
                 />
               </View>
                 </View>

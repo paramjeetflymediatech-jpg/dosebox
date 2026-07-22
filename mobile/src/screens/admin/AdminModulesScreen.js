@@ -62,7 +62,11 @@ export default function AdminModulesScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{top:10,bottom:10,left:10,right:10}}>
+          <Ionicons name="arrow-back" style={styles.backIcon} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Admin Modules</Text>
+        <View style={{ width: 24 }} />
       </View>
       <ScrollView 
         contentContainerStyle={styles.content} 
@@ -106,10 +110,13 @@ export default function AdminModulesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingTop: rv(16), paddingBottom: rv(12),
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
-  headerTitle: { fontSize: rm(22), fontWeight: '700', color: '#0F172A', letterSpacing: -0.3 },
+  backButton: { padding: rv(4) },
+  backIcon: { fontSize: rm(24), color: '#0F172A', fontWeight: '300' },
+  headerTitle: { fontSize: rm(20), fontWeight: '700', color: '#0F172A', letterSpacing: -0.3 },
   content: { padding: spacing.md, paddingBottom: rv(100) },
   sectionTitle: { fontSize: rm(16), fontWeight: '600', color: '#64748B', marginBottom: rv(16) },
   listContainer: { flexDirection: 'column', gap: rv(12) },
