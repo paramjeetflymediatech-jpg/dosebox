@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -45,7 +46,11 @@ export default function ProceedScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchOrders(); }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders();
+    }, [])
+  );
 
   const fetchOrders = async () => {
     try {
@@ -114,9 +119,29 @@ export default function ProceedScreen({ navigation }) {
           ))}
         </View>
 
-        <View style={styles.cardFooter}>
-          <Text style={styles.viewDetailText}>View Details</Text>
-          <Ionicons name="chevron-forward" size={16} color={C.primary} />
+        <View style={[styles.cardFooter, { justifyContent: 'space-between' }]}>
+          <View style={{ flexDirection: 'row', gap: rs(8) }}>
+            {['Pending', 'Confirmed', 'Packed', 'Prescription Review'].includes(displayStatus) && (
+              <TouchableOpacity 
+                style={{ backgroundColor: C.dangerLight, paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: 20, borderWidth: 1, borderColor: C.danger }}
+                onPress={() => navigation.navigate('OrderTracking', { order: item, autoOpenCancel: true })}
+              >
+                <Text style={{ color: C.danger, fontWeight: 'bold', fontSize: rm(12) }}>Cancel Order</Text>
+              </TouchableOpacity>
+            )}
+            {item.status === 'Cancelled' && item.refundStatus === 'Pending User Choice' && (
+              <TouchableOpacity 
+                style={{ backgroundColor: C.warning, paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: 20, borderWidth: 1, borderColor: '#D97706' }}
+                onPress={() => navigation.navigate('OrderTracking', { order: item, autoOpenClaim: true })}
+              >
+                <Text style={{ color: C.white, fontWeight: 'bold', fontSize: rm(12) }}>Claim Refund</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.viewDetailText}>View Details</Text>
+            <Ionicons name="chevron-forward" size={16} color={C.primary} />
+          </View>
         </View>
       </TouchableOpacity>
     );

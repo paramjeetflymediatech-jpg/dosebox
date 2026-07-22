@@ -229,10 +229,13 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Total</span>
-                      <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{formatCurrency(Number(order.finalAmount))}</span>
+                      <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Order Value</span>
+                      <span className="font-extrabold text-slate-900 text-sm sm:text-base">₹{formatCurrency(Number(order.finalAmount) + Number((order as any).tokensUsed || 0))}</span>
                       {(order as any).tokensUsed > 0 && (
-                        <span className="text-xs text-brand-600 font-semibold block mt-1">Tokens Used: {(order as any).tokensUsed}</span>
+                        <>
+                          <span className="text-xs text-brand-600 font-semibold block mt-1">Tokens Used: {(order as any).tokensUsed}</span>
+                          <span className="text-xs text-slate-500 font-bold block mt-0.5">Paid: ₹{formatCurrency(Number(order.finalAmount))}</span>
+                        </>
                       )}
                     </div>
                     <div className="flex gap-2">

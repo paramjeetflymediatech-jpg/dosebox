@@ -99,6 +99,16 @@ export default function OrderTrackingScreen({ route, navigation }) {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  useEffect(() => {
+    if (route?.params?.autoOpenCancel) {
+      setIsClaimMode(false);
+      setCancelModalOpen(true);
+    } else if (route?.params?.autoOpenClaim) {
+      setIsClaimMode(true);
+      setCancelModalOpen(true);
+    }
+  }, []);
+
   const fetchOrderData = async () => {
     await Promise.all([
       api.get('/orders').then(res => {
@@ -243,8 +253,18 @@ export default function OrderTrackingScreen({ route, navigation }) {
               </View>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.infoLabel}>Total Amount</Text>
-              <Text style={styles.infoValue}>₹{order.finalAmount}</Text>
+              <Text style={styles.infoLabel}>Order Value</Text>
+              <Text style={styles.infoValue}>₹{Number(order.finalAmount) + Number(order.tokensUsed || 0)}</Text>
+              {order.tokensUsed > 0 && (
+                <>
+                  <Text style={{ fontSize: rm(12), color: C.primary, fontWeight: '700', marginTop: rv(2) }}>
+                    Tokens Used: {order.tokensUsed}
+                  </Text>
+                  <Text style={{ fontSize: rm(12), color: C.sub, fontWeight: '600', marginTop: rv(2) }}>
+                    Paid: ₹{order.finalAmount}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
           <View style={styles.divider} />

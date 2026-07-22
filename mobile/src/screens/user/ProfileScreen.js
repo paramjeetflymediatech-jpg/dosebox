@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,31 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, useFocusEffect } from '@react-navigation/native';
+import api from '../../services/api';
 import { rs, rv, rm, spacing, radius, isTablet } from '../../utils/responsive';
 
 export default function ProfileScreen({ navigation }) {
   const [user, setUser] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  useEffect(() => {
-    AsyncStorage.getItem('user').then((val) => {
-      if (val) setUser(JSON.parse(val));
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      // First load from local storage for instant render
+      AsyncStorage.getItem('user').then((val) => {
+        if (val) setUser(JSON.parse(val));
+      });
+      // Then fetch latest from backend
+      api.get('/account/profile')
+        .then(async (res) => {
+          if (res.data?.success && res.data.data) {
+            setUser(res.data.data);
+            await AsyncStorage.setItem('user', JSON.stringify(res.data.data));
+          }
+        })
+        .catch(err => console.error('Failed to fetch profile', err));
+    }, [])
+  );
 
   const performLogout = async () => {
     setShowLogoutModal(false);

@@ -37,7 +37,7 @@ const MENU_SECTIONS = [
       { id: 'blog', title: 'Our Blog', icon: 'document-text-outline', screen: 'Blog' },
       { id: 'contact', title: 'Contact Support', icon: 'chatbubbles-outline', screen: 'Contact' },
       { id: 'test', title: 'Testimonials', icon: 'star-outline', screen: 'Testimonial' },
-      { id: 'news', title: 'Latest News', icon: 'newspaper-outline', screen: 'News' }
+      // { id: 'news', title: 'Latest News', icon: 'newspaper-outline', screen: 'News' }
     ]
   },
   {

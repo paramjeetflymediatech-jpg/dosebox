@@ -64,7 +64,7 @@ api.interceptors.response.use(
         if (refreshToken) {
           // Ask the backend for a new access token
           const refreshResponse = await axios.post(`${API_URL}/auth/refresh`, {
-            refresh_token: refreshToken
+            refreshToken: refreshToken
           });
           
           if (refreshResponse.data && refreshResponse.data.accessToken) {

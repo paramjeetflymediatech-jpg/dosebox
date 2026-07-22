@@ -232,32 +232,41 @@ export default function UploadPrescriptionScreen({ navigation }) {
           </View>
 
           <Text style={styles.sectionHeader}>Medicine Formula Matches</Text>
-          {result.medicines.map((med, idx) => {
-            const product = med.product || (med.variants && med.variants[0]);
-            if (!product) return null;
-            return (
-              <View key={idx} style={styles.medCard}>
-                 <View style={styles.extractedRow}>
-                   <View style={styles.brandBadge}>
-                     <Text style={styles.brandBadgeText}>Handwritten Brand</Text>
+          {result.medicines && result.medicines.length > 0 ? (
+            result.medicines.map((med, idx) => {
+              const product = med.product || (med.variants && med.variants[0]);
+              if (!product) return null;
+              return (
+                <View key={idx} style={styles.medCard}>
+                   <View style={styles.extractedRow}>
+                     <View style={styles.brandBadge}>
+                       <Text style={styles.brandBadgeText}>Handwritten Brand</Text>
+                     </View>
+                     <Text style={styles.extractedText}>"{med.extracted?.medicineName || 'Unknown'} {med.extracted?.strength || ''}"</Text>
                    </View>
-                   <Text style={styles.extractedText}>"{med.extracted?.medicineName || 'Unknown'} {med.extracted?.strength || ''}"</Text>
-                 </View>
-                 <View style={styles.matchRow}>
-                   <Ionicons name="return-down-forward" size={24} color="#0D9488" style={{marginTop: 4, marginRight: 12}} />
-                   <View style={styles.matchDetails}>
-                     <Text style={styles.productName}>{product.name}</Text>
-                     <View style={styles.priceRow}>
-                        <Text style={styles.doseboxPrice}>₹{product.discountPrice || product.price}</Text>
-                        {product.price && product.discountPrice < product.price && (
-                          <Text style={styles.marketPrice}>₹{product.price}</Text>
-                        )}
+                   <View style={styles.matchRow}>
+                     <Ionicons name="return-down-forward" size={24} color="#0D9488" style={{marginTop: 4, marginRight: 12}} />
+                     <View style={styles.matchDetails}>
+                       <Text style={styles.productName}>{product.name}</Text>
+                       <View style={styles.priceRow}>
+                          <Text style={styles.doseboxPrice}>₹{product.discountPrice || product.price}</Text>
+                          {product.price && product.discountPrice < product.price && (
+                            <Text style={styles.marketPrice}>₹{product.price}</Text>
+                          )}
+                       </View>
                      </View>
                    </View>
-                 </View>
-              </View>
-            );
-          })}
+                </View>
+              );
+            })
+          ) : (
+            <View style={{ alignItems: 'center', paddingVertical: rv(40), paddingHorizontal: spacing.lg }}>
+               <Ionicons name="alert-circle-outline" size={rs(48)} color="#94A3B8" />
+               <Text style={{ marginTop: rv(12), fontSize: rm(16), color: '#475569', textAlign: 'center', lineHeight: rv(24) }}>
+                 No medicines were matched from this prescription. Please try uploading a clearer image or search manually.
+               </Text>
+            </View>
+          )}
         </ScrollView>
       ) : (
         <>
@@ -332,12 +341,18 @@ export default function UploadPrescriptionScreen({ navigation }) {
         </View>
       )}
 
-      {result && result.medicines && result.medicines.length > 0 && (
+      {result && (
          <View style={[styles.bottomContainer, styles.resultFooter, { paddingBottom: insets.bottom + 24 }]}>
-            <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart} activeOpacity={0.8}>
-              <Text style={styles.addToCartText}>Add Verified Generics to Cart</Text>
-              <Ionicons name="chevron-forward" size={20} color="#ffffff" />
-            </TouchableOpacity>
+           {result.medicines && result.medicines.length > 0 ? (
+             <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart} activeOpacity={0.8}>
+               <Text style={styles.addToCartText}>Add Verified Generics to Cart</Text>
+               <Ionicons name="chevron-forward" size={20} color="#ffffff" />
+             </TouchableOpacity>
+           ) : (
+             <TouchableOpacity style={styles.processButton} onPress={() => { setResult(null); setImageUri(null); }} activeOpacity={0.8}>
+               <Text style={styles.processButtonText}>Upload Clearer Image</Text>
+             </TouchableOpacity>
+           )}
          </View>
       )}
     </SafeAreaView>

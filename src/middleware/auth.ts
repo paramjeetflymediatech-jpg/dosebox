@@ -36,7 +36,10 @@ export const authenticateJWT = async (req: NextRequest): Promise<AuthenticatedUs
       roleId: user.roleId,
       roleName: user.role ? (user.role as any).name : 'Customer'
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return NextResponse.json({ success: false, message: 'Token has expired', code: 'TOKEN_EXPIRED' }, { status: 401 });
+    }
     return NextResponse.json({ success: false, message: 'Token is invalid or expired' }, { status: 401 });
   }
 };
