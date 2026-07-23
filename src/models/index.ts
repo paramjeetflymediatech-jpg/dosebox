@@ -254,7 +254,7 @@ export interface MedicineAttributes {
   verifierRegNo?: string;
   isColdChain?: boolean;
 }
-export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain'>> implements MedicineAttributes {
+export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain' | 'verificationStatus'>> implements MedicineAttributes {
   declare id: number;
   declare name: string;
   declare genericName: string;
