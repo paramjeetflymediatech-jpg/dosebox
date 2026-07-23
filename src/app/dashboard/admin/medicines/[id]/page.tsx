@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Pill, ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pill, ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, Wand2, ShieldCheck } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import dynamic from 'next/dynamic';
 
@@ -13,6 +14,8 @@ export default function EditMedicinePage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
+  const { user, isMedico, isAdmin, isLeadership } = useAuth();
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
   const [brands, setBrands] = useState<{ id: number, name: string }[]>([]);
@@ -39,7 +42,10 @@ export default function EditMedicinePage() {
     brandId: '',
     minStockAlertThreshold: '10',
     locationInWarehouse: '',
-    sections: [] as { id?: number; title: string; content: string; sortOrder: number }[]
+    sections: [] as { id?: number; title: string; content: string; sortOrder: number }[],
+    verificationStatus: 'Pending',
+    verifierName: '',
+    verifierRegNo: ''
   });
 
   useEffect(() => {
@@ -81,7 +87,10 @@ export default function EditMedicinePage() {
             brandId: m.brandId?.toString() || '',
             minStockAlertThreshold: m.inventory?.minStockAlertThreshold?.toString() || '10',
             locationInWarehouse: m.inventory?.locationInWarehouse || '',
-            sections: m.sections ? [...m.sections].sort((a: any, b: any) => a.sortOrder - b.sortOrder) : []
+            sections: m.sections ? [...m.sections].sort((a: any, b: any) => a.sortOrder - b.sortOrder) : [],
+            verificationStatus: m.verificationStatus || 'Pending',
+            verifierName: m.verifierName || '',
+            verifierRegNo: m.verifierRegNo || ''
           });
         }
       } catch (err) {
@@ -200,6 +209,53 @@ export default function EditMedicinePage() {
     });
   };
 
+  
+  const handleGenerateAI = async () => {
+    if (!formData.name || !formData.genericName) {
+      alert('Please fill Brand Name and Generic Name first');
+      return;
+    }
+    setGeneratingAI(true);
+    try {
+      const res = await api.post('/admin/medicines/generate-ai', {
+        name: formData.name,
+        genericName: formData.genericName,
+        manufacturer: formData.manufacturer,
+        composition: formData.composition,
+        dosage: formData.dosage
+      });
+      if (res.data?.success) {
+        const { description, sideEffects, storageInstructions, sections } = res.data.data;
+        setFormData(prev => ({
+          ...prev,
+          description: description || prev.description,
+          sideEffects: sideEffects || prev.sideEffects,
+          storageInstructions: storageInstructions || prev.storageInstructions,
+          sections: sections && sections.length > 0 ? sections.map((s: any, i: number) => ({ ...s, sortOrder: i })) : prev.sections
+        }));
+        alert('AI content generated successfully! Please review before saving.');
+      } else {
+        alert(res.data?.message || 'Failed to generate content');
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.message || 'Error generating AI content');
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  const handleVerifyContent = () => {
+    if (!user) return;
+    setFormData(prev => ({
+      ...prev,
+      verificationStatus: 'Verified',
+      verifierName: user.name,
+      verifierRegNo: user.email // Proxy for DMC number in demo
+    }));
+    alert('Content marked as Verified. Click Save to persist changes.');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.categoryId || !formData.brandId || !formData.price) {
@@ -217,7 +273,10 @@ export default function EditMedicinePage() {
         categoryId: Number(formData.categoryId),
         brandId: Number(formData.brandId),
         minStockAlertThreshold: Number(formData.minStockAlertThreshold),
-        sections: formData.sections.map((s, i) => ({ ...s, sortOrder: i }))
+        sections: formData.sections.map((s, i) => ({ ...s, sortOrder: i })),
+        verificationStatus: formData.verificationStatus,
+        verifierName: formData.verifierName,
+        verifierRegNo: formData.verifierRegNo
       };
 
       await api.put(`/medicines/${id}`, payload);

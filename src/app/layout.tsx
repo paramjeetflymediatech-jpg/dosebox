@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import TrackingProvider from '../components/TrackingProvider';
+import Chatbot from '../components/Chatbot';
 
 import './globals.css';
 import api from '../lib/api';
@@ -87,6 +88,41 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user, login, googleLogin, logout, isAdmin } = useAuth();
   const { cartItems } = useCart();
   const [searchVal, setSearchVal] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchVal.trim().length >= 2) {
+        try {
+          const res = await api.get(`/medicines?search=${encodeURIComponent(searchVal.trim())}&limit=6`);
+          if (res.data?.success) {
+            setSearchSuggestions(res.data.data || []);
+            setShowSuggestions(true);
+          }
+        } catch (e) {
+          console.error('Failed to fetch suggestions', e);
+        }
+      } else {
+        setSearchSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchVal]);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -100,6 +136,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   const handleSearch = () => {
     if (searchVal.trim()) {
+      setShowSuggestions(false);
       router.push(`/medicines?search=${encodeURIComponent(searchVal.trim())}`);
     }
   };
@@ -321,7 +358,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       {!hideHeaderFooter && (
         <div className="bg-brand-700 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2">
           <span className="text-accent-light">⚡</span>
-          Government-Compliant Indian Specialty Drugs. Swapping branded oncology & kidney medications saves up to 85% under Special Patient Assistance programs!
+          Regulatory Compliance Indian Specialty Drugs. Swapping branded oncology & kidney medications saves up to 85% under Special Patient Assistance programs!
         </div>
       )}
 
@@ -358,7 +395,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* SEARCH BAR */}
-          <div className="flex-1 max-w-2xl relative hidden lg:block">
+          <div className="flex-1 max-w-2xl relative hidden lg:block" ref={searchContainerRef}>
             <input
               type="text"
               placeholder="Search chronic care drugs, Galvus, Trastuzumab..."
@@ -369,6 +406,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   handleSearch();
                 }
               }}
+              onFocus={() => { if (searchVal.trim().length >= 2) setShowSuggestions(true); }}
               className="w-full bg-slate-50/50 border-2 border-slate-100 text-slate-800 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-sm font-medium shadow-inner"
             />
             <button 
@@ -377,6 +415,53 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             >
               <Search className="w-5 h-5 text-slate-400 hover:text-brand-600" />
             </button>
+            
+            {/* TYPE-AHEAD SUGGESTIONS */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                <div className="py-2">
+                  <div className="px-4 py-2 flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                    <span>Suggestions</span>
+                  </div>
+                  {searchSuggestions.map((med) => {
+                    let img = '/Media.jpg';
+                    try {
+                      if (med.images) {
+                        const arr = typeof med.images === 'string' ? JSON.parse(med.images) : med.images;
+                        if (arr && arr.length > 0) img = arr[0];
+                      }
+                    } catch (e) {}
+
+                    return (
+                      <div 
+                        key={med.id}
+                        onClick={() => {
+                          setShowSuggestions(false);
+                          setSearchVal('');
+                          router.push(`/medicines/detail?id=${med.id}`);
+                        }}
+                        className="px-4 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0"
+                      >
+                        <img src={img} alt={med.name} className="w-10 h-10 object-contain rounded-lg border border-slate-100 p-1 shrink-0 bg-white" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-slate-800 truncate">{med.name}</h4>
+                          <p className="text-[10px] text-slate-500 truncate mt-0.5">{med.composition || med.genericName || 'Generic Medicine'}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-extrabold text-brand-600">₹{med.discountPrice || med.price}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div 
+                  onClick={handleSearch}
+                  className="bg-slate-50 px-4 py-3 text-center text-sm font-bold text-brand-600 hover:bg-brand-50 cursor-pointer transition-colors border-t border-slate-100"
+                >
+                  View all results for "{searchVal}"
+                </div>
+              </div>
+            )}
           </div>
 
           {/* NAVIGATION BUTTONS */}
@@ -396,7 +481,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
 
             {/* Admin Dashboard */}
-            {user && isAdmin && (
+            {user && (isAdmin || (user.role === 'Leadership') || (user.role === 'Medico') || (user.role === 'Pharmacist')) && (
               <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
                 <Link href="/dashboard/admin" className="p-2 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-full transition-colors" title="Admin">
                   <LayoutDashboard className="w-5 h-5" />
@@ -421,7 +506,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               {user ? (
                 <div className="relative group">
                   <Link
-                    href="/account"
+                    href={user && (isAdmin || user.role === 'Leadership' || user.role === 'Medico' || user.role === 'Pharmacist') ? '/dashboard/admin' : '/account'}
                     className="flex items-center gap-2 text-slate-600 hover:text-brand-600 transition-colors bg-slate-50 p-2.5 sm:px-4 sm:py-2.5 rounded-full hover:bg-brand-50"
                   >
                     {(user as any)?.avatar ? (
@@ -435,7 +520,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   {/* Dropdown Menu */}
                   <div className="absolute right-0 top-full w-48 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                     <div className="bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col py-2">
-                      <Link href="/account" className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2">
+                      <Link 
+                        href={user && (isAdmin || user.role === 'Leadership' || user.role === 'Medico' || user.role === 'Pharmacist') ? '/dashboard/admin' : '/account'} 
+                        className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2"
+                      >
                         <LayoutDashboard className="w-4 h-4" />
                         Dashboard
                       </Link>
@@ -520,7 +608,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-brand-400">
                 <Shield className="w-6 h-6" />
               </div>
-              <h4 className="text-white font-bold text-sm">Govt Registered Chemist</h4>
+              <h4 className="text-white font-bold text-sm">Regulatory Compliance Pharmacy</h4>
               <p className="text-[11px] text-slate-500">Legal license for specialty medicines (Schedule H, H1, X)</p>
             </div>
             <div className="flex flex-col items-center gap-3">
@@ -599,13 +687,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </ul>
             
             {/* Dev Login Panel - Mocking only */}
-            <div className="mt-8 pt-6 border-t border-slate-800">
+            {/* <div className="mt-8 pt-6 border-t border-slate-800">
                <h4 className="text-slate-600 font-bold text-[10px] mb-2 uppercase tracking-widest">Test Accounts (Dev)</h4>
                <div className="text-[10px] text-slate-500 space-y-1">
                  <div>Admin: admin@dosebox.com</div>
                  <div>Pharm: pharmacist@dosebox.com</div>
                </div>
-            </div>
+            </div> */}
           </div>
         </div>
         
@@ -902,6 +990,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
+      {/* Chatbot Integration */}
+      {!pathname.startsWith('/dashboard/admin') && <Chatbot />}
     </>
   );
 }

@@ -4,14 +4,14 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift, Trash2
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift, Trash2, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isAdmin, loading, logout } = useAuth();
+  const { user, isAdmin, isLeadership, isMedico, loading, logout } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -20,13 +20,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  const hasDashboardAccess = isAdmin || isLeadership || isMedico;
+
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!loading && !hasDashboardAccess) {
       router.push('/');
     }
-  }, [loading, isAdmin, router]);
+  }, [loading, hasDashboardAccess, router]);
 
-  if (loading || !isAdmin) {
+  if (loading || !hasDashboardAccess) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
@@ -34,27 +36,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const navItems = [
-    { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutGrid },
-    { name: 'Users', href: '/dashboard/admin/users', icon: Users },
-    { name: 'Reward Points', href: '/dashboard/admin/rewards', icon: Gift },
-    { name: 'Orders', href: '/dashboard/admin/orders', icon: ShoppingBag },
-    { name: 'Transactions', href: '/dashboard/admin/transactions', icon: FileText },
-    { name: 'Medicines', href: '/dashboard/admin/medicines', icon: Pill },
-    { name: 'Categories', href: '/dashboard/admin/categories', icon: Tag },
-    { name: 'Brands', href: '/dashboard/admin/brands', icon: Shield },
-    { name: 'Suppliers', href: '/dashboard/admin/suppliers', icon: Truck },
-    { name: 'Prescriptions', href: '/dashboard/admin/prescriptions', icon: FileText },
-    { name: 'Doctors', href: '/dashboard/admin/doctors', icon: Stethoscope },
-    { name: 'Appointments', href: '/dashboard/admin/appointments', icon: Calendar },
-    { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText },
-    { name: 'FAQs', href: '/dashboard/admin/faqs', icon: HelpCircle },
-    { name: 'Support Tickets', href: '/dashboard/admin/support', icon: HelpCircle },
-    { name: 'Data Deletion', href: '/dashboard/admin/data-deletion', icon: Trash2 },
-    { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings },
-    { name: 'Coupons', href: '/dashboard/admin/coupons', icon: Tag },
-    { name: 'Banners', href: '/dashboard/admin/banners', icon: Flag }
+  const allNavItems = [
+    { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutGrid, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Users', href: '/dashboard/admin/users', icon: Users, allowRoles: ['Admin'] },
+    { name: 'Roles', href: '/dashboard/admin/roles', icon: Shield, allowRoles: ['Admin'] },
+    { name: 'Reward Points', href: '/dashboard/admin/rewards', icon: Gift, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Orders', href: '/dashboard/admin/orders', icon: ShoppingBag, allowRoles: ['Admin', 'Leadership', 'Medico'] },
+    { name: 'Transactions', href: '/dashboard/admin/transactions', icon: FileText, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Medicines', href: '/dashboard/admin/medicines', icon: Pill, allowRoles: ['Admin', 'Medico'] },
+    { name: 'Categories', href: '/dashboard/admin/categories', icon: Tag, allowRoles: ['Admin'] },
+    { name: 'Brands', href: '/dashboard/admin/brands', icon: Shield, allowRoles: ['Admin'] },
+    { name: 'Suppliers', href: '/dashboard/admin/suppliers', icon: Truck, allowRoles: ['Admin'] },
+    { name: 'Prescriptions', href: '/dashboard/admin/prescriptions', icon: FileText, allowRoles: ['Admin', 'Medico'] },
+    { name: 'Doctors', href: '/dashboard/admin/doctors', icon: Stethoscope, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Appointments', href: '/dashboard/admin/appointments', icon: Calendar, allowRoles: ['Admin'] },
+    { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText, allowRoles: ['Admin'] },
+    { name: 'FAQs', href: '/dashboard/admin/faqs', icon: HelpCircle, allowRoles: ['Admin'] },
+    { name: 'Support Tickets', href: '/dashboard/admin/support', icon: HelpCircle, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Data Deletion', href: '/dashboard/admin/data-deletion', icon: Trash2, allowRoles: ['Admin'] },
+    { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings, allowRoles: ['Admin'] },
+    { name: 'Coupons', href: '/dashboard/admin/coupons', icon: Tag, allowRoles: ['Admin'] },
+    { name: 'Banners', href: '/dashboard/admin/banners', icon: Flag, allowRoles: ['Admin'] },
+    { name: 'Bot Simulator', href: '/dashboard/admin/bot-simulator', icon: MessageSquare, allowRoles: ['Admin', 'Leadership'] }
   ];
+
+  const navItems = allNavItems.filter(item => {
+    if (isAdmin) return true;
+    if (isLeadership && item.allowRoles.includes('Leadership')) return true;
+    if (isMedico && item.allowRoles.includes('Medico')) return true;
+    return false;
+  });
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">

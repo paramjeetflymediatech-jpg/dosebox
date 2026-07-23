@@ -9,7 +9,7 @@ import Link from 'next/link';
 import api from '../../../lib/api';
 import { useCart } from '../../../context/CartContext';
 import { toast } from 'react-hot-toast';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
 
 interface Review {
   id: number;
@@ -39,6 +39,9 @@ interface MedicineDetails {
   brand?: { name: string };
   categoryDetail?: { name: string };
   reviews?: Review[];
+  verificationStatus?: string;
+  verifierName?: string;
+  verifierRegNo?: string;
 }
 
 function MedicineDetailsContent() {
@@ -187,13 +190,19 @@ function MedicineDetailsContent() {
           {/* Right: Product Meta & Adders */}
           <div className="flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-bold text-brand-600  tracking-widest bg-brand-50 py-1 px-3.5 rounded-full w-max inline-block">
                   {medicine.brand?.name || 'CIpla'}
                 </span>
                 {medicine.packSize && (
                   <span className="text-xs font-bold text-slate-500  tracking-widest bg-slate-100 py-1 px-3.5 rounded-full w-max inline-block border border-slate-200">
                     {medicine.packSize}
+                  </span>
+                )}
+                {medicine.verificationStatus === 'Verified' && (
+                  <span className="text-xs font-bold text-emerald-700 tracking-widest bg-emerald-50 py-1 px-3.5 rounded-full inline-flex items-center gap-1.5 border border-emerald-200" title={`Medically Reviewed by ${medicine.verifierName || 'Professional'} (${medicine.verifierRegNo || 'Reg: N/A'})`}>
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Verified by {medicine.verifierName || 'Doctor'}
                   </span>
                 )}
               </div>
@@ -240,6 +249,16 @@ function MedicineDetailsContent() {
                     <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{formatCurrency(price)}</span>
                   )}
                 </div>
+                {(() => {
+                  const activePrice = discPrice || price;
+                  const unitPriceObj = calculateUnitPrice(activePrice, medicine.packSize);
+                  if (!unitPriceObj) return null;
+                  return (
+                    <p className="text-sm text-slate-500 font-medium mt-1">
+                      ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                    </p>
+                  );
+                })()}
                 <p className="text-xxs text-slate-400 mt-1">Tax inclusive (GST included in prices)</p>
               </div>
             </div>

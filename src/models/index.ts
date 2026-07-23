@@ -249,8 +249,12 @@ export interface MedicineAttributes {
   images: string; // JSON array string
   categoryId: number;
   supplierId?: number;
+  verificationStatus: 'Pending' | 'Verified';
+  verifierName?: string;
+  verifierRegNo?: string;
+  isColdChain?: boolean;
 }
-export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images'>> implements MedicineAttributes {
+export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain'>> implements MedicineAttributes {
   declare id: number;
   declare name: string;
   declare genericName: string;
@@ -270,6 +274,10 @@ export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttribu
   declare images: string;
   declare categoryId: number;
   declare supplierId?: number;
+  declare verificationStatus: 'Pending' | 'Verified';
+  declare verifierName?: string;
+  declare verifierRegNo?: string;
+  declare isColdChain?: boolean;
 }
 Medicine.init(
   {
@@ -285,13 +293,17 @@ Medicine.init(
     sideEffects: { type: DataTypes.TEXT, allowNull: true },
     storageInstructions: { type: DataTypes.STRING, allowNull: true },
     papOffer: { type: DataTypes.TEXT, allowNull: true },
-    prescriptionRequired: { type: DataTypes.BOOLEAN, defaultValue: false },
+    prescriptionRequired: { type: DataTypes.BOOLEAN, defaultValue: true },
     price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     discountPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
     stock: { type: DataTypes.INTEGER, defaultValue: 0 },
     images: { type: DataTypes.TEXT, defaultValue: '[]' },
     categoryId: { type: DataTypes.INTEGER, allowNull: false },
     supplierId: { type: DataTypes.INTEGER, allowNull: true },
+    verificationStatus: { type: DataTypes.ENUM('Pending', 'Verified'), defaultValue: 'Pending' },
+    verifierName: { type: DataTypes.STRING, allowNull: true },
+    verifierRegNo: { type: DataTypes.STRING, allowNull: true },
+    isColdChain: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   { sequelize, modelName: 'Medicine', tableName: 'medicines', timestamps: true }
 );

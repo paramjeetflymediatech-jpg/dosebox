@@ -229,7 +229,7 @@ export default function UploadPrescriptionPage() {
                     const pName = result.metadata?.patientName;
                     const dName = result.metadata?.doctorName;
                     const hasPatient = pName && !pName.includes('Unknown') && !pName.includes('Scanned');
-                    
+
                     const isDoctorUnknown = !dName || dName.includes('Unknown') || dName.includes('Scanned');
                     const displayDoctorName = isDoctorUnknown ? 'Not Given' : dName;
                     const displayDoctorSpecialty = isDoctorUnknown ? '' : (result.metadata?.doctorSpecialty ? `(${result.metadata.doctorSpecialty})` : '');
@@ -269,6 +269,12 @@ export default function UploadPrescriptionPage() {
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <span className="text-[10px] uppercase font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">Handwritten Brand</span>
                             <span className="text-sm font-medium text-slate-600 italic">"{med.extracted?.medicineName || 'Unknown'} {med.extracted?.strength || ''}"</span>
+                            {med.extracted?.dosage && (
+                              <span className="text-[10px] uppercase font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{med.extracted.dosage}</span>
+                            )}
+                            {med.extracted?.quantity && (
+                              <span className="text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Qty: {med.extracted.quantity} Units (AI Calc)</span>
+                            )}
                           </div>
 
                           {product ? (
@@ -327,7 +333,7 @@ export default function UploadPrescriptionPage() {
 
               {/* Overall Savings Box */}
               {savings.savedAmount > 0 && (
-                <div className="border border-teal-200 bg-teal-50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="border border-teal-200 bg-teal-50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center shrink-0">
                       <Sparkles className="w-5 h-5" />
@@ -340,6 +346,43 @@ export default function UploadPrescriptionPage() {
                   <div className="text-left sm:text-right shrink-0 sm:ml-4">
                     <p className="text-sm text-slate-400 line-through">₹{formatCurrency(savings.totalMarket)}</p>
                     <p className="text-2xl font-black text-teal-600">₹{formatCurrency(savings.totalDosebox)}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Alternatives Section */}
+              {result.medicines?.some((m: any) => m.variants && m.variants.length > 0) && (
+                <div className="mt-8 border-t border-slate-100 pt-8">
+                  <p className="text-xs font-bold text-slate-400 tracking-wider mb-4 uppercase">Recommended Alternatives (Same Formula)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {result.medicines.map((med: any, mIdx: number) => {
+                      if (!med.variants || med.variants.length === 0) return null;
+                      return med.variants.map((variant: any, vIdx: number) => {
+                        let img = 'https://images.unsplash.com/photo-1584308666744-24d5e478ac6d?w=800&q=80';
+                        try {
+                          const parsed = typeof variant.images === 'string' ? JSON.parse(variant.images) : variant.images;
+                          if (parsed && parsed.length > 0) img = parsed[0];
+                        } catch (e) {}
+
+                        const isSelected = selectedVariants[mIdx]?.id === variant.id;
+
+                        return (
+                          <div key={`${mIdx}-${vIdx}`} className={`border rounded-xl p-4 flex items-start gap-4 transition-all cursor-pointer ${isSelected ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' : 'border-slate-200 hover:border-teal-300 bg-white'}`} onClick={() => setSelectedVariants({ ...selectedVariants, [mIdx]: variant })}>
+                            <img src={img} alt={variant.name} className="w-12 h-12 rounded-lg object-cover border border-slate-100 shrink-0" />
+                            <div className="flex-1">
+                              <h5 className="font-bold text-slate-800 text-sm">{variant.name}</h5>
+                              <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{variant.manufacturer || 'Generic Brand'}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <p className="text-sm font-bold text-teal-600">₹{formatCurrency(Number(variant.discountPrice || variant.price))}</p>
+                                <button className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors ${isSelected ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-600 border-teal-200 hover:bg-teal-50'}`}>
+                                  {isSelected ? 'Selected' : 'Select'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })}
                   </div>
                 </div>
               )}
@@ -420,7 +463,7 @@ export default function UploadPrescriptionPage() {
                     >
                       Process Prescription
                     </button>
-                    
+
                     <button
                       onClick={(e) => { e.stopPropagation(); setFile(null); setPreviewUrl(null); }}
                       className="mt-4 block mx-auto text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors"

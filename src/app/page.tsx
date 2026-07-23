@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
 import SupportContactSection from '../components/SupportContactSection';
 
 if (typeof window !== 'undefined') {
@@ -495,7 +495,7 @@ export default function HomePage() {
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
               <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Target Specific Ailments</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Chronic Category</h2>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Specialty</h2>
             </div>
             <Link href="/condition" className="text-sm font-bold text-brand-600 hover:text-brand-700 hover:underline whitespace-nowrap flex items-center gap-1">
               View All <ArrowRight className="w-4 h-4" />
@@ -577,6 +577,8 @@ export default function HomePage() {
                 const discPrice = med.discountPrice ? Number(med.discountPrice) : null;
                 const price = Number(med.price);
                 const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
+                const activePrice = discPrice || price;
+                const unitPriceObj = calculateUnitPrice(activePrice, med.packSize);
 
                 return (
                   <div
@@ -631,8 +633,13 @@ export default function HomePage() {
                           {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
                         </div>
                         <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
-                          ₹{formatCurrency(discPrice ? discPrice.toFixed(0) : price)}
+                          ₹{formatCurrency(activePrice.toFixed(0))}
                         </div>
+                        {unitPriceObj && (
+                          <div className="text-[10px] text-[#9b9b9b] font-medium mt-0.5">
+                            ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -752,6 +759,8 @@ export default function HomePage() {
               const discPrice = med.discountPrice ? Number(med.discountPrice) : null;
               const price = Number(med.price);
               const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
+              const activePrice = discPrice || price;
+              const unitPriceObj = calculateUnitPrice(activePrice, med.packSize);
 
               return (
                 <div
@@ -806,8 +815,13 @@ export default function HomePage() {
                         {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
                       </div>
                       <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
-                        ₹{formatCurrency(discPrice ? discPrice.toFixed(0) : price)}
+                        ₹{formatCurrency(activePrice.toFixed(0))}
                       </div>
+                      {unitPriceObj && (
+                        <div className="text-[10px] text-[#9b9b9b] font-medium mt-0.5">
+                          ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5">

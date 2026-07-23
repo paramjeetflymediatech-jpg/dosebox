@@ -19,6 +19,7 @@ interface User {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
@@ -39,21 +40,35 @@ export default function AdminUsersPage() {
     status: 'Active'
   });
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const res = await api.get('/admin/users');
-      if (res.data?.success) {
-        setUsers(res.data.data);
+      const [usersRes, rolesRes] = await Promise.all([
+        api.get('/admin/users'),
+        api.get('/admin/roles')
+      ]);
+      if (usersRes.data?.success) {
+        setUsers(usersRes.data.data);
+      }
+      if (rolesRes.data?.success) {
+        setRoles(rolesRes.data.data);
       }
     } catch (err) {
-      toast.error('Failed to load users');
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchUsersOnly = async () => {
+    try {
+      const res = await api.get('/admin/users');
+      if (res.data?.success) setUsers(res.data.data);
+    } catch (err) {}
+  };
+
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
   const openAddModal = () => {
@@ -83,7 +98,7 @@ export default function AdminUsersPage() {
         const res = await api.put(`/admin/users/${editUser.id}`, formData);
         if (res.data?.success) {
           toast.success('User updated successfully');
-          fetchUsers();
+          fetchUsersOnly();
           setShowModal(false);
         } else {
           toast.error(res.data?.message || 'Failed to update user');
@@ -92,7 +107,7 @@ export default function AdminUsersPage() {
         const res = await api.post('/admin/users', formData);
         if (res.data?.success) {
           toast.success('User created successfully');
-          fetchUsers();
+          fetchUsersOnly();
           setShowModal(false);
         } else {
           toast.error(res.data?.message || 'Failed to create user');
@@ -120,7 +135,7 @@ export default function AdminUsersPage() {
       const res = await api.delete(`/admin/users/${id}`);
       if (res.data?.success) {
         toast.success('User deleted successfully');
-        fetchUsers();
+        fetchUsersOnly();
       } else {
         toast.error('Failed to delete user');
       }
@@ -146,9 +161,8 @@ export default function AdminUsersPage() {
   );
 
   const getRoleName = (roleId: number) => {
-    if (roleId === 1) return 'Admin';
-    if (roleId === 2) return 'Customer';
-    return 'Unknown';
+    const role = roles.find(r => r.id === roleId);
+    return role ? role.name : 'Unknown';
   };
 
   if (loading) {
@@ -167,7 +181,7 @@ export default function AdminUsersPage() {
             <Users className="w-6 h-6 text-brand-600" />
             Users Management
           </h1>
-          <p className="text-sm text-slate-500 mt-1">View and manage all registered users.</p>
+          <p className="text-slate-500 mt-1">View and manage all registered users.</p>
         </div>
         <div className="flex gap-4">
           <div className="relative">
@@ -278,7 +292,7 @@ export default function AdminUsersPage() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -334,8 +348,9 @@ export default function AdminUsersPage() {
                     onChange={(e) => setFormData({...formData, roleId: e.target.value})}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500"
                   >
-                    <option value="1">Admin</option>
-                    <option value="2">Customer</option>
+                    {roles.map(role => (
+                      <option key={role.id} value={role.id}>{role.name}</option>
+                    ))}
                   </select>
                 </div>
 

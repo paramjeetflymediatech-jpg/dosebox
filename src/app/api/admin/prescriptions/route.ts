@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'Admin');
+    const authCheck = authorizeRoles(userAuth, 'Admin', 'SuperAdmin', 'Medico');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const { searchParams } = new URL(req.url);
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest) {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'Admin');
+    const authCheck = authorizeRoles(userAuth, 'Admin', 'SuperAdmin', 'Medico');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const body = await req.json();

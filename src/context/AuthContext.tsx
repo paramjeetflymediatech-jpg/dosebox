@@ -8,7 +8,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
-  role: 'Admin' | 'Customer' | 'SuperAdmin' | 'Pharmacist';
+  role: 'Admin' | 'Customer' | 'SuperAdmin' | 'Pharmacist' | 'Medico' | 'Leadership';
   doseboxTokens?: number;
 }
 
@@ -19,7 +19,8 @@ interface AuthContextType {
   googleLogin: (googleId: string, email: string, name: string, avatar: string) => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
-
+  isLeadership: boolean;
+  isMedico: boolean;
   isCustomer: boolean;
   isPharmacist: boolean;
 }
@@ -105,6 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
+  const isLeadership = user?.role === 'Leadership';
+  const isMedico = user?.role === 'Medico' || user?.role === 'Pharmacist';
   const isCustomer = user?.role === 'Customer';
   const isPharmacist = user?.role === 'Pharmacist';
 
@@ -116,6 +119,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       googleLogin,
       logout,
       isAdmin,
+      isLeadership,
+      isMedico,
       isCustomer,
       isPharmacist
     }}>

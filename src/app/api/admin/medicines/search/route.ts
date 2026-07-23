@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    const authCheck = authorizeRoles(authResult, 'Admin');
+    const authCheck = authorizeRoles(authResult, 'Admin', 'Medico', 'Pharmacist', 'SuperAdmin');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const { searchParams } = new URL(req.url);

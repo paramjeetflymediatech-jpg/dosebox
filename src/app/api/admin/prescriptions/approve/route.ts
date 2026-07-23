@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return authResult;
     }
     
-    const authCheck = authorizeRoles(authResult, 'Admin');
+    const authCheck = authorizeRoles(authResult, 'Admin', 'Medico', 'Pharmacist', 'SuperAdmin');
     if (authCheck instanceof NextResponse) {
       await transaction.rollback();
       return authCheck;

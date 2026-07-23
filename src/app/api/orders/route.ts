@@ -249,8 +249,8 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = (page - 1) * limit;
 
-    // If admin, superadmin or pharmacist
-    if (userAuth.roleName === 'Admin' || userAuth.roleName === 'SuperAdmin' || userAuth.roleName === 'Pharmacist') {
+    // If admin, superadmin, leadership, medico or pharmacist
+    if (['Admin', 'SuperAdmin', 'Pharmacist', 'Leadership', 'Medico'].includes(userAuth.roleName)) {
       const status = searchParams.get('status');
       const filter: any = {};
       if (status) {

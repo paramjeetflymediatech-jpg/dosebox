@@ -8,15 +8,14 @@ export async function GET(req: NextRequest) {
   try {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
-    const roleAuth = authorizeRoles(userAuth, 'Admin');
+    const roleAuth = authorizeRoles(userAuth, 'Admin', 'SuperAdmin', 'Leadership', 'Medico');
     if (roleAuth) return roleAuth;
 
     const totalOrders = await Order.count();
     
-    const orders = await Order.findAll({
-      where: { paymentStatus: 'Paid' }
-    });
-    const totalRevenue = orders.reduce((acc: number, order: any) => acc + Number(order.finalAmount), 0);
+    const allOrders = await Order.findAll();
+    const paidOrders = allOrders.filter((o: any) => o.paymentStatus === 'Paid');
+    const totalRevenue = paidOrders.reduce((acc: number, order: any) => acc + Number(order.finalAmount), 0);
 
     const totalCustomers = await User.count({ where: { roleId: 2 } });
     const activeUsers = await User.count({ where: { status: 'active' } });
@@ -50,7 +49,7 @@ export async function GET(req: NextRequest) {
     }
 
     const revenueChart = last6Months.map(m => {
-      const monthOrders = orders.filter((o: any) => {
+      const monthOrders = paidOrders.filter((o: any) => {
         const od = new Date(o.createdAt);
         return od.getMonth() === m.monthNum && od.getFullYear() === m.year;
       });
@@ -66,6 +65,21 @@ export async function GET(req: NextRequest) {
       });
       return { month: m.monthName, customers: cumulativeCustomers.length };
     });
+
+    const orderStatusCounts: Record<string, number> = {};
+    allOrders.forEach((o: any) => {
+      const status = o.status || 'Unknown';
+      orderStatusCounts[status] = (orderStatusCounts[status] || 0) + 1;
+    });
+
+    const orderHealthChart = Object.entries(orderStatusCounts).map(([name, value]) => ({
+      name,
+      value
+    }));
+
+    if (inventoryAlerts > 0) {
+      orderHealthChart.push({ name: 'Stock Issues', value: inventoryAlerts });
+    }
 
     const topSellingMedicines = await Medicine.findAll({
       limit: 5,
@@ -90,7 +104,7 @@ export async function GET(req: NextRequest) {
           prescriptionRequests,
           inventoryAlerts
         },
-        charts: { revenueChart, customerGrowthChart },
+        charts: { revenueChart, customerGrowthChart, orderHealthChart },
         topSellingMedicines, topCategories
       }
     }, { status: 200 });

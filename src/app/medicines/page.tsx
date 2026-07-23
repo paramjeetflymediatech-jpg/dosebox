@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
 import { useCart } from '../../context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
 
 interface Medicine {
   id: number;
@@ -305,6 +305,16 @@ function MedicinesCatalogContent() {
                             ) : (
                               <span className="text-base font-extrabold text-slate-900 leading-none">₹{formatCurrency(price)}</span>
                             )}
+                            {(() => {
+                              const activePrice = discPrice || price;
+                              const unitPriceObj = calculateUnitPrice(activePrice, med.packSize);
+                              if (!unitPriceObj) return null;
+                              return (
+                                <div className="text-[10px] text-slate-500 font-medium mt-1">
+                                  ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                                </div>
+                              );
+                            })()}
                           </div>
                           
                           <div className="flex items-center gap-2">

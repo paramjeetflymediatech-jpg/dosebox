@@ -48,10 +48,14 @@ export const authorizeRoles = (user: AuthenticatedUser, ...allowedRoles: string[
   // SuperAdmin has access to everything
   if (user.roleName === 'SuperAdmin') return null;
 
+  // Level 1: Admin, Level 2: Medico, Level 3: Leadership
+  // 'Medico' is used for pharmacists/doctors approving prescriptions.
+  // 'Leadership' is used for executive views and reports.
+
   if (!allowedRoles.includes(user.roleName)) {
     return NextResponse.json({ 
       success: false, 
-      message: `Role '${user.roleName}' is unauthorized to access this resources. Required: [${allowedRoles.join(', ')}]` 
+      message: `Role '${user.roleName}' is unauthorized to access this resource. Required: [${allowedRoles.join(', ')}]` 
     }, { status: 403 });
   }
   return null;

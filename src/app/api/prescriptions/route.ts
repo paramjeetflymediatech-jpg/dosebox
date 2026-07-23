@@ -353,9 +353,14 @@ For every medicine return:
 
 - name
 - strength
-- dosage
-- duration
-- quantity
+- dosage (e.g., 'BD', 'OD', 'TDS', '1-0-1')
+- duration (e.g., '30 days', '1 week')
+- quantity: You MUST mathematically calculate the exact number of pills/units needed based on dosage and duration. For example:
+  - "30 days BD" (twice a day) = 60 tablets
+  - "1 month OD" (once a day) = 30 tablets
+  - "5 days TDS" (thrice a day) = 15 tablets
+  - "1-0-1 for 10 days" = 20 tablets
+  If you cannot calculate it, output null.
 - confidence
 
 
@@ -633,10 +638,39 @@ Return ONLY JSON.
          matchType = "Similar";
          matchedConfidence =
            best.score;
+         matchedMedicine = 
+           best.medicine;
          variants =
            rankedMatches
              .slice(0, 5)
              .map((x) => x.medicine);
+       }
+
+       // ==========================================
+       // Find Recommendations by Generic Name / Composition
+       // ==========================================
+       if (matchedMedicine) {
+           const recommendations = medicineCatalog.filter((m: any) => {
+               if (m.id === matchedMedicine.id) return false;
+               
+               const hasSameGeneric = m.genericName && matchedMedicine.genericName && m.genericName.trim().toLowerCase() === matchedMedicine.genericName.trim().toLowerCase();
+               const hasSameComposition = m.composition && matchedMedicine.composition && m.composition.trim().toLowerCase() === matchedMedicine.composition.trim().toLowerCase();
+               
+               return hasSameGeneric || hasSameComposition;
+           });
+
+           if (matchType === "Exact") {
+              variants = recommendations.slice(0, 5);
+           } else if (matchType === "Similar") {
+              const existingIds = new Set(variants.map(v => v.id));
+              recommendations.forEach(r => {
+                  if (!existingIds.has(r.id)) {
+                      variants.push(r);
+                      existingIds.add(r.id);
+                  }
+              });
+              variants = variants.slice(0, 5); // limit to top 5
+           }
        }
        // ==========================================
        // Save Matched Product

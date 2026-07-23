@@ -47,13 +47,26 @@ export async function GET(req: NextRequest) {
     const whereClause: any = {};
 
     if (search) {
-      whereClause[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { genericName: { [Op.like]: `%${search}%` } },
-        { composition: { [Op.like]: `%${search}%` } },
-        { manufacturer: { [Op.like]: `%${search}%` } },
-        { '$categoryDetail.name$': { [Op.like]: `%${search}%` } }
-      ];
+      let searchTerm = search;
+      if (searchTerm.toLowerCase() === 'pcm') {
+        searchTerm = 'paracetamol';
+      }
+
+      // Split by spaces to allow "Galvus 50mg" to match "Galvus" and "50mg"
+      const searchTerms = searchTerm.split(' ').filter(t => t.trim().length > 0);
+      
+      const searchConditions = searchTerms.map(term => ({
+        [Op.or]: [
+          { name: { [Op.like]: `%${term}%` } },
+          { genericName: { [Op.like]: `%${term}%` } },
+          { composition: { [Op.like]: `%${term}%` } },
+          { manufacturer: { [Op.like]: `%${term}%` } },
+          { '$categoryDetail.name$': { [Op.like]: `%${term}%` } },
+          { '$brand.name$': { [Op.like]: `%${term}%` } }
+        ]
+      }));
+
+      whereClause[Op.and] = searchConditions;
     }
 
     if (minPrice || maxPrice) {

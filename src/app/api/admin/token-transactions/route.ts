@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
-    const authError = authorizeRoles(userAuth, 'Admin');
+    const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin', 'Leadership');
     if (authError) return authError;
 
     const { searchParams } = new URL(req.url);

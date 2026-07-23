@@ -3,14 +3,14 @@
 import { formatCurrency } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
 import { 
-  DollarSign, ShoppingBag, Users, AlertTriangle 
+  DollarSign, ShoppingBag, Users, AlertTriangle, Download, Activity
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../lib/api';
 
 // Dynamically render charts to prevent SSR hydration errors
 import { 
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar 
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
 interface KPI {
@@ -24,7 +24,7 @@ interface KPI {
 }
 
 export default function AdminDashboardPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isLeadership, isMedico } = useAuth();
   
   // Hydration check
   const [mounted, setMounted] = useState(false);
@@ -33,6 +33,7 @@ export default function AdminDashboardPage() {
   const [kpis, setKpis] = useState<KPI | null>(null);
   const [revenueChart, setRevenueChart] = useState<any[]>([]);
   const [growthChart, setGrowthChart] = useState<any[]>([]);
+  const [orderHealthChart, setOrderHealthChart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadAdminData = async () => {
@@ -43,6 +44,7 @@ export default function AdminDashboardPage() {
       setKpis(statsData.kpis);
       setRevenueChart(statsData.charts.revenueChart);
       setGrowthChart(statsData.charts.customerGrowthChart);
+      setOrderHealthChart(statsData.charts.orderHealthChart || []);
     } catch (err) {
       console.error('Failed to load admin stats', err);
     } finally {
@@ -52,10 +54,27 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (isAdmin) {
+    if (isMedico) {
+      window.location.href = '/dashboard/admin/prescriptions';
+    } else if (isAdmin || isLeadership) {
       loadAdminData();
     }
-  }, [isAdmin]);
+  }, [isAdmin, isLeadership, isMedico]);
+
+  const handleExport = async () => {
+    try {
+      const response = await api.get('/admin/orders/export', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'dosebox_orders_report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (err) {
+      console.error('Export failed', err);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -76,6 +95,14 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 tracking-tight">Dashboard Overview</h1>
           <p className="text-slate-500 mt-2 font-medium text-lg">Welcome back, {user?.name}</p>
+        </div>
+        <div className="flex gap-3 mt-4 md:mt-0">
+          <button 
+            onClick={handleExport}
+            className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-200 hover:shadow-emerald-300 hover:-translate-y-0.5 transition-all font-semibold flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" /> Export Report
+          </button>
         </div>
       </div>
 
@@ -146,46 +173,125 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white">
-          <h3 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2"><DollarSign className="w-6 h-6 text-emerald-500"/> Revenue Trend</h3>
-          <div className="h-[300px] w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+        
+        {/* Revenue Trend - Redesigned */}
+        <div className="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/30 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-100 opacity-50"></div>
+          <div className="flex justify-between items-end mb-8 relative z-10">
+            <div>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl shadow-inner">
+                  <DollarSign className="w-5 h-5"/>
+                </div>
+                Revenue Trend
+              </h3>
+              <p className="text-slate-500 font-medium mt-1 ml-12">Monthly revenue tracking and forecasting</p>
+            </div>
+          </div>
+          <div className="h-[400px] w-full relative z-10">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueChart}>
+              <AreaChart data={revenueChart} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.01}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dx={-10} tickFormatter={(value) => `₹${value/1000}k`} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} dy={15} interval={0} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} tickFormatter={(value) => `₹${value/1000}k`} />
                 <Tooltip 
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  cursor={{stroke: '#e2e8f0', strokeWidth: 2}}
+                  contentStyle={{borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px 16px', fontWeight: 'bold'}}
+                  cursor={{stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4'}}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" activeDot={{ r: 6, strokeWidth: 0, fill: '#10b981' }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg shadow-slate-200/50 border border-white">
-          <h3 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2"><Users className="w-6 h-6 text-purple-500"/> Customer Growth</h3>
-          <div className="h-[300px] w-full">
+        {/* Customer Growth - Redesigned */}
+        <div className="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100/30 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-100 opacity-50"></div>
+          <div className="flex justify-between items-end mb-8 relative z-10">
+            <div>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl shadow-inner">
+                  <Users className="w-5 h-5"/>
+                </div>
+                Customer Growth
+              </h3>
+              <p className="text-slate-500 font-medium mt-1 ml-12">New customer acquisitions over time</p>
+            </div>
+          </div>
+          <div className="h-[400px] w-full relative z-10">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={growthChart}>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dx={-10} />
+              <BarChart data={growthChart} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                <defs>
+                  <linearGradient id="colorCust" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} dy={15} interval={0} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} />
                 <Tooltip 
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  cursor={{fill: '#f1f5f9'}}
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px 16px', fontWeight: 'bold'}}
                 />
-                <Bar dataKey="customers" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="customers" fill="url(#colorCust)" radius={[6, 6, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Order Health Status - Redesigned */}
+        <div className="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-rose-100/30 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-100 opacity-50"></div>
+          <div className="flex justify-between items-end mb-8 relative z-10">
+            <div>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl shadow-inner">
+                  <Activity className="w-5 h-5"/>
+                </div>
+                Order Health Status
+              </h3>
+              <p className="text-slate-500 font-medium mt-1 ml-12">Distribution of current order statuses</p>
+            </div>
+          </div>
+          <div className="h-[400px] w-full relative z-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={orderHealthChart}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={110}
+                  outerRadius={150}
+                  paddingAngle={6}
+                  dataKey="value"
+                  stroke="none"
+                  cornerRadius={8}
+                >
+                  {orderHealthChart.map((entry, index) => {
+                    const colors = ['#10b981', '#f59e0b', '#f43f5e', '#6366f1', '#0ea5e9'];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} className="hover:opacity-80 transition-opacity cursor-pointer" />;
+                  })}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px 16px', fontWeight: 'bold'}}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={50} 
+                  iconType="circle" 
+                  wrapperStyle={{ paddingTop: '20px', fontWeight: 600, color: '#475569' }} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
     </div>
   );

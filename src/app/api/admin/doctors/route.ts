@@ -5,7 +5,7 @@ import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
 export async function GET(req: NextRequest) {
   const userAuth = await authenticateJWT(req);
   if (userAuth instanceof NextResponse) return userAuth;
-  const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin');
+  const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin', 'Leadership');
   if (authError) return authError;
 
   try {
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userAuth = await authenticateJWT(req);
   if (userAuth instanceof NextResponse) return userAuth;
-  const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin');
+  const authError = authorizeRoles(userAuth, 'Admin', 'SuperAdmin', 'Leadership');
   if (authError) return authError;
 
   try {
