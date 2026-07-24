@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         const settings: any = {};
         settingsRaw.forEach((s: any) => settings[s.key] = s.value);
 
-        const sellerName = settings.enterprise_legal_name || 'DOSEBOX HEALTHCARE PVT LTD.';
+        const sellerName = settings.enterprise_legal_name || 'JAGBIR PHARMACEUTICALS PVT LTD.';
 
         let dynamicAddress = '';
         if (settings.enterprise_address || settings.enterprise_city) {
@@ -44,10 +44,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
           ].filter(Boolean).join('\n');
         }
 
-        const sellerAddress = dynamicAddress || '123 HEALTH AVENUE, SECTOR 4\nNEW DELHI-110001';
-        const sellerPhone = settings.enterprise_phone || '011-12345678, 9876543210';
-        const sellerDL = settings.enterprise_drug_license || 'DL-123456789';
-        const sellerGST = settings.enterprise_gst || '07AABCU9603R1ZX';
+        const sellerAddress = dynamicAddress || `B-35, BUILDING NO.-6, ANSAL CHAMBER-2
+BHIKAJI CAMA PLACE,
+NEW DELHI-110066`;
+        const sellerPhone = settings.enterprise_phone || '011-43550667,9718641733,9718211733';
+        const sellerDL = settings.enterprise_drug_license || 'WLF20B2025DL000670/WLF21B2025DL000659';
+        const sellerGST = settings.enterprise_gst || '07AAECJ0285F1ZQ';
 
         const doc = new PDFDocument({ margin: 20, size: 'A4' });
         const chunks: Buffer[] = [];
