@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
+import path from 'path';
 import { authenticateJWT } from '../../../../../middleware/auth';
 import { Order, OrderItem, Medicine, User, Setting } from '../../../../../models';
 import PDFDocument from 'pdfkit';
@@ -52,6 +53,25 @@ NEW DELHI-110066`;
         const sellerGST = settings.enterprise_gst || '07AAECJ0285F1ZQ';
 
         const doc = new PDFDocument({ margin: 20, size: 'A4' });
+        
+        // Add watermark
+        const watermarkPath = path.join(process.cwd(), 'mobile', 'src', 'assets', 'images', 'Media.jpg');
+        try {
+          doc.save();
+          doc.opacity(0.1); // Light watermark
+          const maxDimension = 300;
+          // A4 dimensions are 595.28 x 841.89
+          const x = (595.28 - maxDimension) / 2;
+          const y = (841.89 - maxDimension) / 2;
+          doc.image(watermarkPath, x, y, { 
+            fit: [maxDimension, maxDimension],
+            align: 'center',
+            valign: 'center'
+          });
+          doc.restore();
+        } catch (err) {
+          console.error('Failed to add watermark:', err);
+        }
         const chunks: Buffer[] = [];
 
         doc.on('data', chunk => chunks.push(chunk));
@@ -77,10 +97,10 @@ NEW DELHI-110066`;
 
         // Seller Info (Left)
         doc.font('Helvetica-Bold').fontSize(9).fillColor('#000080').text(sellerName, 22, 22, { width: 156 });
-        doc.font('Helvetica').fontSize(8).fillColor('black').text(sellerAddress, 22, 34, { width: 156 });
-        doc.text(`Phone : ${sellerPhone}`, 22, 65, { width: 156 });
-        doc.text(`D.L.No. : ${sellerDL}`, 22, 75, { width: 156 });
-        doc.text(`GSTIN : ${sellerGST}`, 22, 85, { width: 156 });
+        doc.font('Helvetica').fontSize(8).fillColor('black').text(sellerAddress, { width: 156 });
+        doc.text(`Phone : ${sellerPhone}`, { width: 156 });
+        doc.text(`D.L.No. : ${sellerDL}`, { width: 156 });
+        doc.text(`GSTIN : ${sellerGST}`, { width: 156 });
 
         // Middle Header
         doc.font('Helvetica-Bold').fontSize(12).fillColor('#000080').text('GST INVOICE', 180, 25, { width: 220, align: 'center' });
