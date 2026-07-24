@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { User as UserIcon, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../lib/api';
+import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const router = useRouter();
 
   const [profileData, setProfileData] = useState({
     name: '', phone: '', currentPassword: '', newPassword: '',
@@ -57,6 +59,13 @@ export default function ProfilePage() {
       if (res.data?.success) {
         toast.success('Profile updated successfully');
         setProfileData(prev => ({ ...prev, currentPassword: '', newPassword: '' }));
+        
+        // Redirect to the appropriate dashboard
+        if (user?.role === 'Admin' || user?.role === 'Leadership' || user?.role === 'Medico') {
+          router.push('/dashboard/admin');
+        } else {
+          router.push('/account');
+        }
       } else {
         toast.error(res.data?.message || 'Failed to update profile');
       }

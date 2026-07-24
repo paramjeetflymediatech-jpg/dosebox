@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift, Trash2, MessageSquare, Wand2
+import { 
+  Users, Settings, Shield, ShoppingBag, LayoutGrid, 
+  Menu, X, FileText, LogOut,
+  Pill, Wand2, Tag, Truck, Stethoscope, Calendar, HelpCircle, Trash2, Flag,
+  Gift, MessageSquare, Building2
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -59,7 +62,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings, allowRoles: ['Admin'] },
     { name: 'Coupons', href: '/dashboard/admin/coupons', icon: Tag, allowRoles: ['Admin'] },
     { name: 'Banners', href: '/dashboard/admin/banners', icon: Flag, allowRoles: ['Admin'] },
-    { name: 'Bot Simulator', href: '/dashboard/admin/bot-simulator', icon: MessageSquare, allowRoles: ['Admin', 'Leadership'] }
+    { name: 'Bot Simulator', href: '/dashboard/admin/bot-simulator', icon: MessageSquare, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Admin Profile', href: '/dashboard/admin/enterprise', icon: Building2, allowRoles: ['Admin'] },
   ];
 
   const navItems = allNavItems.filter(item => {
