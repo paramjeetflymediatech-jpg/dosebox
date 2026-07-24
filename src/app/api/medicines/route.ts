@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     const sortBy = searchParams.get('sortBy');
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '10';
+    const includeSections = searchParams.get('includeSections') === 'true';
 
     const cacheKey = `medicines:list:${searchParams.toString()}`;
     
@@ -100,6 +101,14 @@ export async function GET(req: NextRequest) {
 
     if (brand && !whereClause.brandId) {
       includeOptions[0].where = { slug: brand };
+    }
+
+    if (includeSections) {
+      includeOptions.push({
+        model: MedicineSection,
+        as: 'sections',
+        attributes: ['title', 'content']
+      });
     }
 
     let order: any[] = [['id', 'DESC']];

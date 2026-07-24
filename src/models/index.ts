@@ -249,12 +249,15 @@ export interface MedicineAttributes {
   images: string; // JSON array string
   categoryId: number;
   supplierId?: number;
-  verificationStatus: 'Pending' | 'Verified';
+  contentStatus: 'Draft' | 'Under Review' | 'Approved' | 'Rejected';
+  aiModelUsed?: string;
+  promptVersion?: string;
+  lastReviewedAt?: Date;
   verifierName?: string;
   verifierRegNo?: string;
   isColdChain?: boolean;
 }
-export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain' | 'verificationStatus'>> implements MedicineAttributes {
+export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain' | 'contentStatus' | 'aiModelUsed' | 'promptVersion' | 'lastReviewedAt'>> implements MedicineAttributes {
   declare id: number;
   declare name: string;
   declare genericName: string;
@@ -274,7 +277,10 @@ export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttribu
   declare images: string;
   declare categoryId: number;
   declare supplierId?: number;
-  declare verificationStatus: 'Pending' | 'Verified';
+  declare contentStatus: 'Draft' | 'Under Review' | 'Approved' | 'Rejected';
+  declare aiModelUsed?: string;
+  declare promptVersion?: string;
+  declare lastReviewedAt?: Date;
   declare verifierName?: string;
   declare verifierRegNo?: string;
   declare isColdChain?: boolean;
@@ -300,7 +306,10 @@ Medicine.init(
     images: { type: DataTypes.TEXT, defaultValue: '[]' },
     categoryId: { type: DataTypes.INTEGER, allowNull: false },
     supplierId: { type: DataTypes.INTEGER, allowNull: true },
-    verificationStatus: { type: DataTypes.ENUM('Pending', 'Verified'), defaultValue: 'Pending' },
+    contentStatus: { type: DataTypes.ENUM('Draft', 'Under Review', 'Approved', 'Rejected'), defaultValue: 'Draft' },
+    aiModelUsed: { type: DataTypes.STRING, allowNull: true },
+    promptVersion: { type: DataTypes.STRING, allowNull: true },
+    lastReviewedAt: { type: DataTypes.DATE, allowNull: true },
     verifierName: { type: DataTypes.STRING, allowNull: true },
     verifierRegNo: { type: DataTypes.STRING, allowNull: true },
     isColdChain: { type: DataTypes.BOOLEAN, defaultValue: false },

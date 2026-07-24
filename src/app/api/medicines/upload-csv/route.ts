@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
-import { Medicine, Brand, Category } from '../../../../models';
+import { Medicine, Brand, Category, MedicineSection } from '../../../../models';
 import * as XLSX from 'xlsx';
 
 export async function POST(req: NextRequest) {
@@ -233,15 +233,46 @@ export async function POST(req: NextRequest) {
           brandId,
           supplierId: rowData.supplierid ? parseInt(rowData.supplierid, 10) : undefined,
           images: imagesArr,
-          prescriptionRequired: rowData.prescriptionrequired?.toLowerCase() === 'true'
+          prescriptionRequired: rowData.prescriptionrequired?.toLowerCase() === 'true',
+          contentStatus: 'Draft'
         };
 
         const existingMed = await (Medicine as any).findOne({ where: { name: rowData.name } });
+        let currentMedId;
         if (existingMed) {
           await existingMed.update(medicineData);
+          currentMedId = existingMed.id;
         } else {
-          await Medicine.create(medicineData);
+          const newMed = await (Medicine as any).create(medicineData);
+          currentMedId = newMed.id;
         }
+
+        // Process dynamic sections
+        const sectionKeys = Object.keys(rowData).filter(k => k.startsWith('section: '));
+        if (sectionKeys.length > 0 && currentMedId) {
+          // Get existing sections for this medicine to manage sortOrder
+          let existingSections = await (MedicineSection as any).findAll({ where: { medicineId: currentMedId } });
+          let nextSortOrder = existingSections.length;
+
+          for (const key of sectionKeys) {
+            const title = key.replace('section: ', '').trim();
+            const content = rowData[key];
+            if (!content) continue;
+
+            const existingSec = existingSections.find((s: any) => s.title.toLowerCase() === title.toLowerCase());
+            if (existingSec) {
+              await existingSec.update({ content });
+            } else {
+              await (MedicineSection as any).create({
+                medicineId: currentMedId,
+                title: title.charAt(0).toUpperCase() + title.slice(1),
+                content,
+                sortOrder: nextSortOrder++
+              });
+            }
+          }
+        }
+
         successCount++;
       } catch (err) {
         errorCount++;

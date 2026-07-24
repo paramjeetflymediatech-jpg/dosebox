@@ -16,6 +16,7 @@ interface Medicine {
   prescriptionRequired: boolean;
   categoryDetail?: { name: string };
   brand?: { name: string };
+  contentStatus?: string;
 }
 
 export default function AdminMedicinesPage() {
@@ -96,33 +97,94 @@ export default function AdminMedicinesPage() {
     }
   };
 
-  const handleExportCsv = () => {
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    try {
+      const res = await api.put(`/medicines/${id}`, { contentStatus: newStatus });
+      if (res.data?.success) {
+        setMedicines(medicines.map(m => m.id === id ? { ...m, contentStatus: newStatus } : m));
+        Swal.fire({
+          title: 'Status Updated',
+          text: `Medicine status changed to ${newStatus}`,
+          icon: 'success',
+          toast: true,
+          position: 'bottom-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    } catch (err) {
+      console.error('Failed to update status', err);
+      Swal.fire('Error', 'Failed to update status', 'error');
+    }
+  };
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCsv = async () => {
     if (filteredMedicines.length === 0) {
       alert('No data to export.');
       return;
     }
     
-    const headers = ['ID', 'Name', 'Generic Name', 'Brand', 'Category', 'Price', 'Stock', 'Prescription Required'];
-    const rows = filteredMedicines.map(m => [
-      m.id,
-      `"${(m.name || '').replace(/"/g, '""')}"`,
-      `"${(m.genericName || '').replace(/"/g, '""')}"`,
-      `"${(m.brand?.name || '').replace(/"/g, '""')}"`,
-      `"${(m.categoryDetail?.name || '').replace(/"/g, '""')}"`,
-      m.price,
-      m.stock,
-      m.prescriptionRequired ? 'Yes' : 'No'
-    ]);
-    
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `medicines_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setExporting(true);
+    try {
+      // Fetch full data with sections included
+      const res = await api.get('/medicines?limit=10000&includeSections=true');
+      const allExportData = res.data?.data || [];
+      
+      // Filter to match the currently filtered view on the client
+      const exportIds = new Set(filteredMedicines.map(m => m.id));
+      const finalExportData = allExportData.filter((m: any) => exportIds.has(m.id));
+
+      // Gather all unique section titles for dynamic columns
+      const sectionTitles = new Set<string>();
+      finalExportData.forEach((m: any) => {
+        if (m.sections && Array.isArray(m.sections)) {
+          m.sections.forEach((s: any) => sectionTitles.add(s.title));
+        }
+      });
+      const sectionHeaders = Array.from(sectionTitles).map(t => `Section: ${t}`);
+
+      const headers = ['ID', 'Name', 'Generic Name', 'Brand', 'Category', 'Price', 'Stock', 'Prescription Required', 'Status', ...sectionHeaders];
+      
+      const rows = finalExportData.map((m: any) => {
+        const row = [
+          m.id,
+          `"${(m.name || '').replace(/"/g, '""')}"`,
+          `"${(m.genericName || '').replace(/"/g, '""')}"`,
+          `"${(m.brand?.name || '').replace(/"/g, '""')}"`,
+          `"${(m.categoryDetail?.name || '').replace(/"/g, '""')}"`,
+          m.price,
+          m.stock,
+          m.prescriptionRequired ? 'Yes' : 'No',
+          `"${(m.contentStatus || 'Draft').replace(/"/g, '""')}"`
+        ];
+        
+        // Append section contents in the same order as headers
+        Array.from(sectionTitles).forEach(title => {
+          const sec = m.sections?.find((s: any) => s.title === title);
+          const content = sec ? String(sec.content) : '';
+          row.push(`"${content.replace(/"/g, '""')}"`);
+        });
+        
+        return row;
+      });
+      
+      const csvContent = [headers.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `medicines_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to export CSV', error);
+      alert('Failed to export CSV. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleDeleteAll = async () => {
@@ -159,7 +221,7 @@ export default function AdminMedicinesPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
           <Pill className="w-8 h-8 text-brand-600" /> Medicines Catalog
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={handleDeleteAll}
             className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
@@ -168,9 +230,15 @@ export default function AdminMedicinesPage() {
           </button>
           <button
             onClick={handleExportCsv}
-            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+            disabled={exporting}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50"
           >
-            <Download className="w-4 h-4" /> Export (CSV)
+            {exporting ? (
+              <div className="w-4 h-4 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin"></div>
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Export (CSV)
           </button>
           <button
             onClick={() => setIsCsvModalOpen(true)}
@@ -187,7 +255,7 @@ export default function AdminMedicinesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-sm overflow-hidden">
         <div className="relative mb-6">
           <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
           <input
@@ -208,15 +276,16 @@ export default function AdminMedicinesPage() {
             <p className="text-sm mt-1">Try a different search or add a new medicine.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <th className="py-3 px-4">Name</th>
-                  <th className="py-3 px-4">Brand / Category</th>
-                  <th className="py-3 px-4">Price</th>
-                  <th className="py-3 px-4">Stock</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Name</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Brand / Category</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Price</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Stock</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -245,6 +314,23 @@ export default function AdminMedicinesPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4">
+                      <select 
+                        value={med.contentStatus || 'Draft'}
+                        onChange={(e) => handleStatusChange(med.id, e.target.value)}
+                        className={`text-xs font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-brand-500 cursor-pointer ${
+                          med.contentStatus === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                          med.contentStatus === 'Under Review' ? 'bg-amber-100 text-amber-800' :
+                          med.contentStatus === 'Rejected' ? 'bg-rose-100 text-rose-800' :
+                          'bg-slate-100 text-slate-800'
+                        }`}
+                      >
+                        <option value="Draft">Draft</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </td>
+                    <td className="py-4 px-4">
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/dashboard/admin/medicines/${med.id}`}
@@ -269,7 +355,7 @@ export default function AdminMedicinesPage() {
           </div>
         )}
 
-        <div className="mt-8 -mx-4 md:-mx-8">
+        <div className="mt-6 sm:mt-8 flex justify-center">
           <Pagination 
             currentPage={currentPage}
             totalPages={Math.ceil(filteredMedicines.length / itemsPerPage)}

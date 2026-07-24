@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift, Trash2, MessageSquare
+  LayoutGrid, Tag, FileText, Settings, Flag, LogOut, Code, Pill, ShoppingBag, Clipboard, Truck, Shield, Stethoscope, Calendar, Menu, X, Users, HelpCircle, Gift, Trash2, MessageSquare, Wand2
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -21,6 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   const hasDashboardAccess = isAdmin || isLeadership || isMedico;
+  const dashboardTitle = isAdmin ? 'Admin Control' : isLeadership ? 'Leadership Portal' : isMedico ? 'Medical Portal' : 'Dashboard';
 
   useEffect(() => {
     if (!loading && !hasDashboardAccess) {
@@ -37,13 +38,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const allNavItems = [
-    { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutGrid, allowRoles: ['Admin', 'Leadership'] },
+    { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutGrid, allowRoles: ['Admin', 'Leadership', 'Medico'] },
     { name: 'Users', href: '/dashboard/admin/users', icon: Users, allowRoles: ['Admin'] },
     { name: 'Roles', href: '/dashboard/admin/roles', icon: Shield, allowRoles: ['Admin'] },
     { name: 'Reward Points', href: '/dashboard/admin/rewards', icon: Gift, allowRoles: ['Admin', 'Leadership'] },
     { name: 'Orders', href: '/dashboard/admin/orders', icon: ShoppingBag, allowRoles: ['Admin', 'Leadership', 'Medico'] },
     { name: 'Transactions', href: '/dashboard/admin/transactions', icon: FileText, allowRoles: ['Admin', 'Leadership'] },
     { name: 'Medicines', href: '/dashboard/admin/medicines', icon: Pill, allowRoles: ['Admin', 'Medico'] },
+    { name: 'Generate AI', href: '/dashboard/admin/generate-ai-bulk', icon: Wand2, allowRoles: ['Admin', 'Medico'] },
     { name: 'Categories', href: '/dashboard/admin/categories', icon: Tag, allowRoles: ['Admin'] },
     { name: 'Brands', href: '/dashboard/admin/brands', icon: Shield, allowRoles: ['Admin'] },
     { name: 'Suppliers', href: '/dashboard/admin/suppliers', icon: Truck, allowRoles: ['Admin'] },
@@ -90,7 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <img src="/Media.jpg" alt="Logo" className="w-30 h-30 object-contain" />
           </Link>
           <div>
-            <h2 className="text-lg font-bold text-slate-800 leading-tight">Admin Control</h2>
+            <h2 className="text-lg font-bold text-slate-800 leading-tight">{dashboardTitle}</h2>
             <p className="text-xs text-slate-500">Manage your store</p>
           </div>
         </div>
@@ -134,7 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="font-bold text-slate-800 text-lg">Admin Control</h1>
+            <h1 className="font-bold text-slate-800 text-lg">{dashboardTitle}</h1>
           </div>
           <img src="/Media.jpg" alt="Logo" className="w-8 h-8 object-contain" />
         </header>

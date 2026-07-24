@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
 import { Op, col } from 'sequelize';
-import { Order, User, Medicine, Category, Inventory } from '../../../../models';
+import { Order, User, Medicine, Category, Inventory, Prescription } from '../../../../models';
 
 export async function GET(req: NextRequest) {
   try {
@@ -92,6 +92,31 @@ export async function GET(req: NextRequest) {
       attributes: ['id', 'name', 'slug']
     });
 
+    // --- MEDICO STATS ---
+    const allPrescriptions = await Prescription.findAll({ attributes: ['status'] });
+    const prescriptionStatusCounts: Record<string, number> = {};
+    allPrescriptions.forEach((p: any) => {
+      const s = p.status || 'Unknown';
+      prescriptionStatusCounts[s] = (prescriptionStatusCounts[s] || 0) + 1;
+    });
+
+    const allMedicines = await Medicine.findAll({ attributes: ['contentStatus'] });
+    const contentStatusCounts: Record<string, number> = {};
+    allMedicines.forEach((m: any) => {
+      const s = m.contentStatus || 'Draft';
+      contentStatusCounts[s] = (contentStatusCounts[s] || 0) + 1;
+    });
+
+    const medicoStats = {
+      prescriptionChart: Object.entries(prescriptionStatusCounts).map(([name, value]) => ({ name, value })),
+      catalogChart: Object.entries(contentStatusCounts).map(([name, value]) => ({ name, value })),
+      totalPrescriptions: allPrescriptions.length,
+      pendingPrescriptions: prescriptionStatusCounts['Pending'] || 0,
+      draftMedicines: contentStatusCounts['Draft'] || 0,
+      reviewMedicines: contentStatusCounts['Review'] || 0,
+      lowStockMedicines: inventoryAlerts
+    };
+
     return NextResponse.json({
       success: true,
       data: {
@@ -105,7 +130,7 @@ export async function GET(req: NextRequest) {
           inventoryAlerts
         },
         charts: { revenueChart, customerGrowthChart, orderHealthChart },
-        topSellingMedicines, topCategories
+        topSellingMedicines, topCategories, medicoStats
       }
     }, { status: 200 });
   } catch (error: any) {

@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Pill, ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, Wand2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
+import Swal from 'sweetalert2';
 import dynamic from 'next/dynamic';
 
 const CustomEditor = dynamic(() => import('@/components/CustomEditor'), { ssr: false });
@@ -43,7 +44,9 @@ export default function EditMedicinePage() {
     minStockAlertThreshold: '10',
     locationInWarehouse: '',
     sections: [] as { id?: number; title: string; content: string; sortOrder: number }[],
-    verificationStatus: 'Pending',
+    contentStatus: 'Draft',
+    aiModelUsed: '',
+    promptVersion: '',
     verifierName: '',
     verifierRegNo: ''
   });
@@ -88,14 +91,16 @@ export default function EditMedicinePage() {
             minStockAlertThreshold: m.inventory?.minStockAlertThreshold?.toString() || '10',
             locationInWarehouse: m.inventory?.locationInWarehouse || '',
             sections: m.sections ? [...m.sections].sort((a: any, b: any) => a.sortOrder - b.sortOrder) : [],
-            verificationStatus: m.verificationStatus || 'Pending',
+            contentStatus: m.contentStatus || 'Draft',
+            aiModelUsed: m.aiModelUsed || '',
+            promptVersion: m.promptVersion || '',
             verifierName: m.verifierName || '',
             verifierRegNo: m.verifierRegNo || ''
           });
         }
       } catch (err) {
         console.error('Failed to load medicine data', err);
-        alert('Could not load medicine details.');
+        Swal.fire('Error', 'Could not load medicine details.', 'error');
       } finally {
         setLoading(false);
       }
@@ -148,7 +153,7 @@ export default function EditMedicinePage() {
         if (res.ok && data.success) {
           uploadedUrls.push(data.fileUrl);
         } else {
-          alert(`Upload failed for ${file.name}: ${data.message || 'Unknown error'}`);
+          Swal.fire('Error', `Upload failed for ${file.name}: ${data.message || 'Unknown error'}`, 'error');
         }
       }
 
@@ -157,7 +162,7 @@ export default function EditMedicinePage() {
       }
     } catch (err) {
       console.error('Image upload failed', err);
-      alert('Failed to upload image(s)');
+      Swal.fire('Error', 'Failed to upload image(s)', 'error');
     } finally {
       setUploadingImage(false);
       e.target.value = ''; // Reset input
@@ -212,7 +217,7 @@ export default function EditMedicinePage() {
   
   const handleGenerateAI = async () => {
     if (!formData.name || !formData.genericName) {
-      alert('Please fill Brand Name and Generic Name first');
+      Swal.fire('Warning', 'Please fill Brand Name and Generic Name first', 'warning');
       return;
     }
     setGeneratingAI(true);
@@ -225,21 +230,21 @@ export default function EditMedicinePage() {
         dosage: formData.dosage
       });
       if (res.data?.success) {
-        const { description, sideEffects, storageInstructions, sections } = res.data.data;
+        const { sections, aiModelUsed, promptVersion, contentStatus } = res.data.data;
         setFormData(prev => ({
           ...prev,
-          description: description || prev.description,
-          sideEffects: sideEffects || prev.sideEffects,
-          storageInstructions: storageInstructions || prev.storageInstructions,
-          sections: sections && sections.length > 0 ? sections.map((s: any, i: number) => ({ ...s, sortOrder: i })) : prev.sections
+          sections: sections && sections.length > 0 ? sections.map((s: any, i: number) => ({ ...s, sortOrder: i })) : prev.sections,
+          aiModelUsed: aiModelUsed || prev.aiModelUsed,
+          promptVersion: promptVersion || prev.promptVersion,
+          contentStatus: contentStatus || 'Draft'
         }));
-        alert('AI content generated successfully! Please review before saving.');
+        Swal.fire('Success', 'AI content generated successfully! Please review before saving.', 'success');
       } else {
-        alert(res.data?.message || 'Failed to generate content');
+        Swal.fire('Error', res.data?.message || 'Failed to generate content', 'error');
       }
     } catch (err: any) {
       console.error(err);
-      alert(err?.response?.data?.message || 'Error generating AI content');
+      Swal.fire('Error', err?.response?.data?.message || 'Error generating AI content', 'error');
     } finally {
       setGeneratingAI(false);
     }
@@ -249,17 +254,18 @@ export default function EditMedicinePage() {
     if (!user) return;
     setFormData(prev => ({
       ...prev,
-      verificationStatus: 'Verified',
+      contentStatus: 'Approved',
       verifierName: user.name,
       verifierRegNo: user.email // Proxy for DMC number in demo
     }));
-    alert('Content marked as Verified. Click Save to persist changes.');
+    Swal.fire('Approved', 'Content marked as Approved. Click Save to persist changes.', 'success');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.categoryId || !formData.brandId || !formData.price) {
-      return alert('Please fill all required fields');
+      Swal.fire('Warning', 'Please fill all required fields', 'warning');
+      return;
     }
 
     setSaving(true);
@@ -274,7 +280,9 @@ export default function EditMedicinePage() {
         brandId: Number(formData.brandId),
         minStockAlertThreshold: Number(formData.minStockAlertThreshold),
         sections: formData.sections.map((s, i) => ({ ...s, sortOrder: i })),
-        verificationStatus: formData.verificationStatus,
+        contentStatus: formData.contentStatus,
+        aiModelUsed: formData.aiModelUsed,
+        promptVersion: formData.promptVersion,
         verifierName: formData.verifierName,
         verifierRegNo: formData.verifierRegNo
       };
@@ -283,7 +291,7 @@ export default function EditMedicinePage() {
       router.push('/dashboard/admin/medicines');
     } catch (err) {
       console.error('Failed to update medicine', err);
-      alert('Failed to update medicine');
+      Swal.fire('Error', 'Failed to update medicine', 'error');
     } finally {
       setSaving(false);
     }
@@ -295,13 +303,32 @@ export default function EditMedicinePage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard/admin/medicines" className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
-        </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
-          <Pill className="w-8 h-8 text-brand-600" /> Edit Medicine
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/admin/medicines" className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+            <Pill className="w-8 h-8 text-brand-600" /> Edit Medicine
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            type="button" 
+            onClick={handleGenerateAI} 
+            disabled={generatingAI} 
+            className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
+          >
+            <Wand2 className="w-5 h-5" /> {generatingAI ? 'Generating...' : 'Generate with AI'}
+          </button>
+          <button 
+            type="button" 
+            onClick={handleVerifyContent} 
+            className="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold rounded-xl flex items-center gap-2 transition-colors"
+          >
+            <ShieldCheck className="w-5 h-5" /> Verify Content
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
@@ -319,6 +346,15 @@ export default function EditMedicinePage() {
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Generic Name *</label>
                   <input type="text" value={formData.genericName} onChange={e => setFormData({ ...formData, genericName: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Paracetamol" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Content Status</label>
+                  <select value={formData.contentStatus} onChange={e => setFormData({ ...formData, contentStatus: e.target.value as any })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+                    <option value="Draft">Draft</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Approved">Approved (Published)</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
                 </div>
               </div>
 
@@ -440,30 +476,7 @@ export default function EditMedicinePage() {
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Dosage Guidelines *</label>
                 <input type="text" value={formData.dosage} onChange={e => setFormData({ ...formData, dosage: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 tablet twice a day" />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-                <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500">
-                  <CustomEditor 
-                    value={formData.description} 
-                    onChange={data => setFormData({...formData, description: data})} 
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Side Effects</label>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500">
-                    <CustomEditor 
-                      value={formData.sideEffects} 
-                      onChange={data => setFormData({...formData, sideEffects: data})} 
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Storage Instructions</label>
-                  <textarea value={formData.storageInstructions} onChange={e => setFormData({ ...formData, storageInstructions: e.target.value })} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Store in a cool dry place..."></textarea>
-                </div>
-              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Pack Size</label>

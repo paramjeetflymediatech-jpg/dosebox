@@ -39,7 +39,7 @@ interface MedicineDetails {
   brand?: { name: string };
   categoryDetail?: { name: string };
   reviews?: Review[];
-  verificationStatus?: string;
+  contentStatus?: string;
   verifierName?: string;
   verifierRegNo?: string;
 }
@@ -199,7 +199,7 @@ function MedicineDetailsContent() {
                     {medicine.packSize}
                   </span>
                 )}
-                {medicine.verificationStatus === 'Verified' && (
+                {medicine.contentStatus === 'Approved' && (
                   <span className="text-xs font-bold text-emerald-700 tracking-widest bg-emerald-50 py-1 px-3.5 rounded-full inline-flex items-center gap-1.5 border border-emerald-200" title={`Medically Reviewed by ${medicine.verifierName || 'Professional'} (${medicine.verifierRegNo || 'Reg: N/A'})`}>
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Verified by {medicine.verifierName || 'Doctor'}
@@ -376,18 +376,22 @@ export function MedicineScrollspy({ medicine }: { medicine: any }) {
 
   let sectionsList: { id: string; label: string; content: string }[] = [];
   
-  if (medicine.sections && medicine.sections.length > 0) {
-    sectionsList = medicine.sections.map((s: any) => ({
-      id: `section-${s.id}`,
-      label: s.title,
-      content: s.content
-    }));
-  } else {
-    // Fallback for older medicines without dynamic sections
-    if (medicine.description) sectionsList.push({ id: 'introduction', label: 'Introduction', content: medicine.description });
-    if (medicine.dosage) sectionsList.push({ id: 'how-to-use', label: 'How to Use', content: medicine.dosage });
-    if (medicine.storageInstructions) sectionsList.push({ id: 'storage', label: 'Storage Conditions', content: medicine.storageInstructions });
-    if (medicine.sideEffects) sectionsList.push({ id: 'side-effects', label: 'Side Effects', content: medicine.sideEffects });
+  const isApproved = !medicine.contentStatus || medicine.contentStatus === 'Approved';
+
+  if (isApproved) {
+    if (medicine.sections && medicine.sections.length > 0) {
+      sectionsList = medicine.sections.map((s: any) => ({
+        id: `section-${s.id}`,
+        label: s.title,
+        content: s.content
+      }));
+    } else {
+      // Fallback for older medicines without dynamic sections
+      if (medicine.description) sectionsList.push({ id: 'introduction', label: 'Introduction', content: medicine.description });
+      if (medicine.dosage) sectionsList.push({ id: 'how-to-use', label: 'How to Use', content: medicine.dosage });
+      if (medicine.storageInstructions) sectionsList.push({ id: 'storage', label: 'Storage Conditions', content: medicine.storageInstructions });
+      if (medicine.sideEffects) sectionsList.push({ id: 'side-effects', label: 'Side Effects', content: medicine.sideEffects });
+    }
   }
 
   return (
@@ -409,7 +413,11 @@ export function MedicineScrollspy({ medicine }: { medicine: any }) {
       {/* Main Content Sections */}
       <section className="w-full md:w-3/4 border border-slate-200 rounded-3xl bg-white shadow-sm p-6 sm:p-8">
         {sectionsList.length === 0 ? (
-           <div className="text-slate-500 text-center py-10">No detailed information available for this medicine yet.</div>
+           <div className="text-slate-500 text-center py-10 font-medium">
+             {medicine.contentStatus && medicine.contentStatus !== 'Approved' 
+               ? "Detailed medical information is currently under review by our medical team and will be published shortly."
+               : "No detailed information available for this medicine yet."}
+           </div>
         ) : (
           sectionsList.map((item) => (
             <div key={item.id} id={item.id} className="w-full pb-6 mb-6 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0">

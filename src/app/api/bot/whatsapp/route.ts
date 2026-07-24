@@ -32,42 +32,31 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
-      generationConfig: {
-        temperature: 0.1,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            intent: { type: SchemaType.STRING, description: "ORDER, INQUIRY, or OTHER" },
-            items: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  name: { type: SchemaType.STRING },
-                  quantity: { type: SchemaType.NUMBER, description: "Calculated quantity of units" },
-                  dosage: { type: SchemaType.STRING, nullable: true }
-                },
-                required: ["name", "quantity"]
-              }
-            },
-            address: { type: SchemaType.STRING, nullable: true },
-            replyMessage: { type: SchemaType.STRING, description: "A friendly response to the customer based on their query." }
-          },
-          required: ["intent", "items", "replyMessage"]
-        }
-      }
     });
 
     const prompt = `You are DoseBox's WhatsApp Order Bot. Extract the customer's intent and medicines they want to order from the following message. If they mention dosage and duration (e.g., 30 days BD), calculate the total quantity of tablets exactly. Address is optional.
+    
+    You MUST respond with valid JSON only. Do not wrap it in markdown block quotes. The JSON must exactly follow this structure:
+    {
+      "intent": "ORDER" | "INQUIRY" | "OTHER",
+      "items": [
+        { "name": "medicine name", "quantity": 10, "dosage": "BD" }
+      ],
+      "address": "user address if provided, else null",
+      "replyMessage": "A friendly response to the customer based on their query."
+    }
+
     Message: "${message}"`;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    let text = result.response.text();
+    text = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+
     let parsed: any;
     try {
       parsed = JSON.parse(text);
     } catch (e) {
+      console.error('Failed to parse Gemini output:', text);
       return NextResponse.json({ success: false, reply: "Sorry, I couldn't understand your order. Please try again." });
     }
 
@@ -88,15 +77,15 @@ export async function POST(req: NextRequest) {
       for (const m of allMedicines) {
         // Simple fallback matching
         if (m.name.toLowerCase().includes(qName) || m.genericName.toLowerCase().includes(qName)) {
-           bestMatch = m;
-           break;
+          bestMatch = m;
+          break;
         }
-        
+
         // Or if calculateSimilarity exists, use it
         const nameScore = calculateSimilarity ? calculateSimilarity(qName, m.name.toLowerCase()) : 0;
         const genScore = calculateSimilarity ? calculateSimilarity(qName, m.genericName.toLowerCase()) : 0;
         const score = Math.max(nameScore, genScore);
-        
+
         if (score > highestScore && score > 0.4) {
           highestScore = score;
           bestMatch = m;
@@ -118,10 +107,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (matchedItems.length === 0) {
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         reply: "I couldn't find exact matches for the medicines you asked for. A pharmacist will contact you shortly to assist.",
-        parsed 
+        parsed
       });
     }
 
