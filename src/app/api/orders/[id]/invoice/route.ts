@@ -36,8 +36,15 @@ function numberToWords(num: number): string {
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
-    const userAuth = await authenticateJWT(req);
-    if (userAuth instanceof NextResponse) return userAuth;
+    
+    // Check if this is a public share link
+    const isShared = req.nextUrl.searchParams.get('shared') === 'true';
+    
+    let userAuth: any = null;
+    if (!isShared) {
+      userAuth = await authenticateJWT(req);
+      if (userAuth instanceof NextResponse) return userAuth;
+    }
 
     const order: any = await Order.findByPk(params.id, {
       include: [
@@ -50,8 +57,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
 
-    // Only allow Admin or the order owner to view the invoice
-    if (Number(order.userId) !== Number(userAuth.id) && userAuth.roleName !== 'Admin') {
+    // Only enforce owner/Admin check if not accessed via public share link
+    if (!isShared && Number(order.userId) !== Number(userAuth.id) && userAuth.roleName !== 'Admin') {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 

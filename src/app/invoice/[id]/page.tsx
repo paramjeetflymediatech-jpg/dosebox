@@ -45,7 +45,7 @@ export default async function InvoiceSharePage({ params }: Props) {
         and display the DoseBox logo instead of a generic PDF icon!
       */}
       <iframe 
-        src={`/api/orders/${id}/invoice`} 
+        src={`/api/orders/${id}/invoice?shared=true`} 
         style={{ width: '100%', height: '100%', border: 'none' }}
         title={`Invoice OD-${id}`}
       />
