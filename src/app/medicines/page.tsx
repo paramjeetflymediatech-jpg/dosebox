@@ -81,6 +81,29 @@ function MedicinesCatalogContent() {
     loadMeta();
   }, []);
 
+  // Sync URL search params to local state if navigated via navbar or external links
+  useEffect(() => {
+    if (searchParams) {
+      const qSearch = searchParams.get('search');
+      if (qSearch !== null && qSearch !== searchTerm) {
+        setSearchTerm(qSearch);
+        setCurrentPage(1);
+      }
+      
+      const qCategory = searchParams.get('category');
+      if (qCategory !== null && qCategory !== selectedCategory) {
+        setSelectedCategory(qCategory);
+        setCurrentPage(1);
+      }
+      
+      const qBrand = searchParams.get('brand');
+      if (qBrand !== null && qBrand !== selectedBrand) {
+        setSelectedBrand(qBrand);
+        setCurrentPage(1);
+      }
+    }
+  }, [searchParams]);
+
   // Fetch medicines based on active filters
   useEffect(() => {
     async function fetchMedicines() {

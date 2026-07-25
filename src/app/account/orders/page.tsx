@@ -11,13 +11,16 @@ interface OrderItem {
   id: number;
   quantity: number;
   price: string;
-  medicine?: { name: string; images: string };
+  medicineId: number;
+  medicine?: { id: number; name: string; images: string };
 }
 
 interface Order {
   id: number;
   status: string;
   totalAmount: string;
+  discountAmount?: string;
+  gstAmount?: string;
   finalAmount: string;
   paymentStatus: string;
   paymentMethod?: string;
@@ -270,21 +273,86 @@ export default function OrdersPage() {
                           let imgUrl = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
                           try { if (item.medicine?.images) imgUrl = JSON.parse(item.medicine.images)[0]; } catch(e){}
                           return (
-                            <div key={item.id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                            <Link href={`/medicines/detail?id=${item.medicineId}`} key={item.id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0 hover:bg-slate-50 transition-all rounded-lg -mx-2 px-2 group cursor-pointer">
                               <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center overflow-hidden border border-slate-100 flex-shrink-0">
+                                <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center overflow-hidden border border-slate-100 flex-shrink-0 group-hover:border-brand-200 transition-colors">
                                   <img src={imgUrl} className="object-contain max-h-8 mix-blend-multiply" />
                                 </div>
                                 <div className="min-w-0">
-                                  <h5 className="font-bold text-slate-800 text-xs truncate">{item.medicine?.name || 'Unknown item'}</h5>
+                                  <h5 className="font-bold text-slate-800 text-xs truncate group-hover:text-brand-600 transition-colors">{item.medicine?.name || 'Unknown item'}</h5>
                                   <span className="text-xs text-slate-400 block mt-0.5">Qty: {item.quantity} • ₹{formatCurrency(Number(item.price))}</span>
                                 </div>
                               </div>
                               <span className="text-xs font-bold text-slate-800 flex-shrink-0">₹{formatCurrency((Number(item.price) * item.quantity))}</span>
-                            </div>
+                            </Link>
                           );
                         })}
                       </div>
+
+                      {/* ORDER SUMMARY */}
+                      {(() => {
+                        const totalMRP = Number(order.totalAmount) || 0;
+                        const totalDiscountSaved = Number(order.discountAmount) || 0;
+                        const finalAmount = Number(order.finalAmount) || 0;
+                        const gstAmount = Number(order.gstAmount) || 0;
+                        const tokensUsed = Number((order as any).tokensUsed) || 0;
+
+                        const itemsTotalBilling = (order.items || []).reduce((sum: number, item: any) => sum + (Number(item.price) * item.quantity), 0);
+                        const productDiscount = Math.max(0, totalMRP - itemsTotalBilling);
+                        const couponDiscount = Math.max(0, totalDiscountSaved - productDiscount - tokensUsed);
+                        
+                        const baseTotal = totalMRP - totalDiscountSaved;
+                        let shippingFee = 0;
+                        if (Math.abs(finalAmount - (baseTotal + gstAmount)) <= 51) {
+                          shippingFee = Math.max(0, Math.round(finalAmount - (baseTotal + gstAmount)));
+                        } else {
+                          shippingFee = Math.max(0, Math.round(finalAmount - baseTotal));
+                        }
+
+                        return (
+                          <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+                            <h4 className="font-bold text-slate-950 text-xs uppercase tracking-wider mb-4">Order Summary</h4>
+                            <div className="flex justify-between items-center text-sm font-semibold text-slate-500">
+                              <span>Total MRP</span>
+                              <span className="text-slate-900">₹{formatCurrency(totalMRP)}</span>
+                            </div>
+                            {productDiscount > 0 && (
+                              <div className="flex justify-between items-center text-sm font-semibold text-emerald-600">
+                                <span>Dosebox Discount</span>
+                                <span>- ₹{formatCurrency(productDiscount)}</span>
+                              </div>
+                            )}
+                            {couponDiscount > 0 && (
+                              <div className="flex justify-between items-center text-sm font-bold text-indigo-600">
+                                <span>Promo Discount</span>
+                                <span>- ₹{formatCurrency(couponDiscount)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-2 border-t border-slate-50">
+                              <span>Cart Total</span>
+                              <span className="text-slate-900">₹{formatCurrency(totalMRP - productDiscount)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm font-semibold text-slate-500 mt-2">
+                              <span>GST (18%)</span>
+                              <span className="text-slate-900">₹{formatCurrency(gstAmount)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm font-semibold text-slate-500">
+                              <span>Delivery Charges</span>
+                              <span className="text-slate-900">{shippingFee > 0 ? `₹${formatCurrency(shippingFee)}` : 'Free'}</span>
+                            </div>
+                            {tokensUsed > 0 && (
+                              <div className="flex justify-between items-center text-sm font-semibold text-amber-600">
+                                <span>Tokens Used</span>
+                                <span>- ₹{formatCurrency(tokensUsed)}</span>
+                              </div>
+                            )}
+                            <div className="pt-4 mt-4 border-t border-slate-200 flex justify-between items-baseline">
+                              <span className="font-extrabold text-slate-900 text-base">Order Total</span>
+                              <span className="font-black text-brand-600 text-lg">₹{formatCurrency(finalAmount)}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex flex-col h-full">
                       <div className="flex items-center justify-between mb-6">

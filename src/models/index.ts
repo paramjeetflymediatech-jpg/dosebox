@@ -249,6 +249,7 @@ export interface MedicineAttributes {
   images: string; // JSON array string
   categoryId: number;
   supplierId?: number;
+  hsnCode?: string;
   contentStatus: 'Draft' | 'Under Review' | 'Approved' | 'Rejected';
   aiModelUsed?: string;
   promptVersion?: string;
@@ -257,7 +258,7 @@ export interface MedicineAttributes {
   verifierRegNo?: string;
   isColdChain?: boolean;
 }
-export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain' | 'contentStatus' | 'aiModelUsed' | 'promptVersion' | 'lastReviewedAt'>> implements MedicineAttributes {
+export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain' | 'contentStatus' | 'aiModelUsed' | 'promptVersion' | 'lastReviewedAt' | 'hsnCode'>> implements MedicineAttributes {
   declare id: number;
   declare name: string;
   declare genericName: string;
@@ -277,6 +278,7 @@ export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttribu
   declare images: string;
   declare categoryId: number;
   declare supplierId?: number;
+  declare hsnCode?: string;
   declare contentStatus: 'Draft' | 'Under Review' | 'Approved' | 'Rejected';
   declare aiModelUsed?: string;
   declare promptVersion?: string;
@@ -306,6 +308,7 @@ Medicine.init(
     images: { type: DataTypes.TEXT, defaultValue: '[]' },
     categoryId: { type: DataTypes.INTEGER, allowNull: false },
     supplierId: { type: DataTypes.INTEGER, allowNull: true },
+    hsnCode: { type: DataTypes.STRING, allowNull: true },
     contentStatus: { type: DataTypes.ENUM('Draft', 'Under Review', 'Approved', 'Rejected'), defaultValue: 'Draft' },
     aiModelUsed: { type: DataTypes.STRING, allowNull: true },
     promptVersion: { type: DataTypes.STRING, allowNull: true },

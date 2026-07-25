@@ -232,6 +232,7 @@ export async function POST(req: NextRequest) {
           categoryId,
           brandId,
           supplierId: rowData.supplierid ? parseInt(rowData.supplierid, 10) : undefined,
+          hsnCode: rowData.hsncode || rowData.hsn || undefined,
           images: imagesArr,
           prescriptionRequired: rowData.prescriptionrequired?.toLowerCase() === 'true',
           contentStatus: 'Draft'

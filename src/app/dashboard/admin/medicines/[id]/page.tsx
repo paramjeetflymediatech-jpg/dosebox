@@ -31,6 +31,7 @@ export default function EditMedicinePage() {
     composition: '',
     dosage: '',
     packSize: '',
+    hsnCode: '',
     description: '',
     sideEffects: '',
     storageInstructions: '',
@@ -78,6 +79,7 @@ export default function EditMedicinePage() {
             composition: m.composition || '',
             dosage: m.dosage || '',
             packSize: m.packSize || '',
+            hsnCode: m.hsnCode || '',
             description: m.description || '',
             sideEffects: m.sideEffects || '',
             storageInstructions: m.storageInstructions || '',
@@ -477,10 +479,14 @@ export default function EditMedicinePage() {
                 <input type="text" value={formData.dosage} onChange={e => setFormData({ ...formData, dosage: e.target.value })} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 tablet twice a day" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Pack Size</label>
                   <input type="text" value={formData.packSize} onChange={e => setFormData({ ...formData, packSize: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 AMPOULE(s) OF 5ML" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">HSN Code</label>
+                  <input type="text" value={formData.hsnCode} onChange={e => setFormData({ ...formData, hsnCode: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 300490" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">PAP Offer <span className="text-slate-400 font-normal text-xs">(Patient Assistance Program)</span></label>

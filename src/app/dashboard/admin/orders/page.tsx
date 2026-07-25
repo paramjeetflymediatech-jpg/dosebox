@@ -445,28 +445,69 @@ export default function AdminOrdersPage() {
               <div className="flex justify-end">
                 <div className="w-full md:w-1/2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-500 font-medium">Subtotal</span>
-                      <span className="text-sm font-bold text-slate-900">₹{formatCurrency(Number(viewOrder.totalAmount))}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-500 font-medium">Discount</span>
-                      <span className="text-sm font-bold text-emerald-600">-₹{formatCurrency(Number(viewOrder.discountAmount))}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-500 font-medium">GST</span>
-                      <span className="text-sm font-bold text-slate-900">₹{formatCurrency(Number(viewOrder.gstAmount))}</span>
-                    </div>
-                    {viewOrder.tokensUsed > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-500 font-medium">Tokens Used</span>
-                        <span className="text-sm font-bold text-emerald-600">-₹{formatCurrency(Number(viewOrder.tokensUsed))}</span>
-                      </div>
-                    )}
-                    <div className="pt-3 mt-3 border-t border-slate-200 flex justify-between items-center">
-                      <span className="text-base font-extrabold text-slate-900">Total Amount</span>
-                      <span className="text-lg font-extrabold text-brand-600">₹{formatCurrency(Number(viewOrder.finalAmount))}</span>
-                    </div>
+                    {(() => {
+                      const totalMRP = Number(viewOrder.totalAmount) || 0;
+                      const totalDiscountSaved = Number(viewOrder.discountAmount) || 0;
+                      const finalAmount = Number(viewOrder.finalAmount) || 0;
+                      const gstAmount = Number(viewOrder.gstAmount) || 0;
+                      const tokensUsed = Number(viewOrder.tokensUsed) || 0;
+
+                      const itemsTotalBilling = (viewOrder.items || []).reduce((sum: number, item: any) => sum + (Number(item.price) * item.quantity), 0);
+                      const productDiscount = Math.max(0, totalMRP - itemsTotalBilling);
+                      const couponDiscount = Math.max(0, totalDiscountSaved - productDiscount - tokensUsed);
+                      
+                      const baseTotal = totalMRP - totalDiscountSaved;
+                      let shippingFee = 0;
+                      // Determine if this order used the old bugged API (missing GST in finalAmount) or the fixed API
+                      if (Math.abs(finalAmount - (baseTotal + gstAmount)) <= 51) {
+                        shippingFee = Math.max(0, Math.round(finalAmount - (baseTotal + gstAmount)));
+                      } else {
+                        shippingFee = Math.max(0, Math.round(finalAmount - baseTotal));
+                      }
+
+                      return (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-slate-500 font-medium">Total MRP</span>
+                            <span className="text-sm font-bold text-slate-900">₹{formatCurrency(totalMRP)}</span>
+                          </div>
+                          {productDiscount > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-slate-500 font-medium">Dosebox Discount</span>
+                              <span className="text-sm font-bold text-emerald-600">-₹{formatCurrency(productDiscount)}</span>
+                            </div>
+                          )}
+                          {couponDiscount > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-slate-500 font-medium">Promo Discount</span>
+                              <span className="text-sm font-bold text-indigo-600">-₹{formatCurrency(couponDiscount)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-100">
+                            <span className="text-sm font-bold text-slate-800">Cart Total</span>
+                            <span className="text-sm font-bold text-slate-900">₹{formatCurrency(totalMRP - productDiscount)}</span>
+                          </div>
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-sm text-slate-500 font-medium">GST (18%)</span>
+                            <span className="text-sm font-bold text-slate-900">₹{formatCurrency(gstAmount)}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-slate-500 font-medium">Delivery Charges</span>
+                            <span className="text-sm font-bold text-slate-900">{shippingFee > 0 ? `₹${formatCurrency(shippingFee)}` : 'Free'}</span>
+                          </div>
+                          {tokensUsed > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-slate-500 font-medium">Tokens Used</span>
+                              <span className="text-sm font-bold text-amber-600">-₹{formatCurrency(tokensUsed)}</span>
+                            </div>
+                          )}
+                          <div className="pt-3 mt-3 border-t border-slate-200 flex justify-between items-center">
+                            <span className="text-base font-extrabold text-slate-900">Order Total</span>
+                            <span className="text-lg font-extrabold text-brand-600">₹{formatCurrency(finalAmount)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

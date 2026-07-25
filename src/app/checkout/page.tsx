@@ -391,7 +391,7 @@ export default function CheckoutPage() {
 
       const orderData = {
         items: itemsPayload,
-        couponCode: sessionStorage.getItem("couponCode") || undefined,
+        couponCode: couponCode || undefined,
         shippingAddress: selectedAddrObj,
         paymentMethod,
         prescriptionId,

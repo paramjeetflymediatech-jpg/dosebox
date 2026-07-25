@@ -23,6 +23,7 @@ export default function NewMedicinePage() {
     composition: '',
     dosage: '',
     packSize: '',
+    hsnCode: '',
     description: '',
     sideEffects: '',
     storageInstructions: '',
@@ -357,10 +358,14 @@ export default function NewMedicinePage() {
                   <textarea value={formData.storageInstructions} onChange={e => setFormData({...formData, storageInstructions: e.target.value})} rows={2} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. Store in a cool dry place..."></textarea>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Pack Size</label>
                   <input type="text" value={formData.packSize} onChange={e => setFormData({...formData, packSize: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 1 AMPOULE(s) OF 5ML" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">HSN Code</label>
+                  <input type="text" value={formData.hsnCode} onChange={e => setFormData({ ...formData, hsnCode: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500" placeholder="e.g. 300490" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">PAP Offer <span className="text-slate-400 font-normal text-xs">(Patient Assistance Program)</span></label>

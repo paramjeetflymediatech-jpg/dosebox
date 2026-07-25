@@ -137,8 +137,8 @@ export default function Chatbot() {
       {/* Chatbot Window */}
       {isOpen && (
         <div className="fixed z-[100] flex flex-col bg-white overflow-hidden shadow-2xl animate-in slide-in-from-bottom-5 duration-300 
-          bottom-0 right-0 w-full h-[100dvh] rounded-none border-0
-          sm:bottom-24 sm:right-6 sm:w-[350px] sm:h-[450px] sm:max-h-[75vh] sm:rounded-3xl sm:border sm:border-slate-200"
+          bottom-24 right-4 w-[calc(100vw-32px)] max-w-[350px] h-[450px] max-h-[75vh] rounded-3xl border border-slate-200
+          sm:right-6"
         >
           
           {/* Header */}
