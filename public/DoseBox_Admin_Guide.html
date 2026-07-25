@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DoseBox Admin & Portal Guide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    @media print {
+      body { background-color: white; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #e2e8f0; }
+    }
+    .gradient-text {
+      background: linear-gradient(to right, #2563eb, #14b8a6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="antialiased py-12 px-4 sm:px-8 max-w-5xl mx-auto">
+  
+  <div class="no-print mb-8 bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-xl flex items-center justify-between">
+    <p><strong>Tip:</strong> Press <kbd class="bg-white px-2 py-1 rounded shadow-sm">Ctrl + P</kbd> (or Cmd + P) and select <strong>"Save as PDF"</strong> to download this document.</p>
+    <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">Download PDF</button>
+  </div>
+
+  <header class="text-center mb-16">
+    <div class="inline-block mb-4 p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+      <img src="/Media.jpg" alt="DoseBox Logo" class="h-16 w-auto mx-auto rounded-xl object-contain" />
+    </div>
+    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-slate-900">DoseBox <span class="gradient-text">System Guide</span></h1>
+    <p class="text-lg text-slate-500 max-w-2xl mx-auto">A comprehensive overview of the Admin Control Panel, Medico, and Leadership portals, including secure access credentials.</p>
+  </header>
+
+  <!-- Login Credentials Section -->
+  <section class="mb-16">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-3"><span class="bg-slate-900 text-white w-8 h-8 flex items-center justify-center rounded-lg text-sm">1</span> System Access Credentials</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Medico -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-teal-100 print-shadow-none">
+        <div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m-9 1h18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        </div>
+        <h3 class="font-bold text-lg text-slate-900 mb-1">Medico Portal</h3>
+        <p class="text-sm text-slate-500 mb-4">Clinical & Inventory Access</p>
+        <div class="space-y-3">
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Email</span>
+            <span class="text-slate-800 font-medium font-mono text-sm">medico@dosebox.com</span>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Password</span>
+            <span class="text-slate-800 font-medium font-mono text-sm">medico123</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leadership -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 print-shadow-none">
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        </div>
+        <h3 class="font-bold text-lg text-slate-900 mb-1">Leadership Portal</h3>
+        <p class="text-sm text-slate-500 mb-4">Business & Financial Access</p>
+        <div class="space-y-3">
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Email</span>
+            <span class="text-slate-800 font-medium font-mono text-sm">leadership@dosebox.com</span>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Password</span>
+            <span class="text-slate-800 font-medium font-mono text-sm">leadership123</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 print-shadow-none">
+        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </div>
+        <h3 class="font-bold text-lg text-slate-900 mb-1">Master Admin</h3>
+        <p class="text-sm text-slate-500 mb-4">Full System Control</p>
+        <div class="space-y-3">
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Email</span>
+            <span class="text-slate-800 font-medium font-mono text-sm">admin@dosebox.com</span>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Password</span>
+            <span class="text-slate-800 font-medium font-mono text-sm">admin123</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Role Breakdown -->
+  <section class="mb-16 page-break">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-3"><span class="bg-slate-900 text-white w-8 h-8 flex items-center justify-center rounded-lg text-sm">2</span> Portal & Role Breakdown</h2>
+    <p class="text-slate-600 mb-8 leading-relaxed text-lg">This section explains the critical difference between the two specialized portals: <strong>Medico</strong> and <strong>Leadership</strong>. If your online pharmacy was a physical brick-and-mortar store, the Medico acts as the <strong>Head Pharmacist</strong> managing the counter and inventory, while the Leadership acts as the <strong>Store Manager or Owner</strong> working in the back office handling finances, marketing, and strategy.</p>
+    
+    <div class="grid grid-cols-1 gap-12">
+      
+      <!-- Medico -->
+      <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 print-shadow-none relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-48 h-48 bg-teal-50 rounded-bl-[150px] -z-10"></div>
+        <h3 class="text-3xl font-extrabold text-teal-700 mb-2">The "Medico" Portal</h3>
+        <p class="text-slate-500 font-medium mb-6 text-lg">Target Audience: Pharmacists, Inventory Managers, & Dispensary Staff</p>
+        
+        <p class="text-slate-700 mb-8 leading-relaxed text-lg">The Medico's primary responsibility is ensuring clinical accuracy and inventory fulfillment. They do not worry about profit margins or marketing campaigns; their sole focus is making sure that the correct medicines are in stock, properly categorized, safely dispensed, and legally verified. They are the medical gatekeepers of your platform.</p>
+        
+        <div class="space-y-6">
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-teal-500"></div> Dashboard</h4>
+            <p class="text-slate-600">Provides a daily operational checklist. Medicos can immediately see how many orders are pending packaging and dispatch, and how many new prescriptions have been uploaded by patients that require urgent medical review.</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-teal-500"></div> Orders</h4>
+            <p class="text-slate-600">The fulfillment center. Medicos use this tab to physically process sales. When a customer buys something, the Medico prints the packing slip, verifies the physical stock, boxes the items, and marks the order as "Shipped".</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-teal-500"></div> Medicines</h4>
+            <p class="text-slate-600">The master inventory list. Medicos have full control over the catalog. They can add new drugs, update MRP and discount prices, update physical stock levels, input HSN codes for GST, and define active compositions and side effects.</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-teal-500"></div> Generate AI</h4>
+            <p class="text-slate-600">A productivity tool that helps Medicos quickly write professional, legally-compliant medical descriptions for new catalog items without spending hours typing them manually.</p>
+          </div>
+
+          <div class="bg-rose-50 p-5 rounded-2xl border border-rose-100">
+            <h4 class="font-bold text-rose-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-rose-500"></div> Prescriptions (Core Clinical Duty)</h4>
+            <p class="text-rose-800">This is their most critical clinical function. For medicines that require a doctor's note (Rx), patients will upload images of their prescriptions. The Medico, as a licensed professional, reviews these images to ensure they are valid, within date, and authentic before approving the order to be shipped.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leadership -->
+      <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 print-shadow-none relative overflow-hidden mt-8">
+        <div class="absolute top-0 right-0 w-48 h-48 bg-blue-50 rounded-bl-[150px] -z-10"></div>
+        <h3 class="text-3xl font-extrabold text-blue-700 mb-2">The "Leadership" Portal</h3>
+        <p class="text-slate-500 font-medium mb-6 text-lg">Target Audience: Business Owners, Financial Managers, & Customer Experience Directors</p>
+        
+        <p class="text-slate-700 mb-8 leading-relaxed text-lg">The Leadership team focuses exclusively on business growth, tracking revenue, auditing finances, and ensuring the customer experience is absolutely flawless. They do not handle the day-to-day packing of pills; they handle the money, the people, and the high-level strategy.</p>
+        
+        <div class="space-y-6">
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Dashboard</h4>
+            <p class="text-slate-600">Shows high-level business intelligence metrics. Leadership can track daily/monthly revenue, user growth rates, average order values, and overall profit margins at a glance.</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Orders & Transactions</h4>
+            <p class="text-slate-600">While Medicos use "Orders" to pack boxes, Leadership uses this section to audit finances. They track every payment gateway transaction, resolve failed payments, process customer refunds, and ensure the bank deposits match the system records.</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Reward Points</h4>
+            <p class="text-slate-600">A powerful marketing tool. Leadership dictates how the loyalty program works—setting rules for how many points customers earn per purchase, and establishing the conversion rate for when customers redeem points for discounts to drive repeat business.</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Doctors</h4>
+            <p class="text-slate-600">Allows Leadership to manage B2B relationships and partnerships with medical professionals who operate on the platform, track their consultation volume, and manage their payouts.</p>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <h4 class="font-bold text-slate-900 text-lg flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Support Tickets & Bot Simulator</h4>
+            <p class="text-slate-600">Oversees customer satisfaction. Leadership can review escalated customer complaints or disputes. Additionally, they use the Bot Simulator to train and test the automated Chatbot to ensure it gives polite, accurate answers to customers automatically.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Full Admin Guide -->
+  <section class="page-break mt-16">
+    <h2 class="text-2xl font-bold mb-8 flex items-center gap-3"><span class="bg-slate-900 text-white w-8 h-8 flex items-center justify-center rounded-lg text-sm">3</span> Master Admin Features Glossary</h2>
+    <p class="text-slate-600 mb-8 leading-relaxed text-lg">The <strong>Master Admin</strong> portal is the highest level of access. It combines every single feature of the Medico and Leadership portals, plus exclusive system configuration settings. Below is a deep dive into exactly what every single tab accomplishes.</p>
+    
+    <div class="space-y-8">
+      
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">📊 Dashboard</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> The command center of your store.<br/><strong>Detailed Explanation:</strong> Think of this as the "front page" of your business. It gives you a quick snapshot of how your store is doing today—showing your total sales revenue, how many new orders came in, new user registrations, and quick alerts on stock shortages or pending prescriptions that need your immediate attention.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">👥 Users & 🛡️ Roles</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Customer and Staff management.<br/><strong>Detailed Explanation:</strong> The Users tab is your customer address book. You can view everyone who has created an account, see their purchase history, reset their passwords, or block malicious accounts. The Roles tab allows you to create employee accounts (like a Support Agent) and strictly control what they are allowed to see and do, ensuring they can't access sensitive financial data.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">📦 Orders & 💳 Transactions</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> The heart of your operations and financial history.<br/><strong>Detailed Explanation:</strong> The Orders section is where you process physical sales. You can update the status of a purchase from "Processing" to "Packed" to "Shipped", generate PDF tax invoices, and print shipping labels. The Transactions tab acts as your digital cash register tape—it tracks the exact status of every payment gateway transaction, including successful payments, failed cards, and any refunds you've issued.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">💊 Medicines & 🤖 Generate AI</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Your product inventory and AI assistant.<br/><strong>Detailed Explanation:</strong> The Medicines tab is where you add the actual products you are selling. You can upload images, set the MRP, apply discount prices, update physical stock levels, and assign HSN codes for accurate GST billing. The Generate AI tool is a smart assistant that helps you write these product descriptions automatically in seconds, saving you hours of manual typing.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">🗂️ Categories, 🏢 Brands, & 🚚 Suppliers</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Product organization and vendor management.<br/><strong>Detailed Explanation:</strong> Categories act as the "aisles" of your digital store (e.g., "Vitamins", "Pain Relief") so customers can browse easily. Brands is a list of the pharmaceutical companies whose products you sell (like Cipla, Sun Pharma). Suppliers is a private address book of the wholesale distributors who supply you with stock, making it easy to know who to call when you need to reorder.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">📝 Prescriptions</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Clinical Rx verification.<br/><strong>Detailed Explanation:</strong> For medicines that legally require a doctor's note, customers will upload a photo of their prescription during checkout. This tab allows your pharmacist to review the uploaded image, verify the doctor's signature and date, and either approve or reject the order based on clinical validity.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">🩺 Doctors & 📅 Appointments</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Doctor directory and Consultation bookings.<br/><strong>Detailed Explanation:</strong> A database of doctors partnered with your platform. If your platform offers online telemedicine consultations, this is the calendar where you track and manage all upcoming and past patient bookings, as well as manage the doctors' profiles and schedules.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">📰 Blogs, ❓ FAQs, & 🔍 SEO Rules</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Content marketing and Search Engine Optimization.<br/><strong>Detailed Explanation:</strong> Blogs allow you to write health articles to attract visitors from Google. FAQs provide a self-help section so customers can find answers to common questions (like "How long does delivery take?") without calling support. SEO Rules give you technical control over meta titles and keywords to ensure your store ranks high on Google search results.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">🎧 Support Tickets & 🗑️ Data Deletion</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Customer service desk and Privacy compliance.<br/><strong>Detailed Explanation:</strong> When a customer has a complaint or a question about their order, it creates a "ticket" here. You and your staff can reply to them directly from this panel until the issue is resolved. Data Deletion allows you to safely process requests from users who want their accounts and personal data erased, keeping you compliant with privacy laws.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">🎟️ Coupons & 🖼️ Banners</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Promotions and Homepage advertisements.<br/><strong>Detailed Explanation:</strong> Coupons allow you to create special discount codes (like "DIWALI20" for 20% off) and set rules like minimum order amounts or expiry dates. Banners allow you to easily swap out the big, eye-catching promotional images on the front page of your app or website to advertise sales or popular products.</p>
+      </div>
+
+      <div class="pb-8 border-b border-slate-200">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">💬 Bot Simulator</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Chatbot testing.<br/><strong>Detailed Explanation:</strong> A safe testing ground for your automated AI customer service bot. You can chat with it here to simulate customer interactions, ensuring it gives polite, accurate answers about your store policies before you deploy it to interact with real customers.</p>
+      </div>
+
+      <div class="pb-8 border-b border-transparent">
+        <h4 class="text-xl font-bold text-slate-900 mb-2">🎁 Reward Points & 👤 Admin Profile</h4>
+        <p class="text-slate-700 leading-relaxed"><strong>What it is:</strong> Loyalty program and Personal settings.<br/><strong>Detailed Explanation:</strong> Reward Points is a system to keep customers coming back by allowing you to configure how points are earned and spent. Admin Profile is simply where you manage your own account details, update your login email, change your password, and set up your security preferences.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- User Portal Guide -->
+  <section class="page-break mt-16">
+    <h2 class="text-2xl font-bold mb-8 flex items-center gap-3"><span class="bg-slate-900 text-white w-8 h-8 flex items-center justify-center rounded-lg text-sm">4</span> Customer Portal & User Dashboard</h2>
+    <p class="text-slate-600 mb-8 leading-relaxed text-lg">This section breaks down the features available to your registered customers when they log into the DoseBox platform. It also details the specific business logic regarding order cancellations, refunds, and prescription handling.</p>
+    
+    <div class="space-y-8">
+      
+      <!-- Customer Tabs -->
+      <div class="pb-8 border-b border-slate-200">
+        <h3 class="text-xl font-extrabold text-indigo-700 mb-4">Customer Dashboard Sections</h3>
+        <ul class="space-y-4 text-slate-700">
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Dashboard:</strong> A quick welcome screen showing their recent orders, current wallet balance, and quick links.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>My Prescriptions:</strong> A digital health locker. Users can view all their historically uploaded prescriptions and check whether the Admin has Approved or Rejected them.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>My Consultations:</strong> A history log of all their online telemedicine appointments booked through the platform.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Reward Points:</strong> Their digital wallet. Users can track how many DoseBox Tokens they have earned, and see a history of when they spent them on previous orders.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Manage Addresses:</strong> Allows users to save multiple delivery locations (e.g., Home, Office, Parents' House) for faster checkout.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Personal Information:</strong> Where the user can update their name, contact phone number, and change their password.</p></li>
+        </ul>
+      </div>
+
+      <!-- Orders & Invoices -->
+      <div class="pb-8 border-b border-slate-200">
+        <h3 class="text-xl font-extrabold text-indigo-700 mb-4">My Orders & Invoices</h3>
+        <p class="text-slate-700 leading-relaxed mb-4">In the <strong>My Orders</strong> tab, customers can view their complete purchase history. Clicking on an individual order opens the <strong>Order Details</strong> page.</p>
+        <ul class="space-y-4 text-slate-700">
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Detailed Breakdown:</strong> Users see a full breakdown of their purchase, including exact items ordered, GST/Tax calculations, promo discounts applied, and shipping charges.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>PDF Invoices:</strong> Once an order is processed, customers can instantly download a highly detailed, professional, GST-compliant <strong>PDF Tax Invoice</strong> for their personal health records or medical insurance claims.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Order Tracking:</strong> Users can track the live status of their order (e.g., Pending → Processing → Packed → Shipped → Delivered).</p></li>
+        </ul>
+      </div>
+
+      <!-- Prescription Cases -->
+      <div class="pb-8 border-b border-slate-200">
+        <h3 class="text-xl font-extrabold text-indigo-700 mb-4">Prescription Rules & Cases</h3>
+        <p class="text-slate-700 leading-relaxed mb-4">The platform dynamically handles prescriptions based on what the user is buying:</p>
+        <ul class="space-y-4 text-slate-700">
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Non-Rx Orders:</strong> If a cart only contains general wellness items (like Vitamins or Shampoo), the user can check out instantly without uploading anything.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Rx Orders (Upload Required):</strong> If the cart contains a restricted drug, the checkout is strictly paused. The user MUST upload an image of a valid doctor's prescription to proceed.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Admin Approval:</strong> Once uploaded, the order status becomes "Pending Approval". The Medico team reviews the image. If approved, the order begins processing and is shipped.</p></li>
+          <li class="flex gap-4"><div class="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0"></div><p><strong>Admin Rejection:</strong> If the prescription is invalid, blurry, or expired, the Medico rejects it. The order is halted, and the user is notified to provide a valid prescription or their order is canceled and refunded.</p></li>
+        </ul>
+      </div>
+
+      <!-- Cancellation Policy -->
+      <div class="pb-8 border-b border-transparent">
+        <h3 class="text-xl font-extrabold text-rose-700 mb-4">Cancellations, Refunds & DoseBox Tokens Policy</h3>
+        <p class="text-slate-700 leading-relaxed mb-6">DoseBox has a very specific, customer-friendly wallet logic to handle canceled orders and compensate users.</p>
+        
+        <div class="space-y-6">
+          <div class="bg-rose-50 p-5 rounded-2xl border border-rose-100">
+            <h4 class="font-bold text-rose-900 text-lg mb-2">1. User-Initiated Cancellations (The 2-Time Limit)</h4>
+            <p class="text-rose-800 mb-2">Customers are allowed to cancel an order from their dashboard up to <strong>2 times</strong> for any personal reason. As a goodwill gesture, when they use these free cancellations, they are compensated with <strong>DoseBox Tokens</strong> (Reward Points) added directly to their wallet:</p>
+            <ul class="list-disc pl-5 text-rose-800 font-medium">
+              <li>If the canceled Order Value is <strong>less than ₹500</strong> → The user receives <strong>50 DoseBox Tokens</strong>.</li>
+              <li>If the canceled Order Value is <strong>₹500 or more</strong> → The user receives <strong>100 DoseBox Tokens</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+            <h4 class="font-bold text-slate-900 text-lg mb-2">2. Exceeding the Cancellation Limit</h4>
+            <p class="text-slate-700">Once a user reaches their strict 2-time cancellation limit, they can no longer freely cancel orders and farm reward tokens. If they need to cancel a 3rd order, they must reach out to Customer Support. For these excess cancellations, they will receive a standard monetary refund as per their original order amount, but they will <strong>not</strong> receive any bonus DoseBox Tokens.</p>
+          </div>
+
+          <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+            <h4 class="font-bold text-blue-900 text-lg mb-2">3. Admin-Initiated Cancellations (Platform Fault)</h4>
+            <p class="text-blue-800">If the Admin has to cancel an order (for example, due to an item being Out of Stock, a delivery logistics issue, or a rejected prescription), the user is not penalized. Because this is an administrative fault, the user automatically receives a <strong>full 100% monetary refund</strong> to their original payment method for the exact order amount.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Deep Dive Features -->
+  <section class="page-break mt-16 mb-16">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-extrabold text-slate-900 inline-flex items-center justify-center gap-3"><span class="bg-indigo-600 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg shadow-indigo-200">5</span> Deep Dive: Core Platform Features</h2>
+      <p class="text-slate-500 mt-4 text-lg max-w-2xl mx-auto">A closer look at the advanced logic powering your platform's most powerful capabilities.</p>
+    </div>
+    
+    <div class="space-y-16">
+      
+      <!-- Prescription Upload Flow -->
+      <div class="bg-white rounded-[2.5rem] p-10 lg:p-14 shadow-2xl shadow-emerald-900/5 border border-emerald-100 print-shadow-none relative overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute -top-32 -right-32 w-96 h-96 bg-emerald-400/20 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
+        
+        <div class="mb-12">
+          <h3 class="text-3xl font-extrabold text-emerald-900 mb-4 flex items-center gap-3">
+            <div class="bg-emerald-100 text-emerald-600 p-3 rounded-xl border border-emerald-200">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            How "Upload Prescription" Works
+          </h3>
+          <p class="text-slate-600 text-lg">Handling restricted medical drugs legally and safely is a core feature of the platform. Here is the end-to-end flow.</p>
+        </div>
+        
+        <div class="relative border-l-4 border-emerald-100 pl-10 ml-6 space-y-12">
+          
+          <div class="relative">
+            <div class="absolute -left-[3.45rem] top-0 w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white font-bold text-xl">1</div>
+            <h4 class="text-2xl font-bold text-slate-900 mb-2">Seamless Upload & AI Scanning</h4>
+            <p class="text-slate-600 text-lg leading-relaxed">Customers can upload a photo of their doctor's note or a written format name. The system's AI automatically scans and reads the image to identify the medicines.</p>
+          </div>
+
+          <div class="relative">
+            <div class="absolute -left-[3.45rem] top-0 w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white font-bold text-xl">2</div>
+            <h4 class="text-2xl font-bold text-slate-900 mb-2">Instant Non-Rx Checkout & Alternatives</h4>
+            <p class="text-slate-600 text-lg leading-relaxed">If the AI identifies the medicine as Non-Rx (over-the-counter), the user can directly add it to their cart and checkout instantly. The system also intelligently recommends alternative medicines by showing salt names and compositions so the user has cheaper or better options.</p>
+          </div>
+
+          <div class="relative">
+            <div class="absolute -left-[3.45rem] top-0 w-12 h-12 bg-amber-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white font-bold text-xl">3</div>
+            <h4 class="text-2xl font-bold text-slate-900 mb-2">Admin Review (Rx & Unreadable)</h4>
+            <p class="text-slate-600 text-lg leading-relaxed">If the medicine requires a prescription (Rx), or if the AI is unable to clearly read the handwritten text, the application automatically goes into "Admin Review".</p>
+          </div>
+
+          <div class="relative">
+            <div class="absolute -left-[3.45rem] top-0 w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white font-bold text-xl">4</div>
+            <h4 class="text-2xl font-bold text-slate-900 mb-2">Approval & Add to Cart</h4>
+            <p class="text-slate-600 text-lg leading-relaxed">The Medico reviews the uploaded image, manually adds the correct medicine to the user's application, and approves it. The user then sees "Application Approved" in their prescription section, along with a direct "Add to Cart" button for the exact medicines the admin approved.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Chatbot AI -->
+      <div class="bg-gradient-to-br from-slate-900 via-[#1e1b4b] to-indigo-950 rounded-[2.5rem] p-10 lg:p-14 shadow-2xl border border-indigo-500/30 print-shadow-none relative overflow-hidden text-white">
+        <!-- Glow effect -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <div class="mb-14 text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-indigo-500/20 text-indigo-300 mb-6 border border-indigo-400/30 shadow-inner">
+              <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            </div>
+            <h3 class="text-4xl font-extrabold text-white mb-4">AI Customer Service Chatbot</h3>
+            <p class="text-indigo-200 text-xl max-w-3xl mx-auto leading-relaxed">DoseBox includes a 24/7 intelligent AI Chatbot designed to drastically reduce the workload of human support agents by automatically answering customer queries and driving direct sales.</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-colors">
+              <div class="text-4xl mb-6">💬</div>
+              <h4 class="text-xl font-bold text-white mb-3">Instant Customer Support</h4>
+              <p class="text-indigo-200/80 leading-relaxed">Customers can access the chatbot on the homepage at any time. The bot can instantly answer normal questions about store policies, delivery times, refund statuses, and how to navigate the website.</p>
+            </div>
+            
+            <div class="bg-indigo-500/20 backdrop-blur-xl border border-indigo-400/50 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_40px_rgba(99,102,241,0.2)]">
+              <div class="absolute -right-10 -top-10 w-32 h-32 bg-indigo-400/40 blur-3xl rounded-full"></div>
+              <div class="text-4xl mb-6 relative z-10">🛒</div>
+              <h4 class="text-xl font-bold text-white mb-3 relative z-10">Direct Cart Integration</h4>
+              <p class="text-indigo-100 leading-relaxed relative z-10">This is the most powerful feature. If a user types a medicine name, the AI directly queries the database. If in stock, it immediately provides a direct <strong>"Add to Cart"</strong> button right inside the chat window.</p>
+            </div>
+            
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-colors">
+              <div class="text-4xl mb-6">⚙️</div>
+              <h4 class="text-xl font-bold text-white mb-3">Admin Bot Simulator</h4>
+              <p class="text-indigo-200/80 leading-relaxed">Before deploying, Leadership can use the "Bot Simulator" tab in the Admin Panel to privately chat with the AI, test its responses to tricky questions, and ensure it sounds polite.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="mt-16 text-center text-slate-400 text-sm pb-8">
+    <p>&copy; DoseBox Platform Guide - Strictly Confidential</p>
+  </footer>
+
+</body>
+</html>
