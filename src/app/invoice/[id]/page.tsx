@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Click here to view and download your official DoseBox invoice for order OD-${id}.`,
       images: [
         {
-          url: '/Media.jpg',
+          url: 'https://nk.socialflymediatech.com/Media.jpg',
           width: 800,
           height: 800,
           alt: 'DoseBox Logo',
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: `DoseBox Invoice #OD-${id}`,
       description: `Click here to view and download your official DoseBox invoice for order OD-${id}.`,
-      images: ['/Media.jpg'],
+      images: ['https://nk.socialflymediatech.com/Media.jpg'],
     },
   };
 }
