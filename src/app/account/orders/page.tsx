@@ -60,9 +60,9 @@ const getRichTimeline = (order: Order, timeline: any[]) => {
   if (timelineDescList.some(d => d.includes('out for delivery'))) maxCompletedIndex = Math.max(maxCompletedIndex, 6);
 
   return steps.map((step, index) => {
-    const explicitEvent = timeline.find(t => 
-       (t.desc && t.desc.toLowerCase().includes(step.toLowerCase())) || 
-       (t.status && t.status.toLowerCase().includes(step.toLowerCase()))
+    const explicitEvent = timeline.find(t =>
+      (t.desc && t.desc.toLowerCase().includes(step.toLowerCase())) ||
+      (t.status && t.status.toLowerCase().includes(step.toLowerCase()))
     );
 
     let isCompleted = index <= maxCompletedIndex || !!explicitEvent;
@@ -82,7 +82,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [orderPage, setOrderPage] = useState(1);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
-  
+
   // Cancel & Refund state
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
@@ -103,7 +103,7 @@ export default function OrdersPage() {
       if (res.data?.success) {
         setTokenRefundCount(res.data.data.tokenRefundCount || 0);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   async function loadOrders() {
@@ -180,10 +180,10 @@ export default function OrdersPage() {
       const blob = new Blob([res.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url; 
+      link.href = url;
       link.setAttribute('download', `Invoice_Order_${orderId}.pdf`);
-      document.body.appendChild(link); 
-      link.click(); 
+      document.body.appendChild(link);
+      link.click();
       link.remove();
     } catch (err) {
       toast.error('Failed to download invoice PDF.');
@@ -216,7 +216,7 @@ export default function OrdersPage() {
           {orders.slice((orderPage - 1) * ordersPerPage, orderPage * ordersPerPage).map((order) => {
             const isExpanded = expandedOrderId === order.id;
             let timeline = [];
-            try { timeline = JSON.parse(order.trackingTimeline || '[]'); } catch(e){}
+            try { timeline = JSON.parse(order.trackingTimeline || '[]'); } catch (e) { }
 
             return (
               <div key={order.id} className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm transition-all">
@@ -246,8 +246,9 @@ export default function OrdersPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       {order.status === 'Delivered' && (
-                        <button onClick={() => downloadInvoice(order.id)} className="p-2 bg-brand-50 border border-brand-100 text-brand-600 hover:bg-brand-100 rounded-lg transition-all" title="Download Invoice">
-                          <Download className="w-4 h-4" />
+                        <button onClick={() => downloadInvoice(order.id)} className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-100 text-brand-700 hover:bg-brand-50 hover:border-brand-200 rounded-lg transition-all shadow-sm" title="Download DoseBox Invoice">
+                          {/* <img src="/Media.jpg" alt="DoseBox Invoice" className="w-5 h-5 object-cover rounded-md" /> */}
+                          <span className="text-xs font-extrabold uppercase tracking-wider hidden sm:inline">Invoice</span>
                         </button>
                       )}
                       {['Pending', 'Confirmed', 'Packed'].includes(order.status) && (
@@ -271,7 +272,7 @@ export default function OrdersPage() {
                       <div className="space-y-3">
                         {order.items?.map((item) => {
                           let imgUrl = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
-                          try { if (item.medicine?.images) imgUrl = JSON.parse(item.medicine.images)[0]; } catch(e){}
+                          try { if (item.medicine?.images) imgUrl = JSON.parse(item.medicine.images)[0]; } catch (e) { }
                           return (
                             <Link href={`/medicines/detail?id=${item.medicineId}`} key={item.id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0 hover:bg-slate-50 transition-all rounded-lg -mx-2 px-2 group cursor-pointer">
                               <div className="flex items-center gap-3 min-w-0">
@@ -300,7 +301,7 @@ export default function OrdersPage() {
                         const itemsTotalBilling = (order.items || []).reduce((sum: number, item: any) => sum + (Number(item.price) * item.quantity), 0);
                         const productDiscount = Math.max(0, totalMRP - itemsTotalBilling);
                         const couponDiscount = Math.max(0, totalDiscountSaved - productDiscount - tokensUsed);
-                        
+
                         const baseTotal = totalMRP - totalDiscountSaved;
                         let shippingFee = 0;
                         if (Math.abs(finalAmount - (baseTotal + gstAmount)) <= 51) {
@@ -368,7 +369,7 @@ export default function OrdersPage() {
                         const richTimeline = getRichTimeline(order, timeline);
                         const liveData = liveTracking[order.id];
                         const isLoadingLive = loadingTracking[order.id];
-                        
+
                         if (isLoadingLive) {
                           return (
                             <div className="flex flex-col items-center justify-center py-8 opacity-50">
@@ -502,7 +503,7 @@ export default function OrdersPage() {
                 {isClaimMode ? 'Please select how you would like to receive your refund for this cancelled order.' : 'We are sorry to see you cancel. Please choose a refund method.'}
               </p>
             </div>
-            
+
             <div className="p-6 space-y-5">
               {!isClaimMode && (
                 <div>
@@ -519,7 +520,7 @@ export default function OrdersPage() {
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-3">Select Refund Method</label>
-                
+
                 <div className="space-y-3">
                   {orderToCancel.paymentMethod !== 'COD' && (
                     <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${refundMethod === 'bank' ? 'border-brand-500 bg-brand-50' : 'border-slate-100 hover:border-slate-200'}`}>
@@ -576,8 +577,8 @@ export default function OrdersPage() {
               <button onClick={() => setCancelModalOpen(false)} className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-all">
                 Close
               </button>
-              <button 
-                onClick={submitCancelOrClaim} 
+              <button
+                onClick={submitCancelOrClaim}
                 disabled={isSubmittingCancel || (!isClaimMode && !cancelReason.trim())}
                 className="flex-1 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-all shadow-sm shadow-brand-500/20"
               >
