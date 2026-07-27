@@ -174,6 +174,22 @@ export default function MedicineDetailScreen({ navigation, route }) {
           </View>
         ))}
 
+        {/* ── AUTHENTICITY BADGE ── */}
+        {medicine.contentStatus === 'Approved' && medicine.verifierName && (
+          <View style={[styles.section, { backgroundColor: '#F0FDFA', borderColor: '#CCFBF1', borderWidth: 1, borderRadius: radius.md, marginHorizontal: spacing.md, padding: spacing.md }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: rv(8) }}>
+              <Ionicons name="shield-checkmark" size={rs(24)} color="#0D9488" />
+              <Text style={{ fontSize: rm(14), fontWeight: '700', color: '#115E59', marginLeft: rs(8) }}>Medically Verified Content</Text>
+            </View>
+            <Text style={{ fontSize: rm(12), color: '#0F766E', lineHeight: rv(18) }}>
+              This information has been checked and approved by {medicine.verifierName}.
+            </Text>
+            <Text style={{ fontSize: rm(12), color: '#0F766E', fontWeight: 'bold', marginTop: rv(4) }}>
+              Reg No: {medicine.verifierRegNo || 'N/A'}
+            </Text>
+          </View>
+        )}
+
         {/* ── RELATED PRODUCTS ── */}
         {relatedProducts.length > 0 && (
           <View style={[styles.section, { paddingRight: 0, backgroundColor: 'transparent' }]}>

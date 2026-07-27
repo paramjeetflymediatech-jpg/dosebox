@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
           intent = parsed.intent || 'UNKNOWN';
           extractedItems = parsed.items || [];
           botReply = parsed.replyMessage || '';
-          
+
           if (intent === 'ORDER' && extractedItems.length > 0) {
             // Match Medicines
             let totalAmount = 0;
@@ -68,19 +68,19 @@ export async function POST(req: NextRequest) {
               let bestMatch = null;
               let highestScore = 0;
               const qName = item.name.toLowerCase();
-              
+
               for (const m of allMedicines) {
                 if (m.name.toLowerCase().includes(qName) || m.genericName.toLowerCase().includes(qName)) {
                   bestMatch = m;
                   break;
                 }
-                
+
                 // Simple fuzzy match simulation
                 let score = 0;
                 const mName = m.name.toLowerCase();
                 if (mName.startsWith(qName)) score = 0.8;
                 else if (mName.includes(qName)) score = 0.6;
-                
+
                 if (score > highestScore && score > 0.4) {
                   highestScore = score;
                   bestMatch = m;

@@ -129,13 +129,14 @@ export default function UploadPrescriptionScreen({ navigation }) {
     result.medicines.forEach((medItem) => {
       const product = medItem.product || (medItem.variants && medItem.variants[0]);
       if (product) {
+        const calculatedQty = medItem.extracted?.quantity || 1;
         addToCart({
           id: product.id,
           name: product.name,
           price: product.price || 0,
           discountPrice: product.discountPrice || product.price,
           image: product.images?.[0] || '',
-          qty: 1, // Will be handled by cart context
+          qty: calculatedQty, // Use AI calculated dosage
           prescriptionRequired: product.requiresPrescription || false,
         });
         addedCount++;
@@ -243,6 +244,16 @@ export default function UploadPrescriptionScreen({ navigation }) {
                        <Text style={styles.brandBadgeText}>Handwritten Brand</Text>
                      </View>
                      <Text style={styles.extractedText}>"{med.extracted?.medicineName || 'Unknown'} {med.extracted?.strength || ''}"</Text>
+                     {med.extracted?.dosage && (
+                       <Text style={{ fontSize: rm(12), color: '#64748B', marginTop: rv(2) }}>
+                         Dosage: {med.extracted.dosage} for {med.extracted.duration || '-'}
+                       </Text>
+                     )}
+                     {med.extracted?.quantity && (
+                       <Text style={{ fontSize: rm(12), color: '#0D9488', fontWeight: 'bold', marginTop: rv(2) }}>
+                         Calculated Total: {med.extracted.quantity} units
+                       </Text>
+                     )}
                    </View>
                    <View style={styles.matchRow}>
                      <Ionicons name="return-down-forward" size={24} color="#0D9488" style={{marginTop: 4, marginRight: 12}} />

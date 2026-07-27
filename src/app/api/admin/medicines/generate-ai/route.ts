@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       }
     `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const result = await model.generateContent(prompt);
     let text = result.response.text();
 
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     let parsedData;
     try {
       parsedData = JSON.parse(text);
-      parsedData.aiModelUsed = 'gemini-2.5-flash';
+      parsedData.aiModelUsed = 'gemini-3.5-flash';
       parsedData.promptVersion = 'v1';
       parsedData.contentStatus = 'Draft';
     } catch (parseError) {

@@ -8,6 +8,7 @@ import MedicoDashboardScreen from '../screens/medico/MedicoDashboardScreen';
 import MedicoOrdersScreen from '../screens/medico/MedicoOrdersScreen';
 import MedicoMedicinesScreen from '../screens/medico/MedicoMedicinesScreen';
 import MedicoPrescriptionsScreen from '../screens/medico/MedicoPrescriptionsScreen';
+import ContentReviewScreen from '../screens/medico/ContentReviewScreen';
 
 import { rs, rv, rm, TAB_BAR_HEIGHT } from '../utils/responsive';
 
@@ -76,6 +77,14 @@ export default function MedicoTabNavigator() {
         options={{
           tabBarLabel: 'Rx Review',
           tabBarIcon: ({ color, focused }) => <TabIcon iconName={focused ? 'document-text' : 'document-text-outline'} color={color} focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="ContentReviewTab"
+        component={ContentReviewScreen}
+        options={{
+          tabBarLabel: 'QC Hub',
+          tabBarIcon: ({ color, focused }) => <TabIcon iconName={focused ? 'shield-checkmark' : 'shield-checkmark-outline'} color={color} focused={focused} />,
         }}
       />
     </Tab.Navigator>

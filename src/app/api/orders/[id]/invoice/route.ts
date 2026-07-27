@@ -7,20 +7,20 @@ import PDFDocument from 'pdfkit';
 
 function numberToWords(num: number): string {
   if (num === 0) return 'Zero';
-  
+
   const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
   const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-  
+
   const numStr = Math.floor(num).toString();
   if (numStr.length > 9) return 'Overflow';
-  
+
   const n: any = ('000000000' + numStr).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
   if (!n) return '';
-  
+
   let str = '';
   str += (n[1] != '00') ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Lac ' : '';
   str += (n[2] != '00') ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : ''; // Note: Indian numbering splits at 2 for crores, lakhs, thousands
-  
+
   // Actually, fixing the regex indices:
   // n[1] = crores, n[2] = lakhs, n[3] = thousands, n[4] = hundreds, n[5] = tens
   str = '';
@@ -29,34 +29,31 @@ function numberToWords(num: number): string {
   str += (n[3] != '00') ? (a[Number(n[3])] || b[Number(n[3][0])] + ' ' + a[Number(n[3][1])]) + 'Thousand ' : '';
   str += (n[4] != '0') ? (a[Number(n[4])] || b[Number(n[4][0])] + ' ' + a[Number(n[4][1])]) + 'Hundred ' : '';
   str += (n[5] != '00') ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[Number(n[5][0])] + ' ' + a[Number(n[5][1])]) : '';
-  
+
   return str.trim();
 }
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
-    
+
     // Check if this is a public share link
     const isShared = req.nextUrl.searchParams.get('shared') === 'true';
-    
+
     let userAuth: any = null;
     if (!isShared) {
       userAuth = await authenticateJWT(req);
       if (userAuth instanceof NextResponse) return userAuth;
     }
 
-    console.log('Fetching order for invoice with ID:', params.id);
     const order: any = await Order.findByPk(params.id, {
       include: [
         { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine' }] },
         { model: User, as: 'user' }
       ]
     });
-    console.log('Order found:', !!order);
 
     if (!order) {
-      console.log('Returning 404 because order is null for ID:', params.id);
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
 
@@ -91,7 +88,7 @@ New Delhi - 110066`;
         const sellerGST = settings.enterprise_gst || '07AAECJ0285F1ZQ';
 
         const doc = new PDFDocument({ margin: 20, size: 'A4' });
-        
+
         // Add watermark
         const watermarkPath = path.join(process.cwd(), 'mobile', 'src', 'assets', 'images', 'Media.jpg');
         try {
@@ -101,7 +98,7 @@ New Delhi - 110066`;
           // A4 dimensions are 595.28 x 841.89
           const x = (595.28 - maxDimension) / 2;
           const y = (841.89 - maxDimension) / 2;
-          doc.image(watermarkPath, x, y, { 
+          doc.image(watermarkPath, x, y, {
             fit: [maxDimension, maxDimension],
             align: 'center',
             valign: 'center'
@@ -339,18 +336,18 @@ New Delhi - 110066`;
 
         // Right Footer: Values
         doc.font('Helvetica-Bold').fontSize(8);
-        
+
         const summaryX = 455;
         const valueX = 520;
         const labelWidth = 70;
         const valWidth = 50;
-        
+
         let ry = 602;
-        
+
         doc.text('Total MRP', summaryX, ry);
         doc.text(totalMRP.toFixed(2), valueX, ry, { width: valWidth, align: 'right' });
         ry += 11;
-        
+
         // Draw line under Total MRP
         doc.moveTo(450, ry - 2).lineTo(575, ry - 2).stroke();
         ry += 4; // Add a little extra spacing after the line
@@ -361,27 +358,27 @@ New Delhi - 110066`;
           doc.text(`-${productDiscount.toFixed(2)}`, valueX, ry, { width: valWidth, align: 'right' });
           ry += 11;
         }
-        
+
         if (couponDiscount > 0) {
           doc.text('Promo Discount', summaryX, ry);
           doc.text(`-${couponDiscount.toFixed(2)}`, valueX, ry, { width: valWidth, align: 'right' });
           ry += 11;
         }
-        
+
         doc.font('Helvetica-Bold');
         doc.text('Cart Total', summaryX, ry);
         doc.text((totalMRP - productDiscount).toFixed(2), valueX, ry, { width: valWidth, align: 'right' });
         ry += 11;
-        
+
         doc.font('Helvetica');
         doc.text('GST (18%)', summaryX, ry);
         doc.text(gstAmount.toFixed(2), valueX, ry, { width: valWidth, align: 'right' });
         ry += 11;
-        
+
         doc.text('Delivery Charges', summaryX, ry);
         doc.text(shippingFee > 0 ? shippingFee.toFixed(2) : 'Free', valueX, ry, { width: valWidth, align: 'right' });
         ry += 11;
-        
+
         if (tokensUsed > 0) {
           doc.text('Tokens Used', summaryX, ry);
           doc.text(`-${tokensUsed.toFixed(2)}`, valueX, ry, { width: valWidth, align: 'right' });

@@ -50,6 +50,7 @@ const getStatusColor = (status) => {
 export default function ProceedScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,40 +74,40 @@ export default function ProceedScreen({ navigation }) {
   };
 
   const handleDownloadInvoice = async (orderId) => {
+    if (isDownloading) return;
+    setIsDownloading(true);
     try {
       const token = await AsyncStorage.getItem('accessToken');
       const url = `${API_URL}/orders/${orderId}/invoice`;
 
       const { dirs } = ReactNativeBlobUtil.fs;
       const fileName = `Invoice_OD-${orderId}.pdf`;
-      const path = Platform.OS === 'ios' ? `${dirs.DocumentDir}/${fileName}` : `${dirs.DownloadDir}/${fileName}`;
+      const path = `${dirs.DocumentDir}/${fileName}`;
 
       AlertService.show({ type: 'info', title: 'Downloading', message: 'Invoice is downloading...' });
 
-      const res = await ReactNativeBlobUtil.config({
-        fileCache: true,
-        path: path,
-        addAndroidDownloads: {
-          useDownloadManager: true,
-          notification: true,
-          path: path,
-          description: 'Downloading Invoice',
-          title: fileName,
-          mime: 'application/pdf',
-        }
-      }).fetch('GET', url, {
-        Authorization: `Bearer ${token}`
+      const res = await ReactNativeBlobUtil.fetch('GET', url, {
+        Authorization: `Bearer ${token}`,
+        'Accept-Encoding': 'identity'
       });
 
-      if (Platform.OS === 'ios') {
-        ReactNativeBlobUtil.ios.previewDocument(res.path());
-      } else {
-        AlertService.show({ type: 'success', title: 'Success', message: 'Invoice downloaded successfully' });
-      }
+      const base64Str = res.base64();
+      await ReactNativeBlobUtil.fs.writeFile(path, base64Str, 'base64');
 
+      if (Platform.OS === 'ios') {
+        ReactNativeBlobUtil.ios.previewDocument(path);
+      } else {
+        try {
+          await ReactNativeBlobUtil.android.actionViewIntent(path, 'application/pdf');
+        } catch (intentErr) {
+          AlertService.show({ type: 'error', title: 'No App Found', message: 'Please install a PDF viewer to open this invoice.' });
+        }
+      }
     } catch (err) {
       console.log('Download error:', err);
       AlertService.show({ type: 'error', title: 'Error', message: 'Failed to download invoice' });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -182,10 +183,16 @@ export default function ProceedScreen({ navigation }) {
             )}
             {displayStatus === 'Delivered' && (
               <TouchableOpacity 
-                style={{ backgroundColor: C.successLight, paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: 20, borderWidth: 1, borderColor: C.success }}
-                onPress={() => navigation.navigate('Invoice', { order: item })}
+                style={styles.invoiceBtn}
+                onPress={() => handleDownloadInvoice(item.id)}
+                disabled={isDownloading}
               >
-                <Text style={{ color: C.success, fontWeight: 'bold', fontSize: rm(12) }}>View Invoice</Text>
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color={C.success} style={{ marginRight: 6 }} />
+                ) : (
+                  <Ionicons name="download-outline" size={18} color={C.success} style={{ marginRight: 6 }} />
+                )}
+                <Text style={styles.invoiceText}>{isDownloading ? 'Downloading...' : 'Download Invoice'}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -294,6 +301,22 @@ const styles = StyleSheet.create({
 
   cardFooter: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: rv(8), paddingTop: rv(16), borderTopWidth: 1, borderTopColor: C.border },
   viewDetailText: { fontSize: rm(14), color: C.primary, fontWeight: '700', marginRight: 4 },
+  invoiceBtn: {
+    backgroundColor: C.successLight,
+    paddingHorizontal: rs(12),
+    paddingVertical: rv(6),
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: C.success,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  invoiceText: {
+    color: C.success,
+    fontWeight: 'bold',
+    fontSize: rm(12)
+  },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   emptyIcon: { fontSize: rs(56), marginBottom: rv(16) },

@@ -247,7 +247,7 @@ export default function OrdersPage() {
                       </button>
                       {order.status === 'Delivered' && (
                         <button onClick={() => downloadInvoice(order.id)} className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-100 text-brand-700 hover:bg-brand-50 hover:border-brand-200 rounded-lg transition-all shadow-sm" title="Download DoseBox Invoice">
-                          {/* <img src="/Media.jpg" alt="DoseBox Invoice" className="w-5 h-5 object-cover rounded-md" /> */}
+                          <Download className="w-4 h-4" />
                           <span className="text-xs font-extrabold uppercase tracking-wider hidden sm:inline">Invoice</span>
                         </button>
                       )}

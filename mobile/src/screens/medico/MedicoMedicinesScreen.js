@@ -35,6 +35,15 @@ export default function MedicoMedicinesScreen({ navigation }) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   
+  const getEmptyForm = () => ({
+    name: '', genericName: '', brandId: '', manufacturer: '',
+    composition: '', dosage: '', packSize: '', description: '',
+    sideEffects: '', storageInstructions: '', papOffer: '',
+    prescriptionRequired: false, price: '0', discountPrice: '0', mrp: '0', hsnCode: '',
+    stock: '0', categoryId: '', supplierId: '', images: '',
+    sections: []
+  });
+
   const [saving, setSaving] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -77,14 +86,6 @@ export default function MedicoMedicinesScreen({ navigation }) {
     loadData();
   };
 
-  const getEmptyForm = () => ({
-    name: '', genericName: '', brandId: '', manufacturer: '',
-    composition: '', dosage: '', packSize: '', description: '',
-    sideEffects: '', storageInstructions: '', papOffer: '',
-    prescriptionRequired: false, price: '0', discountPrice: '0', mrp: '0', hsnCode: '',
-    stock: '0', categoryId: '', supplierId: '', images: '',
-    sections: []
-  });
 
   const handlePickImage = async () => {
     try {
@@ -196,6 +197,34 @@ export default function MedicoMedicinesScreen({ navigation }) {
       AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save medicine' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGenerateAI = async () => {
+    if (!formData.name || !formData.genericName) {
+      AlertService.show({ type: 'error', title: 'Missing Info', message: 'Name and Generic Name are required for AI generation.' });
+      return;
+    }
+    setGeneratingAI(true);
+    try {
+      const res = await api.post('/admin/medicines/generate-ai', {
+        name: formData.name,
+        genericName: formData.genericName,
+        manufacturer: formData.manufacturer,
+        composition: formData.composition,
+        dosage: formData.dosage
+      });
+      if (res.data?.success && res.data.data?.sections) {
+        setFormData({ ...formData, sections: res.data.data.sections });
+        AlertService.show({ type: 'success', title: 'AI Success', message: 'Medical description generated successfully!' });
+      } else {
+        AlertService.show({ type: 'error', title: 'AI Error', message: res.data?.message || 'Failed to generate content.' });
+      }
+    } catch (err) {
+      console.log('AI Generate Error:', err);
+      AlertService.show({ type: 'error', title: 'AI Error', message: 'An error occurred during AI generation.' });
+    } finally {
+      setGeneratingAI(false);
     }
   };
 

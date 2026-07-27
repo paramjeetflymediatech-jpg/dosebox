@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '10';
     const includeSections = searchParams.get('includeSections') === 'true';
+    const contentStatus = searchParams.get('contentStatus');
 
     const cacheKey = `medicines:list:${searchParams.toString()}`;
     
@@ -78,6 +79,10 @@ export async function GET(req: NextRequest) {
 
     if (prescription !== null && prescription !== undefined) {
       whereClause.prescriptionRequired = prescription === 'true';
+    }
+
+    if (contentStatus) {
+      whereClause.contentStatus = contentStatus;
     }
 
     const includeOptions: any[] = [

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         // Send reply back via Meta API
         await sendWhatsAppMessage(phone, botReply);
       }
-      
+
       // Always return 200 OK so Meta knows we received the webhook
       return NextResponse.json({ success: true }, { status: 200 });
     } else {
@@ -161,12 +161,12 @@ async function processMessageAndGenerateReply(message: string, phone: string, us
           bestMatch = m;
           break; // Perfect or direct inclusion match
         }
-        
+
         let score = 0;
         const mName = m.name.toLowerCase();
         if (mName.startsWith(qName)) score = 0.8;
         else if (mName.includes(qName)) score = 0.6;
-        
+
         if (score > highestScore && score > 0.4) {
           highestScore = score;
           bestMatch = m;

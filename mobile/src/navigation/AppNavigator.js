@@ -20,7 +20,6 @@ import OrderTrackingScreen from '../screens/user/OrderTrackingScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 import ProceedScreen from '../screens/user/ProceedScreen';
 import AlertsScreen from '../screens/user/AlertsScreen';
-import InvoiceScreen from '../screens/user/InvoiceScreen';
 import MainTabNavigator from './MainTabNavigator';
 import AdminTabNavigator from './AdminTabNavigator';
 import MedicoTabNavigator from './MedicoTabNavigator';
@@ -102,7 +101,6 @@ export default function AppNavigator() {
         <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Proceed" component={ProceedScreen} />
-        <Stack.Screen name="Invoice" component={InvoiceScreen} />
         <Stack.Screen name="Alerts" component={AlertsScreen} />
         <Stack.Screen name="UserPrescriptions" component={UserPrescriptionsScreen} />
         <Stack.Screen name="UserConsultations" component={UserConsultationsScreen} />

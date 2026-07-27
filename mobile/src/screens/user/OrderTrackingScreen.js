@@ -99,7 +99,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [isClaimMode, setIsClaimMode] = useState(false);
   const [tokenRefundCount, setTokenRefundCount] = useState(0);
-
+  const [isDownloading, setIsDownloading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -140,40 +140,40 @@ export default function OrderTrackingScreen({ route, navigation }) {
   };
 
   const handleDownloadInvoice = async (orderId) => {
+    if (isDownloading) return;
+    setIsDownloading(true);
     try {
       const token = await AsyncStorage.getItem('accessToken');
       const url = `${API_URL}/orders/${orderId}/invoice`;
 
       const { dirs } = ReactNativeBlobUtil.fs;
       const fileName = `Invoice_OD-${orderId}.pdf`;
-      const path = Platform.OS === 'ios' ? `${dirs.DocumentDir}/${fileName}` : `${dirs.DownloadDir}/${fileName}`;
+      const path = `${dirs.DocumentDir}/${fileName}`;
 
       AlertService.show({ type: 'info', title: 'Downloading', message: 'Invoice is downloading...' });
 
-      const res = await ReactNativeBlobUtil.config({
-        fileCache: true,
-        path: path,
-        addAndroidDownloads: {
-          useDownloadManager: true,
-          notification: true,
-          path: path,
-          description: 'Downloading Invoice',
-          title: fileName,
-          mime: 'application/pdf',
-        }
-      }).fetch('GET', url, {
-        Authorization: `Bearer ${token}`
+      const res = await ReactNativeBlobUtil.fetch('GET', url, {
+        Authorization: `Bearer ${token}`,
+        'Accept-Encoding': 'identity'
       });
 
-      if (Platform.OS === 'ios') {
-        ReactNativeBlobUtil.ios.previewDocument(res.path());
-      } else {
-        AlertService.show({ type: 'success', title: 'Success', message: 'Invoice downloaded successfully' });
-      }
+      const base64Str = res.base64();
+      await ReactNativeBlobUtil.fs.writeFile(path, base64Str, 'base64');
 
+      if (Platform.OS === 'ios') {
+        ReactNativeBlobUtil.ios.previewDocument(path);
+      } else {
+        try {
+          await ReactNativeBlobUtil.android.actionViewIntent(path, 'application/pdf');
+        } catch (intentErr) {
+          AlertService.show({ type: 'error', title: 'No App Found', message: 'Please install a PDF viewer to open this invoice.' });
+        }
+      }
     } catch (err) {
       console.log('Download error:', err);
       AlertService.show({ type: 'error', title: 'Error', message: 'Failed to download invoice' });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -324,10 +324,17 @@ export default function OrderTrackingScreen({ route, navigation }) {
               <View style={styles.divider} />
               <TouchableOpacity 
                 style={{ backgroundColor: C.successLight, padding: rv(12), borderRadius: radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
-                onPress={() => navigation.navigate('Invoice', { order: order })}
+                onPress={() => handleDownloadInvoice(order.id)}
+                disabled={isDownloading}
               >
-                <Ionicons name="document-text-outline" size={20} color={C.success} style={{ marginRight: 8 }} />
-                <Text style={{ color: C.success, fontWeight: '700', fontSize: rm(14) }}>View Invoice</Text>
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color={C.success} style={{ marginRight: 8 }} />
+                ) : (
+                  <Ionicons name="download-outline" size={20} color={C.success} style={{ marginRight: 8 }} />
+                )}
+                <Text style={{ color: C.success, fontWeight: '700', fontSize: rm(14) }}>
+                  {isDownloading ? 'Downloading...' : 'Download Invoice'}
+                </Text>
               </TouchableOpacity>
             </>
           )}

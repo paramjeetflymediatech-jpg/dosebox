@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Animated,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -549,6 +550,22 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.prescriptionArrow}>
             <Text style={{ color: C.white, fontWeight: '700', fontSize: rm(12), marginRight: rs(4) }}>Proceed</Text>
             <Ionicons name="arrow-forward" size={16} color={C.white} />
+          </View>
+        </TouchableOpacity>
+
+        {/* ── WHATSAPP BOT BANNER ── */}
+        <TouchableOpacity
+          style={[styles.prescriptionBanner, { backgroundColor: '#25D366', marginTop: 0 }]}
+          onPress={() => Linking.openURL('https://wa.me/919876543210?text=Hello%20DoseBox%2C%20I%20would%20like%20to%20order%20some%20medicines.')}
+          activeOpacity={0.85}
+        >
+          <View>
+            <Text style={styles.prescriptionTitle}>Order via WhatsApp Bot</Text>
+            <Text style={styles.prescriptionSub}>Just send a voice note or message</Text>
+          </View>
+          <View style={[styles.prescriptionArrow, { backgroundColor: '#128C7E' }]}>
+            <Ionicons name="logo-whatsapp" size={18} color={C.white} style={{ marginRight: rs(4) }} />
+            <Text style={{ color: C.white, fontWeight: '700', fontSize: rm(12) }}>Chat</Text>
           </View>
         </TouchableOpacity>
 

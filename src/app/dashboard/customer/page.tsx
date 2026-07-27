@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   ShoppingBag, Clipboard, MapPin, Eye, FileText, CheckCircle2, AlertCircle, XCircle, ArrowRight, Download, Calendar, HelpCircle, Upload, ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
@@ -43,7 +43,7 @@ interface Prescription {
 export default function CustomerDashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { addToCart } = useCart();
-  
+
   // States
   const [orders, setOrders] = useState<Order[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
@@ -93,7 +93,7 @@ export default function CustomerDashboardPage() {
       if (res.data?.success) {
         setPrescriptionId(res.data.data.id);
         setUploadSuccess(true);
-        
+
         // Refresh prescriptions list
         const prescRes = await api.get('/prescriptions/customer');
         if (prescRes.data?.success) {
@@ -120,7 +120,7 @@ export default function CustomerDashboardPage() {
     let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
     try {
       if (med.images) imagesArr = JSON.parse(med.images);
-    } catch (e) {}
+    } catch (e) { }
 
     addToCart({
       id: med.id,
@@ -138,7 +138,7 @@ export default function CustomerDashboardPage() {
       let imagesArr = ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250'];
       try {
         if (med.images) imagesArr = JSON.parse(med.images);
-      } catch (e) {}
+      } catch (e) { }
 
       addToCart({
         id: med.id,
@@ -206,7 +206,7 @@ export default function CustomerDashboardPage() {
   return (
     <div className="bg-slate-50 min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* User Card */}
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
           <div>
@@ -216,14 +216,14 @@ export default function CustomerDashboardPage() {
           </div>
 
           <div className="flex gap-4">
-            <button 
-              onClick={() => setActiveTab('orders')} 
+            <button
+              onClick={() => setActiveTab('orders')}
               className={`py-2 px-5 rounded-full font-bold text-xs sm:text-sm transition-all border ${activeTab === 'orders' ? 'bg-brand-600 border-brand-600 text-white shadow' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
             >
               My Orders ({orders.length})
             </button>
-            <button 
-              onClick={() => setActiveTab('prescriptions')} 
+            <button
+              onClick={() => setActiveTab('prescriptions')}
               className={`py-2 px-5 rounded-full font-bold text-xs sm:text-sm transition-all border ${activeTab === 'prescriptions' ? 'bg-brand-600 border-brand-600 text-white shadow' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
             >
               Prescriptions ({prescriptions.length})
@@ -247,21 +247,20 @@ export default function CustomerDashboardPage() {
                 let timeline = [];
                 try {
                   timeline = JSON.parse(order.trackingTimeline || '[]');
-                } catch(e){}
+                } catch (e) { }
 
                 return (
                   <div key={order.id} className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm transition-all">
-                    
+
                     {/* Compact Header summary */}
                     <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/50">
                       <div>
                         <div className="flex items-center gap-3">
                           <span className="font-extrabold text-slate-900 text-sm">Order #OD-{order.id}</span>
-                          <span className={`text-xxs font-bold px-2.5 py-0.5 rounded-full ${
-                            order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                            order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                            'bg-amber-50 text-amber-600 border border-amber-100'
-                          }`}>
+                          <span className={`text-xxs font-bold px-2.5 py-0.5 rounded-full ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                              order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                                'bg-amber-50 text-amber-600 border border-amber-100'
+                            }`}>
                             {order.status}
                           </span>
                         </div>
@@ -275,7 +274,7 @@ export default function CustomerDashboardPage() {
                         </div>
 
                         <div className="flex gap-2">
-                          <button 
+                          <button
                             onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
                             className="p-1.5 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-lg transition-all"
                             title="Expand order details"
@@ -283,7 +282,7 @@ export default function CustomerDashboardPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           {order.paymentStatus === 'Paid' && (
-                            <button 
+                            <button
                               onClick={() => downloadInvoice(order.id)}
                               className="p-1.5 bg-brand-50 border border-brand-100 text-brand-600 hover:bg-brand-100 rounded-lg transition-all"
                               title="Download Invoice PDF"
@@ -308,7 +307,7 @@ export default function CustomerDashboardPage() {
                                 if (item.medicine?.images) {
                                   imgUrl = JSON.parse(item.medicine.images)[0];
                                 }
-                              } catch(e){}
+                              } catch (e) { }
 
                               return (
                                 <div key={item.id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
@@ -358,7 +357,7 @@ export default function CustomerDashboardPage() {
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
               <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-6 border-b border-slate-100 pb-3">My Uploaded Doctor Prescriptions</h3>
-              
+
               {/* UPLOAD & SCAN WIDGET */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 space-y-4">
                 <div>
@@ -370,7 +369,7 @@ export default function CustomerDashboardPage() {
                     Upload a prescription sheet. Our AI system will scan the document and instantly extract matchable medicines for your cart.
                   </p>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row items-center gap-4 justify-between border-t border-slate-200/50 pt-4">
                   <input
                     type="file"
@@ -419,7 +418,7 @@ export default function CustomerDashboardPage() {
                         </h4>
                         <p className="text-xxs text-slate-400 mt-0.5">We detected the following medicines in your prescription:</p>
                       </div>
-                      <button 
+                      <button
                         onClick={addAllScannedToCart}
                         className="bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xxs py-1 px-3 rounded-full transition-all shadow"
                       >
@@ -432,7 +431,7 @@ export default function CustomerDashboardPage() {
                         let img = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
                         try {
                           if (med.images) img = JSON.parse(med.images)[0];
-                        } catch (e) {}
+                        } catch (e) { }
 
                         return (
                           <div key={med.id} className="bg-white border border-brand-100/50 p-2.5 rounded-lg flex items-center justify-between gap-2 shadow-xs">
@@ -445,7 +444,7 @@ export default function CustomerDashboardPage() {
                                 <span className="text-slate-400 text-xxs block">₹{formatCurrency(Number(med.price))}</span>
                               </div>
                             </div>
-                            
+
                             <button
                               onClick={() => addScannedToCart(med)}
                               className="font-extrabold text-xxs py-0.5 px-2 rounded-full transition-all border bg-brand-50 border-brand-200 text-brand-700 hover:bg-brand-100"
@@ -459,14 +458,14 @@ export default function CustomerDashboardPage() {
                   </div>
                 )}
               </div>
-              
+
               {prescriptions.length === 0 ? (
                 <p className="text-slate-400 italic text-sm text-center py-6">No prescription files uploaded yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {prescriptions.map((presc) => (
-                    <div 
-                      key={presc.id} 
+                    <div
+                      key={presc.id}
                       className="border border-slate-100 p-4 rounded-xl flex items-center justify-between gap-4 shadow-sm hover:bg-slate-50/50"
                     >
                       <div className="flex items-center gap-3">
@@ -483,11 +482,10 @@ export default function CustomerDashboardPage() {
                       </div>
 
                       <div>
-                        <span className={`text-xxs font-bold py-1 px-3 rounded-full flex items-center gap-1.5 ${
-                          presc.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                          presc.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                          'bg-amber-50 text-amber-600 border border-amber-100'
-                        }`}>
+                        <span className={`text-xxs font-bold py-1 px-3 rounded-full flex items-center gap-1.5 ${presc.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                            presc.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                              'bg-amber-50 text-amber-600 border border-amber-100'
+                          }`}>
                           {presc.status === 'Approved' && <CheckCircle2 className="w-3.5 h-3.5" />}
                           {presc.status === 'Rejected' && <XCircle className="w-3.5 h-3.5" />}
                           {presc.status === 'Pending' && <AlertCircle className="w-3.5 h-3.5" />}
