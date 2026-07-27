@@ -132,7 +132,7 @@ export default function AlertsScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: rv(10) }} />}
+          ItemSeparatorComponent={() => <View style={{ height: rv(6) }} />}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1F5C52" />}
           ListEmptyComponent={
             <Text style={{textAlign: 'center', color: '#94A3B8', marginTop: 50}}>No alerts found</Text>
@@ -174,9 +174,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: radius.lg,
-    padding: spacing.md,
+    paddingVertical: rv(10),
+    paddingHorizontal: spacing.sm,
     flexDirection: 'row',
-    gap: rs(12),
+    gap: rs(10),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: rv(4),
+    marginBottom: rv(2),
   },
   cardTitle: {
     fontSize: rm(15),

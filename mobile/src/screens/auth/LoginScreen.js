@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputGroup: {
-    marginBottom: rv(20),
+    marginBottom: rv(12),
   },
   label: {
     fontSize: rm(13),
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: rs(30),
-    paddingVertical: rv(16),
+    paddingVertical: rv(12),
     paddingHorizontal: rs(20),
     fontSize: rm(15),
     color: '#111827',
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    paddingVertical: rv(16),
+    paddingVertical: rv(12),
     fontSize: rm(15),
     color: '#111827',
   },
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: COLORS.primary, // Using DoseBox Teal
-    paddingVertical: rv(18),
+    paddingVertical: rv(14),
     borderRadius: rs(30),
     alignItems: 'center',
     shadowColor: COLORS.primary,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 6,
-    marginBottom: rv(32),
+    marginBottom: rv(24),
   },
   primaryButtonDisabled: {
     opacity: 0.7,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
-    paddingVertical: rv(14),
+    paddingVertical: rv(12),
     borderRadius: rs(30),
     borderWidth: 1,
     borderColor: '#e5e7eb',

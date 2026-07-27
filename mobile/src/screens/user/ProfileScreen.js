@@ -67,14 +67,13 @@ export default function ProfileScreen({ navigation }) {
     : '?';
 
   const menuItems = [
-    // { label: 'Dashboard', sub: 'Overview of your account', route: 'HomeTab' },
-    { label: 'My Prescriptions', sub: 'View and upload prescriptions', route: 'UserPrescriptions' },
-    { label: 'My Consultations', sub: 'View doctor consultations', route: 'UserConsultations' },
-    { label: 'Reward Points', sub: 'View your Dosebox tokens', route: 'UserRewards' },
-    { label: 'Manage Addresses', sub: 'Manage delivery locations', route: 'UserAddresses' },
-    { label: 'My Orders', sub: 'View your order history', route: 'Proceed' },
-    { label: 'Personal Information', sub: 'Update your profile details', route: 'UserProfileEdit' },
-    { label: 'Account Deletion', sub: 'Request to delete your account data', route: 'DataDeletion' },
+    { label: 'My Prescriptions', route: 'UserPrescriptions', icon: 'document-text', color: '#3b82f6', bgColor: '#eff6ff' },
+    { label: 'My Consultations', route: 'UserConsultations', icon: 'medkit', color: '#10b981', bgColor: '#ecfdf5' },
+    { label: 'Reward Points', route: 'UserRewards', icon: 'star', color: '#f59e0b', bgColor: '#fffbeb' },
+    { label: 'Manage Addresses', route: 'UserAddresses', icon: 'location', color: '#8b5cf6', bgColor: '#f5f3ff' },
+    { label: 'My Orders', route: 'Proceed', icon: 'cube', color: '#ec4899', bgColor: '#fdf2f8' },
+    { label: 'Personal Information', route: 'UserProfileEdit', icon: 'person', color: '#0ea5e9', bgColor: '#f0f9ff' },
+    { label: 'Account Deletion', route: 'DataDeletion', icon: 'trash', color: '#ef4444', bgColor: '#fef2f2' },
   ];
 
   return (
@@ -90,20 +89,28 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Avatar Card */}
-        <View style={styles.avatarCard}>
-          <View style={[styles.avatar, isTablet && styles.avatarTablet]}>
-            <Text style={[styles.avatarText, isTablet && styles.avatarTextTablet]}>
-              {initials}
-            </Text>
-          </View>
-          <Text style={styles.userName}>{user?.name || 'User'}</Text>
-          <Text style={styles.userEmail}>{user?.email || ''}</Text>
-          {user?.doseboxTokens !== undefined && (
-            <View style={styles.pointsBadge}>
-              <Text style={styles.pointsText}>⭐ {user.doseboxTokens} DoseBox Tokens</Text>
+        {/* Premium Profile Card */}
+        <View style={styles.premiumProfileCard}>
+          <View style={styles.profileContentRow}>
+            <View style={[styles.avatarPremium, isTablet && styles.avatarTablet]}>
+              <Text style={[styles.avatarTextPremium, isTablet && styles.avatarTextTablet]}>
+                {initials}
+              </Text>
             </View>
-          )}
+            <View style={styles.profileInfoPremium}>
+              <Text style={styles.userNamePremium}>{user?.name || 'Guest User'}</Text>
+              <Text style={styles.userEmailPremium}>{user?.email || 'Welcome to DoseBox'}</Text>
+              {user?.doseboxTokens !== undefined && (
+                <View style={styles.tokenBadgePremium}>
+                  <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: rs(4) }} />
+                  <Text style={styles.tokenTextPremium}>{user.doseboxTokens} Tokens</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity style={styles.editBtnPremium} activeOpacity={0.8} onPress={() => navigation.navigate('UserProfileEdit')}>
+              <Ionicons name="pencil" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Menu */}
@@ -115,11 +122,13 @@ export default function ProfileScreen({ navigation }) {
               activeOpacity={0.6}
               onPress={() => item.route && navigation.navigate(item.route)}
             >
-              <View>
+              <View style={styles.menuLeft}>
+                <View style={[styles.iconWrap, { backgroundColor: item.bgColor }]}>
+                  <Ionicons name={item.icon} size={18} color={item.color} />
+                </View>
                 <Text style={styles.menuLabel}>{item.label}</Text>
-                <Text style={styles.menuSub}>{item.sub}</Text>
               </View>
-              <Text style={styles.chevron}>›</Text>
+              <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
             </TouchableOpacity>
           ))}
         </View>
@@ -171,53 +180,87 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.3,
   },
-  avatarCard: {
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: rv(32),
-    marginBottom: rv(12),
+  premiumProfileCard: {
+    backgroundColor: '#1F5C52', // DoseBox primary color
+    marginHorizontal: spacing.md,
+    marginTop: rv(20),
+    marginBottom: rv(20),
+    borderRadius: radius['2xl'] || 16,
+    padding: rv(20),
+    shadowColor: '#1F5C52',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  avatar: {
-    width: rs(80),
-    height: rs(80),
-    borderRadius: rs(40),
-    backgroundColor: '#1F5C52',
+  profileContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarPremium: {
+    width: rs(72),
+    height: rs(72),
+    borderRadius: rs(36),
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: rv(14),
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  avatarTextPremium: {
+    color: '#1F5C52',
+    fontSize: rm(26),
+    fontWeight: '800',
   },
   avatarTablet: {
     width: rs(100),
     height: rs(100),
     borderRadius: rs(50),
   },
-  avatarText: {
-    color: '#fff',
-    fontSize: rm(28),
-    fontWeight: '700',
-  },
   avatarTextTablet: { fontSize: rm(36) },
-  userName: {
+  profileInfoPremium: {
+    flex: 1,
+    marginLeft: rs(16),
+  },
+  userNamePremium: {
     fontSize: rm(20),
     fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: rv(4),
+    color: '#fff',
+    marginBottom: rv(2),
   },
-  userEmail: {
-    fontSize: rm(14),
-    color: '#64748B',
-    marginBottom: rv(12),
+  userEmailPremium: {
+    fontSize: rm(13),
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: rv(8),
   },
-  pointsBadge: {
-    backgroundColor: '#F0FDF4',
-    paddingHorizontal: rs(16),
+  tokenBadgePremium: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF08A', // vibrant yellow highlight
+    borderWidth: 1,
+    borderColor: '#FDE047',
+    alignSelf: 'flex-start',
+    paddingHorizontal: rs(12),
     paddingVertical: rv(6),
     borderRadius: radius.full,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  pointsText: {
-    color: '#1F5C52',
-    fontWeight: '600',
+  tokenTextPremium: {
+    color: '#92400E', // dark amber/gold for strong contrast
+    fontWeight: '800',
     fontSize: rm(13),
+  },
+  editBtnPremium: {
+    width: rs(40),
+    height: rs(40),
+    borderRadius: rs(20),
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
     backgroundColor: '#fff',
@@ -236,19 +279,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: rv(16),
+    paddingVertical: rv(12),
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
+  },
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconWrap: {
+    width: rs(36),
+    height: rs(36),
+    borderRadius: rs(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: rs(12),
   },
   menuItemLast: { borderBottomWidth: 0 },
   menuLabel: {
     fontSize: rm(15),
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#0F172A',
-    marginBottom: rv(2),
   },
-  menuSub: { fontSize: rm(12), color: '#94A3B8' },
-  chevron: { fontSize: rm(22), color: '#CBD5E1', fontWeight: '300' },
   logoutBtn: {
     marginHorizontal: spacing.md,
     marginBottom: rv(12),

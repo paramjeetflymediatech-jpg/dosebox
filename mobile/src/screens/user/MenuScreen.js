@@ -10,27 +10,27 @@ export default function MenuScreen({ navigation }) {
     {
       title: 'Explore',
       items: [
-        { name: 'Categories', icon: 'grid-outline', screen: 'Categories' },
-        { name: 'Blogs & Articles', icon: 'document-text-outline', screen: 'Blog' },
-        { name: 'News & Updates', icon: 'chatbubble-outline', screen: 'News' },
-        { name: 'Testimonials', icon: 'chatbubble-outline', screen: 'Testimonial' },
+        { name: 'Categories', icon: 'grid', screen: 'Categories', color: '#3b82f6', bgColor: '#eff6ff' },
+        { name: 'Blogs & Articles', icon: 'document-text', screen: 'Blog', color: '#8b5cf6', bgColor: '#f5f3ff' },
+        { name: 'News & Updates', icon: 'newspaper', screen: 'News', color: '#0ea5e9', bgColor: '#f0f9ff' },
+        { name: 'Testimonials', icon: 'chatbubbles', screen: 'Testimonial', color: '#f59e0b', bgColor: '#fffbeb' },
       ]
     },
     {
       title: 'Support & Help',
       items: [
-        { name: 'About Us', icon: 'information-circle-outline', screen: 'About' },
-        { name: 'Contact Us', icon: 'call-outline', screen: 'Contact' },
-        { name: 'FAQs', icon: 'help-circle-outline', screen: 'FAQ' },
+        { name: 'About Us', icon: 'information-circle', screen: 'About', color: '#10b981', bgColor: '#ecfdf5' },
+        { name: 'Contact Us', icon: 'call', screen: 'Contact', color: '#ec4899', bgColor: '#fdf2f8' },
+        { name: 'FAQs', icon: 'help-circle', screen: 'FAQ', color: '#f43f5e', bgColor: '#fff1f2' },
       ]
     },
     {
       title: 'Legal & Policies',
       items: [
-        { name: 'Terms of Service', icon: 'document-text-outline', screen: 'Terms' },
-        { name: 'Privacy Policy', icon: 'document-text-outline', screen: 'PrivacyPolicy' },
-        { name: 'Refund Policy', icon: 'document-text-outline', screen: 'RefundPolicy' },
-        { name: 'Cookie Policy', icon: 'document-text-outline', screen: 'CookiePolicy' },
+        { name: 'Terms of Service', icon: 'shield-checkmark', screen: 'Terms', color: '#64748b', bgColor: '#f8fafc' },
+        { name: 'Privacy Policy', icon: 'lock-closed', screen: 'PrivacyPolicy', color: '#14b8a6', bgColor: '#f0fdfa' },
+        { name: 'Refund Policy', icon: 'cash', screen: 'RefundPolicy', color: '#84cc16', bgColor: '#f7fee7' },
+        { name: 'Cookie Policy', icon: 'globe', screen: 'CookiePolicy', color: '#6366f1', bgColor: '#eef2ff' },
       ]
     }
   ];
@@ -53,12 +53,12 @@ export default function MenuScreen({ navigation }) {
                   onPress={() => navigation.navigate(item.screen)}
                 >
                   <View style={styles.menuItemLeft}>
-                    <View style={styles.iconBox}>
-                      <Ionicons name={item.icon} size={rs(20)} color="#1F5C52" />
+                    <View style={[styles.iconBox, { backgroundColor: item.bgColor || '#F1F5F9' }]}>
+                      <Ionicons name={item.icon} size={18} color={item.color || '#1F5C52'} />
                     </View>
                     <Text style={styles.menuItemText}>{item.name}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={rs(20)} color="#CBD5E1" />
+                  <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
                 </TouchableOpacity>
               ))}
             </View>
@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: rm(24), fontWeight: '800', color: '#0F172A' },
   content: { padding: spacing.md },
-  section: { marginBottom: rv(24) },
-  sectionTitle: { fontSize: rm(14), fontWeight: '700', color: '#64748B', marginBottom: rv(12), textTransform: 'uppercase', letterSpacing: 0.5, paddingLeft: spacing.sm },
+  section: { marginBottom: rv(16) },
+  sectionTitle: { fontSize: rm(14), fontWeight: '700', color: '#64748B', marginBottom: rv(8), textTransform: 'uppercase', letterSpacing: 0.5, paddingLeft: spacing.sm },
   card: {
     backgroundColor: '#fff',
     borderRadius: radius.xl,
@@ -96,20 +96,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: rv(10),
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9'
   },
   lastMenuItem: { borderBottomWidth: 0 },
   menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
   iconBox: {
-    width: rs(40),
-    height: rs(40),
+    width: rs(32),
+    height: rs(32),
     borderRadius: radius.md,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md
+    marginRight: rs(10)
   },
-  menuItemText: { fontSize: rm(16), fontWeight: '600', color: '#334155' }
+  menuItemText: { fontSize: rm(14), fontWeight: '600', color: '#334155' }
 });

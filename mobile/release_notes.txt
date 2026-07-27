@@ -1,0 +1,11 @@
+# Release Notes - Version 1.1
+
+## What's New
+- **Mobile Invoice Download**: Added the ability to download invoices directly from the mobile app.
+- **Role-based Dashboards**: Introduced and enhanced the Leadership and Medico dashboard sections for better oversight and management on mobile.
+- **Invoice Enhancements**: Finalized invoice messaging and updated the Dosebox invoice UI for a cleaner experience.
+- **System Overview**: General improvements to the full system overview.
+
+## Under the Hood
+- Switched application environment to production.
+- Upgraded the API endpoint for improved stability and live data access.

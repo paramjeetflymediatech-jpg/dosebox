@@ -96,11 +96,22 @@ export default function EditBannerPage({ params }: { params: Promise<{ id: strin
           
           <input type="text" placeholder="Subtitle (optional)" value={banner.subtitle} onChange={e => setBanner({...banner, subtitle: e.target.value})} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl md:col-span-2 focus:outline-none focus:border-brand-500 transition-colors" />
           
-          <div className="md:col-span-2 space-y-2">
+          <div className="md:col-span-2 space-y-3">
             <label className="text-sm font-semibold text-slate-700">Banner Image (Upload new or URL)</label>
+            
+            {(imageFile || banner.image) && (
+              <div className="w-full max-w-lg h-48 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative mb-2 shadow-inner">
+                <img 
+                  src={imageFile ? URL.createObjectURL(imageFile) : banner.image} 
+                  alt="Banner preview" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
             <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
-            <div className="text-center text-sm font-medium text-slate-400">OR</div>
-            <input type="url" placeholder="Image URL (if not uploading)" value={banner.image} onChange={e => setBanner({...banner, image: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
+            <div className="text-center text-sm font-medium text-slate-400 py-1">OR</div>
+            <input type="text" placeholder="Image URL (if not uploading)" value={banner.image} onChange={e => setBanner({...banner, image: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
           </div>
 
           <input required type="text" placeholder="Destination Link (e.g. /medicines)" value={banner.link} onChange={e => setBanner({...banner, link: e.target.value})} className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl md:col-span-2 focus:outline-none focus:border-brand-500 transition-colors" />

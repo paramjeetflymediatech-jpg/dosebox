@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,26 +16,28 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 import { COLORS, FONTS, SHADOWS } from '../../utils/theme';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 
+
 const SLIDES = [
   {
     id: '1',
-    icon: '💊',
+    image: require('../../assets/images/onboarding_medicine.png'),
     title: 'Genuine Medicines',
     description: 'We source exclusively from accredited formulators, so you always get authentic medication safely.',
   },
   {
     id: '2',
-    icon: '🩺',
+    image: require('../../assets/images/onboarding_doctor.png'),
     title: 'Top-Rated Doctors',
     description: 'Consult with verified healthcare professionals from the comfort of your home.',
   },
   {
     id: '3',
-    icon: '🚚',
+    image: require('../../assets/images/onboarding_delivery.png'),
     title: 'Fast, Secure Delivery',
     description: 'Get your prescriptions delivered right to your door with real-time tracking.',
   },
 ];
+
 
 export default function OnboardingScreen({ navigation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -56,7 +59,7 @@ export default function OnboardingScreen({ navigation }) {
           return prev;
         }
       });
-    }, 2500);
+    }, 4000);
   };
 
   useEffect(() => {
@@ -103,8 +106,8 @@ export default function OnboardingScreen({ navigation }) {
   const renderItem = ({ item }) => {
     return (
       <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
-        <View style={styles.iconBadge}>
-          <Text style={styles.iconText}>{item.icon}</Text>
+        <View style={styles.imageContainer}>
+          <Image source={item.image} style={styles.heroImage} resizeMode="contain" />
         </View>
         <Text style={styles.slideTitle}>{item.title}</Text>
         <Text style={styles.slideDescription}>{item.description}</Text>
@@ -213,18 +216,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xxl,
   },
-  iconBadge: {
-    width: rs(120),
-    height: rs(120),
-    borderRadius: rs(60),
-    backgroundColor: COLORS.surface,
+  imageContainer: {
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: rv(40),
-    ...SHADOWS.sm,
+    marginBottom: rv(30),
   },
-  iconText: {
-    fontSize: rs(56),
+  heroImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: radius.xl,
   },
   slideTitle: {
     fontSize: rm(32),

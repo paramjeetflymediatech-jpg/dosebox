@@ -88,6 +88,63 @@ const AnimatedQuickLink = ({ item, onPress }) => {
   );
 };
 
+const AnimatedMedicalCard = () => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.15,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
+
+  return (
+    <View style={{ marginHorizontal: spacing.md, marginBottom: rv(32), backgroundColor: '#0D9488', borderRadius: radius.xl, padding: rs(20), overflow: 'hidden', shadowColor: '#0D9488', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 }}>
+      {/* Background decorations */}
+      <View style={{ position: 'absolute', top: -rs(30), right: -rs(20), width: rs(120), height: rs(120), borderRadius: rs(60), backgroundColor: 'rgba(255,255,255,0.08)' }} />
+      <View style={{ position: 'absolute', bottom: -rs(40), left: -rs(20), width: rs(160), height: rs(160), borderRadius: rs(80), backgroundColor: 'rgba(255,255,255,0.05)' }} />
+      
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Animated.View style={{ transform: [{ scale: pulseAnim }], width: rs(52), height: rs(52), borderRadius: rs(26), backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center', marginRight: rs(16), shadowColor: '#34D399', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 12, elevation: 8 }}>
+          <Ionicons name="pulse" size={28} color="#0D9488" />
+        </Animated.View>
+        
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: rm(17), fontWeight: '800', color: '#F0FDFA', marginBottom: rv(2) }}>DoseBox Care+</Text>
+          <Text style={{ fontSize: rm(12), color: '#99F6E4', lineHeight: rv(16) }}>24/7 Expert pharmacists & doctors on standby for your health.</Text>
+        </View>
+      </View>
+      
+      <View style={{ flexDirection: 'row', marginTop: rv(20), borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: rv(16) }}>
+         <View style={{ flex: 1, alignItems: 'center' }}>
+           <Ionicons name="shield-checkmark" size={20} color="#5EEAD4" />
+           <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>100% Genuine</Text>
+         </View>
+         <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+         <View style={{ flex: 1, alignItems: 'center' }}>
+           <Ionicons name="thermometer" size={20} color="#5EEAD4" />
+           <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>Lab Tested</Text>
+         </View>
+         <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+         <View style={{ flex: 1, alignItems: 'center' }}>
+           <Ionicons name="flash" size={20} color="#5EEAD4" />
+           <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>Express Rx</Text>
+         </View>
+      </View>
+    </View>
+  );
+};
+
 export default function HomeScreen({ navigation }) {
   const { totalQty, addToCart } = useCart();
   const { selectedAddress, selectAddress } = useLocation();
@@ -391,8 +448,21 @@ export default function HomeScreen({ navigation }) {
                 <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => {
-                    if (item.link) {
-                      navigation.navigate(item.link);
+                    if (!item.link) return;
+                    
+                    if (item.link.startsWith('/medicines/detail')) {
+                      const match = item.link.match(/id=(\d+)/);
+                      if (match) {
+                        navigation.navigate('MedicineDetail', { medicine: { id: parseInt(match[1]) } });
+                      }
+                    } else if (item.link.startsWith('/categories')) {
+                      navigation.navigate('Categories');
+                    } else if (item.link.startsWith('/blogs')) {
+                      navigation.navigate('Blog');
+                    } else {
+                      // Fallback for simple routes like 'UploadPrescription' or '/UploadPrescription'
+                      const routeName = item.link.replace(/^\//, '');
+                      navigation.navigate(routeName);
                     }
                   }}
                 >
@@ -433,7 +503,41 @@ export default function HomeScreen({ navigation }) {
             />
           ))}
         </View>
+    {/* ── WHATSAPP BOT ACTION ── */}
+        <TouchableOpacity
+          style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: rv(12), padding: rs(16), backgroundColor: '#F0FDF4', borderRadius: radius.xl, borderWidth: 1, borderColor: '#dcfce7', shadowColor: '#25D366', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}
+          onPress={() => Linking.openURL('https://wa.me/919876543210?text=Hello%20DoseBox%2C%20I%20would%20like%20to%20order%20some%20medicines.')}
+          activeOpacity={0.8}
+        >
+          <View style={{ width: rs(44), height: rs(44), borderRadius: rs(22), backgroundColor: '#25D366', alignItems: 'center', justifyContent: 'center', marginRight: rs(14) }}>
+            <Ionicons name="logo-whatsapp" size={24} color={C.white} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: rm(15), fontWeight: '700', color: '#166534', marginBottom: rv(2) }}>Order via WhatsApp</Text>
+            <Text style={{ fontSize: rm(12), color: '#15803d' }}>Send a voice note or message</Text>
+          </View>
+          <View style={{ width: rs(32), height: rs(32), borderRadius: rs(16), backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="chevron-forward" size={18} color="#166534" />
+          </View>
+        </TouchableOpacity>
 
+    {/* ── UPLOAD PRESCRIPTION ACTION ── */}
+        <TouchableOpacity
+          style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: rv(24), padding: rs(16), backgroundColor: '#F8FAFC', borderRadius: radius.xl, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
+          onPress={() => navigation.navigate('UploadPrescription')}
+          activeOpacity={0.8}
+        >
+          <View style={{ width: rs(44), height: rs(44), borderRadius: rs(22), backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', marginRight: rs(14) }}>
+            <Ionicons name="document-text" size={20} color={C.white} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: rm(15), fontWeight: '700', color: '#0f172a', marginBottom: rv(2) }}>Order with Prescription</Text>
+            <Text style={{ fontSize: rm(12), color: '#475569' }}>Upload it and we'll handle the rest</Text>
+          </View>
+          <View style={{ width: rs(32), height: rs(32), borderRadius: rs(16), backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="chevron-forward" size={18} color="#0f172a" />
+          </View>
+        </TouchableOpacity>
 
         {loadingData ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: rv(40) }} />
@@ -537,77 +641,46 @@ export default function HomeScreen({ navigation }) {
           </>
         )}
 
-        {/* ── UPLOAD PRESCRIPTION CTA (Proceed) ── */}
-        <TouchableOpacity
-          style={styles.prescriptionBanner}
-          onPress={() => navigation.navigate('UploadPrescription')}
-          activeOpacity={0.85}
-        >
-          <View>
-            <Text style={styles.prescriptionTitle}>Order with Prescription</Text>
-            <Text style={styles.prescriptionSub}>Upload it and we'll handle the rest</Text>
-          </View>
-          <View style={styles.prescriptionArrow}>
-            <Text style={{ color: C.white, fontWeight: '700', fontSize: rm(12), marginRight: rs(4) }}>Proceed</Text>
-            <Ionicons name="arrow-forward" size={16} color={C.white} />
-          </View>
-        </TouchableOpacity>
-
-        {/* ── WHATSAPP BOT BANNER ── */}
-        <TouchableOpacity
-          style={[styles.prescriptionBanner, { backgroundColor: '#25D366', marginTop: 0 }]}
-          onPress={() => Linking.openURL('https://wa.me/919876543210?text=Hello%20DoseBox%2C%20I%20would%20like%20to%20order%20some%20medicines.')}
-          activeOpacity={0.85}
-        >
-          <View>
-            <Text style={styles.prescriptionTitle}>Order via WhatsApp Bot</Text>
-            <Text style={styles.prescriptionSub}>Just send a voice note or message</Text>
-          </View>
-          <View style={[styles.prescriptionArrow, { backgroundColor: '#128C7E' }]}>
-            <Ionicons name="logo-whatsapp" size={18} color={C.white} style={{ marginRight: rs(4) }} />
-            <Text style={{ color: C.white, fontWeight: '700', fontSize: rm(12) }}>Chat</Text>
-          </View>
-        </TouchableOpacity>
-
         {/* ── OUR STATS ── */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>50k+</Text>
-            <Text style={styles.statLabel}>Happy Users</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: rv(24), marginBottom: rv(24), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: '#F1F5F9', paddingVertical: rv(20), paddingHorizontal: rs(12), shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>50k+</Text>
+            <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>Happy Users</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>10k+</Text>
-            <Text style={styles.statLabel}>Medicines</Text>
+          <View style={{ width: 1, height: rv(32), backgroundColor: '#F1F5F9' }} />
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>10k+</Text>
+            <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>Medicines</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>4.8★</Text>
-            <Text style={styles.statLabel}>App Rating</Text>
-          </View>
-        </View>
-
-
-        {/* ── FEATURES SECTION ── */}
-        <View style={styles.featuresSection}>
-          <View style={[styles.featureItem, { marginTop: rv(12) }]}>
-            <Ionicons name="ribbon-outline" size={rm(32)} color={C.text} style={styles.featureIcon} />
-            <Text style={styles.featureTitle}>Clinically Tested</Text>
-            <Text style={styles.featureDesc}>All products are vetted by our expert team.</Text>
-          </View>
-
-          <View style={styles.featureItem}>
-            <Ionicons name="bus-outline" size={rm(32)} color={C.text} style={styles.featureIcon} />
-            <Text style={styles.featureTitle}>Reliable Delivery</Text>
-            <Text style={styles.featureDesc}>Swift and secure handling to your doorstep.</Text>
-          </View>
-
-          <View style={[styles.featureItem, { marginBottom: rv(12) }]}>
-            <Ionicons name="headset-outline" size={rm(32)} color={C.text} style={styles.featureIcon} />
-            <Text style={styles.featureTitle}>Expert Support</Text>
-            <Text style={styles.featureDesc}>24/7 care for all your health inquiries.</Text>
+          <View style={{ width: 1, height: rv(32), backgroundColor: '#F1F5F9' }} />
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>4.8<Text style={{ fontSize: rm(16) }}>★</Text></Text>
+            <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>App Rating</Text>
           </View>
         </View>
+
+
+        {/* ── FEATURES SECTION (ANIMATED) ── */}
+        <AnimatedMedicalCard />
+
+        {/* ── 24/7 SUPPORT ── */}
+        <View style={{ marginHorizontal: spacing.md, marginBottom: rv(40), backgroundColor: '#EEF2FF', borderRadius: radius.xl, padding: rs(20), borderWidth: 1, borderColor: '#E0E7FF', alignItems: 'center' }}>
+          <View style={{ width: rs(56), height: rs(56), borderRadius: rs(28), backgroundColor: '#C7D2FE', alignItems: 'center', justifyContent: 'center', marginBottom: rv(12) }}>
+            <Ionicons name="chatbubbles" size={28} color="#4F46E5" />
+          </View>
+          <Text style={{ fontSize: rm(18), fontWeight: '800', color: '#312E81', marginBottom: rv(4), textAlign: 'center' }}>24/7 Support</Text>
+          <Text style={{ fontSize: rm(13), color: '#4F46E5', textAlign: 'center', marginBottom: rv(16), paddingHorizontal: rs(10), lineHeight: rv(18) }}>
+            We're here to help you. If you have any issue related to your order or anything else, message us.
+          </Text>
+          <TouchableOpacity 
+            style={{ backgroundColor: '#4F46E5', paddingVertical: rv(12), paddingHorizontal: rs(24), borderRadius: radius.full, shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('Contact')}
+          >
+            <Text style={{ color: C.white, fontSize: rm(14), fontWeight: '700' }}>Submit a Request</Text>
+          </TouchableOpacity>
+        </View>
+
 
       </ScrollView>
 
