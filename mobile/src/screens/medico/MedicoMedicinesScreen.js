@@ -13,7 +13,7 @@ import Pagination from '../../components/admin/Pagination';
 import { getFullImageUrl } from '../../utils/image';
 import { AlertService } from '../../services/AlertService';
 
-export default function AdminMedicinesScreen({ navigation }) {
+export default function MedicoMedicinesScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const filteredData = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchQuery.toLowerCase())));
@@ -30,6 +30,7 @@ export default function AdminMedicinesScreen({ navigation }) {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -195,34 +196,6 @@ export default function AdminMedicinesScreen({ navigation }) {
       AlertService.show({ type: 'error', title: 'Error', message: 'Failed to save medicine' });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleGenerateAI = async () => {
-    if (!formData.name || !formData.genericName) {
-      AlertService.show({ type: 'error', title: 'Missing Info', message: 'Name and Generic Name are required for AI generation.' });
-      return;
-    }
-    setGeneratingAI(true);
-    try {
-      const res = await api.post('/admin/medicines/generate-ai', {
-        name: formData.name,
-        genericName: formData.genericName,
-        manufacturer: formData.manufacturer,
-        composition: formData.composition,
-        dosage: formData.dosage
-      });
-      if (res.data?.success && res.data.data?.sections) {
-        setFormData({ ...formData, sections: res.data.data.sections });
-        AlertService.show({ type: 'success', title: 'AI Success', message: 'Medical description generated successfully!' });
-      } else {
-        AlertService.show({ type: 'error', title: 'AI Error', message: res.data?.message || 'Failed to generate content.' });
-      }
-    } catch (err) {
-      console.log('AI Generate Error:', err);
-      AlertService.show({ type: 'error', title: 'AI Error', message: 'An error occurred during AI generation.' });
-    } finally {
-      setGeneratingAI(false);
     }
   };
 

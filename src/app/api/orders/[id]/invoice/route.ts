@@ -46,14 +46,17 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       if (userAuth instanceof NextResponse) return userAuth;
     }
 
+    console.log('Fetching order for invoice with ID:', params.id);
     const order: any = await Order.findByPk(params.id, {
       include: [
         { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine' }] },
         { model: User, as: 'user' }
       ]
     });
+    console.log('Order found:', !!order);
 
     if (!order) {
+      console.log('Returning 404 because order is null for ID:', params.id);
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
 

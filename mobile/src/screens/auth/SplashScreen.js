@@ -59,6 +59,10 @@ export default function SplashScreen({ navigation }) {
             const userRole = user?.role?.toLowerCase() || '';
             if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
               nextRoute = 'AdminTabs';
+            } else if (userRole === 'medico') {
+              nextRoute = 'MedicoTabs';
+            } else if (userRole === 'leadership') {
+              nextRoute = 'LeadershipTabs';
             } else {
               nextRoute = 'MainTabs';
             }

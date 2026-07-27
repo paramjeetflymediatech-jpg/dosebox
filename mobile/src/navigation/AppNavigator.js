@@ -20,8 +20,11 @@ import OrderTrackingScreen from '../screens/user/OrderTrackingScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 import ProceedScreen from '../screens/user/ProceedScreen';
 import AlertsScreen from '../screens/user/AlertsScreen';
+import InvoiceScreen from '../screens/user/InvoiceScreen';
 import MainTabNavigator from './MainTabNavigator';
 import AdminTabNavigator from './AdminTabNavigator';
+import MedicoTabNavigator from './MedicoTabNavigator';
+import LeadershipTabNavigator from './LeadershipTabNavigator';
 import GuestTabNavigator from './GuestTabNavigator';
 
 import UserPrescriptionsScreen from '../screens/user/UserPrescriptionsScreen';
@@ -86,6 +89,8 @@ export default function AppNavigator() {
         <Stack.Screen name="GuestTabs" component={GuestTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="MainTabs" component={MainTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="AdminTabs" component={AdminTabNavigator} options={{ animation: 'fade' }} />
+        <Stack.Screen name="MedicoTabs" component={MedicoTabNavigator} options={{ animation: 'fade' }} />
+        <Stack.Screen name="LeadershipTabs" component={LeadershipTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -97,6 +102,7 @@ export default function AppNavigator() {
         <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Proceed" component={ProceedScreen} />
+        <Stack.Screen name="Invoice" component={InvoiceScreen} />
         <Stack.Screen name="Alerts" component={AlertsScreen} />
         <Stack.Screen name="UserPrescriptions" component={UserPrescriptionsScreen} />
         <Stack.Screen name="UserConsultations" component={UserConsultationsScreen} />

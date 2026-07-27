@@ -324,10 +324,10 @@ export default function OrderTrackingScreen({ route, navigation }) {
               <View style={styles.divider} />
               <TouchableOpacity 
                 style={{ backgroundColor: C.successLight, padding: rv(12), borderRadius: radius.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
-                onPress={() => handleDownloadInvoice(order.id)}
+                onPress={() => navigation.navigate('Invoice', { order: order })}
               >
                 <Ionicons name="document-text-outline" size={20} color={C.success} style={{ marginRight: 8 }} />
-                <Text style={{ color: C.success, fontWeight: '700', fontSize: rm(14) }}>Download Invoice</Text>
+                <Text style={{ color: C.success, fontWeight: '700', fontSize: rm(14) }}>View Invoice</Text>
               </TouchableOpacity>
             </>
           )}

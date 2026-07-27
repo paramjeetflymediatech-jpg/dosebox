@@ -88,6 +88,10 @@ export default function LoginScreen({ navigation, route }) {
           navigation.replace(returnTo);
         } else if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
           navigation.replace('AdminTabs');
+        } else if (userRole === 'medico') {
+          navigation.replace('MedicoTabs');
+        } else if (userRole === 'leadership') {
+          navigation.replace('LeadershipTabs');
         } else {
           navigation.replace('MainTabs');
         }
@@ -157,6 +161,10 @@ export default function LoginScreen({ navigation, route }) {
           navigation.replace(returnTo);
         } else if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
           navigation.replace('AdminTabs');
+        } else if (userRole === 'medico') {
+          navigation.replace('MedicoTabs');
+        } else if (userRole === 'leadership') {
+          navigation.replace('LeadershipTabs');
         } else {
           navigation.replace('MainTabs');
         }

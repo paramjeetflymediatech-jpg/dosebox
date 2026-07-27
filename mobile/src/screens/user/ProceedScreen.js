@@ -183,9 +183,9 @@ export default function ProceedScreen({ navigation }) {
             {displayStatus === 'Delivered' && (
               <TouchableOpacity 
                 style={{ backgroundColor: C.successLight, paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: 20, borderWidth: 1, borderColor: C.success }}
-                onPress={() => handleDownloadInvoice(item.id)}
+                onPress={() => navigation.navigate('Invoice', { order: item })}
               >
-                <Text style={{ color: C.success, fontWeight: 'bold', fontSize: rm(12) }}>Download Invoice</Text>
+                <Text style={{ color: C.success, fontWeight: 'bold', fontSize: rm(12) }}>View Invoice</Text>
               </TouchableOpacity>
             )}
           </View>
