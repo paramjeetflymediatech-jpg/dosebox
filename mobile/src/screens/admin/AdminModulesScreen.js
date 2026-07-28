@@ -26,6 +26,29 @@ const MODULES = [
   { id: 'enterprise', title: 'Enterprise Profile', icon: 'business-outline', screen: 'AdminEnterprise', color: '#E0F2FE', iconColor: '#0369A1' },
 ];
 
+const SECTIONS = [
+  {
+    title: 'Core Business',
+    subtitle: 'Everyday operations & user roles',
+    moduleIds: ['orders', 'prescriptions', 'users', 'transactions', 'appointments']
+  },
+  {
+    title: 'Catalog & Stock',
+    subtitle: 'Inventory, brands, and suppliers',
+    moduleIds: ['medicines', 'categories', 'brands', 'suppliers']
+  },
+  {
+    title: 'Marketing & Support',
+    subtitle: 'Blogs, banners, coupons, and FAQs',
+    moduleIds: ['blogs', 'banners', 'coupons', 'doctors', 'faqs', 'rewards']
+  },
+  {
+    title: 'Settings & Compliance',
+    subtitle: 'System optimization & configuration',
+    moduleIds: ['enterprise', 'seo', 'dataDeletion']
+  }
+];
+
 export default function AdminModulesScreen({ navigation }) {
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -51,7 +74,6 @@ export default function AdminModulesScreen({ navigation }) {
   };
 
   useEffect(() => {
-    // Refresh stats when the screen is focused
     const unsubscribe = navigation.addListener('focus', () => {
       fetchCounts();
     });
@@ -59,6 +81,40 @@ export default function AdminModulesScreen({ navigation }) {
     fetchCounts();
     return unsubscribe;
   }, [navigation]);
+
+  const renderModuleCard = (modId) => {
+    const mod = MODULES.find(m => m.id === modId);
+    if (!mod) return null;
+    const count = counts[mod.id] !== undefined ? counts[mod.id] : 0;
+    
+    return (
+      <TouchableOpacity
+        key={mod.id}
+        style={styles.gridCard}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate(mod.screen)}
+      >
+        <View style={styles.cardHeader}>
+          <View style={[styles.iconBox, { backgroundColor: mod.color }]}>
+            <Ionicons name={mod.icon} size={rs(20)} color={mod.iconColor} />
+          </View>
+          <Ionicons name="arrow-forward-circle-outline" size={rs(20)} color="#CBD5E1" />
+        </View>
+
+        <Text style={styles.itemTitle} numberOfLines={1}>{mod.title}</Text>
+        
+        {loading ? (
+          <ActivityIndicator size="small" color="#94A3B8" style={{ alignSelf: 'flex-start', marginTop: rv(4) }} />
+        ) : (
+          <Text style={styles.itemCount}>
+            {mod.id === 'enterprise' || mod.id === 'seo' || mod.id === 'dataDeletion'
+              ? 'Configure'
+              : `${count} item${count !== 1 ? 's' : ''}`}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,39 +130,21 @@ export default function AdminModulesScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F5C52']} />}
       >
-        <Text style={styles.sectionTitle}>Manage Platform</Text>
-        <View style={styles.listContainer}>
-          {MODULES.map(mod => {
-            const count = counts[mod.id] !== undefined ? counts[mod.id] : 0;
-            return (
-              <TouchableOpacity
-                key={mod.id}
-                style={styles.listItem}
-                activeOpacity={0.7}
-                onPress={() => navigation.navigate(mod.screen)}
-              >
-                <View style={[styles.iconBox, { backgroundColor: mod.color }]}>
-                  <Ionicons name={mod.icon} size={rs(22)} color={mod.iconColor} />
-                </View>
-
-                <View style={styles.textContainer}>
-                  <Text style={styles.itemTitle}>{mod.title}</Text>
-                  {loading ? (
-                    <ActivityIndicator size="small" color="#94A3B8" style={{ alignSelf: 'flex-start' }} />
-                  ) : (
-                    <Text style={styles.itemCount}>
-                      {mod.id === 'enterprise' || mod.id === 'seo' || mod.id === 'dataDeletion'
-                        ? 'Configure'
-                        : `${count} item${count !== 1 ? 's' : ''}`}
-                    </Text>
-                  )}
-                </View>
-
-                <Ionicons name="chevron-forward" size={rs(20)} color="#CBD5E1" />
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {SECTIONS.map((sec, idx) => (
+          <View key={idx} style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIndicator} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionTitle}>{sec.title}</Text>
+                <Text style={styles.sectionSubtitle}>{sec.subtitle}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.gridRow}>
+              {sec.moduleIds.map(modId => renderModuleCard(modId))}
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,15 +161,29 @@ const styles = StyleSheet.create({
   backIcon: { fontSize: rm(24), color: '#0F172A', fontWeight: '300' },
   headerTitle: { fontSize: rm(20), fontWeight: '700', color: '#0F172A', letterSpacing: -0.3 },
   content: { padding: spacing.md, paddingBottom: rv(100) },
-  sectionTitle: { fontSize: rm(16), fontWeight: '600', color: '#64748B', marginBottom: rv(16) },
-  listContainer: { flexDirection: 'column', gap: rv(12) },
-  listItem: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: radius.lg, padding: spacing.md,
-    alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1
+  
+  sectionContainer: { marginBottom: rv(24) },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: rv(12), gap: rs(8) },
+  sectionIndicator: { width: rs(4), height: rv(24), backgroundColor: '#1F5C52', borderRadius: radius.full },
+  sectionTitle: { fontSize: rm(16), fontWeight: '800', color: '#0F172A' },
+  sectionSubtitle: { fontSize: rm(12), color: '#64748B', marginTop: rv(1) },
+  
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: rv(10) },
+  gridCard: {
+    width: '48.5%',
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  iconBox: { width: rv(48), height: rv(48), borderRadius: rv(24), alignItems: 'center', justifyContent: 'center', marginRight: rv(16) },
-  textContainer: { flex: 1, justifyContent: 'center' },
-  itemTitle: { fontSize: rm(16), fontWeight: '600', color: '#0F172A', marginBottom: rv(4) },
-  itemCount: { fontSize: rm(13), fontWeight: '500', color: '#64748B' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rv(12) },
+  iconBox: { width: rv(40), height: rv(40), borderRadius: rv(12), alignItems: 'center', justifyContent: 'center' },
+  itemTitle: { fontSize: rm(14), fontWeight: '700', color: '#0F172A', marginBottom: rv(2) },
+  itemCount: { fontSize: rm(12), fontWeight: '600', color: '#64748B' },
 });

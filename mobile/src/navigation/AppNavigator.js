@@ -93,8 +93,8 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminTabs" component={AdminTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="MedicoTabs" component={MedicoTabNavigator} options={{ animation: 'fade' }} />
         <Stack.Screen name="LeadershipTabs" component={LeadershipTabNavigator} options={{ animation: 'fade' }} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ animation: 'slide_from_left' }} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="VerifyOtp" component={VerifyOtpScreen} />
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
