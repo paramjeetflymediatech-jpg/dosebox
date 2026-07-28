@@ -8,12 +8,13 @@ import {
   Easing,
   Platform,
   Image,
-  ScrollView
+  ScrollView,
+  Modal
 } from 'react-native';
 import { AlertService } from '../../services/AlertService';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import api from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import PermissionsService from '../../services/PermissionsService';
@@ -28,6 +29,8 @@ export default function UploadPrescriptionScreen({ navigation }) {
   const [imageName, setImageName] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState(null);
+  
+  const [showPickerModal, setShowPickerModal] = useState(false);
   
   const { addToCart } = useCart();
 
@@ -49,6 +52,35 @@ export default function UploadPrescriptionScreen({ navigation }) {
       }
     } catch (err) {
       AlertService.show({ type: 'error', title: 'Error', message: 'Failed to open gallery: ' + err.message });
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+      if (!hasPermission) return;
+
+      const response = await launchCamera({
+        mediaType: 'photo',
+        quality: 0.8,
+        saveToPhotos: true,
+      });
+
+      if (response.didCancel) return;
+      
+      if (response.errorCode || response.errorMessage) {
+        AlertService.show({ type: 'error', title: 'Camera Error', message: response.errorMessage || response.errorCode });
+        return;
+      }
+      
+      if (response.assets && response.assets.length > 0) {
+        setImageUri(response.assets[0].uri);
+        setImageType(response.assets[0].type || 'image/jpeg');
+        setImageName(response.assets[0].fileName || 'camera.jpg');
+        setResult(null); // Reset if picking a new image
+      }
+    } catch (err) {
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to open camera: ' + err.message });
     }
   };
 
@@ -184,12 +216,20 @@ export default function UploadPrescriptionScreen({ navigation }) {
           <Text style={styles.instructionsText}>
             Upload your prescription. Our medical OCR matches the ingredients directly to generic alternatives.
           </Text>
-          <TouchableOpacity style={styles.uploadBox} onPress={pickImage} activeOpacity={0.8}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="cloud-upload-outline" size={32} color="#0D9488" />
+          
+          <TouchableOpacity 
+            style={styles.mainUploadBox} 
+            onPress={() => setShowPickerModal(true)} 
+            activeOpacity={0.8}
+          >
+            <View style={styles.mainIconCircle}>
+              <Ionicons name="document-text-outline" size={40} color="#0D9488" />
             </View>
-            <Text style={styles.uploadText}>Tap to select prescription</Text>
-            <Text style={styles.uploadSubText}>Supports JPG, PNG (Max 10MB)</Text>
+            <Text style={styles.mainUploadTitle}>Upload Prescription</Text>
+            <Text style={styles.mainUploadDesc}>Tap to capture or select image</Text>
+            <View style={styles.uploadBadge}>
+              <Text style={styles.uploadBadgeText}>Camera & Gallery Supported</Text>
+            </View>
           </TouchableOpacity>
           
           <View style={styles.privacyBox}>
@@ -366,6 +406,62 @@ export default function UploadPrescriptionScreen({ navigation }) {
            )}
          </View>
       )}
+      <Modal
+        visible={showPickerModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPickerModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowPickerModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeaderLine} />
+            <Text style={styles.modalTitle}>Select Option</Text>
+            
+            <TouchableOpacity 
+              style={styles.modalOption} 
+              onPress={() => {
+                setShowPickerModal(false);
+                takePhoto();
+              }}
+            >
+              <View style={[styles.modalOptionIcon, { backgroundColor: '#EAF4F2' }]}>
+                <Ionicons name="camera" size={24} color="#0D9488" />
+              </View>
+              <View style={styles.modalOptionTextContainer}>
+                <Text style={styles.modalOptionText}>Take Photo</Text>
+                <Text style={styles.modalOptionSubText}>Use your camera to capture prescription</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.modalOption} 
+              onPress={() => {
+                setShowPickerModal(false);
+                pickImage();
+              }}
+            >
+              <View style={[styles.modalOptionIcon, { backgroundColor: '#EEF2FF' }]}>
+                <Ionicons name="images" size={24} color="#4F46E5" />
+              </View>
+              <View style={styles.modalOptionTextContainer}>
+                <Text style={styles.modalOptionText}>Choose from Gallery</Text>
+                <Text style={styles.modalOptionSubText}>Select an existing image from gallery</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.modalCancelBtn} 
+              onPress={() => setShowPickerModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -699,5 +795,153 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: rm(16),
     fontWeight: '700',
+  },
+  uploadRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: rv(24),
+  },
+  optionBox: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: radius.xl,
+    backgroundColor: '#ffffff',
+    paddingVertical: rv(24),
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  optionTitle: {
+    fontSize: rm(15),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: rv(4),
+  },
+  optionDesc: {
+    fontSize: rm(11),
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  mainUploadBox: {
+    borderWidth: 2,
+    borderColor: '#99F6E4',
+    borderStyle: 'dashed',
+    borderRadius: radius.xl,
+    backgroundColor: '#F0FDFA',
+    paddingVertical: rv(48),
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: rv(24),
+    shadowColor: '#0D9488',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 1,
+  },
+  mainIconCircle: {
+    width: rs(80),
+    height: rs(80),
+    borderRadius: rs(40),
+    backgroundColor: '#CCFBF1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: rv(20),
+  },
+  mainUploadTitle: {
+    fontSize: rm(18),
+    fontWeight: '800',
+    color: '#115E59',
+    marginBottom: rv(6),
+  },
+  mainUploadDesc: {
+    fontSize: rm(13),
+    color: '#0D9488',
+    marginBottom: rv(16),
+  },
+  uploadBadge: {
+    backgroundColor: '#EAF4F2',
+    paddingHorizontal: spacing.md,
+    paddingVertical: rv(6),
+    borderRadius: radius.full,
+  },
+  uploadBadgeText: {
+    fontSize: rm(11),
+    fontWeight: '600',
+    color: '#0D9488',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: rv(12),
+    paddingBottom: rv(32),
+  },
+  modalHeaderLine: {
+    width: rs(40),
+    height: rv(4),
+    backgroundColor: '#E2E8F0',
+    borderRadius: radius.full,
+    alignSelf: 'center',
+    marginBottom: rv(20),
+  },
+  modalTitle: {
+    fontSize: rm(18),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: rv(20),
+    textAlign: 'center',
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: rv(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalOptionIcon: {
+    width: rs(48),
+    height: rs(48),
+    borderRadius: rs(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: rs(16),
+  },
+  modalOptionTextContainer: {
+    flex: 1,
+  },
+  modalOptionText: {
+    fontSize: rm(16),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: rv(2),
+  },
+  modalOptionSubText: {
+    fontSize: rm(12),
+    color: '#64748B',
+  },
+  modalCancelBtn: {
+    backgroundColor: '#F1F5F9',
+    paddingVertical: rv(14),
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    marginTop: rv(20),
+  },
+  modalCancelText: {
+    fontSize: rm(15),
+    fontWeight: '700',
+    color: '#475569',
   },
 });

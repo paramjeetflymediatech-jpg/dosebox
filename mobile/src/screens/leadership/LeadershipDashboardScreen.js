@@ -87,14 +87,18 @@ export default function LeadershipDashboardScreen({ navigation }) {
             <Text style={styles.headerTitle}>Dashboard Overview</Text>
             <Text style={styles.headerSubtitle}>Welcome back, {user?.name || 'Admin'}</Text>
           </View>
-          <TouchableOpacity onPress={handleLogout} style={{ padding: rv(8), backgroundColor: '#FEE2E2', borderRadius: radius.md }}>
-            <Ionicons name="log-out-outline" size={rm(24)} color="#EF4444" />
+          <TouchableOpacity onPress={() => navigation.navigate('LeadershipProfile')} style={{ padding: rv(8), backgroundColor: '#EAF4F2', borderRadius: radius.md }} activeOpacity={0.8}>
+            <Ionicons name="person-outline" size={rm(24)} color="#1F5C52" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.statsContainer}>
           {/* Full Width Revenue Card */}
-          <View style={[styles.statCard, { width: '100%', backgroundColor: '#1F5C52', borderColor: '#1F5C52' }]}>
+          <TouchableOpacity 
+            style={[styles.statCard, { width: '100%', backgroundColor: '#1F5C52', borderColor: '#1F5C52' }]}
+            onPress={() => navigation.navigate('TransactionsTab')}
+            activeOpacity={0.9}
+          >
             <View style={styles.statHeader}>
               <View>
                 <Text style={[styles.statTitle, { color: '#D1FAE5' }]}>Total Revenue</Text>
@@ -102,31 +106,43 @@ export default function LeadershipDashboardScreen({ navigation }) {
               </View>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}><Text style={styles.icon}>💸</Text></View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* 2-Column Grid for other stats */}
           <View style={styles.gridRow}>
-            <View style={styles.gridCard}>
+            <TouchableOpacity 
+              style={styles.gridCard}
+              onPress={() => navigation.navigate('TransactionsTab')}
+              activeOpacity={0.9}
+            >
               <View style={[styles.iconBox, { backgroundColor: '#DBEAFE', marginBottom: rv(12) }]}><Text style={styles.icon}>🛍️</Text></View>
               <Text style={styles.gridValue}>{kpis?.totalOrders?.toLocaleString() || 0}</Text>
               <Text style={styles.gridTitle}>Total Orders</Text>
-            </View>
+            </TouchableOpacity>
 
-            <View style={styles.gridCard}>
-              <View style={[styles.iconBox, { backgroundColor: '#F3E8FF', marginBottom: rv(12) }]}><Text style={styles.icon}>👥</Text></View>
-              <Text style={styles.gridValue}>{kpis?.totalCustomers?.toLocaleString() || 0}</Text>
-              <Text style={styles.gridTitle}>Customers</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.gridCard}
+              onPress={() => navigation.navigate('DoctorsTab')}
+              activeOpacity={0.9}
+            >
+              <View style={[styles.iconBox, { backgroundColor: '#F3E8FF', marginBottom: rv(12) }]}><Text style={styles.icon}>🩺</Text></View>
+              <Text style={styles.gridValue}>{kpis?.totalDoctors?.toLocaleString() || 0}</Text>
+              <Text style={styles.gridTitle}>Doctors</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.gridRow}>
-            <View style={styles.gridCard}>
+          {/* <View style={styles.gridRow}>
+            <TouchableOpacity 
+              style={styles.gridCard}
+              onPress={() => navigation.navigate('RewardsTab')}
+              activeOpacity={0.9}
+            >
               <View style={[styles.iconBox, { backgroundColor: '#FEF3C7', marginBottom: rv(12) }]}><Text style={styles.icon}>⭐</Text></View>
               <Text style={styles.gridValue}>{kpis?.totalTokens?.toLocaleString() || 0}</Text>
               <Text style={styles.gridTitle}>Total Loyalty Tokens</Text>
-            </View>
+            </TouchableOpacity>
             <View style={[styles.gridCard, { opacity: 0 }]} />
-          </View>
+          </View> */}
         </View>
 
         {charts?.revenueChart && charts.revenueChart.length > 0 && (

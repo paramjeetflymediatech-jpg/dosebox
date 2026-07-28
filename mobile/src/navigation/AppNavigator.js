@@ -50,6 +50,8 @@ import MedicineDetailScreen from '../screens/explore/MedicineDetailScreen';
 
 import AdminModulesScreen from '../screens/admin/AdminModulesScreen';
 import AdminProfileScreen from '../screens/admin/AdminProfileScreen';
+import MedicoProfileScreen from '../screens/medico/MedicoProfileScreen';
+import LeadershipProfileScreen from '../screens/leadership/LeadershipProfileScreen';
 import AdminAppointmentsScreen from '../screens/admin/AdminAppointmentsScreen';
 import AdminBannersScreen from '../screens/admin/AdminBannersScreen';
 import AdminBlogsScreen from '../screens/admin/AdminBlogsScreen';
@@ -128,6 +130,8 @@ export default function AppNavigator() {
         {/* Admin Screens */}
         <Stack.Screen name="AdminModules" component={AdminModulesScreen} />
         <Stack.Screen name="AdminProfile" component={AdminProfileScreen} />
+        <Stack.Screen name="MedicoProfile" component={MedicoProfileScreen} />
+        <Stack.Screen name="LeadershipProfile" component={LeadershipProfileScreen} />
         <Stack.Screen name="AdminAppointments" component={AdminAppointmentsScreen} />
         <Stack.Screen name="AdminBanners" component={AdminBannersScreen} />
         <Stack.Screen name="AdminBlogs" component={AdminBlogsScreen} />

@@ -96,59 +96,72 @@ export default function UserPrescriptionsScreen({ navigation }) {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Prescription #{item.id}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+          <View style={{ flex: 1, marginRight: rs(8) }}>
+            <Text style={styles.cardTitle}>Prescription #{item.id}</Text>
+            <Text style={styles.dateText}>
+              Uploaded {new Date(item.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric',
+              })}
+            </Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
             <Text style={[styles.statusText, { color: statusColor }]}>{item.status || 'Pending'}</Text>
           </View>
         </View>
-        <Text style={styles.dateText}>
-          {new Date(item.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: 'numeric',
-          })}
-        </Text>
-        
+
         {(!item.status || item.status.toLowerCase() === 'pending') && (
           <View style={styles.infoBanner}>
-            <Ionicons name="information-circle" size={18} color="#0284C7" />
-            <Text style={styles.infoBannerText}>Your prescription is being reviewed by our pharmacist. We will notify you once medicines are added.</Text>
+            <Ionicons name="time-outline" size={18} color="#B45309" />
+            <Text style={styles.infoBannerText}>Our pharmacist is verifying this. We will notify you once medicines are added.</Text>
           </View>
         )}
 
         {item.status?.toLowerCase() === 'rejected' && (
           <View style={[styles.infoBanner, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-            <Ionicons name="alert-circle" size={18} color="#DC2626" />
-            <Text style={[styles.infoBannerText, { color: '#B91C1C' }]}>This prescription was rejected. Please review the notes below or upload a clearer image.</Text>
+            <Ionicons name="close-circle-outline" size={18} color="#DC2626" />
+            <Text style={[styles.infoBannerText, { color: '#B91C1C' }]}>This prescription was rejected. Please review notes or upload again.</Text>
           </View>
         )}
 
-        {item.pharmacistNotes ? <Text style={styles.notesText} numberOfLines={2}>Notes: {item.pharmacistNotes}</Text> : null}
-        
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setViewImageUri(getFullImageUrl(item.fileUrl))}>
-            <Ionicons name="eye-outline" size={16} color="#0D1B2A" />
-            <Text style={styles.actionText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(item.id)}>
-            <Ionicons name="trash-outline" size={16} color="#EF4444" />
-            <Text style={[styles.actionText, { color: '#EF4444' }]}>Delete</Text>
-          </TouchableOpacity>
-        </View>
+        {item.pharmacistNotes ? (
+          <View style={styles.notesContainer}>
+            <Text style={styles.notesLabel}>Pharmacist Notes:</Text>
+            <Text style={styles.notesText}>{item.pharmacistNotes}</Text>
+          </View>
+        ) : null}
 
         {hasDraftItems && (
           <View style={styles.draftItemsContainer}>
-            <Text style={styles.draftItemsTitle}>Medicines Added by Pharmacist:</Text>
-            {item.draftCart.items.map((cartItem, idx) => (
-              <View key={idx} style={styles.draftItemRow}>
-                <Text style={styles.draftItemName} numberOfLines={1}>• {cartItem.medicine?.name}</Text>
-                <Text style={styles.draftItemQty}>Qty: {cartItem.quantity}</Text>
-              </View>
-            ))}
-            <TouchableOpacity style={styles.proceedBtn} onPress={() => handleProceed(item.draftCart, item.id)}>
-              <Text style={styles.proceedBtnText}>Proceed to Order</Text>
-              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            <Text style={styles.draftItemsTitle}>Prescribed Medicines Matched:</Text>
+            <View style={styles.draftItemsList}>
+              {item.draftCart.items.map((cartItem, idx) => (
+                <View key={idx} style={styles.draftItemRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: rs(8) }}>
+                    <Ionicons name="checkmark-circle" size={16} color="#0D9488" style={{ marginRight: rs(6) }} />
+                    <Text style={styles.draftItemName} numberOfLines={1}>{cartItem.medicine?.name}</Text>
+                  </View>
+                  <Text style={styles.draftItemQty}>Qty: {cartItem.quantity}</Text>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.proceedBtn} onPress={() => handleProceed(item.draftCart, item.id)} activeOpacity={0.8}>
+              <Text style={styles.proceedBtnText}>Add to Cart & Checkout</Text>
+              <Ionicons name="cart-outline" size={18} color="#fff" style={{ marginLeft: rs(6) }} />
             </TouchableOpacity>
           </View>
         )}
+
+        <View style={styles.cardFooter}>
+          <TouchableOpacity style={styles.viewBtn} onPress={() => setViewImageUri(getFullImageUrl(item.fileUrl))} activeOpacity={0.7}>
+            <Ionicons name="image-outline" size={16} color="#475569" />
+            <Text style={styles.viewBtnText}>View Upload</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)} activeOpacity={0.7}>
+            <Ionicons name="trash-outline" size={16} color="#EF4444" />
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -157,12 +170,12 @@ export default function UserPrescriptionsScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{top:20, bottom:20, left:20, right:20}}>
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Prescriptions</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('UploadPrescription')} style={styles.uploadNewBtn}>
-          <Ionicons name="add" size={20} color="#1F5C52" />
-          <Text style={styles.uploadNewText}>Upload</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('UploadPrescription')} style={styles.uploadNewBtn} activeOpacity={0.8}>
+          <Ionicons name="add" size={18} color="#1F5C52" />
+          <Text style={styles.uploadNewText}>Upload New</Text>
         </TouchableOpacity>
       </View>
 
@@ -195,7 +208,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
       )}
 
       {/* Image View Modal */}
-      <Modal visible={!!viewImageUri} transparent={true} animationType="fade">
+      <Modal visible={!!viewImageUri} transparent={true} animationType="fade" onRequestClose={() => setViewImageUri(null)}>
         <View style={styles.modalBg}>
           <TouchableOpacity style={styles.modalClose} onPress={() => setViewImageUri(null)}>
             <Ionicons name="close" size={32} color="#fff" />
@@ -214,6 +227,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingTop: rv(16),
     paddingBottom: rv(12),
@@ -221,51 +235,159 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
-  backBtn: { marginRight: rs(16), padding: rs(4) },
-  backIcon: { fontSize: rm(24), color: '#0F172A', fontWeight: '400' },
-  headerTitle: { flex: 1, fontSize: rm(20), fontWeight: '700', color: '#0F172A' },
-  uploadNewBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EAF4F2', paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: radius.full },
-  uploadNewText: { color: '#1F5C52', fontWeight: '600', marginLeft: rs(4), fontSize: rm(12) },
+  backBtn: { padding: rs(4) },
+  headerTitle: { fontSize: rm(18), fontWeight: '700', color: '#0F172A', flex: 1, marginLeft: rs(12) },
+  uploadNewBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#EAF4F2', 
+    paddingHorizontal: rs(12), 
+    paddingVertical: rv(8), 
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(31, 92, 82, 0.15)'
+  },
+  uploadNewText: { color: '#1F5C52', fontWeight: '700', marginLeft: rs(2), fontSize: rm(12) },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   list: { padding: spacing.md, paddingBottom: rv(100) },
+  
   card: {
     backgroundColor: '#fff',
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     padding: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    marginBottom: rv(16),
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
     elevation: 2,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rv(4) },
-  cardTitle: { fontSize: rm(16), fontWeight: '600', color: '#1E293B' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: rv(12) },
+  cardTitle: { fontSize: rm(15), fontWeight: '700', color: '#0F172A', marginBottom: rv(2) },
+  dateText: { fontSize: rm(12), color: '#64748B' },
   statusBadge: { paddingHorizontal: rs(10), paddingVertical: rv(4), borderRadius: radius.full },
-  statusText: { fontSize: rm(12), fontWeight: '700', textTransform: 'capitalize' },
-  dateText: { fontSize: rm(13), color: '#64748B', marginBottom: rv(8) },
-  notesText: { fontSize: rm(14), color: '#475569', marginTop: rv(8), backgroundColor: '#F1F5F9', padding: rs(10), borderRadius: radius.sm },
+  statusText: { fontSize: rm(11), fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   
-  infoBanner: { flexDirection: 'row', backgroundColor: '#F0F9FF', borderColor: '#BAE6FD', borderWidth: 1, padding: 10, borderRadius: 8, marginTop: 12, alignItems: 'center' },
-  infoBannerText: { fontSize: 13, color: '#0369A1', flex: 1, marginLeft: 8, lineHeight: 18 },
-
-  actionsRow: { flexDirection: 'row', gap: rs(12), marginTop: rv(12), paddingTop: rv(12), borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: rs(4), paddingVertical: rv(4) },
-  actionText: { fontSize: 13, fontWeight: '600', color: '#0D1B2A', marginLeft: 6 },
+  infoBanner: { 
+    flexDirection: 'row', 
+    backgroundColor: '#FFFBEB', 
+    borderColor: '#FDE68A', 
+    borderWidth: 1, 
+    padding: spacing.md, 
+    borderRadius: radius.lg, 
+    marginVertical: rv(10), 
+    alignItems: 'flex-start' 
+  },
+  infoBannerText: { fontSize: rm(12), color: '#B45309', flex: 1, marginLeft: rs(8), lineHeight: rv(18), fontWeight: '500' },
   
-  draftItemsContainer: { backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, marginTop: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  draftItemsTitle: { fontSize: 13, fontWeight: '700', color: '#1F5C52', marginBottom: 8 },
-  draftItemRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' },
-  draftItemName: { fontSize: 13, color: '#334155', flex: 1, marginRight: 8, fontWeight: '500' },
-  draftItemQty: { fontSize: 13, color: '#64748B', fontWeight: '600' },
+  notesContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginTop: rv(12),
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  notesLabel: {
+    fontSize: rm(12),
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: rv(4),
+  },
+  notesText: {
+    fontSize: rm(13),
+    color: '#64748B',
+    lineHeight: rv(18),
+  },
+  
+  draftItemsContainer: { 
+    backgroundColor: '#F0FDFA', 
+    padding: spacing.md, 
+    borderRadius: radius.lg, 
+    marginTop: rv(16), 
+    borderWidth: 1, 
+    borderColor: '#CCFBF1' 
+  },
+  draftItemsTitle: { fontSize: rm(13), fontWeight: '800', color: '#115E59', marginBottom: rv(10) },
+  draftItemsList: {
+    marginBottom: rv(6),
+  },
+  draftItemRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginBottom: rv(8), 
+    alignItems: 'center' 
+  },
+  draftItemName: { fontSize: rm(13), color: '#115E59', flex: 1, marginRight: rs(8), fontWeight: '600' },
+  draftItemQty: { fontSize: rm(12), color: '#0D9488', fontWeight: '700' },
+  
+  proceedBtn: { 
+    flexDirection: 'row', 
+    backgroundColor: '#0D9488', 
+    paddingVertical: rv(12), 
+    borderRadius: radius.lg, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginTop: rv(10),
+    shadowColor: '#0D9488',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  proceedBtnText: { color: '#fff', fontWeight: '700', fontSize: rm(14) },
+  
+  cardFooter: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginTop: rv(14), 
+    paddingTop: rv(12), 
+    borderTopWidth: 1, 
+    borderTopColor: '#F1F5F9' 
+  },
+  viewBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: rs(4), 
+    paddingVertical: rv(6),
+    paddingHorizontal: rs(10),
+    borderRadius: radius.md,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  viewBtnText: { fontSize: rm(12), fontWeight: '600', color: '#475569' },
+  
+  deleteBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: rs(4), 
+    paddingVertical: rv(6),
+    paddingHorizontal: rs(10),
+    borderRadius: radius.md,
+    backgroundColor: '#FEF2F2',
+  },
+  deleteBtnText: { fontSize: rm(12), fontWeight: '600', color: '#EF4444' },
 
-  proceedBtn: { flexDirection: 'row', backgroundColor: '#1F5C52', paddingVertical: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  proceedBtnText: { color: '#fff', fontWeight: '600', fontSize: rm(14) },
-  emptyIcon: { fontSize: rm(48), marginBottom: rv(16) },
-  emptyTitle: { fontSize: rm(18), fontWeight: '700', color: '#1E293B', marginBottom: rv(8) },
-  emptySub: { fontSize: rm(14), color: '#64748B', textAlign: 'center', marginBottom: rv(24) },
-  primaryBtn: { backgroundColor: '#1F5C52', paddingHorizontal: rs(24), paddingVertical: rv(14), borderRadius: radius.md },
-  primaryBtnText: { color: '#fff', fontWeight: '600', fontSize: rm(15) },
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
+  emptyIcon: { fontSize: rm(54), marginBottom: rv(16) },
+  emptyTitle: { fontSize: rm(18), fontWeight: '700', color: '#0F172A', marginBottom: rv(8) },
+  emptySub: { fontSize: rm(14), color: '#64748B', textAlign: 'center', marginBottom: rv(24), lineHeight: rv(20) },
+  primaryBtn: { 
+    backgroundColor: '#1F5C52', 
+    paddingHorizontal: rs(24), 
+    paddingVertical: rv(14), 
+    borderRadius: radius.lg,
+    shadowColor: '#1F5C52',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: rm(15) },
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.95)', justifyContent: 'center', alignItems: 'center' },
   modalClose: { position: 'absolute', top: rv(40), right: rs(20), zIndex: 10, padding: rs(10) },
-  fullImage: { width: '100%', height: '80%' },
+  fullImage: { width: '90%', height: '80%' },
 });

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../../middleware/auth';
 import { Op, col } from 'sequelize';
-import { Order, User, Medicine, Category, Inventory, Prescription } from '../../../../models';
+import { Order, User, Medicine, Category, Inventory, Prescription, Doctor } from '../../../../models';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const totalRevenue = paidOrders.reduce((acc: number, order: any) => acc + Number(order.finalAmount), 0);
 
     const totalCustomers = await User.count({ where: { roleId: 2 } });
+    const totalDoctors = await Doctor.count();
     const activeUsers = await User.count({ where: { status: 'active' } });
     const totalTokensResult = await User.sum('doseboxTokens');
     const totalTokens = totalTokensResult || 0;
@@ -124,6 +125,7 @@ export async function GET(req: NextRequest) {
           totalRevenue,
           totalOrders,
           totalCustomers,
+          totalDoctors,
           activeUsers,
           totalTokens,
           prescriptionRequests,

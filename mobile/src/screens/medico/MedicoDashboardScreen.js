@@ -89,14 +89,18 @@ export default function MedicoDashboardScreen({ navigation }) {
             <Text style={styles.headerTitle}>Dashboard Overview</Text>
             <Text style={styles.headerSubtitle}>Welcome back, {user?.name || 'Admin'}</Text>
           </View>
-          <TouchableOpacity onPress={handleLogout} style={{ padding: rv(8), backgroundColor: '#FEE2E2', borderRadius: radius.md }}>
-            <Ionicons name="log-out-outline" size={rm(24)} color="#EF4444" />
+          <TouchableOpacity onPress={() => navigation.navigate('MedicoProfile')} style={{ padding: rv(8), backgroundColor: '#EAF4F2', borderRadius: radius.md }} activeOpacity={0.8}>
+            <Ionicons name="person-outline" size={rm(24)} color="#1F5C52" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.statsContainer}>
           {/* Full Width Orders Card */}
-          <View style={[styles.statCard, { width: '100%', backgroundColor: '#1F5C52', borderColor: '#1F5C52' }]}>
+          <TouchableOpacity 
+            style={[styles.statCard, { width: '100%', backgroundColor: '#1F5C52', borderColor: '#1F5C52' }]}
+            onPress={() => navigation.navigate('OrdersTab')}
+            activeOpacity={0.9}
+          >
             <View style={styles.statHeader}>
               <View>
                 <Text style={[styles.statTitle, { color: '#D1FAE5' }]}>Total Orders</Text>
@@ -104,15 +108,19 @@ export default function MedicoDashboardScreen({ navigation }) {
               </View>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}><Text style={styles.icon}>🛍️</Text></View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Grid for Inventory */}
           <View style={styles.gridRow}>
-            <View style={[styles.gridCard, { borderColor: '#FECDD3' }]}>
+            <TouchableOpacity 
+              style={[styles.gridCard, { borderColor: '#FECDD3', flex: 1 }]}
+              onPress={() => navigation.navigate('MedicinesTab')}
+              activeOpacity={0.9}
+            >
               <View style={[styles.iconBox, { backgroundColor: '#FFE4E6', marginBottom: rv(12) }]}><Text style={styles.icon}>⚠️</Text></View>
               <Text style={[styles.gridValue, { color: '#E11D48' }]}>{kpis?.inventoryAlerts || 0}</Text>
               <Text style={styles.gridTitle}>Inventory Alerts</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 

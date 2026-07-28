@@ -178,6 +178,53 @@ export default function HomeScreen({ navigation }) {
     { id: 3, label: 'Prescription', icon: 'document-text-outline', color: '#4338CA', bg: '#F0EEFF', route: 'UploadPrescription' },
     { id: 4, label: 'My Orders', icon: 'cube-outline', color: '#BE123C', bg: '#FFF0F0', route: 'Proceed' },
   ];
+  const fetchAndSetCurrentAddress = async () => {
+    setFetchingLocation(true);
+    Geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+            headers: {
+              'User-Agent': 'DoseboxApp/1.0',
+              'Accept-Language': 'en-US,en;q=0.9'
+            }
+          });
+          const data = await res.json();
+          if (data && data.address) {
+            const addr = data.address;
+            const newAddress = {
+              id: 'current_loc',
+              title: 'Current Location',
+              street: addr.road || addr.suburb || addr.neighbourhood || '',
+              city: addr.city || addr.town || addr.village || addr.county || '',
+              state: addr.state || '',
+              zipCode: addr.postcode || '',
+              country: addr.country || 'India'
+            };
+            selectAddress(newAddress);
+            setShowLocationModal(false);
+            AlertService.show({ type: 'success', title: 'Location Updated', message: 'Delivery location set to your current position.' });
+          }
+        } catch (err) {
+          console.error('Geocoding error:', err);
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to reverse geocode location.' });
+        } finally {
+          setFetchingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        if (error.code === 2) {
+          AlertService.show({ type: 'error', title: 'GPS Disabled', message: 'Please turn on Location (GPS) in your phone settings.' });
+        } else {
+          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to get current position. Make sure GPS is enabled.' });
+        }
+        setFetchingLocation(false);
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+    );
+  };
 
   useEffect(() => {
     fetchHomeData();
@@ -187,9 +234,11 @@ export default function HomeScreen({ navigation }) {
         if (token) {
           const requested = await AsyncStorage.getItem('locationRequestedAfterLogin');
           if (!requested) {
-            const PermissionsService = require('../../services/PermissionsService').default;
-            await PermissionsService.requestLocationPermission();
+            const hasPermission = await PermissionsService.requestLocationPermission();
             await AsyncStorage.setItem('locationRequestedAfterLogin', 'true');
+            if (hasPermission) {
+              fetchAndSetCurrentAddress();
+            }
           }
         } else {
           await AsyncStorage.removeItem('locationRequestedAfterLogin');
@@ -279,51 +328,7 @@ export default function HomeScreen({ navigation }) {
     const hasPermission = await PermissionsService.requestLocationPermission();
     if (!hasPermission) return;
 
-    setFetchingLocation(true);
-    Geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
-            headers: {
-              'User-Agent': 'DoseboxApp/1.0',
-              'Accept-Language': 'en-US,en;q=0.9'
-            }
-          });
-          const data = await res.json();
-          if (data && data.address) {
-            const addr = data.address;
-            const newAddress = {
-              id: 'current_loc',
-              title: 'Current Location',
-              street: addr.road || addr.suburb || addr.neighbourhood || '',
-              city: addr.city || addr.town || addr.village || addr.county || '',
-              state: addr.state || '',
-              zipCode: addr.postcode || '',
-              country: addr.country || 'India'
-            };
-            selectAddress(newAddress);
-            setShowLocationModal(false);
-            AlertService.show({ type: 'success', title: 'Location Updated', message: 'Delivery location set to your current position.' });
-          }
-        } catch (err) {
-          console.error('Geocoding error:', err);
-          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to reverse geocode location.' });
-        } finally {
-          setFetchingLocation(false);
-        }
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        if (error.code === 2) {
-          AlertService.show({ type: 'error', title: 'GPS Disabled', message: 'Please turn on Location (GPS) in your phone settings.' });
-        } else {
-          AlertService.show({ type: 'error', title: 'Error', message: 'Failed to get current position. Make sure GPS is enabled.' });
-        }
-        setFetchingLocation(false);
-      },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
-    );
+    fetchAndSetCurrentAddress();
   };
 
   const renderMedicineCard = ({ item: med }) => {
