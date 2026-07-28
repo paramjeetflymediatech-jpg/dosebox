@@ -69,6 +69,7 @@ import AdminMedicinesScreen from '../screens/admin/AdminMedicinesScreen';
 import AdminOrdersScreen from '../screens/admin/AdminOrdersScreen';
 import AdminPrescriptionReviewScreen from '../screens/admin/AdminPrescriptionReviewScreen';
 import AdminDataDeletionScreen from '../screens/admin/AdminDataDeletionScreen';
+import AdminEnterpriseScreen from '../screens/admin/AdminEnterpriseScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -146,6 +147,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} />
         <Stack.Screen name="AdminPrescriptionReview" component={AdminPrescriptionReviewScreen} />
         <Stack.Screen name="AdminDataDeletion" component={AdminDataDeletionScreen} />
+        <Stack.Screen name="AdminEnterprise" component={AdminEnterpriseScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

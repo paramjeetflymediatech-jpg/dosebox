@@ -14,6 +14,7 @@ import Chatbot from '../components/Chatbot';
 
 import './globals.css';
 import api from '../lib/api';
+import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { toast, Toaster } from 'react-hot-toast';
@@ -103,16 +104,23 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     const delayDebounceFn = setTimeout(async () => {
       if (searchVal.trim().length >= 2) {
         try {
-          const res = await api.get(`/medicines?search=${encodeURIComponent(searchVal.trim())}&limit=6`);
+          const res = await api.get(`/medicines?search=${encodeURIComponent(searchVal.trim())}&limit=6`, {
+            signal: controller.signal
+          });
           if (res.data?.success) {
             setSearchSuggestions(res.data.data || []);
             setShowSuggestions(true);
           }
         } catch (e) {
-          console.error('Failed to fetch suggestions', e);
+          if (axios.isCancel(e)) {
+            console.log('Header search suggestions query aborted');
+          } else {
+            console.error('Failed to fetch suggestions', e);
+          }
         }
       } else {
         setSearchSuggestions([]);
@@ -120,7 +128,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       }
     }, 300);
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      clearTimeout(delayDebounceFn);
+      controller.abort();
+    };
   }, [searchVal]);
 
   const [showAuthModal, setShowAuthModal] = useState(false);

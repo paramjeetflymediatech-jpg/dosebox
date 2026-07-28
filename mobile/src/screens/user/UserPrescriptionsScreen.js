@@ -47,7 +47,7 @@ export default function UserPrescriptionsScreen({ navigation }) {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
-            const res = await api.delete(`/prescriptions/customer/${id}`);
+            const res = await api.delete(`/prescriptions/${id}`);
             if (res.data?.success) {
               setPrescriptions(prev => prev.filter(p => p.id !== id));
             } else {

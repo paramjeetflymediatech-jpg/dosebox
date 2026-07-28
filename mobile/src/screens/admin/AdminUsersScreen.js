@@ -8,13 +8,45 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import AdminListControls from '../../components/admin/AdminListControls';
 import { getFullImageUrl } from '../../utils/image';
 import { AlertService } from '../../services/AlertService';
 
 export default function AdminUsersScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const filteredData = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchQuery.toLowerCase())));
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [sortOrder, setSortOrder] = useState('date_desc');
+
+  let filteredData = data.filter(item => {
+    if (!item || typeof item !== 'object') return false;
+    const matchesSearch = Object.values(item).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    let matchesStatus = true;
+    const itemStatus = (item.status || 'active').toLowerCase();
+    const itemRole = item.role || (item.roleDetail && item.roleDetail.name) || (item.roleId === 1 ? 'Admin' : 'Customer');
+
+    if (statusFilter === 'Active') {
+      matchesStatus = itemStatus === 'active';
+    } else if (statusFilter === 'Inactive') {
+      matchesStatus = itemStatus === 'inactive' || itemStatus === 'blocked';
+    } else if (statusFilter !== 'All') {
+      // Must be a role filter
+      matchesStatus = itemRole.toLowerCase() === statusFilter.toLowerCase();
+    }
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  if (sortOrder === 'date_desc') {
+    filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (sortOrder === 'date_asc') {
+    filteredData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  } else if (sortOrder === 'name_asc') {
+    filteredData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  } else if (sortOrder === 'name_desc') {
+    filteredData.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+  }
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -29,7 +61,7 @@ export default function AdminUsersScreen({ navigation }) {
 
   const loadData = async () => {
     try {
-      const res = await api.get('/admin/users');
+      const res = await api.get('/admin/users?limit=1000');
       if (res.data?.success) {
         let items = res.data.data;
         if (!items) {
@@ -104,7 +136,8 @@ export default function AdminUsersScreen({ navigation }) {
 
   const renderItem = ({ item }) => {
     const formattedDate = new Date(item.createdAt).toLocaleDateString();
-    const roleName = item.roleId === 1 || item.roleId === '1' || item.role === 'Admin' ? 'Admin' : 'Customer';
+    const roleName = item.role || (item.roleDetail && item.roleDetail.name) || (item.roleId === 1 || item.roleId === '1' ? 'Admin' : 'Customer');
+    const displayStatus = item.status || 'Active';
     
     return (
       <View style={[styles.card, { flexDirection: 'column', alignItems: 'stretch' }]}>
@@ -123,9 +156,9 @@ export default function AdminUsersScreen({ navigation }) {
             <Text style={[styles.cardTitle, {marginBottom: 0}]}>{item.name || 'Untitled'} <Text style={{fontSize: 12, color: '#94A3B8'}}>#{item.id}</Text></Text>
             <Text style={{ fontSize: 13, color: '#64748B', marginTop: 2, fontWeight: '500' }}>{roleName}</Text>
           </View>
-          <View style={{backgroundColor: item.status === 'Active' ? '#DCFCE7' : '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12}}>
-            <Text style={{fontSize: 12, color: item.status === 'Active' ? '#166534' : '#991B1B', fontWeight: '700'}}>
-              {item.status || 'Active'}
+          <View style={{backgroundColor: displayStatus.toLowerCase() === 'active' ? '#DCFCE7' : '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12}}>
+            <Text style={{fontSize: 12, color: displayStatus.toLowerCase() === 'active' ? '#166534' : '#991B1B', fontWeight: '700', textTransform: 'capitalize'}}>
+              {displayStatus}
             </Text>
           </View>
         </View>
@@ -172,25 +205,29 @@ export default function AdminUsersScreen({ navigation }) {
         </View>
       ) : (
         <>
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={rs(20)} color="#94A3B8" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search..."
-          placeholderTextColor="#94A3B8"
-          value={searchQuery}
-          onChangeText={(text) => {
-            setSearchQuery(text);
-            setCurrentPage(1);
-          }}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={rs(20)} color="#94A3B8" />
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* AdminListControls for Search, Filter, Sort */}
+      <AdminListControls
+        searchQuery={searchQuery}
+        onSearchChange={(text) => { setSearchQuery(text); setCurrentPage(1); }}
+        filterOptions={[
+          { id: 'All', label: 'All Users' },
+          { id: 'Active', label: 'Active Users' },
+          { id: 'Inactive', label: 'Inactive Users' },
+          ...Array.from(new Set(data.map(item => item.role || (item.roleDetail && item.roleDetail.name) || (item.roleId === 1 ? 'Admin' : 'Customer'))))
+            .filter(Boolean)
+            .map(role => ({ id: role, label: `Role: ${role}` }))
+        ]}
+        filterValue={statusFilter}
+        onFilterChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+        sortOptions={[
+          { id: 'date_desc', label: 'Newest First' },
+          { id: 'date_asc', label: 'Oldest First' },
+          { id: 'name_asc', label: 'Name (A-Z)' },
+          { id: 'name_desc', label: 'Name (Z-A)' },
+        ]}
+        sortValue={sortOrder}
+        onSortChange={(val) => { setSortOrder(val); setCurrentPage(1); }}
+      />
 
       <FlatList
           data={paginatedData}
@@ -307,13 +344,6 @@ export default function AdminUsersScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
-    marginHorizontal: spacing.md, marginTop: rv(16), marginBottom: rv(12), paddingHorizontal: spacing.md,
-    height: rv(48), borderRadius: radius.full, borderWidth: 1, borderColor: '#E2E8F0',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2
-  },
-  searchInput: { flex: 1, marginLeft: rs(8), fontSize: rm(15), color: '#0F172A', fontWeight: '500' },
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

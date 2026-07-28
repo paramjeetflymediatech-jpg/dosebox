@@ -23,6 +23,7 @@ const MODULES = [
   { id: 'faqs', title: 'FAQs', icon: 'help-circle-outline', screen: 'AdminFAQs', color: '#DBEAFE', iconColor: '#2563EB' },
   { id: 'seo', title: 'SEO', icon: 'search-outline', screen: 'AdminSEO', color: '#FDE68A', iconColor: '#D97706' },
   { id: 'dataDeletion', title: 'Data Deletion', icon: 'trash-outline', screen: 'AdminDataDeletion', color: '#FEE2E2', iconColor: '#E11D48' },
+  { id: 'enterprise', title: 'Enterprise Profile', icon: 'business-outline', screen: 'AdminEnterprise', color: '#E0F2FE', iconColor: '#0369A1' },
 ];
 
 export default function AdminModulesScreen({ navigation }) {
@@ -62,14 +63,14 @@ export default function AdminModulesScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{top:10,bottom:10,left:10,right:10}}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="arrow-back" style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Admin Modules</Text>
         <View style={{ width: 24 }} />
       </View>
-      <ScrollView 
-        contentContainerStyle={styles.content} 
+      <ScrollView
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F5C52']} />}
       >
@@ -78,22 +79,26 @@ export default function AdminModulesScreen({ navigation }) {
           {MODULES.map(mod => {
             const count = counts[mod.id] !== undefined ? counts[mod.id] : 0;
             return (
-              <TouchableOpacity 
-                key={mod.id} 
-                style={styles.listItem} 
+              <TouchableOpacity
+                key={mod.id}
+                style={styles.listItem}
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate(mod.screen)}
               >
                 <View style={[styles.iconBox, { backgroundColor: mod.color }]}>
                   <Ionicons name={mod.icon} size={rs(22)} color={mod.iconColor} />
                 </View>
-                
+
                 <View style={styles.textContainer}>
                   <Text style={styles.itemTitle}>{mod.title}</Text>
                   {loading ? (
                     <ActivityIndicator size="small" color="#94A3B8" style={{ alignSelf: 'flex-start' }} />
                   ) : (
-                    <Text style={styles.itemCount}>{count} item{count !== 1 ? 's' : ''}</Text>
+                    <Text style={styles.itemCount}>
+                      {mod.id === 'enterprise' || mod.id === 'seo' || mod.id === 'dataDeletion'
+                        ? 'Configure'
+                        : `${count} item${count !== 1 ? 's' : ''}`}
+                    </Text>
                   )}
                 </View>
 

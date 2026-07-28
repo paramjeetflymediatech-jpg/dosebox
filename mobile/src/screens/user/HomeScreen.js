@@ -181,6 +181,24 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     fetchHomeData();
+    const checkLocationPermission = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (token) {
+          const requested = await AsyncStorage.getItem('locationRequestedAfterLogin');
+          if (!requested) {
+            const PermissionsService = require('../../services/PermissionsService').default;
+            await PermissionsService.requestLocationPermission();
+            await AsyncStorage.setItem('locationRequestedAfterLogin', 'true');
+          }
+        } else {
+          await AsyncStorage.removeItem('locationRequestedAfterLogin');
+        }
+      } catch (err) {
+        console.log('Error checking location permission:', err);
+      }
+    };
+    checkLocationPermission();
   }, []);
 
   useEffect(() => {

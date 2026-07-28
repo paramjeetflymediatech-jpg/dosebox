@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
+import axios from 'axios';
 import { useCart } from '../../context/CartContext';
 import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
 
@@ -106,6 +107,7 @@ function MedicinesCatalogContent() {
 
   // Fetch medicines based on active filters
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchMedicines() {
       setLoading(true);
       try {
@@ -121,19 +123,31 @@ function MedicinesCatalogContent() {
         if (minPrice) params.minPrice = minPrice;
         if (maxPrice) params.maxPrice = maxPrice;
 
-        const res = await api.get('/medicines', { params });
+        const res = await api.get('/medicines', { 
+          params,
+          signal: controller.signal
+        });
         if (res.data?.success) {
           setMedicines(res.data.data);
           setTotalPages(res.data.pagination?.totalPages || 1);
         }
       } catch (err) {
-        console.error('Failed to load medicines list', err);
+        if (axios.isCancel(err)) {
+          console.log('Medicines page fetch aborted');
+        } else {
+          console.error('Failed to load medicines list', err);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
     
     fetchMedicines();
+    return () => {
+      controller.abort();
+    };
   }, [searchTerm, selectedCategory, selectedBrand, minPrice, maxPrice, sortBy, currentPage]);
 
   const handleAddToCart = (med: Medicine, customQty?: number) => {

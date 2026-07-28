@@ -11,12 +11,28 @@ import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
 import { getFullImageUrl } from '../../utils/image';
+import AdminListControls from '../../components/admin/AdminListControls';
 import { AlertService } from '../../services/AlertService';
 
 export default function AdminBrandsScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const filteredData = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchQuery.toLowerCase())));
+  const [sortOrder, setSortOrder] = useState('date_desc');
+
+  let filteredData = data.filter(item => {
+    if (!item || typeof item !== 'object') return false;
+    return Object.values(item).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(searchQuery.toLowerCase()));
+  });
+
+  if (sortOrder === 'date_desc') {
+    filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (sortOrder === 'date_asc') {
+    filteredData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  } else if (sortOrder === 'name_asc') {
+    filteredData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  } else if (sortOrder === 'name_desc') {
+    filteredData.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+  }
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -202,25 +218,21 @@ export default function AdminBrandsScreen({ navigation }) {
         </View>
       ) : (
         <>
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={rs(20)} color="#94A3B8" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search brands..."
-          placeholderTextColor="#94a3b8"
-          value={searchQuery}
-          onChangeText={(text) => {
-            setSearchQuery(text);
-            setCurrentPage(1);
-          }}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={rs(20)} color="#94A3B8" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <AdminListControls
+        searchQuery={searchQuery}
+        onSearchChange={(text) => { setSearchQuery(text); setCurrentPage(1); }}
+        filterOptions={[]}
+        filterValue={''}
+        onFilterChange={() => {}}
+        sortOptions={[
+          { id: 'date_desc', label: 'Newest First' },
+          { id: 'date_asc', label: 'Oldest First' },
+          { id: 'name_asc', label: 'Name (A-Z)' },
+          { id: 'name_desc', label: 'Name (Z-A)' },
+        ]}
+        sortValue={sortOrder}
+        onSortChange={(val) => { setSortOrder(val); setCurrentPage(1); }}
+      />
 
         <FlatList
           data={paginatedData}
@@ -313,13 +325,6 @@ export default function AdminBrandsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
-    marginHorizontal: spacing.md, marginTop: rv(16), marginBottom: rv(12), paddingHorizontal: spacing.md,
-    height: rv(48), borderRadius: radius.full, borderWidth: 1, borderColor: '#E2E8F0',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2
-  },
-  searchInput: { flex: 1, marginLeft: rs(8), fontSize: rm(15), color: '#0F172A', fontWeight: '500' },
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: rv(12), backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
   backButton: { padding: rv(8) },

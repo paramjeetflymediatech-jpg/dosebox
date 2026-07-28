@@ -58,6 +58,16 @@ export default function SearchScreen({ navigation, route }) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const abortControllerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const initialCategorySlug = route.params?.categorySlug || null;
 
   useEffect(() => {
@@ -110,13 +120,18 @@ export default function SearchScreen({ navigation, route }) {
     if (isLoadMore) setIsLoadingMore(true);
     else setIsSearching(true);
     
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    
     try {
       let url = `/medicines?search=${encodeURIComponent(query)}&limit=16&page=${targetPage}`;
       if (initialCategorySlug && query === route.params?.query) {
          url = `/medicines?category=${encodeURIComponent(initialCategorySlug)}&limit=16&page=${targetPage}`;
       }
       
-      const res = await api.get(url);
+      const res = await api.get(url, { signal: abortControllerRef.current.signal });
       if (res.data?.success) {
         const newData = res.data.data || [];
         if (isLoadMore) {
@@ -136,10 +151,16 @@ export default function SearchScreen({ navigation, route }) {
         setPage(targetPage);
       }
     } catch (e) {
-      console.error('Search error', e);
+      if (e.name === 'CanceledError' || e.message === 'canceled') {
+        console.log('Search query aborted:', query);
+      } else {
+        console.error('Search error', e);
+      }
     } finally {
-      setIsSearching(false);
-      setIsLoadingMore(false);
+      if (!abortControllerRef.current || !abortControllerRef.current.signal.aborted) {
+        setIsSearching(false);
+        setIsLoadingMore(false);
+      }
     }
   };
 

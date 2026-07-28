@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Image, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,6 +19,16 @@ export default function AdminPrescriptionReviewScreen({ route, navigation }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(null);
+  
+  const abortControllerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (prescription?.extractedMedicines) {
@@ -43,15 +53,29 @@ export default function AdminPrescriptionReviewScreen({ route, navigation }) {
       return;
     }
     setSearching(true);
+    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     try {
-      const res = await api.get(`/medicines?search=${q}&limit=20`);
+      const res = await api.get(`/medicines?search=${q}&limit=20`, {
+        signal: abortControllerRef.current.signal
+      });
       if (res.data?.success) {
         setSearchResults(res.data.data);
       }
     } catch (e) {
-      console.log('Search error:', e);
+      if (e.name === 'CanceledError' || e.message === 'canceled') {
+        console.log('Admin search aborted:', q);
+      } else {
+        console.log('Search error:', e);
+      }
     } finally {
-      setSearching(false);
+      if (!abortControllerRef.current || !abortControllerRef.current.signal.aborted) {
+        setSearching(false);
+      }
     }
   };
 

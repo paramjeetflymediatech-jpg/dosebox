@@ -1,21 +1,87 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import api from '../../services/api';
+import { AlertService } from '../../services/AlertService';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { ENV } from '../../config/env';
 
 export default function AdminProfileScreen({ navigation }) {
   const [user, setUser] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    phone: '',
+    currentPassword: '',
+    newPassword: '',
+  });
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get('/account/profile');
+      if (res.data?.success) {
+        setUser(res.data.data);
+        await AsyncStorage.setItem('user', JSON.stringify(res.data.data));
+      }
+    } catch (err) {
+      console.log('Failed to fetch admin profile:', err);
+    }
+  };
 
   useEffect(() => {
     AsyncStorage.getItem('user').then((val) => {
       if (val) setUser(JSON.parse(val));
     });
+    fetchProfile();
   }, []);
+
+  const handleOpenEditModal = () => {
+    setEditForm({
+      name: user?.name || '',
+      phone: user?.phone || '',
+      currentPassword: '',
+      newPassword: '',
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editForm.name.trim()) {
+      AlertService.show({ type: 'error', title: 'Validation Error', message: 'Name is required' });
+      return;
+    }
+    
+    if (editForm.newPassword && !editForm.currentPassword) {
+      AlertService.show({ type: 'error', title: 'Validation Error', message: 'Please enter your current password to set a new one.' });
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const res = await api.put('/account/profile', {
+        name: editForm.name,
+        phone: editForm.phone,
+        currentPassword: editForm.currentPassword || undefined,
+        newPassword: editForm.newPassword || undefined,
+      });
+
+      if (res.data?.success) {
+        AlertService.show({ type: 'success', title: 'Success', message: 'Profile updated successfully' });
+        setEditModalVisible(false);
+        fetchProfile();
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to update profile';
+      AlertService.show({ type: 'error', title: 'Error', message: msg });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const performLogout = async () => {
     setShowLogoutModal(false);
@@ -59,9 +125,15 @@ export default function AdminProfileScreen({ navigation }) {
           <Text style={styles.userName}>{user?.name || 'Administrator'}</Text>
           <Text style={styles.userEmail}>{user?.email || 'admin@dosebox.com'}</Text>
           
-          <View style={styles.roleBadge}>
-            <Ionicons name="flash" size={rs(12)} color="#F59E0B" />
-            <Text style={styles.roleText}>SUPER ADMIN</Text>
+          <View style={{ flexDirection: 'row', gap: rs(8), alignItems: 'center' }}>
+            <View style={styles.roleBadge}>
+              <Ionicons name="flash" size={rs(12)} color="#F59E0B" />
+              <Text style={styles.roleText}>SUPER ADMIN</Text>
+            </View>
+            <TouchableOpacity style={styles.editBtn} onPress={handleOpenEditModal} activeOpacity={0.8}>
+              <Ionicons name="create-outline" size={rs(12)} color="#0F5C52" />
+              <Text style={styles.editBtnText}>Edit Profile</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -128,6 +200,82 @@ export default function AdminProfileScreen({ navigation }) {
                 <Text style={styles.modalBtnConfirmText}>Sign Out</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Profile Modal */}
+      <Modal visible={editModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBottomContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitleText}>Edit Profile</Text>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)} hitSlop={{top:10, bottom:10, left:10, right:10}}>
+                <Ionicons name="close" size={rm(24)} color="#475569" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <View style={styles.inputBox}>
+                <Ionicons name="person-outline" size={rm(18)} color="#94A3B8" style={{ marginRight: rs(8) }} />
+                <TextInput
+                  style={styles.textInput}
+                  value={editForm.name}
+                  onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                  placeholder="Enter full name"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <View style={styles.inputBox}>
+                <Ionicons name="call-outline" size={rm(18)} color="#94A3B8" style={{ marginRight: rs(8) }} />
+                <TextInput
+                  style={styles.textInput}
+                  value={editForm.phone}
+                  onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
+                  placeholder="Enter phone number"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.divider} />
+              
+              <Text style={styles.sectionSubTitle}>Change Password (Optional)</Text>
+
+              <Text style={styles.inputLabel}>Current Password</Text>
+              <View style={styles.inputBox}>
+                <Ionicons name="lock-closed-outline" size={rm(18)} color="#94A3B8" style={{ marginRight: rs(8) }} />
+                <TextInput
+                  style={styles.textInput}
+                  value={editForm.currentPassword}
+                  onChangeText={(text) => setEditForm(prev => ({ ...prev, currentPassword: text }))}
+                  placeholder="Current password"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry
+                />
+              </View>
+
+              <Text style={styles.inputLabel}>New Password</Text>
+              <View style={styles.inputBox}>
+                <Ionicons name="lock-open-outline" size={rm(18)} color="#94A3B8" style={{ marginRight: rs(8) }} />
+                <TextInput
+                  style={styles.textInput}
+                  value={editForm.newPassword}
+                  onChangeText={(text) => setEditForm(prev => ({ ...prev, newPassword: text }))}
+                  placeholder="New password"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry
+                />
+              </View>
+
+              <TouchableOpacity style={styles.saveProfileBtn} onPress={handleSaveProfile} disabled={savingProfile} activeOpacity={0.8}>
+                {savingProfile ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveProfileBtnText}>Save Updates</Text>}
+              </TouchableOpacity>
+              <View style={{ height: rv(30) }} />
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -207,8 +355,24 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: '#EF4444', fontWeight: '700', fontSize: rm(16) },
   
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.6)', justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
-  modalContent: { backgroundColor: '#fff', borderRadius: radius['2xl'] || 16, padding: spacing.xl, width: '100%', maxWidth: 400, alignItems: 'center', elevation: 12 },
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#EAF4F2',
+    paddingHorizontal: rs(14), paddingVertical: rv(6), borderRadius: radius.full, gap: rs(4)
+  },
+  editBtnText: { color: '#0F5C52', fontWeight: '800', fontSize: rm(12) },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.6)', justifyContent: 'flex-end', alignItems: 'stretch' },
+  modalContent: { backgroundColor: '#fff', borderRadius: radius['2xl'] || 16, padding: spacing.xl, alignSelf: 'center', width: '90%', maxWidth: 400, alignItems: 'center', elevation: 12, marginBottom: 'auto', marginTop: 'auto' },
+  modalBottomContent: { backgroundColor: '#fff', borderTopLeftRadius: radius['2xl'] || 16, borderTopRightRadius: radius['2xl'] || 16, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  modalTitleText: { fontSize: rm(18), fontWeight: '700', color: '#0F172A' },
+  modalBody: { padding: spacing.lg },
+  inputLabel: { fontSize: rm(13), fontWeight: '600', color: '#64748B', marginBottom: rv(6), marginTop: rv(12) },
+  inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: radius.md, paddingHorizontal: rs(12), height: rv(48) },
+  textInput: { flex: 1, fontSize: rm(15), color: '#0F172A', paddingVertical: 0 },
+  divider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: rv(20) },
+  sectionSubTitle: { fontSize: rm(15), fontWeight: '700', color: '#0F172A', marginBottom: rv(4) },
+  saveProfileBtn: { backgroundColor: '#1F5C52', paddingVertical: rv(14), borderRadius: radius.md, alignItems: 'center', marginTop: rv(24) },
+  saveProfileBtnText: { color: '#fff', fontSize: rm(16), fontWeight: '700' },
   modalIconBox: { width: rs(64), height: rs(64), borderRadius: rs(32), backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center', marginBottom: rv(16) },
   modalTitle: { fontSize: rm(22), fontWeight: '800', color: '#0F172A', marginBottom: rv(8), textAlign: 'center' },
   modalMessage: { fontSize: rm(15), color: '#475569', textAlign: 'center', marginBottom: rv(24), lineHeight: rv(22) },

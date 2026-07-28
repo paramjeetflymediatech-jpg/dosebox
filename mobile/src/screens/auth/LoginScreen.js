@@ -29,7 +29,7 @@ export default function LoginScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // UI Error States
   const [generalError, setGeneralError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -45,13 +45,13 @@ export default function LoginScreen({ navigation, route }) {
   const handleGoogleLogin = async () => {
     try {
       await GoogleSignin.hasPlayServices();
-      try { await GoogleSignin.signOut(); } catch (e) {} // Force account picker
+      try { await GoogleSignin.signOut(); } catch (e) { } // Force account picker
       const userInfo = await GoogleSignin.signIn();
-      
+
       if (userInfo.type === 'cancelled') {
         return;
       }
-      
+
       const user = userInfo.data ? userInfo.data.user : userInfo.user;
       if (!user) {
         throw new Error('Unable to retrieve user data from Google');
@@ -208,9 +208,9 @@ export default function LoginScreen({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('GuestTabs', { screen: 'HomeTab' })} 
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('GuestTabs', { screen: 'HomeTab' })}
             style={styles.backButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
@@ -224,14 +224,14 @@ export default function LoginScreen({ navigation, route }) {
 
           {/* TOGGLE SWITCH */}
           <View style={styles.toggleContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.toggleBtn, authMode === 'login' && styles.toggleBtnActive]}
               onPress={() => setAuthMode('login')}
               activeOpacity={0.8}
             >
               <Text style={[styles.toggleText, authMode === 'login' && styles.toggleTextActive]}>Log In</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.toggleBtn]}
               onPress={() => navigation.navigate('Register')}
               activeOpacity={0.8}
@@ -242,7 +242,7 @@ export default function LoginScreen({ navigation, route }) {
 
           {generalError ? (
             <View style={styles.generalErrorBox}>
-              <Ionicons name="warning" size={20} color="#DC2626" style={{marginRight: 8}} />
+              <Ionicons name="warning" size={20} color="#DC2626" style={{ marginRight: 8 }} />
               <Text style={styles.generalErrorText}>{generalError}</Text>
             </View>
           ) : null}
@@ -287,7 +287,7 @@ export default function LoginScreen({ navigation, route }) {
                 </View>
                 <Text style={styles.optionText}>Remember me</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                 <Text style={styles.forgotText}>Forget password?</Text>
               </TouchableOpacity>

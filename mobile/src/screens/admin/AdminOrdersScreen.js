@@ -8,12 +8,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
+import AdminListControls from '../../components/admin/AdminListControls';
 import { AlertService } from '../../services/AlertService';
 
 export default function AdminOrdersScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const filteredData = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchQuery.toLowerCase())));
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [sortOrder, setSortOrder] = useState('date_desc');
+  const [showSortModal, setShowSortModal] = useState(false);
+
+  let filteredData = data.filter(item => {
+    if (!item || typeof item !== 'object') return false;
+    const matchesSearch = Object.values(item).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  if (sortOrder === 'date_desc') {
+    filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (sortOrder === 'date_asc') {
+    filteredData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  } else if (sortOrder === 'amount_desc') {
+    filteredData.sort((a, b) => (b.finalAmount || b.totalAmount || 0) - (a.finalAmount || a.totalAmount || 0));
+  } else if (sortOrder === 'amount_asc') {
+    filteredData.sort((a, b) => (a.finalAmount || a.totalAmount || 0) - (b.finalAmount || b.totalAmount || 0));
+  }
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -156,24 +176,29 @@ export default function AdminOrdersScreen({ navigation }) {
         </View>
       ) : (
         <>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={rs(20)} color="#94A3B8" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor="#94A3B8"
-              value={searchQuery}
-              onChangeText={(text) => {
-            setSearchQuery(text);
-            setCurrentPage(1);
-          }}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={rs(20)} color="#94A3B8" />
-              </TouchableOpacity>
-            )}
-          </View>
+          <AdminListControls
+            searchQuery={searchQuery}
+            onSearchChange={(text) => { setSearchQuery(text); setCurrentPage(1); }}
+            filterOptions={[
+              { id: 'All', label: 'All Statuses' },
+              { id: 'Pending', label: 'Pending' },
+              { id: 'Confirmed', label: 'Confirmed' },
+              { id: 'Shipped', label: 'Shipped' },
+              { id: 'Out For Delivery', label: 'Out For Delivery' },
+              { id: 'Delivered', label: 'Delivered' },
+              { id: 'Cancelled', label: 'Cancelled' },
+            ]}
+            filterValue={statusFilter}
+            onFilterChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+            sortOptions={[
+              { id: 'date_desc', label: 'Newest First' },
+              { id: 'date_asc', label: 'Oldest First' },
+              { id: 'amount_desc', label: 'Amount (High to Low)' },
+              { id: 'amount_asc', label: 'Amount (Low to High)' },
+            ]}
+            sortValue={sortOrder}
+            onSortChange={(val) => { setSortOrder(val); setCurrentPage(1); }}
+          />
 
           <FlatList
           data={paginatedData}

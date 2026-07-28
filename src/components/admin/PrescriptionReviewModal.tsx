@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { X, Check, Search, AlertCircle, Trash2, Edit2, Plus, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -12,6 +13,15 @@ const CartItemEditor = ({ item, idx, onSelectProduct, onQuantityChange, onRemove
   const [searchQuery, setSearchQuery] = useState(item.extractedName !== 'Manual Entry' ? item.extractedName : '');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Optionally auto-search if it's missing a product and has a decent query length
@@ -22,15 +32,29 @@ const CartItemEditor = ({ item, idx, onSelectProduct, onQuantityChange, onRemove
 
   const performSearch = async (query: string) => {
     setIsSearching(true);
+    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     try {
-      const res = await api.get(`/admin/medicines/search?q=${encodeURIComponent(query)}`);
+      const res = await api.get(`/admin/medicines/search?q=${encodeURIComponent(query)}`, {
+        signal: abortControllerRef.current.signal
+      });
       if (res.data.success) {
         setSearchResults(res.data.data);
       }
     } catch (error) {
-      toast.error('Search failed');
+      if (axios.isCancel(error)) {
+        console.log('Admin review search aborted:', query);
+      } else {
+        toast.error('Search failed');
+      }
     } finally {
-      setIsSearching(false);
+      if (!abortControllerRef.current || !abortControllerRef.current.signal.aborted) {
+        setIsSearching(false);
+      }
     }
   };
 

@@ -52,6 +52,9 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
     const originalRequest = error.config;
     
     // If the server returns 401 Unauthorized, and this is the first retry attempt
