@@ -6,9 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:migrate": "npx tsx force-sync.ts",
-    "db:seed": "node seed.js",
-    "db:create-admin": "npx tsx create-admin.ts"
+    "db:migrate": "npx tsx migrate-db.ts",
+    "db:seed": "npx tsx migrate-db.ts"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.4.2",
