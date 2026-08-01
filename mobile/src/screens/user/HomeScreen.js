@@ -331,6 +331,26 @@ export default function HomeScreen({ navigation }) {
     fetchAndSetCurrentAddress();
   };
 
+  const navigateWithAuth = async (route, label = 'proceed') => {
+    const token = await AsyncStorage.getItem('accessToken');
+    if (token) {
+      navigation.navigate(route);
+    } else {
+      AlertService.show({
+        type: 'error',
+        title: 'Login Required',
+        message: `Please login to ${label}.`,
+        buttons: [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Login', 
+            onPress: () => navigation.navigate('Login') 
+          }
+        ]
+      });
+    }
+  };
+
   const renderMedicineCard = ({ item: med }) => {
     return <MedicineCard med={med} containerStyle={{ marginRight: rs(12) }} />;
   };
@@ -522,7 +542,14 @@ export default function HomeScreen({ navigation }) {
             <AnimatedQuickLink
               key={item.id}
               item={item}
-              onPress={() => navigation.navigate(item.route)}
+              onPress={() => {
+                const protectedRoutes = ['UploadPrescription', 'UserConsultations', 'Proceed'];
+                if (protectedRoutes.includes(item.route)) {
+                  navigateWithAuth(item.route, `access ${item.label.toLowerCase()}`);
+                } else {
+                  navigation.navigate(item.route);
+                }
+              }}
             />
           ))}
         </View>
@@ -547,7 +574,7 @@ export default function HomeScreen({ navigation }) {
     {/* ── UPLOAD PRESCRIPTION ACTION ── */}
         <TouchableOpacity
           style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: rv(24), padding: rs(16), backgroundColor: '#F8FAFC', borderRadius: radius.xl, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
-          onPress={() => navigation.navigate('UploadPrescription')}
+          onPress={() => navigateWithAuth('UploadPrescription', 'order with prescription')}
           activeOpacity={0.8}
         >
           <View style={{ width: rs(44), height: rs(44), borderRadius: rs(22), backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', marginRight: rs(14) }}>
