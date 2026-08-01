@@ -18,11 +18,11 @@
           "client_type": 1,
           "android_info": {
             "package_name": "com.doseboxmobile",
-            "certificate_hash": "18c5ccae8820aaf258daaa8645860100dbec1cd7"
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {
-          "client_id": "680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com",
+          "client_id": "73308780119-gli7r3u398qmqjovnmiptbcubpl7euum.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -35,7 +35,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com",
+              "client_id": "73308780119-gli7r3u398qmqjovnmiptbcubpl7euum.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -40,7 +40,7 @@ export default function LoginScreen({ navigation, route }) {
     try {
       GoogleSignin.configure({
         webClientId: '680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com',
-        iosClientId: '680555726982-6h74ml3b6pnc9d6m0ph3ffrnbsv5485m.apps.googleusercontent.com',
+        iosClientId: '73308780119-vglrnnd25gscer048ujmsa44sn0m9ouu.apps.googleusercontent.com',
         offlineAccess: true,
       });
     } catch (e) {
@@ -184,11 +184,23 @@ export default function LoginScreen({ navigation, route }) {
       } else {
         // Android Apple Sign-In via Web OAuth
         try {
+          if (!appleAuthAndroid || !appleAuthAndroid.configure) {
+            AlertService.show({
+              type: 'info',
+              title: 'Apple Sign-In',
+              message: 'Apple Sign-In module requires rebuilding native Android app.',
+            });
+            return;
+          }
+
+          const responseType = appleAuthAndroid.ResponseType?.ALL || 'code id_token';
+          const scope = appleAuthAndroid.Scope?.ALL || 'name email';
+
           appleAuthAndroid.configure({
             clientId: 'com.doseboxmobile.web',
             redirectUri: 'https://dosebox.in/api/auth/apple/callback',
-            responseType: appleAuthAndroid.ResponseType.ALL,
-            scope: appleAuthAndroid.Scope.ALL,
+            responseType,
+            scope,
           });
 
           const response = await appleAuthAndroid.signIn();
@@ -241,7 +253,16 @@ export default function LoginScreen({ navigation, route }) {
     } catch (error) {
       if (error.code !== appleAuth.Error.CANCELED) {
         console.error('Apple Sign-In error:', error);
-        AlertService.show({ type: 'error', title: 'Apple Sign-In Error', message: error.message || 'Failed to complete Apple Login.' });
+        const errMsg = error.message || '';
+        if (errMsg.includes('1000') || errMsg.includes('AuthorizationError')) {
+          AlertService.show({
+            type: 'error',
+            title: 'Apple Sign-In Error',
+            message: 'Apple Sign-In failed (Error 1000). Ensure an Apple ID is signed in under iOS Settings and Sign in with Apple capability is enabled.',
+          });
+        } else {
+          AlertService.show({ type: 'error', title: 'Apple Sign-In Error', message: errMsg || 'Failed to complete Apple Login.' });
+        }
       }
     } finally {
       setLoading(false);
@@ -452,10 +473,12 @@ export default function LoginScreen({ navigation, route }) {
                 <Image source={require('../../assets/images/google-logo.png')} style={{ width: 22, height: 22 }} resizeMode="contain" />
                 <Text style={styles.socialText}>Google</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin} disabled={loading}>
-                <Ionicons name="logo-apple" size={22} color="#000" />
-                <Text style={styles.socialText}>Apple</Text>
-              </TouchableOpacity>
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin} disabled={loading}>
+                  <Ionicons name="logo-apple" size={22} color="#000" />
+                  <Text style={styles.socialText}>Apple</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
