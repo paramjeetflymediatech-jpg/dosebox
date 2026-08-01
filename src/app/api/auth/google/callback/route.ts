@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkeyforauth';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecretrefreshjwtkeyforauth';
 
 export async function POST(req: NextRequest) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nk.socialflymediatech.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dosebox.in';
   try {
     const formData = (await req.formData()) as any;
     const credential = (formData as any).get('credential') as string;

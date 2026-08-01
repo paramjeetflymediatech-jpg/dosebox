@@ -7,7 +7,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  
+
   return {
     title: `DoseBox Invoice #OD-${id}`,
     description: `Click here to view and download your official DoseBox invoice for order OD-${id}.`,
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Click here to view and download your official DoseBox invoice for order OD-${id}.`,
       images: [
         {
-          url: 'https://nk.socialflymediatech.com/Media.jpg',
+          url: 'https://dosebox.in/Media.jpg',
           width: 800,
           height: 800,
           alt: 'DoseBox Logo',
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: `DoseBox Invoice #OD-${id}`,
       description: `Click here to view and download your official DoseBox invoice for order OD-${id}.`,
-      images: ['https://nk.socialflymediatech.com/Media.jpg'],
+      images: ['https://dosebox.in/Media.jpg'],
     },
   };
 }
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function InvoiceSharePage({ params }: Props) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  
+
   return (
     <div style={{ margin: 0, padding: 0, height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
       {/* 
@@ -44,8 +44,8 @@ export default async function InvoiceSharePage({ params }: Props) {
         Because this is an HTML page, WhatsApp will read the Open Graph metadata above
         and display the DoseBox logo instead of a generic PDF icon!
       */}
-      <iframe 
-        src={`/api/orders/${id}/invoice?shared=true`} 
+      <iframe
+        src={`/api/orders/${id}/invoice?shared=true`}
         style={{ width: '100%', height: '100%', border: 'none' }}
         title={`Invoice OD-${id}`}
       />
