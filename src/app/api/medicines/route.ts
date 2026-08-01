@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
     const limit = searchParams.get('limit') || '10';
     const includeSections = searchParams.get('includeSections') === 'true';
     const contentStatus = searchParams.get('contentStatus');
+    const pap = searchParams.get('pap');
 
     const cacheKey = `medicines:list:${searchParams.toString()}`;
     
@@ -83,6 +84,15 @@ export async function GET(req: NextRequest) {
 
     if (contentStatus) {
       whereClause.contentStatus = contentStatus;
+    }
+
+    if (pap === 'true') {
+      whereClause.papOffer = {
+        [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' }
+        ]
+      };
     }
 
     const includeOptions: any[] = [

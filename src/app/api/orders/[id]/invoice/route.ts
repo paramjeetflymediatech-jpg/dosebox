@@ -226,7 +226,10 @@ New Delhi - 110066`;
             const rate = Number(item.price);
             const value = qty * rate;
             totalValue += value;
-            const mrp = Number(medicine.price || rate).toFixed(2); // Dynamic MRP
+            const mrpVal = Number(medicine.price || rate);
+            const rateVal = Number(item.price);
+            const discountPct = mrpVal > rateVal ? Math.round(((mrpVal - rateVal) / mrpVal) * 100) : 0;
+            const mrp = mrpVal.toFixed(2); // Dynamic MRP
 
             doc.font('Helvetica').fontSize(8);
 
@@ -241,8 +244,8 @@ New Delhi - 110066`;
             doc.text(medicine.hsnCode || '300490', cx + 2, y, { width: 36 }); cx += 40;
             doc.text(mrp, cx, y, { width: 36, align: 'right' }); cx += 40;
             doc.text(rate.toFixed(2), cx, y, { width: 36, align: 'right' }); cx += 40;
-            doc.text('0.00', cx, y, { width: 21, align: 'right' }); cx += 25;
-            doc.text('9.00%', cx, y, { width: 26, align: 'right' }); cx += 30;
+            doc.text(discountPct > 0 ? `${discountPct}%` : '0%', cx, y, { width: 21, align: 'right' }); cx += 25;
+            doc.text('2.50%', cx, y, { width: 26, align: 'right' }); cx += 30;
             doc.text(value.toFixed(2), cx, y, { width: 31, align: 'right' });
             y += 12;
           });
@@ -295,10 +298,10 @@ New Delhi - 110066`;
 
         doc.font('Helvetica').fontSize(8);
         doc.text('GST 18.00%', 25, 617);
-        doc.text(baseTotal.toFixed(2), 92, 617);
+        doc.text('0.00', 92, 617);
         doc.text('0.00', 152, 617);
-        doc.text(halfGst, 212, 617);
-        doc.text(halfGst, 282, 617);
+        doc.text('0.00', 212, 617);
+        doc.text('0.00', 282, 617);
 
         doc.text('GST 12.00%', 25, 629);
         doc.text('0.00', 92, 629);
@@ -307,10 +310,10 @@ New Delhi - 110066`;
         doc.text('0.00', 282, 629);
 
         doc.text('GST 5.00%', 25, 641);
-        doc.text('0.00', 92, 641);
+        doc.text(baseTotal.toFixed(2), 92, 641);
         doc.text('0.00', 152, 641);
-        doc.text('0.00', 212, 641);
-        doc.text('0.00', 282, 641);
+        doc.text(halfGst, 212, 641);
+        doc.text(halfGst, 282, 641);
 
         doc.moveTo(20, 655).lineTo(350, 655).stroke(); // Above TOTAL
         doc.font('Helvetica-Bold');
@@ -371,7 +374,7 @@ New Delhi - 110066`;
         ry += 11;
 
         doc.font('Helvetica');
-        doc.text('GST (18%)', summaryX, ry);
+        doc.text('GST (5%)', summaryX, ry);
         doc.text(gstAmount.toFixed(2), valueX, ry, { width: valWidth, align: 'right' });
         ry += 11;
 

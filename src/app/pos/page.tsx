@@ -319,7 +319,7 @@ export default function POSPage() {
   // Compute Totals
   const getCartTotals = () => {
     const rawSubtotal = cart.reduce((sum, item) => sum + (item.billingPrice * item.displayQty), 0);
-    const gstRate = 0.18;
+    const gstRate = 0.05;
     const gst = rawSubtotal * gstRate;
     const total = rawSubtotal + gst;
     const rxRequired = cart.some(item => item.medicine.prescriptionRequired);
@@ -682,7 +682,7 @@ export default function POSPage() {
               <span className="font-semibold text-slate-200">₹{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span>GST (18% inclusive)</span>
+              <span>GST (5% inclusive)</span>
               <span className="font-semibold text-slate-300">₹{formatCurrency(gst)}</span>
             </div>
             <div className="border-t border-[#1e293b]/40 my-1"></div>
@@ -956,7 +956,7 @@ export default function POSPage() {
                   <span>₹{formatCurrency(recentOrder.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>GST (18% incl):</span>
+                  <span>GST (5% incl):</span>
                   <span>₹{formatCurrency(recentOrder.gst)}</span>
                 </div>
                 <div className="flex justify-between font-extrabold text-sm border-t border-dashed border-slate-300 pt-1.5">

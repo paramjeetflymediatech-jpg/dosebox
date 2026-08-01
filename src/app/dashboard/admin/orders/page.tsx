@@ -488,7 +488,7 @@ export default function AdminOrdersPage() {
                             <span className="text-sm font-bold text-slate-900">₹{formatCurrency(totalMRP - productDiscount)}</span>
                           </div>
                           <div className="flex justify-between items-center mt-2">
-                            <span className="text-sm text-slate-500 font-medium">GST (18%)</span>
+                            <span className="text-sm text-slate-500 font-medium">GST (5%)</span>
                             <span className="text-sm font-bold text-slate-900">₹{formatCurrency(gstAmount)}</span>
                           </div>
                           <div className="flex justify-between items-center">

@@ -147,7 +147,7 @@ export default function CartCheckoutScreen({ navigation }) {
     }
   }
 
-  const gstAmount = Math.max(0, cartTotal - couponDiscount) * 0.18;
+  const gstAmount = Math.max(0, cartTotal - couponDiscount) * 0.05;
   const finalTotal = Math.max(0, cartTotal - couponDiscount + gstAmount + deliveryFee);
 
   const pointsUsed = useDoseboxTokens ? Math.min(Number(pointsInput) || 0, currentTokens, finalTotal) : 0;
@@ -421,7 +421,7 @@ export default function CartCheckoutScreen({ navigation }) {
                       <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
                     </View>
                     <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>GST (18%)</Text>
+                      <Text style={styles.summaryLabel}>GST (5%)</Text>
                       <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>
                     </View>
 
@@ -760,7 +760,7 @@ export default function CartCheckoutScreen({ navigation }) {
                       </View>
                     )}
                     <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>GST (18%)</Text>
+                      <Text style={styles.summaryLabel}>GST (5%)</Text>
                       <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>
                     </View>
                     <View style={styles.summaryRow}>

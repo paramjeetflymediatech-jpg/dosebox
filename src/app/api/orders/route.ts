@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     const totalBill = subtotal - totalSavings - couponDiscount;
-    const gstAmount = totalBill * 0.18;
+    const gstAmount = totalBill * 0.05;
     const shippingFee = totalBill > 500 ? 0 : 50.00;
     let finalAmount = totalBill + gstAmount + shippingFee;
 

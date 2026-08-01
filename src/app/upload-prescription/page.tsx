@@ -187,16 +187,16 @@ export default function UploadPrescriptionPage() {
   const savings = calculateTotalSavings();
 
   return (
-    <div className="min-h-screen bg-slate-900/40 flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-brand-950/45 flex items-center justify-center p-4 sm:p-6">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-6 py-4 flex items-center justify-between text-white shrink-0">
+        <div className="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-4 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-teal-100" />
+            <Sparkles className="w-5 h-5 text-brand-100" />
             <h2 className="text-lg font-semibold">Smart Prescription Analyzer</h2>
           </div>
-          <Link href="/" className="text-teal-100 hover:text-white transition-colors">
+          <Link href="/" className="text-brand-100 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </Link>
         </div>
@@ -205,17 +205,17 @@ export default function UploadPrescriptionPage() {
         <div className="overflow-y-auto p-6 md:p-8 flex-1">
           {isUploading ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-16 h-16 text-teal-600 animate-spin mb-6" />
+              <Loader2 className="w-16 h-16 text-brand-600 animate-spin mb-6" />
               <h3 className="text-xl font-semibold text-slate-800 mb-2">Processing Document...</h3>
-              <div className="bg-teal-50 text-teal-600 px-6 py-2 rounded-full text-sm font-medium border border-teal-100 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 h-full w-full bg-teal-100/50 animate-pulse"></div>
+              <div className="bg-brand-50 text-brand-600 px-6 py-2 rounded-full text-sm font-medium border border-brand-100 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 h-full w-full bg-brand-100/50 animate-pulse"></div>
                 <span className="relative">Cross-matching chemical components in Dosebox Generic Database...</span>
               </div>
 
               {/* Progress Bar */}
               <div className="w-64 h-2 bg-slate-100 rounded-full mt-6 overflow-hidden relative">
                 <div
-                  className="absolute top-0 left-0 h-full bg-teal-600 rounded-full transition-all duration-300 ease-out"
+                  className="absolute top-0 left-0 h-full bg-brand-600 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
@@ -264,7 +264,7 @@ export default function UploadPrescriptionPage() {
                     const savedPct = marketPrice > 0 ? Math.round(((marketPrice - doseboxPrice) / marketPrice) * 100) : 0;
 
                     return (
-                      <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-teal-300 transition-colors bg-white flex flex-col md:flex-row gap-6 justify-between items-start">
+                      <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-brand-300 transition-colors bg-white flex flex-col md:flex-row gap-6 justify-between items-start">
                         <div className="flex-1 w-full">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <span className="text-[10px] uppercase font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">Handwritten Brand</span>
@@ -280,9 +280,9 @@ export default function UploadPrescriptionPage() {
                           {product ? (
                             <>
                               <div className="flex items-start gap-2">
-                                <ChevronRight className="w-5 h-5 text-teal-500 mt-0.5 shrink-0" />
+                                <ChevronRight className="w-5 h-5 text-brand-500 mt-0.5 shrink-0" />
                                 <div>
-                                  <h4 className="text-lg font-bold text-teal-700"> {product.name}</h4>
+                                  <h4 className="text-lg font-bold text-brand-700"> {product.name}</h4>
                                   <p className="text-xs text-slate-500 mt-1 font-mono">Active: {product.name.replace(/[^a-zA-Z\s]/g, '')} Trihydrate {med.extracted?.strength || '500mg'}</p>
                                 </div>
                               </div>
@@ -315,7 +315,7 @@ export default function UploadPrescriptionPage() {
                             <div className="text-right flex-1 sm:flex-none">
                               <p className="text-[10px] uppercase font-bold text-slate-400">DoseBox Price</p>
                               <p className="text-lg font-bold text-slate-800">₹{formatCurrency(doseboxPrice)} <span className="text-xs font-normal text-slate-500">/ Tablet</span></p>
-                              <p className="text-xs font-bold text-teal-600 mt-1">₹{formatCurrency((doseboxPrice * 10))} <span className="text-slate-400 font-normal">(10 Units)</span></p>
+                              <p className="text-xs font-bold text-brand-600 mt-1">₹{formatCurrency((doseboxPrice * 10))} <span className="text-slate-400 font-normal">(10 Units)</span></p>
                             </div>
                             <div className="w-px h-12 bg-slate-200 hidden sm:block"></div>
                             <div className="text-right flex-1 sm:flex-none">
@@ -333,19 +333,19 @@ export default function UploadPrescriptionPage() {
 
               {/* Overall Savings Box */}
               {savings.savedAmount > 0 && (
-                <div className="border border-teal-200 bg-teal-50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
+                <div className="border border-brand-200 bg-brand-50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 bg-brand-500 text-white rounded-full flex items-center justify-center shrink-0">
                       <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-teal-800 font-bold">Overall Generic Savings: {savings.percentage}%</h4>
-                      <p className="text-sm text-teal-600 mt-0.5">By swapping to DoseBox specialty generics, you save ₹{formatCurrency(savings.savedAmount)} on this order!</p>
+                      <h4 className="text-brand-800 font-bold">Overall Generic Savings: {savings.percentage}%</h4>
+                      <p className="text-sm text-brand-600 mt-0.5">By swapping to DoseBox specialty generics, you save ₹{formatCurrency(savings.savedAmount)} on this order!</p>
                     </div>
                   </div>
                   <div className="text-left sm:text-right shrink-0 sm:ml-4">
                     <p className="text-sm text-slate-400 line-through">₹{formatCurrency(savings.totalMarket)}</p>
-                    <p className="text-2xl font-black text-teal-600">₹{formatCurrency(savings.totalDosebox)}</p>
+                    <p className="text-2xl font-black text-brand-600">₹{formatCurrency(savings.totalDosebox)}</p>
                   </div>
                 </div>
               )}
@@ -367,14 +367,14 @@ export default function UploadPrescriptionPage() {
                         const isSelected = selectedVariants[mIdx]?.id === variant.id;
 
                         return (
-                          <div key={`${mIdx}-${vIdx}`} className={`border rounded-xl p-4 flex items-start gap-4 transition-all cursor-pointer ${isSelected ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' : 'border-slate-200 hover:border-teal-300 bg-white'}`} onClick={() => setSelectedVariants({ ...selectedVariants, [mIdx]: variant })}>
+                          <div key={`${mIdx}-${vIdx}`} className={`border rounded-xl p-4 flex items-start gap-4 transition-all cursor-pointer ${isSelected ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200' : 'border-slate-200 hover:border-brand-300 bg-white'}`} onClick={() => setSelectedVariants({ ...selectedVariants, [mIdx]: variant })}>
                             <img src={img} alt={variant.name} className="w-12 h-12 rounded-lg object-cover border border-slate-100 shrink-0" />
                             <div className="flex-1">
                               <h5 className="font-bold text-slate-800 text-sm">{variant.name}</h5>
                               <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{variant.manufacturer || 'Generic Brand'}</p>
                               <div className="flex items-center justify-between mt-2">
-                                <p className="text-sm font-bold text-teal-600">₹{formatCurrency(Number(variant.discountPrice || variant.price))}</p>
-                                <button className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors ${isSelected ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-600 border-teal-200 hover:bg-teal-50'}`}>
+                                <p className="text-sm font-bold text-brand-600">₹{formatCurrency(Number(variant.discountPrice || variant.price))}</p>
+                                <button className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors ${isSelected ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-brand-600 border-brand-200 hover:bg-brand-50'}`}>
                                   {isSelected ? 'Selected' : 'Select'}
                                 </button>
                               </div>
@@ -415,7 +415,7 @@ export default function UploadPrescriptionPage() {
                 </button>
                 <Link
                   href="/dashboard/customer/prescriptions"
-                  className="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors shadow-md flex items-center gap-2"
+                  className="px-6 py-3 bg-brand-600 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors shadow-md flex items-center gap-2"
                 >
                   View My Prescriptions <ChevronRight className="w-4 h-4" />
                 </Link>
@@ -432,7 +432,7 @@ export default function UploadPrescriptionPage() {
                 onDragLeave={() => setIsDragActive(false)}
                 onDrop={onDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-all duration-300 max-w-xl mx-auto ${isDragActive ? 'border-teal-500 bg-teal-50' : 'border-teal-300 hover:border-teal-400 hover:bg-teal-50/50'
+                className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-all duration-300 max-w-xl mx-auto ${isDragActive ? 'border-brand-500 bg-brand-50' : 'border-brand-300 hover:border-brand-400 hover:bg-brand-50/50'
                   }`}
               >
                 <input
@@ -450,16 +450,16 @@ export default function UploadPrescriptionPage() {
                         <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FileText className="w-8 h-8 text-teal-600" />
+                      <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-brand-600" />
                       </div>
                     )}
-                    <p className="text-lg font-semibold text-teal-800">{file.name}</p>
+                    <p className="text-lg font-semibold text-brand-800">{file.name}</p>
                     <p className="text-sm text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
 
                     <button
                       onClick={(e) => { e.stopPropagation(); handleUpload(); }}
-                      className="mt-6 w-full sm:w-auto px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200"
+                      className="mt-6 w-full sm:w-auto px-8 py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200"
                     >
                       Process Prescription
                     </button>
@@ -473,11 +473,11 @@ export default function UploadPrescriptionPage() {
                   </div>
                 ) : (
                   <div>
-                    <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-teal-100">
-                      <UploadCloud className="w-8 h-8 text-teal-600" />
+                    <div className="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-brand-100">
+                      <UploadCloud className="w-8 h-8 text-brand-600" />
                     </div>
                     <p className="text-lg font-medium text-slate-800 mb-2">
-                      Drag & Drop prescription or <span className="text-teal-600 underline">browse computer</span>
+                      Drag & Drop prescription or <span className="text-brand-600 underline">browse computer</span>
                     </p>
                     <p className="text-sm text-slate-400 font-mono">
                       Supports JPG, PNG, PDF (Max 10MB)
@@ -487,7 +487,7 @@ export default function UploadPrescriptionPage() {
               </div>
 
               <div className="mt-6 sm:mt-8 bg-slate-50 rounded-xl p-4 flex items-start justify-center gap-3 w-full sm:max-w-7xl mx-auto border border-slate-100 text-left">
-                <ShieldCheck className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" />
                 <p className="text-sm text-slate-600 leading-relaxed">
                   <span className="font-bold text-slate-700">100% Privacy Ensured:</span> Encrypted end-to-end data transfer. Your medical information is only read to match medications and is monitored by a Govt-certified digital pharmacist.
                 </p>
@@ -504,8 +504,8 @@ export default function UploadPrescriptionPage() {
                     { tag: 'Scenario B', title: 'Diabetes & High Cholesterol...', doc: 'Dr. Anita Shastry, DM (Endocrinology)' },
                     { tag: 'Scenario C', title: 'Geriatric Ortho & Daily Tonic...', doc: 'Dr. Rameshwar Rao, MS...' }
                   ].map((scenario, i) => (
-                    <div key={i} className="border border-slate-200 rounded-xl p-4 bg-white cursor-pointer hover:border-teal-300 hover:shadow-md transition-all">
-                      <span className="inline-block px-3 py-1 bg-teal-50 text-teal-700 font-semibold text-xs rounded-full mb-3">{scenario.tag}</span>
+                    <div key={i} className="border border-slate-200 rounded-xl p-4 bg-white cursor-pointer hover:border-brand-300 hover:shadow-md transition-all">
+                      <span className="inline-block px-3 py-1 bg-brand-50 text-brand-700 font-semibold text-xs rounded-full mb-3">{scenario.tag}</span>
                       <h4 className="text-sm font-bold text-slate-800 mb-1 truncate">{scenario.title}</h4>
                       <p className="text-xs text-slate-500 truncate">{scenario.doc}</p>
                     </div>
@@ -527,7 +527,7 @@ export default function UploadPrescriptionPage() {
             </button>
             <button
               onClick={handleAddVerifiedToCart}
-              className="w-full sm:w-auto justify-center px-6 py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-colors flex items-center gap-2 shadow-lg shadow-teal-200"
+              className="w-full sm:w-auto justify-center px-6 py-2.5 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors flex items-center gap-2 shadow-lg shadow-brand-200"
             >
               Add Verified Generics to Cart
               <ChevronRight className="w-4 h-4" />
