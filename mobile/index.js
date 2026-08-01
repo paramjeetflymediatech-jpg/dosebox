@@ -7,9 +7,14 @@ import App from './App';
 import { name as appName } from './app.json';
 import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 
-// Register background handler
-setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
-  console.log('Message handled in the background!', remoteMessage);
-});
-
+// Always register main component first
 AppRegistry.registerComponent(appName, () => App);
+
+// Register background messaging handler safely
+try {
+  setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
+    console.log('Message handled in the background!', remoteMessage);
+  });
+} catch (error) {
+  console.log('Firebase background message handler initialization skipped:', error);
+}
