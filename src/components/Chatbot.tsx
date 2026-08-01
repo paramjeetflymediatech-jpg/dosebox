@@ -23,7 +23,7 @@ export default function Chatbot() {
       id: '1',
       sender: 'bot',
       type: 'text',
-      text: "👋 Hi there! I'm the DoseBox Assistant. Enter the name of a medicine, and I'll help you find the best purchase option or recommend suitable alternatives if it's unavailable."
+      text: "👋 Hi there! I'm the DoseBot Assistant. Enter the name of a medicine, and I'll help you find the best purchase option or recommend suitable alternatives if it's unavailable."
     }
   ]);
   const [input, setInput] = useState('');
@@ -57,7 +57,7 @@ export default function Chatbot() {
 
     const userText = input.trim();
     setInput('');
-    
+
     // Add user message
     const newMessages = [...messages, { id: Date.now().toString(), sender: 'user', type: 'text', text: userText } as Message];
     setMessages(newMessages);
@@ -69,9 +69,9 @@ export default function Chatbot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: userText })
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success && data.data) {
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
@@ -100,7 +100,7 @@ export default function Chatbot() {
     try {
       const parsedImages = typeof medicine.images === 'string' ? JSON.parse(medicine.images) : medicine.images;
       if (parsedImages && parsedImages.length > 0) imageUrl = parsedImages[0];
-    } catch (e) {}
+    } catch (e) { }
 
     addToCart({
       id: medicine.id,
@@ -119,11 +119,10 @@ export default function Chatbot() {
       {/* Chatbot Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-[60] flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-110 focus:outline-none ${
-          isOpen 
-            ? 'bg-slate-800 text-white p-4' 
+        className={`fixed bottom-6 right-6 z-[60] flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-110 focus:outline-none ${isOpen
+            ? 'bg-slate-800 text-white p-4'
             : 'bg-gradient-to-tr from-brand-600 via-brand-500 to-indigo-500 text-white p-4 shadow-brand-500/40'
-        }`}
+          }`}
       >
         {isOpen ? <X className="w-6 h-6" /> : <Bot className="w-7 h-7" />}
         {!isOpen && (
@@ -140,7 +139,7 @@ export default function Chatbot() {
           bottom-24 right-4 w-[calc(100vw-32px)] max-w-[350px] h-[450px] max-h-[75vh] rounded-3xl border border-slate-200
           sm:right-6"
         >
-          
+
           {/* Header */}
           <div className="bg-brand-600 p-4 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
@@ -148,15 +147,15 @@ export default function Chatbot() {
                 <Bot className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-extrabold text-white leading-tight">DoseBox Assistant</h3>
+                <h3 className="font-extrabold text-white leading-tight">DoseBot Assistant</h3>
                 <p className="text-xs text-brand-100 font-medium flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Online
                 </p>
               </div>
             </div>
-            
+
             {/* Mobile Close Button (visible only on small screens since toggle button might be obscured or awkward) */}
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               className="sm:hidden p-2 text-white/80 hover:text-white bg-white/10 rounded-full"
             >
@@ -171,12 +170,12 @@ export default function Chatbot() {
                 <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${msg.sender === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-brand-100 text-brand-600'}`}>
                   {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
-                
+
                 <div className={`max-w-[85%] space-y-2`}>
                   <div className={`p-3 rounded-2xl text-sm ${msg.sender === 'user' ? 'bg-brand-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 shadow-sm rounded-tl-none font-medium'}`}>
                     {msg.text}
                   </div>
-                  
+
                   {/* Medicine Cards rendering */}
                   {msg.type === 'medicine' && msg.medicines && (
                     <div className="space-y-3 mt-2 w-full">
@@ -185,7 +184,7 @@ export default function Chatbot() {
                         try {
                           const parsed = typeof med.images === 'string' ? JSON.parse(med.images) : med.images;
                           if (parsed && parsed.length > 0) img = parsed[0];
-                        } catch (e) {}
+                        } catch (e) { }
 
                         return (
                           <div key={med.id} className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col gap-3 w-[260px] sm:w-[280px]">
@@ -197,19 +196,19 @@ export default function Chatbot() {
                                 <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">{med.packSize || '1 Pack'}</p>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between border-t border-slate-100 pt-2">
                               <div>
                                 <p className="text-[10px] text-slate-400 line-through">₹{formatCurrency(Number(med.price))}</p>
                                 <p className="text-sm font-black text-brand-600">₹{formatCurrency(Number(med.discountPrice || med.price))}</p>
                               </div>
-                              
+
                               {addedItems[med.id] ? (
                                 <Link href="/cart" onClick={() => { setIsOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
                                   <CheckCircle className="w-3 h-3" /> Check Cart
                                 </Link>
                               ) : (
-                                <button 
+                                <button
                                   onClick={() => handleAddToCart(med)}
                                   className="px-4 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-brand-600 transition-colors flex items-center gap-1 shadow-sm"
                                 >
@@ -225,7 +224,7 @@ export default function Chatbot() {
                 </div>
               </div>
             ))}
-            
+
             {isLoading && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">

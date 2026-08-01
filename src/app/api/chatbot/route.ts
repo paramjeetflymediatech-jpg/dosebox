@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const qaResponses: Record<string, string> = {
       'how are you': "I'm just a bot, but I'm doing great! How can I help you with your health needs today?",
-      'who are you': "I am the DoseBox Assistant. I can help you search for medicines, check prices, and quickly add them to your cart.",
+      'who are you': "I am the DoseBot Assistant. I can help you search for medicines, check prices, and quickly add them to your cart.",
       'what do you do': "I can help you find any medicine you're looking for! Just type the name of the medicine, and I'll fetch its details for you.",
       'thank you': "You're very welcome! Let me know if you need anything else. 😊",
       'bye': "Goodbye! Stay healthy and take care. 👋",
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       'payment': "We accept Cash on Delivery (COD), UPI (PhonePe, GPay), Credit/Debit cards, and Net Banking.",
       'refund': "We have a hassle-free return policy. You can return unused, sealed medicines within 7 days of delivery for a full refund or DoseBox tokens.",
       'contact': "You can reach our 24/7 support team at support@dosebox.in or call us directly via the 'Contact Us' page.",
-      'greeting': "👋 Hi there! I'm the DoseBox Assistant. Enter the name of a medicine, and I'll help you find the best purchase option or recommend suitable alternatives if it's unavailable."
+      'greeting': "👋 Hi there! I'm the DoseBot Assistant. Enter the name of a medicine, and I'll help you find the best purchase option or recommend suitable alternatives if it's unavailable."
     };
 
     // Check if query matches any QA intent

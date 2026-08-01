@@ -186,7 +186,7 @@ export default function LoginScreen({ navigation, route }) {
         try {
           appleAuthAndroid.configure({
             clientId: 'com.doseboxmobile.web',
-            redirectUri: 'https://nk.socialflymediatech.com/api/auth/apple/callback',
+            redirectUri: 'https://dosebox.in/api/auth/apple/callback',
             responseType: appleAuthAndroid.ResponseType.ALL,
             scope: appleAuthAndroid.Scope.ALL,
           });

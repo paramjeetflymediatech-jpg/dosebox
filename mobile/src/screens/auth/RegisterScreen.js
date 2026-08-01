@@ -57,13 +57,13 @@ export default function RegisterScreen({ navigation }) {
   const handleGoogleLogin = async () => {
     try {
       await GoogleSignin.hasPlayServices();
-      try { await GoogleSignin.signOut(); } catch (e) {} // Force account picker
+      try { await GoogleSignin.signOut(); } catch (e) { } // Force account picker
       const userInfo = await GoogleSignin.signIn();
-      
+
       if (userInfo.type === 'cancelled') {
         return;
       }
-      
+
       const user = userInfo.data ? userInfo.data.user : userInfo.user;
       if (!user) {
         throw new Error('Unable to retrieve user data from Google');
@@ -178,7 +178,7 @@ export default function RegisterScreen({ navigation }) {
         try {
           appleAuthAndroid.configure({
             clientId: 'com.doseboxmobile.web',
-            redirectUri: 'https://nk.socialflymediatech.com/api/auth/apple/callback',
+            redirectUri: 'https://dosebox.in/api/auth/apple/callback',
             responseType: appleAuthAndroid.ResponseType.ALL,
             scope: appleAuthAndroid.Scope.ALL,
           });
@@ -240,12 +240,12 @@ export default function RegisterScreen({ navigation }) {
     setEmailError('');
     setPhoneError('');
     setPasswordError('');
-    
+
     let hasError = false;
-    
+
     if (!firstName.trim()) { setFirstNameError('Required'); hasError = true; }
     if (!lastName.trim()) { setLastNameError('Required'); hasError = true; }
-    
+
     if (hasError) {
       AlertService.show({ type: 'error', title: 'Missing Fields', message: 'First name and last name are required.' });
     }
@@ -260,13 +260,13 @@ export default function RegisterScreen({ navigation }) {
       if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Email', message: 'Invalid email format.' });
       hasError = true;
     }
-    
+
     if (phone.trim() && phone.trim().length < 10) {
       setPhoneError('Invalid phone number');
       if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Phone', message: 'Invalid phone number.' });
       hasError = true;
     }
-    
+
     if (!password) {
       setPasswordError('Please set a password');
       if (!hasError) AlertService.show({ type: 'error', title: 'Invalid Password', message: 'Please set a password.' });
@@ -357,9 +357,9 @@ export default function RegisterScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('GuestTabs', { screen: 'HomeTab' })} 
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('GuestTabs', { screen: 'HomeTab' })}
             style={styles.backButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
@@ -373,14 +373,14 @@ export default function RegisterScreen({ navigation }) {
 
           {/* TOGGLE SWITCH */}
           <View style={styles.toggleContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.toggleBtn, authMode === 'login' && styles.toggleBtnActive]}
               onPress={() => handleToggle('login')}
               activeOpacity={0.8}
             >
               <Text style={[styles.toggleText, authMode === 'login' && styles.toggleTextActive]}>Log In</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.toggleBtn, authMode === 'signup' && styles.toggleBtnActive]}
               onPress={() => handleToggle('signup')}
               activeOpacity={0.8}
@@ -391,7 +391,7 @@ export default function RegisterScreen({ navigation }) {
 
           {generalError ? (
             <View style={styles.generalErrorBox}>
-              <Ionicons name="warning" size={20} color="#DC2626" style={{marginRight: 8}} />
+              <Ionicons name="warning" size={20} color="#DC2626" style={{ marginRight: 8 }} />
               <Text style={styles.generalErrorText}>{generalError}</Text>
             </View>
           ) : null}
@@ -513,7 +513,7 @@ export default function RegisterScreen({ navigation }) {
       </KeyboardAvoidingView>
 
     </SafeAreaView>
-    
+
   );
 }
 
