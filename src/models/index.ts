@@ -65,6 +65,7 @@ export interface UserAttributes {
   email: string;
   password?: string;
   googleId?: string;
+  appleId?: string;
   phone?: string;
   avatar?: string;
   doseboxTokens?: number;
@@ -81,12 +82,13 @@ export interface UserAttributes {
   resetOtpExpires?: Date | null;
   fcmToken?: string | null;
 }
-export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'phone' | 'avatar' | 'doseboxTokens' | 'tokenRefundCount' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires' | 'fcmToken'>> implements UserAttributes {
+export class User extends Model<UserAttributes, Optional<UserAttributes, 'id' | 'password' | 'googleId' | 'appleId' | 'phone' | 'avatar' | 'doseboxTokens' | 'tokenRefundCount' | 'status' | 'age' | 'gender' | 'bloodGroup' | 'height' | 'weight' | 'address' | 'resetOtp' | 'resetOtpExpires' | 'fcmToken'>> implements UserAttributes {
   declare id: number;
   declare name: string;
   declare email: string;
   declare password?: string;
   declare googleId?: string;
+  declare appleId?: string;
   declare phone?: string;
   declare avatar?: string;
   declare doseboxTokens?: number;
@@ -111,6 +113,7 @@ User.init(
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: true },
     googleId: { type: DataTypes.STRING, allowNull: true },
+    appleId: { type: DataTypes.STRING, allowNull: true },
     phone: { type: DataTypes.STRING, allowNull: true },
     avatar: { type: DataTypes.STRING, allowNull: true },
     doseboxTokens: { type: DataTypes.INTEGER, defaultValue: 0 },

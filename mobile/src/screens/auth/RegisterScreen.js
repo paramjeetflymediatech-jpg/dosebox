@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useEffect } from 'react';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { appleAuth, appleAuthAndroid } from '@invertase/react-native-apple-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -42,10 +43,15 @@ export default function RegisterScreen({ navigation }) {
   const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: '680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com',
-      offlineAccess: true,
-    });
+    try {
+      GoogleSignin.configure({
+        webClientId: '680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com',
+        iosClientId: '680555726982-6h74ml3b6pnc9d6m0ph3ffrnbsv5485m.apps.googleusercontent.com',
+        offlineAccess: true,
+      });
+    } catch (e) {
+      console.log('GoogleSignin configure skipped:', e);
+    }
   }, []);
 
   const handleGoogleLogin = async () => {
@@ -107,6 +113,120 @@ export default function RegisterScreen({ navigation }) {
       } else {
         console.error('Google Sign-In error:', error);
         AlertService.show({ type: 'error', title: 'Google Sign-In Error', message: 'Failed to complete Google Login.' });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      setLoading(true);
+      const fcmToken = await AsyncStorage.getItem('fcmToken');
+
+      if (Platform.OS === 'ios') {
+        if (!appleAuth.isSupported) {
+          AlertService.show({
+            type: 'info',
+            title: 'Apple Sign-In',
+            message: 'Apple Sign-In is only supported on iOS devices (iOS 13+).',
+          });
+          return;
+        }
+
+        const appleAuthRequestResponse = await appleAuth.performRequest({
+          requestedOperation: appleAuth.Operation.LOGIN,
+          requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+        });
+
+        const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user);
+
+        if (credentialState === appleAuth.State.AUTHORIZED) {
+          const { user, email, fullName } = appleAuthRequestResponse;
+          const name = fullName ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() : '';
+
+          const payload = {
+            appleId: user,
+            email: email || '',
+            name: name || 'Apple User',
+            device_platform: Platform.OS,
+            device_id: 'device_' + Math.random().toString(36).substring(7),
+            push_token: fcmToken || '',
+            app_version: '0.0.1'
+          };
+
+          const response = await api.post('/auth/apple', payload);
+          const data = response.data;
+
+          if (data.success) {
+            await AsyncStorage.setItem('accessToken', data.accessToken || '');
+            if (data.refreshToken) await AsyncStorage.setItem('refreshToken', data.refreshToken);
+            if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+
+            const userRole = data.user?.role?.toLowerCase() || '';
+            if (userRole.includes('admin')) {
+              navigation.replace('AdminTabs');
+            } else {
+              navigation.replace('MainTabs');
+            }
+          } else {
+            AlertService.show({ type: 'error', title: 'Login Failed', message: data.message || 'Invalid Apple credentials' });
+          }
+        }
+      } else {
+        // Android Apple Sign-In via Web OAuth
+        try {
+          appleAuthAndroid.configure({
+            clientId: 'com.doseboxmobile.web',
+            redirectUri: 'https://nk.socialflymediatech.com/api/auth/apple/callback',
+            responseType: appleAuthAndroid.ResponseType.ALL,
+            scope: appleAuthAndroid.Scope.ALL,
+          });
+
+          const response = await appleAuthAndroid.signIn();
+          if (response && (response.id_token || response.code)) {
+            const userObj = response.user;
+            const name = userObj?.name ? `${userObj.name.firstName || ''} ${userObj.name.lastName || ''}`.trim() : 'Apple User';
+
+            const payload = {
+              appleId: response.code || response.id_token,
+              email: userObj?.email || '',
+              name: name || 'Apple User',
+              device_platform: Platform.OS,
+              device_id: 'device_' + Math.random().toString(36).substring(7),
+              push_token: fcmToken || '',
+              app_version: '0.0.1'
+            };
+
+            const apiRes = await api.post('/auth/apple', payload);
+            const data = apiRes.data;
+
+            if (data.success) {
+              await AsyncStorage.setItem('accessToken', data.accessToken || '');
+              if (data.refreshToken) await AsyncStorage.setItem('refreshToken', data.refreshToken);
+              if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+
+              const userRole = data.user?.role?.toLowerCase() || '';
+              if (userRole.includes('admin')) {
+                navigation.replace('AdminTabs');
+              } else {
+                navigation.replace('MainTabs');
+              }
+            } else {
+              AlertService.show({ type: 'error', title: 'Login Failed', message: data.message || 'Invalid Apple credentials' });
+            }
+          }
+        } catch (androidErr) {
+          if (!androidErr?.message?.includes('E_SIGN_IN_CANCELLED')) {
+            console.error('Android Apple Sign-In error:', androidErr);
+            AlertService.show({ type: 'error', title: 'Apple Sign-In', message: androidErr.message || 'Failed to sign in with Apple.' });
+          }
+        }
+      }
+    } catch (error) {
+      if (error.code !== appleAuth.Error.CANCELED) {
+        console.error('Apple Sign-In error:', error);
+        AlertService.show({ type: 'error', title: 'Apple Sign-In Error', message: error.message || 'Failed to complete Apple Login.' });
       }
     } finally {
       setLoading(false);
@@ -374,6 +494,10 @@ export default function RegisterScreen({ navigation }) {
               <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin} disabled={loading}>
                 <Image source={require('../../assets/images/google-logo.png')} style={{ width: 22, height: 22 }} resizeMode="contain" />
                 <Text style={styles.socialText}>Google</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin} disabled={loading}>
+                <Ionicons name="logo-apple" size={22} color="#000" />
+                <Text style={styles.socialText}>Apple</Text>
               </TouchableOpacity>
             </View>
 
