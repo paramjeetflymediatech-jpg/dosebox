@@ -6,13 +6,14 @@ import Link from 'next/link';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
+import { useCart } from '../../../context/CartContext';
 
 interface OrderItem {
   id: number;
   quantity: number;
   price: string;
   medicineId: number;
-  medicine?: { id: number; name: string; images: string };
+  medicine?: { id: number; name: string; images: string; prescriptionRequired?: boolean };
 }
 
 interface Order {
@@ -78,10 +79,41 @@ const getRichTimeline = (order: Order, timeline: any[]) => {
 };
 
 export default function OrdersPage() {
+  const { addToCart } = useCart();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [orderPage, setOrderPage] = useState(1);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+
+  const handleOrderAgain = (order: Order) => {
+    if (!order.items || order.items.length === 0) {
+      toast.error('No items found in this order.');
+      return;
+    }
+    
+    order.items.forEach(item => {
+      let imgUrl = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+      try {
+        if (item.medicine?.images) {
+          imgUrl = JSON.parse(item.medicine.images)[0];
+        }
+      } catch (e) { }
+
+      addToCart({
+        id: item.medicineId,
+        name: item.medicine?.name || 'Unknown Medicine',
+        price: Number(item.price),
+        prescriptionRequired: item.medicine?.prescriptionRequired || false,
+        image: imgUrl,
+        quantity: item.quantity
+      });
+    });
+
+    toast.success('All items added to cart! Redirecting to cart...');
+    setTimeout(() => {
+      window.location.href = '/cart';
+    }, 800);
+  };
 
   // Cancel & Refund state
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -249,6 +281,16 @@ export default function OrdersPage() {
                         <button onClick={() => downloadInvoice(order.id)} className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-100 text-brand-700 hover:bg-brand-50 hover:border-brand-200 rounded-lg transition-all shadow-sm" title="Download DoseBox Invoice">
                           <Download className="w-4 h-4" />
                           <span className="text-xs font-extrabold uppercase tracking-wider hidden sm:inline">Invoice</span>
+                        </button>
+                      )}
+                      {(order.status === 'Delivered' || order.status === 'Cancelled') && (
+                        <button 
+                          onClick={() => handleOrderAgain(order)} 
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134754] hover:bg-[#072027] text-white rounded-lg transition-all shadow-sm text-xs font-bold whitespace-nowrap"
+                          title="Add all items to cart & order again"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Order Again</span>
                         </button>
                       )}
                       {['Pending', 'Confirmed', 'Packed'].includes(order.status) && (

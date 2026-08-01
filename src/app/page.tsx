@@ -850,21 +850,21 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Single contained dark card */}
-          <div className="relative rounded-3xl overflow-hidden bg-[#0f1623] p-8 sm:p-12 shadow-2xl">
+          <div className="relative rounded-3xl overflow-hidden bg-brand-900 p-8 sm:p-12 shadow-2xl">
             {/* Subtle gradient blobs */}
-            <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[80px] translate-y-1/3 pointer-events-none" />
+            <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-brand-400/15 rounded-full blur-[80px] translate-y-1/3 pointer-events-none" />
 
             <div className="relative z-10 flex flex-col lg:flex-row gap-10 lg:gap-16">
               {/* Left: header */}
               <div className="lg:w-72 flex-shrink-0">
-                <span className="inline-flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-brand-400 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
+                <span className="inline-flex items-center gap-1.5 bg-brand-950/40 border border-brand-800/30 text-brand-300 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
                   <Sparkles className="w-3 h-3" /> Specialty Health Sorter
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-4">
                   Find Your Personal Care Routine
                 </h2>
-                <p className="text-slate-400 text-sm leading-relaxed">
+                <p className="text-brand-200/80 text-sm leading-relaxed">
                   Struggling to find the right vitamins, specialty nutrients, or natural palliative remedies? Check your support goal to see matched recommendations.
                 </p>
               </div>
@@ -872,46 +872,46 @@ export default function HomePage() {
               {/* Right: 2x2 compact cards */}
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Card 1 */}
-                <Link href="/medicines?category=anti-bacterials" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=anti-bacterials" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <Activity className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-sm leading-snug">ANTI BACTERIALS</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Combat bacterial infections, promote healing, and protect your body against harmful microbes.</p>
+                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Combat bacterial infections, promote healing, and protect your body against harmful microbes.</p>
                   </div>
                 </Link>
 
                 {/* Card 2 */}
-                <Link href="/medicines?category=anti-fungals" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=anti-fungals" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <ActivitySquare className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-sm leading-snug">ANTI FUNGALS</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Treat fungal infections, relieve itching, and restore healthy skin and nails.</p>
+                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Treat fungal infections, relieve itching, and restore healthy skin and nails.</p>
                   </div>
                 </Link>
 
                 {/* Card 3 */}
-                <Link href="/medicines?category=arthritis" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=arthritis" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <Droplets className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-sm leading-snug">ARTHRITIS</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Alleviate joint pain, reduce inflammation, and improve mobility for a better quality of life.</p>
+                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Alleviate joint pain, reduce inflammation, and improve mobility for a better quality of life.</p>
                   </div>
                 </Link>
 
                 {/* Card 4 */}
-                <Link href="/medicines?category=oncology" className="group flex items-center gap-4 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
+                <Link href="/medicines?category=oncology" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                     <ThermometerSnowflake className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-sm leading-snug">ONCOLOGY</h3>
-                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed line-clamp-2">Advanced care for cancer treatment, supporting recovery, and improving overall well-being.</p>
+                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Advanced care for cancer treatment, supporting recovery, and improving overall well-being.</p>
                   </div>
                 </Link>
               </div>
@@ -980,29 +980,29 @@ export default function HomePage() {
       </section>
 
       {/* 6. CLINICAL CARE & ONLINE CONSULTATION CTA */}
-      <section ref={ctaRef} className="bg-slate-900 text-white py-20 overflow-hidden relative rounded-[3rem] mx-4 sm:mx-8 lg:mx-auto max-w-7xl my-12 shadow-2xl">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+      <section ref={ctaRef} className="bg-brand-900 text-white py-20 overflow-hidden relative rounded-[3rem] mx-4 sm:mx-8 lg:mx-auto max-w-7xl my-12 shadow-2xl">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/25 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
-            <span className="text-brand-400 font-bold text-xs uppercase tracking-widest flex items-center gap-1.5">
+            <span className="text-brand-300 font-bold text-xs uppercase tracking-widest flex items-center gap-1.5">
               <Sparkles className="w-4 h-4" />
               Tele-Health Consultation
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-3 leading-tight">
               Consult Top Verified Doctors & Specialists Online
             </h2>
-            <p className="text-slate-400 text-sm sm:text-base mt-4 leading-relaxed max-w-lg">
+            <p className="text-brand-200/80 text-sm sm:text-base mt-4 leading-relaxed max-w-lg">
               Get diagnostic reports, prescription sheets, and expert medical advice from General Physicians, Dermatologists, and Cardiologists in under 10 minutes via private video or chat sessions.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:items-center">
               <div className="flex -space-x-3 overflow-hidden">
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150" alt="" />
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=150" alt="" />
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150" alt="" />
+                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150" alt="" />
+                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=150" alt="" />
+                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150" alt="" />
               </div>
-              <div className="text-xs sm:text-sm text-slate-300">
-                <span className="font-bold text-brand-400">12+ Certified Doctors</span> online right now
+              <div className="text-xs sm:text-sm text-brand-100/90">
+                <span className="font-bold text-brand-300">12+ Certified Doctors</span> online right now
               </div>
             </div>
 
@@ -1017,33 +1017,33 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-slate-800 rounded-3xl p-6 border border-slate-700/80 shadow-2xl relative">
-            <div className="absolute top-4 left-4 bg-brand-500/20 text-brand-400 text-xxs font-bold uppercase tracking-wider py-1 px-3 rounded-full border border-brand-500/30">
+          <div className="bg-brand-950/40 rounded-3xl p-6 border border-brand-800/30 shadow-2xl relative">
+            <div className="absolute top-4 left-4 bg-brand-500/20 text-brand-300 text-xxs font-bold uppercase tracking-wider py-1 px-3 rounded-full border border-brand-500/30">
               Live clinic slots
             </div>
 
             <div className="space-y-4 mt-6">
-              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50 flex items-center justify-between">
+              <div className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
                     <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" />
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-white">Dr. Arvinder Singh</h4>
-                    <p className="text-xxs text-brand-400 font-semibold">General Physician • 14 Yrs Exp</p>
+                    <p className="text-xxs text-brand-300 font-semibold">General Physician • 14 Yrs Exp</p>
                   </div>
                 </div>
                 <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all">Book</Link>
               </div>
 
-              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50 flex items-center justify-between">
+              <div className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
                     <img src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" />
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-white">Dr. Priya Ramachandran</h4>
-                    <p className="text-xxs text-brand-400 font-semibold">Dermatologist • 10 Yrs Exp</p>
+                    <p className="text-xxs text-brand-300 font-semibold">Dermatologist • 10 Yrs Exp</p>
                   </div>
                 </div>
                 <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all">Book</Link>
@@ -1052,6 +1052,135 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* 6.5. DOSEBOX MOBILE APP DOWNLOAD BANNER */}
+      {/* <section className="py-20 bg-brand-900 border-t border-b border-brand-800/30 overflow-hidden relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(7,32,39,0.25),transparent_60%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,136,133,0.08),transparent_50%)]"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <span className="bg-brand-950/40 text-brand-300 text-xs font-bold uppercase tracking-widest py-1.5 px-4 rounded-full border border-brand-800/30 inline-block">
+                Dosebox on the go
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+                Manage your Healthcare from the <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-amber-300">DoseBox Mobile App</span>
+              </h2>
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
+                Experience seamless prescription scanning, chronic drug auto-refills, secure messaging with certified pharmacists, and express home delivery at your fingertips.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-950/40 border border-brand-800/20 flex items-center justify-center text-brand-300 shrink-0">
+                    ✓
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white">Instant OCR Reader</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Scan written prescriptions in 3 seconds.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-950/40 border border-brand-800/20 flex items-center justify-center text-brand-300 shrink-0">
+                    ✓
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white">Refill Reminders</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Never run out of monthly chronic medicines.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-950/40 border border-brand-800/20 flex items-center justify-center text-brand-300 shrink-0">
+                    ✓
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white">Pharmacist Chat</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Direct live help for generic alternative choices.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-950/40 border border-brand-800/20 flex items-center justify-center text-brand-300 shrink-0">
+                    ✓
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white">Tele-Health Link</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Connect with doctors in 1-tap on video.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 pt-6">
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.doseboxmobile"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-all hover:scale-105 duration-200 shrink-0"
+                >
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                    alt="Get it on Google Play"
+                    className="h-[44px] w-auto shadow-md rounded-lg"
+                  />
+                </a>
+                <a
+                  href="https://apps.apple.com/app/dosebox"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-all hover:scale-105 duration-200 shrink-0"
+                >
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+                    alt="Download on the App Store"
+                    className="h-[44px] w-auto shadow-md rounded-lg"
+                  />
+                </a>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 flex justify-center lg:justify-end">
+              <div className="bg-brand-950/40 border border-brand-800/30 p-8 rounded-[2.5rem] shadow-2xl relative w-full max-w-sm flex flex-col items-center">
+                <div className="absolute -top-3 -right-3 bg-amber-500 text-white font-extrabold text-xs px-4 py-1.5 rounded-full shadow-lg border border-amber-400 uppercase tracking-widest animate-bounce">
+                  Scan To Install
+                </div>
+
+                <div className="flex gap-4 justify-center w-full mb-6">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="bg-white p-1.5 rounded-2xl shadow-md border-2 border-brand-100/50 flex items-center justify-center">
+                      <img
+                        src="https://quickchart.io/qr?text=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.doseboxmobile&size=300"
+                        alt="Android Play Store QR"
+                        className="w-24 h-24 object-contain"
+                      />
+                    </div>
+                    <span className="text-[9px] font-bold text-brand-300 tracking-wider">Android QR</span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="bg-white p-1.5 rounded-2xl shadow-md border-2 border-brand-100/50 flex items-center justify-center">
+                      <img
+                        src="https://quickchart.io/qr?text=https%3A%2F%2Fapps.apple.com%2Fapp%2Fdosebox&size=300"
+                        alt="iOS App Store QR"
+                        className="w-24 h-24 object-contain"
+                      />
+                    </div>
+                    <span className="text-[9px] font-bold text-brand-300 tracking-wider">iOS QR</span>
+                  </div>
+                </div>
+
+                <h4 className="text-white font-bold text-base mb-1.5">Scan QR with your Phone</h4>
+                <p className="text-slate-400 text-xs leading-relaxed max-w-[240px]">
+                  Points directly to the Google Play Store or iOS App Store for secure installation.
+                </p>
+
+                <div className="w-16 h-1 bg-brand-800/80 rounded-full mt-6"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section> */}
 
       {/* 7. CUSTOMER TESTIMONIALS (Dynamic Google Reviews) */}
       <section ref={testimonialsRef} className="py-20 bg-slate-100">

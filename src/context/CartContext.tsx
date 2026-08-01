@@ -156,8 +156,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  // GST calculation (18% exclusive)
-  const gstAmount = Math.max(0, taxableAmount - couponDiscount) * 0.18;
+  // GST calculation (5% exclusive)
+  const gstAmount = Math.max(0, taxableAmount - couponDiscount) * 0.05;
 
   const totalAmount = Math.max(0, taxableAmount - couponDiscount + gstAmount + shippingFee);
 

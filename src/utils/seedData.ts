@@ -345,7 +345,7 @@ export async function runSeeder() {
     const settingsData = [
       { key: 'platform_name', value: 'DoseBox Healthcare' },
       { key: 'contact_email', value: 'support@dosebox.com' },
-      { key: 'gst_rate_percent', value: '18' },
+      { key: 'gst_rate_percent', value: '5' },
       { key: 'shipping_fee', value: '50' }
     ];
 

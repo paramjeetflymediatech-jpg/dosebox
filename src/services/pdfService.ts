@@ -131,7 +131,7 @@ export class PdfService {
       .text('Discount:', 350, subtotalY + 15)
       .text(`- Rs. ${data.discountAmount.toFixed(2)}`, 470, subtotalY + 15, { align: 'right' })
       
-      .text('GST (18% inclusive):', 350, subtotalY + 30)
+      .text('GST (5% inclusive):', 350, subtotalY + 30)
       .text(`Rs. ${data.gstAmount.toFixed(2)}`, 470, subtotalY + 30, { align: 'right' });
 
     // Grand Total
