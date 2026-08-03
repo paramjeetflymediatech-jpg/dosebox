@@ -17,7 +17,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const body = await req.json();
-    const { name, specialization, experience, fees, availability, rating } = body;
+    const { name, specialization, experience, fees, availability, rating, avatar } = body;
     
     // Process availability (ensure it is a stringified JSON array if provided as object/array)
     let processedAvailability = doctor.availability;
@@ -31,7 +31,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       experience: experience ?? doctor.experience,
       fees: fees ?? doctor.fees,
       availability: processedAvailability,
-      rating: rating ?? doctor.rating
+      rating: rating ?? doctor.rating,
+      avatar: avatar !== undefined ? avatar : doctor.avatar
     });
 
     return NextResponse.json({ success: true, data: doctor });

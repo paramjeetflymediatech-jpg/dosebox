@@ -205,26 +205,41 @@ function MedicinesCatalogContent() {
         <div className="w-full space-y-8">
           
           {/* CATEGORIES NAVIGATION */}
-          <div className="flex overflow-x-auto scrollbar-hide pb-2 gap-3 -mx-4 px-4 md:mx-0 md:px-0">
-            <button
-              onClick={() => { setSelectedCategory(''); setCurrentPage(1); }}
-              className={`flex-shrink-0 px-6 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
-                !selectedCategory ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              All Medicines
-            </button>
-            {categories.map((cat) => (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Browse by Category
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-3 items-center">
               <button
-                key={cat.id}
-                onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
-                className={`flex-shrink-0 px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
-                  selectedCategory === cat.slug ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                onClick={() => { setSelectedCategory(''); setCurrentPage(1); }}
+                className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
+                  !selectedCategory ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {cat.name}
+                All Medicines
               </button>
-            ))}
+              {categories.slice(0, 7).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
+                  className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
+                    selectedCategory === cat.slug ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+              <Link
+                href="/condition"
+                className="px-6 py-2.5 rounded-full font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all flex items-center gap-1"
+              >
+                More Categories
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
           {/* 2. PRODUCT GRID */}

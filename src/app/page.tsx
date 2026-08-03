@@ -53,12 +53,27 @@ interface Category {
   image: string;
 }
 
+interface Doctor {
+  id: number;
+  name: string;
+  specialization: string;
+  experience: number;
+  avatar: string;
+  fees: number;
+  availability: string;
+  rating: number;
+}
+
 export default function HomePage() {
   const { addToCart } = useCart();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [trending, setTrending] = useState<Medicine[]>([]);
   const [recommendations, setRecommendations] = useState<Medicine[]>([]);
+  const [homeDoctors, setHomeDoctors] = useState<Doctor[]>([
+    { id: 1, name: 'Dr. Arvinder Singh', specialization: 'General Physician', experience: 14, avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250', rating: 4.8, fees: 500, availability: '' },
+    { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250', rating: 4.9, fees: 600, availability: '' }
+  ]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -283,21 +298,23 @@ export default function HomePage() {
         );
       }
     }
-  }, { scope: containerRef, dependencies: [categories, trending, banners] });
+  }, { scope: containerRef, dependencies: [categories, trending, banners, homeDoctors] });
 
   // Load content
   useEffect(() => {
     async function loadData() {
       try {
-        const [banRes, catRes, medRes] = await Promise.all([
+        const [banRes, catRes, medRes, docRes] = await Promise.all([
           api.get('/admin/banners'),
           api.get('/medicines/categories'),
-          api.get('/medicines?limit=4')
+          api.get('/medicines?limit=4'),
+          api.get('/appointments/doctors')
         ]);
 
         if (banRes.data?.success) setBanners(banRes.data.data);
         if (catRes.data?.success) setCategories(catRes.data.data);
         if (medRes.data?.success) setTrending(medRes.data.data);
+        if (docRes.data?.success) setHomeDoctors(docRes.data.data);
       } catch (err) {
         console.warn('API error in homepage. Loading static fallbacks.');
         // Setup default fallbacks
@@ -310,6 +327,10 @@ export default function HomePage() {
           { id: 2, name: 'OTC Medicines', slug: 'otc-medicines', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250' },
           { id: 3, name: 'Vitamins & Supplements', slug: 'vitamins-supplements', image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=250' },
           { id: 4, name: 'Ayurveda & Herbs', slug: 'ayurveda-herbs', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=250' }
+        ]);
+        setHomeDoctors([
+          { id: 1, name: 'Dr. Arvinder Singh', specialization: 'General Physician', experience: 14, avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250', rating: 4.8, fees: 500, availability: '' },
+          { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250', rating: 4.9, fees: 600, availability: '' }
         ]);
       }
     }
@@ -997,12 +1018,17 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:items-center">
               <div className="flex -space-x-3 overflow-hidden">
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150" alt="" />
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=150" alt="" />
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150" alt="" />
+                {homeDoctors.slice(0, 3).map((doc, idx) => (
+                  <img 
+                    key={doc.id || idx} 
+                    className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" 
+                    src={doc.avatar || "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150"} 
+                    alt={doc.name} 
+                  />
+                ))}
               </div>
               <div className="text-xs sm:text-sm text-brand-100/90">
-                <span className="font-bold text-brand-300">12+ Certified Doctors</span> online right now
+                <span className="font-bold text-brand-300">{homeDoctors.length || 12}+ Certified Doctors</span> online right now
               </div>
             </div>
 
@@ -1023,31 +1049,20 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-4 mt-6">
-              <div className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" />
+              {homeDoctors.slice(0, 2).map((doc, idx) => (
+                <div key={doc.id || idx} className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0">
+                      <img src={doc.avatar || "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=100"} className="object-cover w-full h-full" alt={doc.name} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{doc.name}</h4>
+                      <p className="text-xxs text-brand-300 font-semibold">{doc.specialization} • {doc.experience} Yrs Exp</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-white">Dr. Arvinder Singh</h4>
-                    <p className="text-xxs text-brand-300 font-semibold">General Physician • 14 Yrs Exp</p>
-                  </div>
+                  <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all shrink-0">Book</Link>
                 </div>
-                <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all">Book</Link>
-              </div>
-
-              <div className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-white">Dr. Priya Ramachandran</h4>
-                    <p className="text-xxs text-brand-300 font-semibold">Dermatologist • 10 Yrs Exp</p>
-                  </div>
-                </div>
-                <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all">Book</Link>
-              </div>
+              ))}
             </div>
           </div>
         </div>
