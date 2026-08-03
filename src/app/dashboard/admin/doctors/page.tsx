@@ -22,7 +22,7 @@ export default function AdminDoctorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<any>(null);
@@ -171,22 +171,22 @@ export default function AdminDoctorsPage() {
     canvas.width = 300;
     canvas.height = 300;
     const ctx = canvas.getContext('2d');
-    
+
     if (ctx) {
       const img = new Image();
       img.onload = () => {
         // Clear canvas
         ctx.clearRect(0, 0, 300, 300);
-        
+
         // Move origin to center of canvas
         ctx.translate(150, 150);
         ctx.rotate((imageRotate * Math.PI) / 180);
         ctx.scale(imageZoom, imageZoom);
-        
+
         // Apply panning offset scaled from 192px container to 300px canvas
         const panScale = 300 / 192;
         ctx.translate((imagePanX * panScale) / imageZoom, (imagePanY * panScale) / imageZoom);
-        
+
         // Emulate CSS object-contain centering
         let drawW = 300;
         let drawH = 300;
@@ -207,16 +207,16 @@ export default function AdminDoctorsPage() {
           dx = -drawW / 2;
           dy = -150;
         }
-        
+
         ctx.drawImage(img, dx, dy, drawW, drawH);
-        
+
         // Upload cropped blob
         canvas.toBlob(async (blob) => {
           if (!blob) {
             setUploadingImage(false);
             return;
           }
-          
+
           try {
             const token = localStorage.getItem('accessToken');
             const file = new File([blob], 'doctor-avatar.jpg', { type: 'image/jpeg' });
@@ -302,7 +302,7 @@ export default function AdminDoctorsPage() {
     }
   };
 
-  const filteredDoctors = doctors.filter(doc => 
+  const filteredDoctors = doctors.filter(doc =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.specialization.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -317,7 +317,7 @@ export default function AdminDoctorsPage() {
           </h1>
           <p className="text-slate-500 text-sm mt-1">Add, edit, or remove doctors, specializations, and schedules.</p>
         </div>
-        <button 
+        <button
           onClick={() => openModal()}
           className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-colors shadow-md"
         >
@@ -330,9 +330,9 @@ export default function AdminDoctorsPage() {
         <div className="p-4 border-b border-slate-100">
           <div className="relative max-w-md">
             <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search doctors by name or specialization..." 
+            <input
+              type="text"
+              placeholder="Search doctors by name or specialization..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
@@ -389,13 +389,13 @@ export default function AdminDoctorsPage() {
                     <td className="px-6 py-4 font-bold text-slate-900">{Number(doctor.fees) === 0 ? 'Free' : `₹${doctor.fees}`}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => openModal(doctor)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(doctor.id)}
                           className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         >
@@ -409,10 +409,10 @@ export default function AdminDoctorsPage() {
             </tbody>
           </table>
         </div>
-        
+
         {filteredDoctors.length > itemsPerPage && (
           <div className="p-4 border-t border-slate-100">
-            <Pagination 
+            <Pagination
               currentPage={currentPage}
               totalPages={Math.ceil(filteredDoctors.length / itemsPerPage)}
               totalItems={filteredDoctors.length}
@@ -434,12 +434,12 @@ export default function AdminDoctorsPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              
+
               {/* Profile Image & Rating Row */}
               <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
-                <div 
+                <div
                   onClick={() => {
                     if (formData.avatar && !uploadingImage) {
                       setEditImageSrc(formData.avatar);
@@ -472,23 +472,23 @@ export default function AdminDoctorsPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1 w-full text-center sm:text-left space-y-2">
                   <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">Doctor Profile Picture</span>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <label className="bg-brand-50 hover:bg-brand-100 text-brand-700 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors border border-brand-100">
                       <UploadCloud className="w-3.5 h-3.5 inline mr-1.5" />
                       Upload Photo
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleFileSelect} 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
                       />
                     </label>
                     {formData.avatar && (
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setFormData(prev => ({ ...prev, avatar: '' }))}
                         className="text-slate-500 hover:text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50 rounded-xl transition-colors"
                       >
@@ -496,14 +496,14 @@ export default function AdminDoctorsPage() {
                       </button>
                     )}
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Or paste profile image URL directly..." 
-                    value={formData.avatar} 
-                    onChange={e => setFormData({...formData, avatar: e.target.value})}
+                  <input
+                    type="text"
+                    placeholder="Or paste profile image URL directly..."
+                    value={formData.avatar}
+                    onChange={e => setFormData({ ...formData, avatar: e.target.value })}
                     className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500"
                   />
-                  
+
                   {/* Preset Avatars Selection */}
                   <div className="pt-2">
                     <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Or choose a preset profile picture</span>
@@ -535,26 +535,26 @@ export default function AdminDoctorsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
-                  <input 
+                  <input
                     type="text" required
                     placeholder="e.g. Dr. Sameer Verma"
-                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                    value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization Category</label>
-                  <select 
-                    value={isCustomSpec ? 'Other' : formData.specialization} 
+                  <select
+                    value={isCustomSpec ? 'Other' : formData.specialization}
                     onChange={e => {
                       const val = e.target.value;
                       if (val === 'Other') {
                         setIsCustomSpec(true);
-                        setFormData({...formData, specialization: ''});
+                        setFormData({ ...formData, specialization: '' });
                       } else {
                         setIsCustomSpec(false);
-                        setFormData({...formData, specialization: val});
+                        setFormData({ ...formData, specialization: val });
                       }
                     }}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm bg-white"
@@ -569,11 +569,11 @@ export default function AdminDoctorsPage() {
                 {isCustomSpec && (
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Custom Specialization Name</label>
-                    <input 
+                    <input
                       type="text" required
                       placeholder="e.g. Cardiothoracic Surgeon"
-                      value={formData.specialization} 
-                      onChange={e => setFormData({...formData, specialization: e.target.value})}
+                      value={formData.specialization}
+                      onChange={e => setFormData({ ...formData, specialization: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
                     />
                   </div>
@@ -581,20 +581,20 @@ export default function AdminDoctorsPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Experience (Years)</label>
-                  <input 
+                  <input
                     type="number" required min="0" max="80"
                     placeholder="e.g. 15"
-                    value={formData.experience} onChange={e => setFormData({...formData, experience: parseInt(e.target.value) || 0})}
+                    value={formData.experience} onChange={e => setFormData({ ...formData, experience: parseInt(e.target.value) || 0 })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Consultation Fee (₹)</label>
-                  <input 
+                  <input
                     type="number" required min="0" step="50"
                     placeholder="e.g. 500"
-                    value={formData.fees} onChange={e => setFormData({...formData, fees: parseFloat(e.target.value) || 0})}
+                    value={formData.fees} onChange={e => setFormData({ ...formData, fees: parseFloat(e.target.value) || 0 })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
                   />
                   <p className="text-xxs text-slate-400 mt-1">Enter 0 to make this consultation free.</p>
@@ -604,10 +604,10 @@ export default function AdminDoctorsPage() {
                   <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1">
                     <Star className="w-4 h-4 text-amber-500 fill-current" /> Rating (1.0 - 5.0)
                   </label>
-                  <input 
+                  <input
                     type="number" required min="1" max="5" step="0.1"
                     placeholder="5.0"
-                    value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value) || 5.0})}
+                    value={formData.rating} onChange={e => setFormData({ ...formData, rating: parseFloat(e.target.value) || 5.0 })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
                   />
                 </div>
@@ -619,27 +619,25 @@ export default function AdminDoctorsPage() {
                   <Clock className="w-4 h-4 text-slate-500" />
                   Define Available Time Slots
                 </label>
-                
-                <div className="flex gap-2 mb-2">
-                  <input 
-                    type="text" 
+
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
                     placeholder="e.g. 09:00 AM, 04:30 PM, or 10:00 - 12:00"
-                    value={newSlot} 
+                    value={newSlot}
                     onChange={e => setNewSlot(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddSlot(); } }}
                     className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm"
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={handleAddSlot}
                     className="bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
                   >
                     Add Slot
                   </button>
                 </div>
-                <p className="text-xxs text-slate-400 mb-4">
-                  Example: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">09:00 AM</code>, <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">04:30 PM</code>, or <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">10:00 AM - 12:00 PM</code>
-                </p>
+
 
                 {/* Slots display */}
                 {slots.length === 0 ? (
@@ -651,13 +649,13 @@ export default function AdminDoctorsPage() {
                     <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5">Current Schedule ({slots.length} Slots)</span>
                     <div className="flex flex-wrap gap-2">
                       {slots.map((slot, index) => (
-                        <div 
+                        <div
                           key={index}
                           className="bg-white border border-slate-200 text-slate-700 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:border-rose-300 transition-colors"
                         >
                           <span>{slot}</span>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={() => handleRemoveSlot(index)}
                             className="w-4 h-4 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors font-bold text-[10px] shrink-0"
                           >
@@ -690,8 +688,8 @@ export default function AdminDoctorsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-100 flex flex-col items-center space-y-6">
             <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-800 text-lg">Adjust Profile Picture</h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setEditorOpen(false)}
                 className="text-slate-400 hover:bg-slate-100 p-1.5 rounded-full transition-colors"
               >
@@ -702,7 +700,7 @@ export default function AdminDoctorsPage() {
             {/* Circular Preview Container */}
             <div className="text-center w-full ">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">Drag photo inside circle to position</span>
-              <div 
+              <div
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -713,9 +711,9 @@ export default function AdminDoctorsPage() {
                 className="w-48 h-48 rounded-full border-4 border-slate-200 shadow-inner overflow-hidden relative bg-slate-50 cursor-move mx-auto select-none"
               >
                 {editImageSrc && (
-                  <img 
-                    src={editImageSrc} 
-                    alt="Editor Preview" 
+                  <img
+                    src={editImageSrc}
+                    alt="Editor Preview"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
                     style={{
                       transform: `translate(${imagePanX}px, ${imagePanY}px) scale(${imageZoom}) rotate(${imageRotate}deg)`
@@ -733,11 +731,11 @@ export default function AdminDoctorsPage() {
                   <span>Zoom Level</span>
                   <span>{imageZoom.toFixed(1)}x</span>
                 </div>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="3" 
-                  step="0.1" 
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
                   value={imageZoom}
                   onChange={e => setImageZoom(parseFloat(e.target.value))}
                   className="w-full accent-brand-600 cursor-pointer"
@@ -748,15 +746,15 @@ export default function AdminDoctorsPage() {
               <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200/50">
                 <span className="text-xs font-bold text-slate-600">Rotation</span>
                 <div className="flex gap-2">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setImageRotate(r => r - 90)}
                     className="bg-white hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 shadow-sm transition-colors"
                   >
                     Rotate Left
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setImageRotate(r => r + 90)}
                     className="bg-white hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 shadow-sm transition-colors"
                   >
@@ -768,15 +766,15 @@ export default function AdminDoctorsPage() {
 
             {/* Actions */}
             <div className="w-full flex gap-3 pt-3 border-t border-slate-100">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setEditorOpen(false)}
                 className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleApplyImage}
                 className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/10 transition-colors"
               >
