@@ -35,6 +35,7 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="dosebox" />
         </intent-filter>
+        <meta-data android:name="android.window.extensions.disableEdgeToEdge" android:value="true" />
       </activity>
     </application>
 </manifest>

@@ -7,6 +7,7 @@
         <!-- Prevent black screen on startup with New Architecture translucent window -->
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
 </resources>

@@ -16,6 +16,7 @@ import { API_URL } from '../../config/env';
 import { AlertService } from '../../services/AlertService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useCart } from '../../context/CartContext';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { getFullImageUrl } from '../../utils/image';
@@ -48,6 +49,7 @@ const getStatusColor = (status) => {
 };
 
 export default function ProceedScreen({ navigation }) {
+  const { addToCart } = useCart();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -109,6 +111,42 @@ export default function ProceedScreen({ navigation }) {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const handleOrderAgain = (order) => {
+    if (!order.items || order.items.length === 0) {
+      AlertService.show({ type: 'error', title: 'Error', message: 'No items found in this order.' });
+      return;
+    }
+
+    order.items.forEach((prod) => {
+      const med = prod.medicine;
+      if (!med) return;
+
+      const imageUri = getImg(prod);
+      const itemToAdd = {
+        id: med.id,
+        name: med.name,
+        price: Number(prod.price),
+        discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
+        prescriptionRequired: med.prescriptionRequired || false,
+        image: imageUri,
+        qty: 1
+      };
+
+      // Add to cart 'quantity' times to get correct quantity in cart
+      for (let i = 0; i < prod.quantity; i++) {
+        addToCart(itemToAdd, true);
+      }
+    });
+
+    AlertService.show({
+      type: 'success',
+      title: 'Cart Updated',
+      message: 'All items added to cart! Redirecting to checkout...'
+    });
+
+    navigation.navigate('CartCheckout');
   };
 
   const getImg = (item) => {
@@ -192,7 +230,16 @@ export default function ProceedScreen({ navigation }) {
                 ) : (
                   <Ionicons name="download-outline" size={18} color={C.success} style={{ marginRight: 6 }} />
                 )}
-                <Text style={styles.invoiceText}>{isDownloading ? 'Downloading...' : 'Download Invoice'}</Text>
+                <Text style={styles.invoiceText}>{isDownloading ? 'Downloading...' : ' Invoice'}</Text>
+              </TouchableOpacity>
+            )}
+            {(displayStatus === 'Delivered' || displayStatus.toLowerCase() === 'cancelled') && (
+              <TouchableOpacity 
+                style={styles.orderAgainBtn}
+                onPress={() => handleOrderAgain(item)}
+              >
+                <Ionicons name="refresh-outline" size={16} color={C.primary} style={{ marginRight: 6 }} />
+                <Text style={styles.orderAgainText}>Order Again</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -324,4 +371,20 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: rm(14), color: C.textSub, textAlign: 'center', lineHeight: 22, marginBottom: rv(24) },
   shopBtn: { backgroundColor: C.primary, paddingHorizontal: rs(28), paddingVertical: rv(16), borderRadius: 999, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   shopBtnText: { color: C.white, fontWeight: '700', fontSize: rm(15) },
+  orderAgainBtn: {
+    backgroundColor: C.primaryLight,
+    paddingHorizontal: rs(12),
+    paddingVertical: rv(6),
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: C.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orderAgainText: {
+    color: C.primary,
+    fontWeight: 'bold',
+    fontSize: rm(12)
+  },
 });

@@ -86,11 +86,10 @@ export default function UserRewardsScreen({ navigation }) {
       <View style={styles.headerBg}>
         <SafeAreaView edges={['top']} style={{ flex: 1 }}>
           <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{top:20, bottom:20, left:20, right:20}}>
-              <Ionicons name="arrow-back" size={24} color={C.white} />
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{top:16, bottom:16, left:16, right:16}}>
+              <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>My Rewards</Text>
-            <View style={{ width: 24 }} />
           </View>
         </SafeAreaView>
       </View>
@@ -155,12 +154,30 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingTop: rv(10),
   },
-  backBtn: { padding: rs(4) },
-  headerTitle: { fontSize: rm(18), fontWeight: '700', color: C.white, letterSpacing: 0.5 },
+  backBtn: { 
+    width: rs(40), 
+    height: rs(40), 
+    borderRadius: 999, 
+    backgroundColor: '#FFFFFF', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginRight: rs(12), 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.05, 
+    shadowRadius: 8, 
+    elevation: 2 
+  },
+  headerTitle: { 
+    flex: 1, 
+    fontSize: rm(22), 
+    fontWeight: '800', 
+    color: '#FFFFFF', 
+    letterSpacing: -0.5 
+  },
   
   contentWrap: { flex: 1, zIndex: 2, marginTop: rv(100) },
   

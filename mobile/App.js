@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import NetInfo from '@react-native-community/netinfo';

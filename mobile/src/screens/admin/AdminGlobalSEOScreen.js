@@ -1,4 +1,4 @@
-import Ionicons from 'react-native-vector-icons/Ionicons';
+﻿import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, FlatList, 
@@ -123,7 +123,7 @@ export default function AdminGlobalSEOScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Global SEO</Text>
         <View style={{ width: rm(24) }} />

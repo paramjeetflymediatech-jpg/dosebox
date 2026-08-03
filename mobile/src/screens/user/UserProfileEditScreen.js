@@ -131,7 +131,7 @@ export default function UserProfileEditScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{top:20, bottom:20, left:20, right:20}}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{top:16, bottom:16, left:16, right:16}}>
           <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Personal Information</Text>
@@ -293,14 +293,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingTop: rv(16),
-    paddingBottom: rv(12),
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    paddingVertical: rv(12),
+    backgroundColor: '#F8FAFC',
   },
-  backBtn: { marginRight: rs(12) },
-  headerTitle: { fontSize: rm(20), fontWeight: '700', color: '#0F172A', letterSpacing: -0.3 },
+  backBtn: { 
+    width: rs(40), 
+    height: rs(40), 
+    borderRadius: 999, 
+    backgroundColor: '#FFFFFF', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginRight: rs(12), 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.05, 
+    shadowRadius: 8, 
+    elevation: 2 
+  },
+  headerTitle: { 
+    flex: 1, 
+    fontSize: rm(22), 
+    fontWeight: '800', 
+    color: '#0F172A', 
+    letterSpacing: -0.5 
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   scrollContent: { padding: spacing.md, paddingBottom: rv(100) },
   card: {

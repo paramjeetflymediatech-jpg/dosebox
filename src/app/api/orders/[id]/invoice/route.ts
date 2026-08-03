@@ -218,6 +218,17 @@ New Delhi - 110066`;
         let totalQty = 0;
         let totalValue = 0;
 
+        const totalMRP = Number(order.totalAmount) || 0;
+        const totalDiscountSaved = Number(order.discountAmount) || 0;
+        const finalAmount = Number(order.finalAmount) || 0;
+        const gstAmount = Number(order.gstAmount) || 0;
+        const tokensUsed = Number(order.tokensUsed || 0);
+
+        const itemsTotalBilling = (order.items || []).reduce((sum: number, item: any) => sum + (Number(item.price) * item.quantity), 0);
+        const productDiscount = Math.max(0, totalMRP - itemsTotalBilling);
+        const couponDiscount = Math.max(0, totalDiscountSaved - productDiscount - tokensUsed);
+        const orderLevelDiscount = Math.max(0, totalDiscountSaved - productDiscount);
+
         if (order.items && order.items.length > 0) {
           order.items.forEach((item: any, idx: number) => {
             const medicine = item.medicine || {};
@@ -228,7 +239,17 @@ New Delhi - 110066`;
             totalValue += value;
             const mrpVal = Number(medicine.price || rate);
             const rateVal = Number(item.price);
-            const discountPct = mrpVal > rateVal ? Math.round(((mrpVal - rateVal) / mrpVal) * 100) : 0;
+            
+            const itemProductDiscount = Math.max(0, mrpVal - rateVal) * qty;
+            const itemProportionalCouponDiscount = itemsTotalBilling > 0 
+              ? (orderLevelDiscount * (rateVal * qty)) / itemsTotalBilling 
+              : 0;
+            const itemTotalDiscount = itemProductDiscount + itemProportionalCouponDiscount;
+            const itemTotalMRP = mrpVal * qty;
+            const discountPct = itemTotalMRP > 0 
+              ? Math.round((itemTotalDiscount / itemTotalMRP) * 100) 
+              : 0;
+            
             const mrp = mrpVal.toFixed(2); // Dynamic MRP
 
             doc.font('Helvetica').fontSize(8);
@@ -250,16 +271,6 @@ New Delhi - 110066`;
             y += 12;
           });
         }
-
-        const totalMRP = Number(order.totalAmount) || 0;
-        const totalDiscountSaved = Number(order.discountAmount) || 0;
-        const finalAmount = Number(order.finalAmount) || 0;
-        const gstAmount = Number(order.gstAmount) || 0;
-        const tokensUsed = Number(order.tokensUsed || 0);
-
-        const itemsTotalBilling = (order.items || []).reduce((sum: number, item: any) => sum + (Number(item.price) * item.quantity), 0);
-        const productDiscount = Math.max(0, totalMRP - itemsTotalBilling);
-        const couponDiscount = Math.max(0, totalDiscountSaved - productDiscount - tokensUsed);
 
         const baseTotal = totalMRP - totalDiscountSaved;
         let shippingFee = 0;

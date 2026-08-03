@@ -1,4 +1,4 @@
-import Ionicons from 'react-native-vector-icons/Ionicons';
+﻿import Ionicons from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import React, { useState, useEffect } from 'react';
 import { 
@@ -156,7 +156,7 @@ export default function AdminBannersScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Banners</Text>
         <View style={{ width: rm(24) }} />

@@ -315,9 +315,9 @@ export default function ConsultationsPage() {
                   </div>
                   {Number(selectedDoctor.fees) > 0 && (
                     <div className="flex justify-between text-slate-400">
-                      <span className="font-semibold">GST (18% inclusive):</span> 
+                      <span className="font-semibold">GST (5% inclusive):</span> 
                       <strong className="text-slate-800">
-                        ₹{formatCurrency((Number(selectedDoctor.fees) * 0.18))}
+                        ₹{formatCurrency((Number(selectedDoctor.fees) * 0.05))}
                       </strong>
                     </div>
                   )}

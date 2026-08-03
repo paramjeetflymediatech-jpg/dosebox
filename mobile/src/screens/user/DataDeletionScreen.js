@@ -55,8 +55,8 @@ export default function DataDeletionScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={rs(24)} color="#1E293B" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{top:16, bottom:16, left:16, right:16}}>
+            <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
           </TouchableOpacity>
         </View>
         <View style={styles.successContainer}>
@@ -82,11 +82,10 @@ export default function DataDeletionScreen({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={rs(24)} color="#1E293B" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{top:16, bottom:16, left:16, right:16}}>
+            <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Account Deletion</Text>
-          <View style={{ width: rs(40) }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -159,12 +158,33 @@ export default function DataDeletionScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingTop: rv(16), paddingBottom: rv(12),
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: rv(12),
+    backgroundColor: '#F8FAFC',
   },
-  backButton: { width: rs(40), height: rs(40), justifyContent: 'center', alignItems: 'flex-start' },
-  headerTitle: { fontSize: rm(18), fontWeight: '700', color: '#0F172A' },
+  backButton: { 
+    width: rs(40), 
+    height: rs(40), 
+    borderRadius: 999, 
+    backgroundColor: '#FFFFFF', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginRight: rs(12), 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.05, 
+    shadowRadius: 8, 
+    elevation: 2 
+  },
+  headerTitle: { 
+    flex: 1, 
+    fontSize: rm(22), 
+    fontWeight: '800', 
+    color: '#0F172A', 
+    letterSpacing: -0.5 
+  },
   content: { padding: spacing.md, paddingBottom: rv(40) },
   
   warningBox: {
