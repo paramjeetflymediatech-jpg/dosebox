@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Stethoscope, Star, CheckCircle, Video, MessageSquare, ShieldCheck, HeartPulse, Clock, Sparkles
+  Stethoscope, Star, CheckCircle, Video, ShieldCheck, HeartPulse, Clock, Sparkles, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
@@ -34,6 +34,7 @@ export default function ConsultationsPage() {
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingComplete, setBookingComplete] = useState(false);
   const [bookingError, setBookingError] = useState('');
+  const [activeImagePreview, setActiveImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDoctors() {
@@ -43,13 +44,8 @@ export default function ConsultationsPage() {
           setDoctors(res.data.data);
         }
       } catch (err) {
-        console.warn('Doctor list API loading failed. Loading fallback practitioners.');
-        // Set standard fallbacks
-        setDoctors([
-          { id: 1, name: 'Dr. Arvinder Singh', specialization: 'Diabetologist', experience: 14, fees: '500.00', availability: JSON.stringify(['09:00 AM', '11:00 AM', '04:00 PM', '06:00 PM']), rating: '4.8', avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250' },
-          { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, fees: '600.00', availability: JSON.stringify(['10:00 AM', '12:00 PM', '02:00 PM', '05:00 PM']), rating: '4.9', avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250' },
-          { id: 3, name: 'Dr. Rohan Mehra', specialization: 'Cardiologist', experience: 18, fees: '800.00', availability: JSON.stringify(['11:30 AM', '03:30 PM', '07:00 PM']), rating: '5.0', avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=250' }
-        ]);
+        console.error('Doctor list API loading failed:', err);
+        setDoctors([]);
       } finally {
         setLoading(false);
       }
@@ -94,10 +90,19 @@ export default function ConsultationsPage() {
     }
   };
 
-  const specializations = ['All', 'Diabetologist', 'Dermatologist', 'Cardiologist'];
+  const specializations = React.useMemo(() => {
+    const specs = new Set<string>();
+    doctors.forEach(doc => {
+      if (doc.specialization) {
+        specs.add(doc.specialization);
+      }
+    });
+    return ['All', ...Array.from(specs)];
+  }, [doctors]);
+
   const filteredDoctors = selectedSpecialization === 'All' 
     ? doctors 
-    : doctors.filter(d => d.specialization.includes(selectedSpecialization));
+    : doctors.filter(d => d.specialization === selectedSpecialization);
 
   if (bookingComplete) {
     return (
@@ -133,13 +138,20 @@ export default function ConsultationsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Banner Section */}
-        <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 mb-10 overflow-hidden relative border border-slate-800 shadow-xl">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="relative z-10 max-w-2xl">
-            <span className="text-brand-400 font-bold text-xxs uppercase tracking-widest flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Telemedicine agg</span>
-            <h1 className="text-2xl sm:text-4xl font-extrabold mt-3">Speak to Certified Doctors & Medical Advisors Online</h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-3 leading-relaxed">
-              Book digital appointments for consultations with general medicine, diabetes management experts, cardiologists and skin clinics. Secure, encrypted video sessions.
+        <div className="bg-gradient-to-r from-brand-900 via-slate-900 to-brand-950 text-white rounded-3xl p-8 sm:p-12 mb-10 overflow-hidden relative border border-brand-800/30 shadow-2xl">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-brand-500/15 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4" />
+          
+          <div className="relative z-10 max-w-2xl text-left">
+            <span className="bg-brand-500/20 text-brand-300 text-[10px] font-extrabold uppercase tracking-widest py-1.5 px-3.5 rounded-full border border-brand-500/30 inline-flex items-center gap-1.5 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-brand-300" /> 
+              DoseBox Tele-Health
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-black mt-6 tracking-tight leading-tight">
+              Speak to Certified <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-brand-200 to-emerald-300">Doctors & Specialists</span> Online
+            </h1>
+            <p className="text-brand-100/70 text-sm sm:text-base mt-4 leading-relaxed font-medium">
+              Book digital appointments for consultations with general medicine practitioners, diabetes experts, cardiologists, and skin specialists. 100% private and secure video sessions.
             </p>
           </div>
         </div>
@@ -181,10 +193,24 @@ export default function ConsultationsPage() {
                     onClick={() => { setSelectedDoctor(doc); setSelectedSlot(''); }}
                   >
                     <div className="flex gap-4">
-                      {/* Avatar */}
-                      <div className="w-16 h-16 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100">
+                      {/* Avatar (Click to preview full-screen) */}
+                      <div 
+                        onClick={(e) => {
+                          if (doc.avatar) {
+                            e.stopPropagation();
+                            setActiveImagePreview(doc.avatar);
+                          }
+                        }}
+                        className={`w-16 h-16 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100 relative group ${doc.avatar ? 'cursor-zoom-in' : ''}`}
+                        title={doc.avatar ? "Click to view full-screen" : undefined}
+                      >
                         {doc.avatar ? (
-                          <img src={doc.avatar} alt={doc.name} className="object-cover w-full h-full" />
+                          <>
+                            <img src={doc.avatar} alt={doc.name} className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <span className="text-[10px] text-white font-bold bg-slate-900/60 px-2 py-0.5 rounded-full backdrop-blur-sm border border-white/10">Zoom</span>
+                            </div>
+                          </>
                         ) : (
                           <Stethoscope className="w-8 h-8 text-brand-600 m-4" />
                         )}
@@ -205,7 +231,9 @@ export default function ConsultationsPage() {
                     <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-0 pt-4 sm:pt-0">
                       <div className="sm:text-right">
                         <span className="text-xxs text-slate-400 font-semibold uppercase tracking-wider block">Fees</span>
-                        <span className="font-black text-slate-800 text-sm sm:text-base">₹{formatCurrency(Number(doc.fees))}</span>
+                        <span className="font-black text-slate-800 text-sm sm:text-base">
+                          {Number(doc.fees) === 0 ? 'Free' : `₹${formatCurrency(Number(doc.fees))}`}
+                        </span>
                       </div>
                       <button className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs py-2 px-5 rounded-full shadow-md shadow-brand-500/10 transition-colors">
                         Select Slot
@@ -238,27 +266,13 @@ export default function ConsultationsPage() {
                   <span className="text-xxs text-slate-400 italic block">{selectedDoctor.specialization}</span>
                 </div>
 
-                {/* Consultation Type Selector */}
-                <div>
-                  <label className="block text-xxs font-bold uppercase tracking-wider text-slate-400 mb-2">Session Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setConsultationType('Video')}
-                      className={`py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${consultationType === 'Video' ? 'bg-brand-550 border-brand-600  shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 '}`}
-                    >
-                      <Video className="w-4 h-4" />
-                      Video Call
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConsultationType('Chat')}
-                      className={`py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${consultationType === 'Chat' ? 'bg-brand-550 border-brand-600  shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Private Chat
-                    </button>
-                  </div>
+                {/* Session Type (Static Video Call) */}
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between">
+                  <span className="text-xxs font-bold text-slate-500 uppercase tracking-wider">Session Type</span>
+                  <span className="bg-brand-50 text-brand-700 text-xxs font-bold px-3 py-1.5 rounded-full border border-brand-100 inline-flex items-center gap-1.5 shadow-sm">
+                    <Video className="w-3.5 h-3.5 text-brand-600" />
+                    Video Call
+                  </span>
                 </div>
 
                 {/* Slots grid */}
@@ -293,8 +307,20 @@ export default function ConsultationsPage() {
 
                 {/* Verify details */}
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xxs space-y-1">
-                  <div className="flex justify-between text-slate-400"><span className="font-semibold">Consulting Fees:</span> <strong className="text-slate-800">₹{formatCurrency(Number(selectedDoctor.fees))}</strong></div>
-                  <div className="flex justify-between text-slate-400"><span className="font-semibold">GST (18% inclusive):</span> <strong className="text-slate-800">₹{formatCurrency((Number(selectedDoctor.fees) * 0.18))}</strong></div>
+                  <div className="flex justify-between text-slate-400">
+                    <span className="font-semibold">Consulting Fees:</span> 
+                    <strong className="text-slate-800">
+                      {Number(selectedDoctor.fees) === 0 ? 'Free' : `₹${formatCurrency(Number(selectedDoctor.fees))}`}
+                    </strong>
+                  </div>
+                  {Number(selectedDoctor.fees) > 0 && (
+                    <div className="flex justify-between text-slate-400">
+                      <span className="font-semibold">GST (18% inclusive):</span> 
+                      <strong className="text-slate-800">
+                        ₹{formatCurrency((Number(selectedDoctor.fees) * 0.18))}
+                      </strong>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -315,6 +341,30 @@ export default function ConsultationsPage() {
         </div>
 
       </div>
+
+      {/* Lightbox Image Preview Modal */}
+      {activeImagePreview && (
+        <div 
+          onClick={() => setActiveImagePreview(null)}
+          className="fixed inset-0 bg-slate-955/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 cursor-zoom-out"
+        >
+          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-slate-900/50 flex items-center justify-center">
+            <button 
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setActiveImagePreview(null); }}
+              className="absolute top-4 right-4 bg-slate-950/60 hover:bg-slate-950/80 text-white p-2 rounded-full border border-white/10 transition-colors cursor-pointer z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={activeImagePreview} 
+              alt="Doctor Avatar Fullscreen" 
+              className="max-w-full max-h-[85vh] object-contain rounded-xl select-none"
+              onClick={(e) => e.stopPropagation()} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

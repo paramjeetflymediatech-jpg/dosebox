@@ -53,15 +53,53 @@ interface Category {
   image: string;
 }
 
+interface Doctor {
+  id: number;
+  name: string;
+  specialization: string;
+  experience: number;
+  avatar: string;
+  fees: number;
+  availability: string;
+  rating: number;
+}
+
 export default function HomePage() {
   const { addToCart } = useCart();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [trending, setTrending] = useState<Medicine[]>([]);
   const [recommendations, setRecommendations] = useState<Medicine[]>([]);
+  const [homeDoctors, setHomeDoctors] = useState<Doctor[]>([
+    { id: 1, name: 'Dr. Arvinder Singh', specialization: 'General Physician', experience: 14, avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250', rating: 4.8, fees: 500, availability: '' },
+    { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250', rating: 4.9, fees: 600, availability: '' }
+  ]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+
+  const [oncologyVal, setOncologyVal] = useState(0);
+  const [costsVal, setCostsVal] = useState(0);
+
+  useEffect(() => {
+    const duration = 2000;
+    const startTime = performance.now();
+
+    function animate(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = progress * (2 - progress);
+
+      setOncologyVal(Math.floor(ease * 80));
+      setCostsVal(Math.floor(ease * 18));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }, []);
 
   // Shelf search & filter state
   const [shelfSearch, setShelfSearch] = useState('');
@@ -283,21 +321,23 @@ export default function HomePage() {
         );
       }
     }
-  }, { scope: containerRef, dependencies: [categories, trending, banners] });
+  }, { scope: containerRef, dependencies: [categories, trending, banners, homeDoctors] });
 
   // Load content
   useEffect(() => {
     async function loadData() {
       try {
-        const [banRes, catRes, medRes] = await Promise.all([
+        const [banRes, catRes, medRes, docRes] = await Promise.all([
           api.get('/admin/banners'),
           api.get('/medicines/categories'),
-          api.get('/medicines?limit=4')
+          api.get('/medicines?limit=4'),
+          api.get('/appointments/doctors')
         ]);
 
         if (banRes.data?.success) setBanners(banRes.data.data);
         if (catRes.data?.success) setCategories(catRes.data.data);
         if (medRes.data?.success) setTrending(medRes.data.data);
+        if (docRes.data?.success) setHomeDoctors(docRes.data.data);
       } catch (err) {
         console.warn('API error in homepage. Loading static fallbacks.');
         // Setup default fallbacks
@@ -310,6 +350,10 @@ export default function HomePage() {
           { id: 2, name: 'OTC Medicines', slug: 'otc-medicines', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250' },
           { id: 3, name: 'Vitamins & Supplements', slug: 'vitamins-supplements', image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=250' },
           { id: 4, name: 'Ayurveda & Herbs', slug: 'ayurveda-herbs', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=250' }
+        ]);
+        setHomeDoctors([
+          { id: 1, name: 'Dr. Arvinder Singh', specialization: 'General Physician', experience: 14, avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250', rating: 4.8, fees: 500, availability: '' },
+          { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250', rating: 4.9, fees: 600, availability: '' }
         ]);
       }
     }
@@ -373,118 +417,167 @@ export default function HomePage() {
 
   return (
     <div className="relative" ref={containerRef}>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) rotate(12deg); }
+          50% { transform: translateY(-12px) rotate(14deg); }
+        }
+        @keyframes float-medium {
+          0%, 100% { transform: translateY(0px) rotate(-12deg); }
+          50% { transform: translateY(-8px) rotate(-10deg); }
+        }
+        .animate-float-slow {
+          animation: float-slow 6s ease-in-out infinite;
+        }
+        .animate-float-medium {
+          animation: float-medium 4s ease-in-out infinite;
+        }
+      `}} />
 
       {/* 1. HERO SECTION */}
-      <section ref={heroRef} className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 flex flex-col lg:flex-row items-center justify-between gap-12">
-        <div className="lg:w-1/2 flex flex-col items-start text-left">
-          <div className="bg-brand-50 text-brand-700 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 py-1.5 rounded-full flex items-center gap-2 mb-6 border border-brand-100 shadow-sm">
-            <Activity className="w-3.5 h-3.5" /> DoseBox Specialty Smart Pharmacy
-          </div>
+      <section ref={heroRef} className="relative w-full overflow-hidden bg-gradient-to-br from-[#f0f9fb] via-[#e5f5f7] to-[#f0f9fb] border-b border-brand-100 py-16 lg:py-24">
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mb-6">
-            Specialty Medicines, <span className="text-brand-600">Up To 85% Off.</span>
+        {/* BACKGROUND ILLUSTRATIONS (LEFT SIDE) */}
+        <div className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 w-[28%] sm:w-[22%] lg:w-[15%] h-[80%] flex flex-col justify-between pointer-events-none z-0 opacity-25 sm:opacity-45 lg:opacity-100 transition-opacity duration-300">
+          <img src="/hero/medicine_pills-Photoroom.png" alt="" className="w-10 h-10 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain rotate-12 self-start animate-float-slow" />
+          <img src="/hero/100722business_2434-Photoroom.png" alt="" className="w-full h-auto max-h-36 sm:max-h-52 lg:max-h-64 object-contain drop-shadow-xl self-center" />
+          <img src="/hero/0e012660-38ad-4ee4-aa1c-af35b66a03c7-Photoroom.png" alt="" className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 object-contain -rotate-12 self-end animate-float-medium" />
+        </div>
+
+        {/* BACKGROUND ILLUSTRATIONS (RIGHT SIDE) */}
+        <div className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 w-[28%] sm:w-[22%] lg:w-[18%] h-[80%] flex flex-col justify-between items-end pointer-events-none z-0 opacity-25 sm:opacity-45 lg:opacity-100 transition-opacity duration-300">
+          <div className="flex gap-4 items-start">
+            <img src="/hero/83af8131-a85d-4670-874d-a03fcf5ac146-Photoroom.png" alt="" className="w-12 h-12 sm:w-20 sm:h-20 lg:w-28 lg:h-28 object-contain animate-float-medium" />
+          </div>
+          <img src="/hero/ChatGPT Image Aug 3, 2026, 12_41_35 PM-Photoroom.png" alt="" className="w-full h-auto max-h-36 sm:max-h-52 lg:max-h-72 object-contain drop-shadow-xl" />
+          <div className="flex gap-4 items-end">
+            <img src="/hero/222993f1-5587-45ad-8ffb-e3ba82b55161-Photoroom.png" alt="" className="w-10 h-10 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain rotate-12 animate-float-slow" />
+            <img src="/hero/70-Photoroom.png" alt="" className="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 object-contain" />
+          </div>
+        </div>
+
+        {/* CENTRAL HERO CONTENT */}
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-20 flex flex-col items-center text-center">
+
+          {/* <div className="bg-brand-100/80 text-brand-800 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 py-1.5 rounded-full flex items-center gap-2 mb-6 border border-brand-200/50 shadow-sm backdrop-blur-sm">
+            <Activity className="w-3.5 h-3.5 text-brand-600" /> DoseBox Specialty Smart Pharmacy
+          </div> */}
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.15] tracking-tight mb-6 max-w-3xl">
+            Specialty Medicines, <br className="hidden sm:inline" />
+            <span className="text-brand-600">Up To 85% Off.</span>
           </h1>
 
-          <p className="text-slate-500 text-base sm:text-lg max-w-lg leading-relaxed mb-8 font-medium">
-            DoseBox is India's digital super-specialty pharmacy. Find life-saving oncology, kidney, and transplant medications with absolute cold-chain logistics, certified WHO-GMP distribution logs, and deep price transparency.
+          <p className="text-slate-600 text-base sm:text-lg max-w-xl leading-relaxed mb-8 font-medium">
+            DoseBox is India's digital super-specialty pharmacy. Find life-saving oncology, kidney, and transplant medications with absolute cold-chain logistics and deep price transparency.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-10 text-xs font-bold text-slate-600">
-            <div className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-brand-500" /> 100% Bioequivalence</div>
+          {/* Centered Search Bar */}
+          {/* <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl bg-white p-2 rounded-2xl sm:rounded-full border border-slate-200 shadow-lg flex flex-col sm:flex-row items-center gap-2 mb-8">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-full text-xs font-semibold text-slate-500 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Deliver to 141001</span>
+            </div>
+            <div className="relative flex-1 w-full">
+              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search Medicines, Or Molecules..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-transparent text-sm focus:outline-none text-slate-800"
+              />
+            </div>
+            <button 
+              type="submit"
+              className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-8 rounded-xl sm:rounded-full text-sm transition-colors shadow-md"
+            >
+              Search
+            </button>
+          </form> */}
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-10">
+            <Link href="/upload-prescription" className="w-full sm:w-auto bg-[#E68A85] hover:bg-[#d9736a] text-white font-bold py-3.5 px-8 rounded-full transition-all flex items-center justify-center gap-2 shadow-md">
+              <Clipboard className="w-5 h-5" /> Upload Rx & Order
+            </Link>
+            <Link href="/medicines" className="w-full sm:w-auto bg-white hover:bg-slate-50 text-brand-700 font-bold py-3.5 px-8 rounded-full border border-slate-200 transition-all flex items-center justify-center gap-2 shadow-sm">
+              <Pill className="w-5 h-5" /> Browse Specialties
+            </Link>
+            <button 
+              type="button"
+              onClick={() => setShowCalculator(true)}
+              className="w-full sm:w-auto bg-[#E8F8F5] hover:bg-[#D1F2EB] text-brand-800 font-bold py-3.5 px-8 rounded-full border border-brand-200 transition-all flex items-center justify-center gap-2 shadow-sm"
+            >
+              <Sparkles className="w-4.5 h-4.5 text-amber-500 fill-amber-500" /> Launch Calculator
+            </button>
+          </div>
+
+          {/* Bento Badges List */}
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-slate-500 bg-white/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-slate-200/40">
+            <div className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-brand-600" /> 100% Bioequivalence</div>
             <div className="flex items-center gap-1.5"><ThermometerSnowflake className="w-4 h-4 text-accent" /> Cold Chain Validated</div>
             <div className="flex items-center gap-1.5"><FileCheck className="w-4 h-4 text-emerald-500" /> Patient Assistance (PAP)</div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <Link href="/upload-prescription" className="w-full sm:w-auto bg-brand-600  text-white font-bold py-3.5 px-8 rounded-full  transition-all flex items-center justify-center gap-2 bg-[#E68A85]">
-              <Clipboard className="w-5 h-5" /> Upload Rx & Order Specialty Drugs
-            </Link>
-
-            <Link href="/medicines" className="w-full sm:w-auto bg-[#E8F8F5] hover:bg-[#D1F2EB] text-brand-700 font-bold py-3.5 px-8 rounded-full border border-brand-200 transition-all flex items-center justify-center gap-2 shadow-sm">
-              <Pill className="w-5 h-5" /> Browse Specialties
-            </Link>
-
-
-          </div>
-        </div>
-
-        {/* HERO RIGHT BENTO CARD */}
-        <div className="lg:w-[45%] w-full">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
-
-            <div className="relative z-10">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Savings Simulator</div>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                High-Precision Therapy Savings
-                <Sparkles className="w-5 h-5 text-amber-400" />
-              </h3>
-
-              <div className="space-y-3 mb-8">
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 bg-white shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100">💊</div>
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase">Branded Drug</div>
-                      <div className="font-bold text-slate-700 text-sm">Vildagliptin 50mg</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] text-slate-400 font-bold uppercase">MRP</div>
-                    <div className="font-bold text-rose-500 text-sm line-through">₹245.00</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-brand-100 bg-brand-50 shadow-sm relative overflow-hidden">
-                  <div className="absolute right-0 top-0 bottom-0 w-1 bg-brand-500" />
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-600 border border-brand-100 shadow-sm">✨</div>
-                    <div>
-                      <div className="text-[10px] text-brand-600 font-bold uppercase">DoseBox Generic</div>
-                      <div className="font-bold text-brand-900 text-sm">VildaMac 50</div>
-                    </div>
-                  </div>
-                  <div className="text-right pr-3">
-                    <div className="text-[10px] text-brand-600 font-bold uppercase">DoseBox Price</div>
-                    <div className="font-black text-brand-700 text-base">₹55.00</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <div className="flex-1 flex flex-col">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Estimated Annual Savings</span>
-                  <span className="text-2xl font-black text-emerald-600">₹6,840.00</span>
-                </div>
-                <button onClick={() => setShowCalculator(true)} className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-6 rounded-xl transition-all text-sm whitespace-nowrap shadow-md shadow-brand-500/20">
-                  Launch Calculator <ArrowRight className="w-4 h-4 inline ml-1" />
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* 2. STATS STRIP */}
-      <section className="bg-brand-900 border-y-4 border-brand-600/30">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-white/10">
-            <div className="px-4">
-              <div className="text-2xl sm:text-3xl font-black text-white">80%+</div>
-              <div className="text-[9px] sm:text-[10px] font-bold text-brand-300 uppercase tracking-widest mt-1">ONCOLOGY SAVINGS RATE</div>
+      {/* 2. STATS CARDS SECTION */}
+      <section className="py-12 bg-[#0F667A] border-y border-slate-200/60 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,128,152,0.03),transparent_60%)] pointer-events-none" />
+
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+
+            {/* Card 1 */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 group">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{oncologyVal}%+</div>
+                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">ONCOLOGY SAVINGS</div>
+              </div>
             </div>
-            <div className="px-4">
-              <div className="text-2xl sm:text-3xl font-black text-white">₹18 Cr+</div>
-              <div className="text-[9px] sm:text-[10px] font-bold text-brand-300 uppercase tracking-widest mt-1">PATIENT COSTS SAVED</div>
+
+            {/* Card 2 */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 group">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">₹{costsVal} Cr+</div>
+                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">COSTS SAVED</div>
+              </div>
             </div>
-            <div className="px-4">
-              <div className="text-2xl sm:text-3xl font-black text-white">2-8°C</div>
-              <div className="text-[9px] sm:text-[10px] font-bold text-brand-300 uppercase tracking-widest mt-1">TEMPERATURE VERIFIED COLD CHAIN</div>
+
+            {/* Card 3 */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 group">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent-light/10 text-accent-dark flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ThermometerSnowflake className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5">
+                  <span>2°C - 8°C</span>
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                </div>
+                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">COLD CHAIN</div>
+              </div>
             </div>
-            <div className="px-4">
-              <div className="text-2xl sm:text-3xl font-black text-white">WHO-GMP</div>
-              <div className="text-[9px] sm:text-[10px] font-bold text-brand-300 uppercase tracking-widest mt-1">LICENSED GENERIC PHARMACIES</div>
+
+            {/* Card 4 */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 group">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Award className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">WHO-GMP</div>
+                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">LICENSED PHARMACIES</div>
+              </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -847,71 +940,71 @@ export default function HomePage() {
       </section>
 
       {/* 5. PERSONAL CARE ROUTINE */}
-      <section className="py-20">
+      <section className="py-16 sm:py-20">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Single contained dark card */}
-          <div className="relative rounded-3xl overflow-hidden bg-brand-900 p-8 sm:p-12 shadow-2xl">
+          <div className="relative rounded-3xl overflow-hidden bg-brand-900 p-6 sm:p-12 shadow-2xl">
             {/* Subtle gradient blobs */}
             <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-brand-400/15 rounded-full blur-[80px] translate-y-1/3 pointer-events-none" />
 
             <div className="relative z-10 flex flex-col lg:flex-row gap-10 lg:gap-16">
               {/* Left: header */}
-              <div className="lg:w-72 flex-shrink-0">
+              <div className="lg:w-72 flex-shrink-0 text-center lg:text-left flex flex-col items-center lg:items-start">
                 <span className="inline-flex items-center gap-1.5 bg-brand-950/40 border border-brand-800/30 text-brand-300 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
                   <Sparkles className="w-3 h-3" /> Specialty Health Sorter
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-4">
                   Find Your Personal Care Routine
                 </h2>
-                <p className="text-brand-200/80 text-sm leading-relaxed">
+                <p className="text-brand-200/80 text-sm leading-relaxed max-w-md lg:max-w-none">
                   Struggling to find the right vitamins, specialty nutrients, or natural palliative remedies? Check your support goal to see matched recommendations.
                 </p>
               </div>
 
               {/* Right: 2x2 compact cards */}
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Card 1 */}
-                <Link href="/medicines?category=anti-bacterials" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <Activity className="w-5 h-5" />
+                <Link href="/medicines?category=anti-bacterials" className="group flex items-start gap-3 sm:gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-3.5 sm:p-4 transition-all">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Activity className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">ANTI BACTERIALS</h3>
-                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Combat bacterial infections, promote healing, and protect your body against harmful microbes.</p>
+                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug">ANTI BACTERIALS</h3>
+                    <p className="text-slate-300/90 text-[11px] sm:text-xs mt-0.5 leading-relaxed line-clamp-2">Combat bacterial infections, promote healing, and protect your body against harmful microbes.</p>
                   </div>
                 </Link>
 
                 {/* Card 2 */}
-                <Link href="/medicines?category=anti-fungals" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
-                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <ActivitySquare className="w-5 h-5" />
+                <Link href="/medicines?category=anti-fungals" className="group flex items-start gap-3 sm:gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-3.5 sm:p-4 transition-all">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <ActivitySquare className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">ANTI FUNGALS</h3>
-                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Treat fungal infections, relieve itching, and restore healthy skin and nails.</p>
+                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug">ANTI FUNGALS</h3>
+                    <p className="text-slate-300/90 text-[11px] sm:text-xs mt-0.5 leading-relaxed line-clamp-2">Treat fungal infections, relieve itching, and restore healthy skin and nails.</p>
                   </div>
                 </Link>
 
                 {/* Card 3 */}
-                <Link href="/medicines?category=arthritis" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
-                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <Droplets className="w-5 h-5" />
+                <Link href="/medicines?category=arthritis" className="group flex items-start gap-3 sm:gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-3.5 sm:p-4 transition-all">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Droplets className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">ARTHRITIS</h3>
-                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Alleviate joint pain, reduce inflammation, and improve mobility for a better quality of life.</p>
+                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug">ARTHRITIS</h3>
+                    <p className="text-slate-300/90 text-[11px] sm:text-xs mt-0.5 leading-relaxed line-clamp-2">Alleviate joint pain, reduce inflammation, and improve mobility for a better quality of life.</p>
                   </div>
                 </Link>
 
                 {/* Card 4 */}
-                <Link href="/medicines?category=oncology" className="group flex items-center gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-4 transition-all">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <ThermometerSnowflake className="w-5 h-5" />
+                <Link href="/medicines?category=oncology" className="group flex items-start gap-3 sm:gap-4 bg-brand-950/40 hover:bg-brand-950/60 border border-brand-800/20 hover:border-brand-500/40 rounded-2xl p-3.5 sm:p-4 transition-all">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <ThermometerSnowflake className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm leading-snug">ONCOLOGY</h3>
-                    <p className="text-slate-300/90 text-xs mt-0.5 leading-relaxed line-clamp-2">Advanced care for cancer treatment, supporting recovery, and improving overall well-being.</p>
+                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug">ONCOLOGY</h3>
+                    <p className="text-slate-300/90 text-[11px] sm:text-xs mt-0.5 leading-relaxed line-clamp-2">Advanced care for cancer treatment, supporting recovery, and improving overall well-being.</p>
                   </div>
                 </Link>
               </div>
@@ -980,36 +1073,41 @@ export default function HomePage() {
       </section>
 
       {/* 6. CLINICAL CARE & ONLINE CONSULTATION CTA */}
-      <section ref={ctaRef} className="bg-brand-900 text-white py-20 overflow-hidden relative rounded-[3rem] mx-4 sm:mx-8 lg:mx-auto max-w-7xl my-12 shadow-2xl">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/25 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <span className="text-brand-300 font-bold text-xs uppercase tracking-widest flex items-center gap-1.5">
+      <section ref={ctaRef} className="bg-brand-900 text-white py-12 sm:py-20 overflow-hidden relative rounded-2xl sm:rounded-[3rem] mx-3 sm:mx-6 lg:mx-auto max-w-7xl my-12 shadow-2xl">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/25 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center text-center lg:text-left">
+          <div className="flex flex-col items-center lg:items-start">
+            <span className="text-brand-300 font-bold text-xs uppercase tracking-widest flex items-center gap-1.5 justify-center lg:justify-start">
               <Sparkles className="w-4 h-4" />
               Tele-Health Consultation
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-3 leading-tight">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white mt-3 leading-tight max-w-xl">
               Consult Top Verified Doctors & Specialists Online
             </h2>
             <p className="text-brand-200/80 text-sm sm:text-base mt-4 leading-relaxed max-w-lg">
               Get diagnostic reports, prescription sheets, and expert medical advice from General Physicians, Dermatologists, and Cardiologists in under 10 minutes via private video or chat sessions.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:items-center">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start">
               <div className="flex -space-x-3 overflow-hidden">
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150" alt="" />
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=150" alt="" />
-                <img className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover" src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150" alt="" />
+                {homeDoctors.slice(0, 3).map((doc, idx) => (
+                  <img
+                    key={doc.id || idx}
+                    className="inline-block h-10 w-10 rounded-full ring-2 ring-brand-900 object-cover"
+                    src={doc.avatar || "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150"}
+                    alt={doc.name}
+                  />
+                ))}
               </div>
-              <div className="text-xs sm:text-sm text-brand-100/90">
-                <span className="font-bold text-brand-300">12+ Certified Doctors</span> online right now
+              <div className="text-xs sm:text-sm text-brand-100/90 font-semibold">
+                <span className="font-bold text-brand-300">{homeDoctors.length || 12}+ Certified Doctors</span> online right now
               </div>
             </div>
 
-            <div className="mt-10">
+            <div className="mt-10 w-full sm:w-auto">
               <Link
                 href="/consultations"
-                className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-brand-500/20 text-sm tracking-wide transition-all inline-flex items-center gap-2"
+                className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-brand-500/20 text-sm tracking-wide transition-all inline-flex items-center justify-center gap-2"
               >
                 Book Consultation Now
                 <ArrowRight className="w-4 h-4" />
@@ -1017,37 +1115,26 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-brand-950/40 rounded-3xl p-6 border border-brand-800/30 shadow-2xl relative">
+          <div className="bg-brand-950/40 rounded-3xl p-5 sm:p-6 border border-brand-800/30 shadow-2xl relative w-full">
             <div className="absolute top-4 left-4 bg-brand-500/20 text-brand-300 text-xxs font-bold uppercase tracking-wider py-1 px-3 rounded-full border border-brand-500/30">
               Live clinic slots
             </div>
 
-            <div className="space-y-4 mt-6">
-              <div className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" />
+            <div className="space-y-4 mt-8">
+              {homeDoctors.slice(0, 2).map((doc, idx) => (
+                <div key={doc.id || idx} className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between gap-3 text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0">
+                      <img src={doc.avatar || "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=100"} className="object-cover w-full h-full" alt={doc.name} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{doc.name}</h4>
+                      <p className="text-xxs text-brand-300 font-semibold">{doc.specialization} • {doc.experience} Yrs Exp</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-white">Dr. Arvinder Singh</h4>
-                    <p className="text-xxs text-brand-300 font-semibold">General Physician • 14 Yrs Exp</p>
-                  </div>
+                  <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all shrink-0">Book</Link>
                 </div>
-                <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all">Book</Link>
-              </div>
-
-              <div className="bg-brand-950/60 p-4 rounded-2xl border border-brand-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=100" className="object-cover w-full h-full" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-white">Dr. Priya Ramachandran</h4>
-                    <p className="text-xxs text-brand-300 font-semibold">Dermatologist • 10 Yrs Exp</p>
-                  </div>
-                </div>
-                <Link href="/consultations" className="bg-brand-600 hover:bg-brand-500 text-white text-xxs font-bold py-1.5 px-3 rounded-full transition-all">Book</Link>
-              </div>
+              ))}
             </div>
           </div>
         </div>

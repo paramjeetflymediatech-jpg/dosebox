@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, specialization, experience, fees, availability, rating } = body;
+    const { name, specialization, experience, fees, availability, rating, avatar } = body;
     
     // Process availability (ensure it is a stringified JSON array if provided as object/array)
     let processedAvailability = '[]';
@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
       experience: experience || 0,
       fees: fees || 0,
       availability: processedAvailability,
-      rating: rating || 5.0
+      rating: rating || 5.0,
+      avatar: avatar || ''
     });
 
     return NextResponse.json({ success: true, data: doctor });

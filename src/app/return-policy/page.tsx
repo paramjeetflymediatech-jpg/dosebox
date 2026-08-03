@@ -1,160 +1,170 @@
 import React from 'react';
-import { RefreshCcw, AlertTriangle, HelpCircle, PackageX, BoxSelect, CalendarClock, Gift, ArrowRight } from 'lucide-react';
+import { RefreshCcw, HelpCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ReturnPolicyPage() {
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden py-12 sm:px-6 lg:px-8">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-amber-50 to-slate-50 pointer-events-none" />
-      <div className="absolute top-1/4 -right-64 w-96 h-96 bg-amber-200/20 rounded-full mix-blend-multiply filter blur-3xl opacity-60 pointer-events-none" />
-      <div className="absolute bottom-1/4 -left-64 w-96 h-96 bg-orange-200/20 rounded-full mix-blend-multiply filter blur-3xl opacity-60 pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden py-16 sm:px-6 lg:px-8">
+      {/* Decorative background gradients */}
+      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#fff7f0] via-[#f8fafc] to-slate-50 pointer-events-none" />
+      <div className="absolute top-1/4 -right-64 w-96 h-96 bg-amber-100/30 rounded-full mix-blend-multiply filter blur-3xl opacity-60 pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto relative z-10 space-y-8">
-        
-        {/* Breadcrumb / Navigation */}
-        <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-          <Link href="/" className="hover:text-amber-600 transition-colors">Home</Link>
-          <span className="text-slate-300">/</span>
-          <span className="text-slate-900">Return Policy</span>
+      <div className="max-w-[1000px] mx-auto relative z-10 px-4 sm:px-0">
+
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+            <Link href="/" className="hover:text-brand-600 transition-colors flex items-center gap-1">
+              <ArrowLeft className="w-4 h-4" /> Home
+            </Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900 font-semibold">Return & Refund Policy</span>
+          </div>
+          <span className="text-xs bg-amber-50 border border-amber-200 text-amber-850 font-semibold px-3.5 py-1 rounded-full">
+            Revised: August 3, 2026
+          </span>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-          
+        {/* Main Document Container */}
+        <div className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+
           {/* Header Section */}
-          <div className="bg-gradient-to-br from-amber-500 to-amber-700 px-8 py-12 relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 p-8 opacity-10">
-              <RefreshCcw className="w-64 h-64 transform rotate-12" />
+          <div className="border-b border-slate-100 px-8 py-12 bg-brand-900 text-white">
+            <div className="flex items-center gap-3 mb-4">
+              <RefreshCcw className="w-8 h-8 text-amber-400" />
+              <span className="text-amber-300 text-xs font-bold uppercase tracking-widest">DoseBox Quality & Safety Standard</span>
             </div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div>
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white mb-6 shadow-inner">
-                  <RefreshCcw className="w-8 h-8" />
-                </div>
-                <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-2">
-                  Return & Safety Policy
-                </h1>
-                <p className="text-amber-50 font-medium text-sm md:text-base max-w-lg leading-relaxed">
-                  Ensuring patient safety is our top priority. Due to the sensitive nature of pharmaceutical products, our return policy is strictly regulated.
-                </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 flex items-center gap-3 text-white">
-                <AlertTriangle className="w-5 h-5 text-amber-200" />
-                <span className="text-sm font-semibold tracking-wide">Last Updated: March 2024</span>
-              </div>
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-none mb-3">
+              Return, Replacement & Refund Policy
+            </h1>
+            <p className="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
+              To guarantee the clinical authenticity, safety, and cold-chain compliance of specialty oncology, nephrology, and transplant medications, all returns are governed by strict safety regulations.
+            </p>
           </div>
 
-          {/* Content Section */}
-          <div className="p-8 md:p-12 space-y-12">
-            
-            <section className="bg-rose-50/50 rounded-3xl p-6 md:p-8 border border-rose-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-bl from-rose-100 to-transparent rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              
-              <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="p-2 bg-rose-100 text-rose-600 rounded-xl border border-rose-200">
-                  <PackageX className="w-6 h-6" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Non-Returnable Items</h2>
-              </div>
+          {/* Detailed Document Content */}
+          <div className="p-8 sm:p-12 text-slate-650 space-y-10 text-sm sm:text-[15px] leading-relaxed animate-fade-in">
 
-              <div className="relative z-10">
-                <p className="text-[15px] text-slate-600 leading-relaxed font-medium mb-5">
-                  To ensure the safety and efficacy of medications for all our patients, we cannot accept returns for:
-                </p>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-start gap-3">
-                    <div className="w-2 h-2 mt-1.5 rounded-full bg-rose-500 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-slate-700 leading-relaxed">Opened or tampered packaging.</span>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-start gap-3">
-                    <div className="w-2 h-2 mt-1.5 rounded-full bg-rose-500 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-slate-700 leading-relaxed">Temperature-controlled medications (e.g., insulin) once leaving our facility.</span>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-start gap-3">
-                    <div className="w-2 h-2 mt-1.5 rounded-full bg-rose-500 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-slate-700 leading-relaxed">Any medication past 7 days from the delivery date.</span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <p className="italic text-slate-500 font-medium">
+              Important Notice: Due to health safety laws and clinical compliance guidelines, medicines cannot be treated like general consumer products. Please read our Return and Refund terms below.
+            </p>
 
-            <section>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
-                  <RefreshCcw className="w-6 h-6" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Acceptable Return Conditions</h2>
-              </div>
-              
-              <p className="text-[15px] text-slate-600 leading-relaxed font-medium mb-6">
-                Returns or replacements are only processed under the strictly monitored circumstances listed below.
+            <hr className="border-slate-100" />
+
+            {/* Section 1 */}
+            <section id="policy-overview" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                1. General Overview & Safety Protocol
+              </h2>
+              <p>
+                DoseBox maintains a strict quality check on all pharmaceutical products. Our supply chain conforms to WHO-GMP standards, ensuring medications are stored under climate-monitored conditions. Because we cannot monitor or verify storage conditions (such as temperature, moisture, and contamination risks) once a product leaves our custody, return options are legally restricted to prevent contaminated drugs from re-entering circulation.
               </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow group">
-                  <BoxSelect className="w-8 h-8 text-emerald-500 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="block font-bold text-slate-900 text-lg mb-2">Wrong Item Delivered</span>
-                  <span className="text-sm text-slate-600 font-medium">If the medicine delivered does not match your ordered prescription exactly.</span>
-                </div>
-                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow group">
-                  <AlertTriangle className="w-8 h-8 text-amber-500 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="block font-bold text-slate-900 text-lg mb-2">Damaged Packaging</span>
-                  <span className="text-sm text-slate-600 font-medium">If the product arrived with broken seals or signs of physical damage.</span>
-                </div>
-                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow group">
-                  <CalendarClock className="w-8 h-8 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="block font-bold text-slate-900 text-lg mb-2">Near Expiry</span>
-                  <span className="text-sm text-slate-600 font-medium">If the medicine has an expiration date of less than 3 months upon arrival.</span>
-                </div>
-              </div>
             </section>
 
-            <section className="bg-amber-50/50 rounded-3xl p-6 md:p-8 border border-amber-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-bl from-amber-100 to-transparent rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              
-              <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl border border-amber-200">
-                  <Gift className="w-6 h-6" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Reward Points Policy</h2>
+            {/* Section 2 */}
+            <section id="non-returnable" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                2. Strictly Non-Returnable Products
+              </h2>
+              <p>
+                The following products are strictly excluded from returns, exchanges, or replacements under any circumstance:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Cold-Chain Items (2°C - 8°C):</strong> Insulin, specialty oncology injections, vaccines, and monoclonal antibody therapies. Once these leave our temperature-controlled cold chain logistics packaging, they can never be returned.</li>
+                <li><strong>Opened or Partially Used Items:</strong> Any medicine box, bottle, or foil strip with broken safety seals, cut strips, or opened packages.</li>
+                <li><strong>Subsidized PAP Orders:</strong> Medicines obtained through Patient Assistance Programs (PAP) in coordination with pharmaceutical companies are non-refundable and non-exchangeable.</li>
+                <li><strong>Delayed Reports:</strong> Any request submitted after **7 days** from the verified delivery stamp.</li>
+              </ul>
+            </section>
+
+            {/* Section 3 */}
+            <section id="eligible-returns" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                3. Conditions for Eligible Returns & Replacements
+              </h2>
+              <p>
+                A customer is eligible to request a direct replacement or product swap only under the following situations:
+              </p>
+              <ul className="list-disc pl-6 space-y-3">
+                <li><strong>Wrong Item Delivered:</strong> The medicine name, composition, or brand delivered does not match the invoice or the validated prescription uploaded during ordering.</li>
+                <li><strong>Transit Damage:</strong> The bottle arrived broken, outer sealing is ruptured, or the cold-chain package was received completely thawed (with ice packs fully dissolved or temperature indicators showing out-of-range).</li>
+                <li><strong>Near Expiry:</strong> The remaining shelf life of the delivered medicine is less than **3 months** from the date of receipt (excluding items sold explicitly under discounted clearance labels with pre-stated expiry schedules).</li>
+              </ul>
+            </section>
+
+            {/* Section 4 */}
+            <section id="verification-window" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                4. Verification Window & Claim Requirements
+              </h2>
+              <p>
+                To request a return or replacement, you must raise a claim through the customer dashboard or via customer support within **7 days** of delivery. To ensure valid validation:
+              </p>
+              <ul className="list-decimal pl-6 space-y-2">
+                <li>Submit high-resolution photographs of the outer packaging, product boxes, batch numbers, and expiry stamps.</li>
+                <li>For damaged products, we highly recommend providing a short unboxing video showing the packaging condition at the moment of opening.</li>
+                <li>Our clinical distribution team will review the claim logs and confirm approval status within **48 hours**.</li>
+              </ul>
+            </section>
+
+            {/* Section 5 */}
+            <section id="wallet-refunds" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                5. Wallet Credit System (No Cash Refunds)
+              </h2>
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl my-4 text-xs sm:text-sm text-slate-800">
+                <strong>Refund Disclaimer:</strong> DoseBox does not offer direct cash or bank refunds for returned products. All approved return claims are credited directly to your DoseBox user profile as **Reward Wallet Points**.
               </div>
-              
-              <div className="relative z-10">
-                <p className="text-[15px] text-slate-700 leading-relaxed font-bold mb-4 bg-white p-4 rounded-xl border border-amber-200 shadow-sm inline-block">
-                  Important: We do not offer cash refunds. Instead, we have a rewarding points system.
-                </p>
-                <div className="grid md:grid-cols-3 gap-4 mt-2">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-start gap-2">
-                    <span className="text-amber-600 font-black text-xl">1 : ₹1</span>
-                    <h4 className="font-bold text-slate-900 text-sm">Base Rewards</h4>
-                    <span className="text-sm text-slate-600 font-medium leading-relaxed">Earn 1 point for every ₹1 spent on your orders.</span>
-                  </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-start gap-2">
-                    <span className="text-amber-600 font-black text-xl">+50</span>
-                    <h4 className="font-bold text-slate-900 text-sm">Bonus for ₹500</h4>
-                    <span className="text-sm text-slate-600 font-medium leading-relaxed">If your bill is exactly ₹500, receive an extra 50 bonus points.</span>
-                  </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-start gap-2">
-                    <span className="text-amber-600 font-black text-xl">+100</span>
-                    <h4 className="font-bold text-slate-900 text-sm">Bonus for &gt;₹500</h4>
-                    <span className="text-sm text-slate-600 font-medium leading-relaxed">If your bill exceeds ₹500, receive an extra 100 bonus points.</span>
-                  </div>
-                </div>
-              </div>
+              <p>
+                Wallet points are credited instantly upon claim approval. They hold perpetual validity and can be used to pay for any future medicines, prescriptions, or consultations.
+              </p>
+            </section>
+
+            {/* Section 6 */}
+            <section id="rewards-points" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                6. Reward Points Program Rules
+              </h2>
+              <p>
+                Every order placed on the DoseBox platform is subject to our loyalty program terms:
+              </p>
+              <ul className="list-disc pl-6 space-y-2.5">
+                <li><strong>Base Points:</strong> Earn <strong>1 Wallet Point</strong> for every ₹1 successfully spent.</li>
+                <li><strong>Bonus tier (₹500 exact bills):</strong> Receive an additional <strong>50 bonus points</strong> for orders totaling exactly ₹500.</li>
+                <li><strong>High-value tier (bills &gt; ₹500):</strong> Receive an additional <strong>100 bonus points</strong> for all orders exceeding ₹500 in value.</li>
+                <li><strong>Conversion:</strong> Points are converted at a flat rate of **1 point = ₹1** for order deductions.</li>
+              </ul>
+            </section>
+
+            {/* Section 7 */}
+            <section id="how-to-initiate" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                7. How to Initiate a Return Request
+              </h2>
+              <p>
+                If your order meets the eligibility criteria in Section 3, please complete the following steps:
+              </p>
+              <ol className="list-decimal pl-6 space-y-2">
+                <li>Go to the <Link href="/dashboard/customer" className="text-brand-600 font-bold hover:underline">Customer Dashboard</Link> and select "My Orders".</li>
+                <li>Find the target invoice and click "Request Replacement/Refund".</li>
+                <li>Select the reason (e.g. wrong drug, damaged) and upload your photos.</li>
+                <li>Pack the product securely in its original packaging box. A representative will inspect and collect the item.</li>
+              </ol>
             </section>
 
           </div>
-          
+
+          {/* Footer Redressal CTA */}
           <div className="bg-slate-50 border-t border-slate-100 p-8 text-center flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-slate-500 text-sm font-medium">Need to request a replacement?</p>
+            <div className="flex items-center gap-2 text-slate-655 font-medium text-sm">
+              <ShieldAlert className="w-5 h-5 text-brand-650" />
+              <span>Conforms to quality control and pharmaceutical safety policies.</span>
+            </div>
             <Link 
-              href="/dashboard/customer" 
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 font-semibold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
+              href="/contact" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 font-semibold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm text-sm"
             >
-              Go to My Orders
-              <ArrowRight className="w-4 h-4" />
+              Contact Support
             </Link>
           </div>
 
