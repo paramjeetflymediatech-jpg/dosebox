@@ -13,7 +13,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     const userAuth = await authenticateJWT(req);
     if (userAuth instanceof NextResponse) return userAuth;
 
-    const authCheck = authorizeRoles(userAuth, 'SuperAdmin', 'Admin', 'Pharmacist', 'Leadership');
+    const authCheck = authorizeRoles(userAuth, 'SuperAdmin', 'Admin', 'Pharmacist', 'Leadership', 'Medico', 'Doctor');
     if (authCheck instanceof NextResponse) return authCheck;
 
     const body = await req.json();
@@ -141,7 +141,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         });
 
         if (user.fcmToken) {
-          await sendPushNotification(user.fcmToken, title, msg, { orderId: String(order.id) });
+          await sendPushNotification(user.fcmToken, title, msg, { orderId: String(order.id) }, user.id);
         }
       }
     }

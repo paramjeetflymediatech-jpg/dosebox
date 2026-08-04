@@ -58,7 +58,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     // Only enforce owner/Admin check if not accessed via public share link
-    if (!isShared && Number(order.userId) !== Number(userAuth.id) && userAuth.roleName !== 'Admin') {
+    const isStaff = ['Admin', 'SuperAdmin', 'Pharmacist', 'Leadership', 'Medico', 'Doctor'].some(r => r.toLowerCase() === userAuth?.roleName?.trim().toLowerCase());
+    if (!isShared && Number(order.userId) !== Number(userAuth.id) && !isStaff) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 

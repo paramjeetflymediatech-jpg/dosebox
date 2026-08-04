@@ -22,7 +22,7 @@ if (!getApps().length) {
 /**
  * Send a push notification to a specific device via FCM Token
  */
-export async function sendPushNotification(token: string, title: string, body: string, data?: any) {
+export async function sendPushNotification(token: string, title: string, body: string, data?: any, userId?: number) {
   if (!getApps().length) {
     console.warn('Skipping push notification because Firebase Admin is not initialized.');
     return { success: false, error: 'Firebase not initialized' };
@@ -44,7 +44,28 @@ export async function sendPushNotification(token: string, title: string, body: s
     console.log('Successfully sent push notification:', response);
     return { success: true, response };
   } catch (error: any) {
-    console.error('Error sending push notification:', error);
-    return { success: false, error: error.message };
+    const isUnregistered = 
+      error.code === 'messaging/registration-token-not-registered' || 
+      error.errorInfo?.code === 'messaging/registration-token-not-registered' ||
+      error.message?.includes('NotRegistered') ||
+      error.message?.includes('UNREGISTERED');
+
+    if (isUnregistered) {
+      console.warn(`[FCM Push] Device token is no longer registered. Cleaning up stale token...`);
+      try {
+        const { User, MobileAuthUser } = require('../models');
+        if (userId) {
+          await User.update({ fcmToken: null }, { where: { id: userId } });
+        }
+        await User.update({ fcmToken: null }, { where: { fcmToken: token } });
+        await MobileAuthUser.update({ pushToken: null }, { where: { pushToken: token } });
+      } catch (dbErr) {
+        console.error('Failed to cleanup stale FCM token from DB:', dbErr);
+      }
+      return { success: false, error: 'Token not registered', isUnregistered: true };
+    }
+
+    console.error('Error sending push notification:', error.message || error);
+    return { success: false, error: error.message || error };
   }
 }
