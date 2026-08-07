@@ -31,6 +31,7 @@ interface MedicineDetails {
   storageInstructions?: string;
   papOffer?: string;
   packSize?: string;
+  hsnCode?: string;
   prescriptionRequired: boolean;
   price: number;
   discountPrice?: number;
@@ -217,8 +218,16 @@ function MedicineDetailsContent() {
                   <p className="text-sm font-semibold text-slate-800 line-clamp-2">{medicine.manufacturer || medicine.brand?.name || 'Unknown'}</p>
                 </div>
                 <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">HSN Code</h4>
+                  <p className="text-sm font-semibold text-slate-800">{medicine.hsnCode || 'N/A'}</p>
+                </div>
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage</h4>
                   <p className="text-sm font-semibold text-slate-800">{medicine.storageInstructions || 'Store in dry condition.'}</p>
+                </div>
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Pack Size</h4>
+                  <p className="text-sm font-semibold text-slate-800">{medicine.packSize || 'Standard'}</p>
                 </div>
               </div>
 

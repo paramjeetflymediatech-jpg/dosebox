@@ -80,6 +80,9 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
         <View style={styles.medRatingRow}>
           <Ionicons name="star" size={compact ? 8 : 10} color="#f6a041" />
           <Text style={[styles.medRatingText, compact && { fontSize: rm(9) }]}>4.8 (42)</Text>
+          {med.hsnCode ? (
+            <Text style={[styles.medRatingText, compact && { fontSize: rm(8) }, { marginLeft: 'auto', fontWeight: '700', color: C.primary }]}>HSN: {med.hsnCode}</Text>
+          ) : null}
         </View>
       </View>
 
