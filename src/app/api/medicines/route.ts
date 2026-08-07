@@ -7,10 +7,10 @@ import redisClient from '../../../config/redis';
 async function clearMedicinesCache() {
   if (redisClient.isOpen) {
     try {
-      const keys = await redisClient.keys('medicines:list:*');
+      const keys = await redisClient.keys('medicines:*');
       if (keys.length > 0) {
         await redisClient.del(keys);
-        console.log('[Redis] Cleared medicines list caches:', keys.length);
+        console.log('[Redis] Cleared medicines caches:', keys.length);
       }
     } catch (cacheErr) {
       console.warn('[Redis Cache Clear Failed]', cacheErr);

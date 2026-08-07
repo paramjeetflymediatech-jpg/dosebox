@@ -366,11 +366,14 @@ function MedicinesCatalogContent() {
                           
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{med.brand?.name || 'GENERIC'}</span>
-                            {med.hsnCode && (
-                              <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                                HSN: {med.hsnCode}
-                              </span>
-                            )}
+                            {(() => {
+                              const hsnVal = med.hsnCode || (med as any).hsn_code || (med as any).hsn;
+                              return hsnVal ? (
+                                <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 font-mono">
+                                  HSN: {hsnVal}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                           <h3 className="font-bold text-slate-900 text-sm mt-1 line-clamp-2 leading-snug">
                             <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
@@ -513,11 +516,14 @@ function MedicinesCatalogContent() {
                     <span className="inline-block bg-slate-100 text-slate-500 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full">
                       {quickViewMed.categoryDetail?.name || 'ONCOLOGY FORMULATION'}
                     </span>
-                    {quickViewMed.hsnCode && (
-                      <span className="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-slate-200">
-                        HSN: {quickViewMed.hsnCode}
-                      </span>
-                    )}
+                    {(() => {
+                      const quickHsn = quickViewMed.hsnCode || (quickViewMed as any).hsn_code || (quickViewMed as any).hsn;
+                      return quickHsn ? (
+                        <span className="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-slate-200 font-mono">
+                          HSN: {quickHsn}
+                        </span>
+                      ) : null;
+                    })()}
                   </div>
                   
                   <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">

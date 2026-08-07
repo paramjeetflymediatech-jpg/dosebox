@@ -219,7 +219,9 @@ function MedicineDetailsContent() {
                 </div>
                 <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">HSN Code</h4>
-                  <p className="text-sm font-semibold text-slate-800">{medicine.hsnCode || 'N/A'}</p>
+                  <p className="text-sm font-semibold text-slate-800 font-mono">
+                    {medicine.hsnCode || (medicine as any).hsn_code || (medicine as any).hsn || 'N/A'}
+                  </p>
                 </div>
                 <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage</h4>
