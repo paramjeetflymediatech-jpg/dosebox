@@ -46,7 +46,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       GoogleSignin.configure({
         webClientId: '680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com',
-        iosClientId: '73308780119-vglrnnd25gscer048ujmsa44sn0m9ouu.apps.googleusercontent.com',
+        iosClientId: '680555726982-6h74ml3b6pnc9d6m0ph3ffrnbsv5485m.apps.googleusercontent.com',
         offlineAccess: true,
       });
     } catch (e) {
@@ -112,7 +112,8 @@ export default function RegisterScreen({ navigation }) {
         AlertService.show({ type: 'error', title: 'Error', message: 'Play services not available or outdated.' });
       } else {
         console.error('Google Sign-In error:', error);
-        AlertService.show({ type: 'error', title: 'Google Sign-In Error', message: 'Failed to complete Google Login.' });
+        const errMsg = error?.message || error?.code || JSON.stringify(error) || 'Failed to complete Google Login.';
+        AlertService.show({ type: 'error', title: 'Google Sign-In Error', message: `Failed to complete Google Login: ${errMsg}` });
       }
     } finally {
       setLoading(false);
