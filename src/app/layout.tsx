@@ -57,6 +57,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <title>DoseBox.in | Specialty Smart Pharmacy</title>
         <meta name="description" content="India's digital super-specialty pharmacy. Save up to 85% on oncology, kidney, and transplant medicines." />
+        <link rel="icon" href="/favicon-512x512.png" sizes="512x512" type="image/png" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" sizes="512x512" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />

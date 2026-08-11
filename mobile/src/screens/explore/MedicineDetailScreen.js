@@ -160,6 +160,10 @@ export default function MedicineDetailScreen({ navigation, route }) {
             <Text style={styles.detailLabel}>Manufacturer:</Text>
             <Text style={styles.detailValue}>{medicine.brand?.name || 'Not specified'}</Text>
           </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>HSN Code:</Text>
+            <Text style={styles.detailValue}>{medicine.hsnCode || 'N/A'}</Text>
+          </View>
         </View>
 
         {/* ── DYNAMIC SECTIONS ── */}

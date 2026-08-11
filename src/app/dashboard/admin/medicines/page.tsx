@@ -14,6 +14,7 @@ interface Medicine {
   price: number;
   stock: number;
   prescriptionRequired: boolean;
+  hsnCode?: string;
   categoryDetail?: { name: string };
   brand?: { name: string };
   contentStatus?: string;
@@ -145,7 +146,7 @@ export default function AdminMedicinesPage() {
       });
       const sectionHeaders = Array.from(sectionTitles).map(t => `Section: ${t}`);
 
-      const headers = ['ID', 'Name', 'Generic Name', 'Brand', 'Category', 'Price', 'Stock', 'Prescription Required', 'Status', ...sectionHeaders];
+      const headers = ['ID', 'Name', 'Generic Name', 'Brand', 'Category', 'HSN Code', 'Price', 'Stock', 'Prescription Required', 'Status', ...sectionHeaders];
       
       const rows = finalExportData.map((m: any) => {
         const row = [
@@ -154,6 +155,7 @@ export default function AdminMedicinesPage() {
           `"${(m.genericName || '').replace(/"/g, '""')}"`,
           `"${(m.brand?.name || '').replace(/"/g, '""')}"`,
           `"${(m.categoryDetail?.name || '').replace(/"/g, '""')}"`,
+          `"${(m.hsnCode || '').replace(/"/g, '""')}"`,
           m.price,
           m.stock,
           m.prescriptionRequired ? 'Yes' : 'No',
@@ -282,6 +284,7 @@ export default function AdminMedicinesPage() {
                 <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-widest">
                   <th className="py-3 px-4 whitespace-nowrap">Name</th>
                   <th className="py-3 px-4 whitespace-nowrap">Brand / Category</th>
+                  <th className="py-3 px-4 whitespace-nowrap">HSN Code</th>
                   <th className="py-3 px-4 whitespace-nowrap">Price</th>
                   <th className="py-3 px-4 whitespace-nowrap">Stock</th>
                   <th className="py-3 px-4 whitespace-nowrap">Status</th>
@@ -303,6 +306,9 @@ export default function AdminMedicinesPage() {
                     <td className="py-4 px-4">
                       <div className="font-semibold text-slate-700">{med.brand?.name || '-'}</div>
                       <div className="text-xs text-slate-400 mt-0.5">{med.categoryDetail?.name || '-'}</div>
+                    </td>
+                    <td className="py-4 px-4 font-semibold text-slate-700">
+                      {med.hsnCode || '-'}
                     </td>
                     <td className="py-4 px-4 font-extrabold text-slate-900">
                       ₹{med.price}
@@ -381,10 +387,10 @@ export default function AdminMedicinesPage() {
                 <p className="font-bold mb-2">Supported Formats: CSV &amp; Excel (.xlsx/.xls)</p>
                 <p className="mb-2">Your file must include either our standard headers or the Client format headers.</p>
                 <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
-                  Client Format: BRAND NAME, COMPOSITION/SALT NAME, MARKETED BY, DOSEBOX RATE, MRP, PACK SIZE, PAP OFFER, STORAGE REQUIREMENT
+                  Client Format: BRAND NAME, COMPOSITION/SALT NAME, MARKETED BY, DOSEBOX RATE, MRP, PACK SIZE, PAP OFFER, STORAGE REQUIREMENT, HSN CODE
                 </code>
                 <code className="block bg-white p-2 rounded border border-blue-200 font-mono text-xs mb-2">
-                  Standard Format: name, genericName, price, packSize, papOffer, stock, categoryId, brandId, supplierId, images
+                  Standard Format: name, genericName, price, packSize, papOffer, stock, categoryId, brandId, supplierId, hsnCode, images
                 </code>
                 <p className="text-xs opacity-80">* For Client format, missing required fields like stock, categoryId, and brandId will be assigned defaults automatically.</p>
                 <p className="text-xs opacity-80 mt-1">For Excel: use the column headers in row 1. The first sheet will be imported.</p>

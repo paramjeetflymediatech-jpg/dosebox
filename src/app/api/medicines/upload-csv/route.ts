@@ -40,11 +40,16 @@ export async function POST(req: NextRequest) {
       return null;
     };
 
-    // --- Helper: is a row a medicine data row (first cell is a number S.No) ---
-    const isMedicineRow = (firstCell: string) => /^\d+$/.test(firstCell.trim());
-
-    // --- Helper: is this row the column-header row ---
-    const isHeaderRow = (rowStr: string) => rowStr.toLowerCase().includes('brand name');
+    // --- Helper: is this row a column-header row ---
+    const isHeaderRow = (rowStr: string) => {
+      const lower = rowStr.toLowerCase();
+      return (
+        lower.includes('brand name') ||
+        lower.includes('generic name') ||
+        lower.includes('composition') ||
+        (lower.includes('name') && (lower.includes('price') || lower.includes('mrp') || lower.includes('stock') || lower.includes('hsn') || lower.includes('rate') || lower.includes('brand') || lower.includes('category')))
+      );
+    };
 
     if (isExcel) {
       const arrayBuffer = await file.arrayBuffer();
@@ -58,6 +63,7 @@ export async function POST(req: NextRequest) {
 
       for (let i = 0; i < rawData.length; i++) {
         const row = rawData[i];
+        if (!row || row.every(c => !String(c ?? '').trim())) continue;
         const rowStr = row.map(c => String(c ?? '')).join('\t');
 
         // Detect category context rows
@@ -70,17 +76,22 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Skip rows with no headers yet or completely empty
-        if (currentHeaders.length === 0 || row.every(c => !c)) continue;
-
-        // Only process rows whose first cell is a number (S.No)
-        if (!isMedicineRow(String(row[0]))) continue;
+        // If headers not set yet, set current row as headers
+        if (currentHeaders.length === 0) {
+          currentHeaders = row.map(h => String(h).trim().toLowerCase());
+          continue;
+        }
 
         const rowDataObj: Record<string, string> = { _category: currentCategory };
         currentHeaders.forEach((h, index) => {
-          rowDataObj[h] = String(row[index] ?? '').trim();
+          if (h) rowDataObj[h] = String(row[index] ?? '').trim();
         });
-        rows.push(rowDataObj);
+
+        // Ensure row has at least some data values
+        const hasValues = Object.entries(rowDataObj).some(([k, v]) => k !== '_category' && v !== '');
+        if (hasValues) {
+          rows.push(rowDataObj);
+        }
       }
     } else {
       // Parse CSV
@@ -100,6 +111,7 @@ export async function POST(req: NextRequest) {
 
         const splitLine = (l: string) => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
         const cells = splitLine(line);
+        if (cells.every(c => !c.trim())) continue;
 
         // Detect header rows
         if (isHeaderRow(line)) {
@@ -107,12 +119,18 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        if (currentHeaders.length === 0) continue;
-        if (!isMedicineRow(cells[0])) continue;
+        if (currentHeaders.length === 0) {
+          currentHeaders = cells.map(h => h.toLowerCase());
+          continue;
+        }
 
         const rowData: Record<string, string> = { _category: currentCategory };
-        currentHeaders.forEach((h, index) => { rowData[h] = cells[index] || ''; });
-        rows.push(rowData);
+        currentHeaders.forEach((h, index) => { if (h) rowData[h] = cells[index] || ''; });
+
+        const hasValues = Object.entries(rowData).some(([k, v]) => k !== '_category' && v !== '');
+        if (hasValues) {
+          rows.push(rowData);
+        }
       }
     }
 
@@ -123,14 +141,17 @@ export async function POST(req: NextRequest) {
         const lowerKey = k.trim().toLowerCase().replace(/^"|"$/g, '');
         let mappedKey = lowerKey;
         
-        if (lowerKey === 'brand name') mappedKey = 'name';
-        else if (lowerKey === 'composition/salt name') mappedKey = 'genericname';
-        else if (lowerKey === 'marketed by') mappedKey = 'manufacturer';
-        else if (lowerKey === 'dosebox rate') mappedKey = 'discountprice';
-        else if (lowerKey === 'mrp') mappedKey = 'price';
-        else if (lowerKey === 'pack size') mappedKey = 'packsize';
-        else if (lowerKey === 'storage requirement') mappedKey = 'storageinstructions';
-        else if (lowerKey === 'pap offer') mappedKey = 'papoffer';
+        if (lowerKey === 'brand name' || lowerKey === 'medicine name' || lowerKey === 'product name') mappedKey = 'name';
+        else if (lowerKey === 'composition/salt name' || lowerKey === 'generic name' || lowerKey === 'genericname' || lowerKey === 'composition' || lowerKey === 'salt name') mappedKey = 'genericname';
+        else if (lowerKey === 'marketed by' || lowerKey === 'manufacturer' || lowerKey === 'brand') mappedKey = 'manufacturer';
+        else if (lowerKey === 'dosebox rate' || lowerKey === 'discount price' || lowerKey === 'discountprice' || lowerKey === 'offer price') mappedKey = 'discountprice';
+        else if (lowerKey === 'mrp' || lowerKey === 'price' || lowerKey === 'rate') mappedKey = 'price';
+        else if (lowerKey === 'pack size' || lowerKey === 'packsize' || lowerKey === 'packaging') mappedKey = 'packsize';
+        else if (lowerKey === 'storage requirement' || lowerKey === 'storageinstructions' || lowerKey === 'storage instructions' || lowerKey === 'storage') mappedKey = 'storageinstructions';
+        else if (lowerKey === 'pap offer' || lowerKey === 'papoffer' || lowerKey === 'pap') mappedKey = 'papoffer';
+        else if (lowerKey === 'hsn code' || lowerKey === 'hsn_code' || lowerKey === 'hsncode' || lowerKey === 'hsn code/sac' || lowerKey === 'hsn/sac' || lowerKey === 'hsn') mappedKey = 'hsncode';
+        else if (lowerKey === 'prescription required' || lowerKey === 'prescriptionrequired' || lowerKey === 'rx required' || lowerKey === 'rx') mappedKey = 'prescriptionrequired';
+        else if (lowerKey === 'category' || lowerKey === 'category name') mappedKey = 'category';
         
         normalizedRow[mappedKey] = v;
       });
@@ -138,6 +159,9 @@ export async function POST(req: NextRequest) {
       // Special case: copy genericname to composition if missing
       if (normalizedRow['genericname'] && !normalizedRow['composition']) {
         normalizedRow['composition'] = normalizedRow['genericname'];
+      }
+      if (normalizedRow['name'] && !normalizedRow['genericname']) {
+        normalizedRow['genericname'] = normalizedRow['name'];
       }
       
       // Defaults for missing required fields in client format
@@ -172,13 +196,13 @@ export async function POST(req: NextRequest) {
       return category.id;
     };
 
-    // Validation: only require name and price
+    // Validation: require name column
     if (rows.length > 0) {
       const firstRowKeys = Object.keys(rows[0]);
-      if (!firstRowKeys.includes('name') || !firstRowKeys.includes('price')) {
+      if (!firstRowKeys.includes('name')) {
         return NextResponse.json({
           success: false,
-          message: `File is missing required columns. Expected: name (BRAND NAME) and price (MRP).`
+          message: `File is missing required column: Name / BRAND NAME.`
         }, { status: 400 });
       }
     }

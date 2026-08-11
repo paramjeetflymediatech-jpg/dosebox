@@ -15,8 +15,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
     }
 
-    // Verify ownership or admin
-    if (Number(order.userId) !== Number(userAuth.id) && userAuth.roleName !== 'Admin' && userAuth.roleName !== 'Pharmacist') {
+    // Verify ownership or staff access
+    const isStaff = ['Admin', 'SuperAdmin', 'Pharmacist', 'Leadership', 'Medico', 'Doctor'].some(r => r.toLowerCase() === userAuth.roleName?.trim().toLowerCase());
+    if (Number(order.userId) !== Number(userAuth.id) && !isStaff) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 

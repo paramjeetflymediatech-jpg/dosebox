@@ -45,14 +45,21 @@ export const authenticateJWT = async (req: NextRequest): Promise<AuthenticatedUs
 };
 
 export const authorizeRoles = (user: AuthenticatedUser, ...allowedRoles: string[]): NextResponse | null => {
+  if (!user || !user.roleName) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Unauthorized: User role is missing' 
+    }, { status: 403 });
+  }
+
+  const userRoleLower = user.roleName.trim().toLowerCase();
+
   // SuperAdmin has access to everything
-  if (user.roleName === 'SuperAdmin') return null;
+  if (userRoleLower === 'superadmin') return null;
 
-  // Level 1: Admin, Level 2: Medico, Level 3: Leadership
-  // 'Medico' is used for pharmacists/doctors approving prescriptions.
-  // 'Leadership' is used for executive views and reports.
+  const allowedLower = allowedRoles.map(r => r.trim().toLowerCase());
 
-  if (!allowedRoles.includes(user.roleName)) {
+  if (!allowedLower.includes(userRoleLower)) {
     return NextResponse.json({ 
       success: false, 
       message: `Role '${user.roleName}' is unauthorized to access this resource. Required: [${allowedRoles.join(', ')}]` 
