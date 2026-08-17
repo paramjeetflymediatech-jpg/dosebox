@@ -53,8 +53,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Brands', href: '/dashboard/admin/brands', icon: Shield, allowRoles: ['Admin'] },
     { name: 'Suppliers', href: '/dashboard/admin/suppliers', icon: Truck, allowRoles: ['Admin'] },
     { name: 'Prescriptions', href: '/dashboard/admin/prescriptions', icon: FileText, allowRoles: ['Admin', 'Medico'] },
-    { name: 'Doctors', href: '/dashboard/admin/doctors', icon: Stethoscope, allowRoles: ['Admin', 'Leadership'] },
-    { name: 'Appointments', href: '/dashboard/admin/appointments', icon: Calendar, allowRoles: ['Admin'] },
+    // { name: 'Doctors', href: '/dashboard/admin/doctors', icon: Stethoscope, allowRoles: ['Admin', 'Leadership'] },  // CONSULT FEATURE DISABLED
+    // { name: 'Appointments', href: '/dashboard/admin/appointments', icon: Calendar, allowRoles: ['Admin'] },  // CONSULT FEATURE DISABLED
     { name: 'Blogs', href: '/dashboard/admin/blogs', icon: FileText, allowRoles: ['Admin'] },
     { name: 'FAQs', href: '/dashboard/admin/faqs', icon: HelpCircle, allowRoles: ['Admin'] },
     { name: 'Support Tickets', href: '/dashboard/admin/support', icon: HelpCircle, allowRoles: ['Admin', 'Leadership'] },

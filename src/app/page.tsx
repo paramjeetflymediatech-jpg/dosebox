@@ -327,17 +327,17 @@ export default function HomePage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [banRes, catRes, medRes, docRes] = await Promise.all([
+        const [banRes, catRes, medRes/* CONSULT_DISABLED , docRes */] = await Promise.all([
           api.get('/admin/banners'),
           api.get('/medicines/categories'),
           api.get('/medicines?limit=4'),
-          api.get('/appointments/doctors')
+          // api.get('/appointments/doctors')  // CONSULT FEATURE DISABLED
         ]);
 
         if (banRes.data?.success) setBanners(banRes.data.data);
         if (catRes.data?.success) setCategories(catRes.data.data);
         if (medRes.data?.success) setTrending(medRes.data.data);
-        if (docRes.data?.success) setHomeDoctors(docRes.data.data);
+        // if (docRes.data?.success) setHomeDoctors(docRes.data.data);  // CONSULT FEATURE DISABLED
       } catch (err) {
         console.warn('API error in homepage. Loading static fallbacks.');
         // Setup default fallbacks
@@ -351,10 +351,11 @@ export default function HomePage() {
           { id: 3, name: 'Vitamins & Supplements', slug: 'vitamins-supplements', image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=250' },
           { id: 4, name: 'Ayurveda & Herbs', slug: 'ayurveda-herbs', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=250' }
         ]);
-        setHomeDoctors([
-          { id: 1, name: 'Dr. Arvinder Singh', specialization: 'General Physician', experience: 14, avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250', rating: 4.8, fees: 500, availability: '' },
-          { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250', rating: 4.9, fees: 600, availability: '' }
-        ]);
+        // CONSULT FEATURE DISABLED
+        // setHomeDoctors([
+        //   { id: 1, name: 'Dr. Arvinder Singh', specialization: 'General Physician', experience: 14, avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250', rating: 4.8, fees: 500, availability: '' },
+        //   { id: 2, name: 'Dr. Priya Ramachandran', specialization: 'Dermatologist', experience: 10, avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250', rating: 4.9, fees: 600, availability: '' }
+        // ]);
       }
     }
     loadData();
@@ -1072,7 +1073,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. CLINICAL CARE & ONLINE CONSULTATION CTA */}
+      {/* 6. CLINICAL CARE & ONLINE CONSULTATION CTA — DISABLED */}
+      {/* CONSULT FEATURE DISABLED — uncomment to re-enable
       <section ref={ctaRef} className="bg-brand-900 text-white py-12 sm:py-20 overflow-hidden relative rounded-2xl sm:rounded-[3rem] mx-3 sm:mx-6 lg:mx-auto max-w-7xl my-12 shadow-2xl">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/25 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center text-center lg:text-left">
@@ -1139,6 +1141,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      CONSULT FEATURE DISABLED — end of commented section */}
 
       {/* 6.5. DOSEBOX MOBILE APP DOWNLOAD BANNER */}
       {/* <section className="py-20 bg-brand-900 border-t border-b border-brand-800/30 overflow-hidden relative">

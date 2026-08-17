@@ -176,7 +176,7 @@ export default function HomeScreen({ navigation }) {
 
   const quickLinks = [
     { id: 1, label: 'Medicines', icon: 'medical-outline', color: '#0F766E', bg: '#EEF8F6', route: 'ExploreTab' },
-    { id: 2, label: 'Consult', icon: 'chatbubbles-outline', color: '#B45309', bg: '#FFF7E6', route: 'UserConsultations' },
+    // { id: 2, label: 'Consult', icon: 'chatbubbles-outline', color: '#B45309', bg: '#FFF7E6', route: 'UserConsultations' },  // CONSULT FEATURE DISABLED
     { id: 3, label: 'Prescription', icon: 'document-text-outline', color: '#4338CA', bg: '#F0EEFF', route: 'UploadPrescription' },
     { id: 4, label: 'My Orders', icon: 'cube-outline', color: '#BE123C', bg: '#FFF0F0', route: 'Proceed' },
   ];

@@ -48,7 +48,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const tabs = [
     { id: '/account', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { id: '/account/prescriptions', label: 'My Prescriptions', icon: FileText },
-    { id: '/account/consultations', label: 'My Consultations', icon: Stethoscope },
+    // { id: '/account/consultations', label: 'My Consultations', icon: Stethoscope },  // CONSULT FEATURE DISABLED
     { id: '/account/rewards', label: 'Reward Points', icon: Sparkles },
     { id: '/account/addresses', label: 'Manage Addresses', icon: MapPin },
     { id: '/account/orders', label: 'My Orders', icon: ShoppingBag },

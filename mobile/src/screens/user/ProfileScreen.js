@@ -68,7 +68,7 @@ export default function ProfileScreen({ navigation }) {
 
   const menuItems = [
     { label: 'My Prescriptions', route: 'UserPrescriptions', icon: 'document-text', color: '#3b82f6', bgColor: '#eff6ff' },
-    { label: 'My Consultations', route: 'UserConsultations', icon: 'medkit', color: '#10b981', bgColor: '#ecfdf5' },
+    // { label: 'My Consultations', route: 'UserConsultations', icon: 'medkit', color: '#10b981', bgColor: '#ecfdf5' },  // CONSULT FEATURE DISABLED
     { label: 'Reward Points', route: 'UserRewards', icon: 'star', color: '#f59e0b', bgColor: '#fffbeb' },
     { label: 'Manage Addresses', route: 'UserAddresses', icon: 'location', color: '#8b5cf6', bgColor: '#f5f3ff' },
     { label: 'My Orders', route: 'Proceed', icon: 'cube', color: '#ec4899', bgColor: '#fdf2f8' },

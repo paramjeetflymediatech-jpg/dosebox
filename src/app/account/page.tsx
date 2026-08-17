@@ -13,7 +13,7 @@ export default function AccountDashboardPage() {
     orders: 0,
     prescriptions: 0,
     addresses: 0,
-    consultations: 0
+    consultations: 0  // CONSULT FEATURE DISABLED
   });
   const [currentTokens, setCurrentTokens] = useState(user?.doseboxTokens || 0);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,8 @@ export default function AccountDashboardPage() {
           api.get('/orders').catch(() => ({ data: { success: false } })),
           api.get('/prescriptions/customer').catch(() => ({ data: { success: false } })),
           api.get('/account/addresses').catch(() => ({ data: { success: false } })),
-          api.get('/account/appointments').catch(() => ({ data: { success: false } })),
+          // api.get('/account/appointments').catch(() => ({ data: { success: false } })),  // CONSULT FEATURE DISABLED
+          Promise.resolve({ data: { success: false } }),
           api.get('/account/profile').catch(() => ({ data: { success: false } }))
         ]);
         
@@ -33,7 +34,7 @@ export default function AccountDashboardPage() {
           orders: ordersRes.data?.success ? ordersRes.data.data.length : 0,
           prescriptions: prescRes.data?.success ? prescRes.data.data.length : 0,
           addresses: addrRes.data?.success ? addrRes.data.data.length : 0,
-          consultations: consultRes.data?.success ? consultRes.data.data.length : 0
+          consultations: 0  // CONSULT FEATURE DISABLED — was: consultRes.data?.success ? consultRes.data.data.length : 0
         });
         if (profileRes.data?.success) {
           setCurrentTokens(profileRes.data.data.doseboxTokens || 0);

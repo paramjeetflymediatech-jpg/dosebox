@@ -397,9 +397,11 @@ export default function POSPage() {
             <button className="flex items-center justify-center w-full py-3 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20" title="POS Dashboard">
               <Pill className="w-5 h-5" />
             </button>
+            {/* CONSULT FEATURE DISABLED
             <button className="flex items-center justify-center w-full py-3 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-slate-900/40 transition-colors" title="Clinic Appointments" onClick={() => router.push('/consultations')}>
               <ClipboardList className="w-5 h-5" />
             </button>
+            CONSULT FEATURE DISABLED */}
           </div>
         </div>
 
