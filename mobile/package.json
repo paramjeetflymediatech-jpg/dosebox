@@ -1,6 +1,6 @@
 {
   "name": "DoseboxMobile",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -8,7 +8,8 @@
     "snap": "./snap_app_store_screenshots.sh",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",

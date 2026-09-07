@@ -18,6 +18,7 @@ interface Medicine {
   categoryDetail?: { name: string };
   brand?: { name: string };
   contentStatus?: string;
+  isActive?: boolean;
 }
 
 export default function AdminMedicinesPage() {
@@ -36,7 +37,7 @@ export default function AdminMedicinesPage() {
   const loadMedicines = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/medicines?limit=10000&sortBy=nameAsc'); // Load all for admin to enable full client search & sort alphabetically
+      const res = await api.get('/medicines?limit=10000&sortBy=nameAsc&isActive=all'); // Load all for admin to enable full client search & sort alphabetically
       if (res.data?.success) {
         setMedicines(res.data.data);
       }
@@ -116,6 +117,61 @@ export default function AdminMedicinesPage() {
     } catch (err) {
       console.error('Failed to update status', err);
       Swal.fire('Error', 'Failed to update status', 'error');
+    }
+  };
+
+  const handleIsActiveChange = async (id: number, isActive: boolean) => {
+    try {
+      const res = await api.put(`/medicines/${id}`, { isActive });
+      if (res.data?.success) {
+        setMedicines(medicines.map(m => m.id === id ? { ...m, isActive } : m));
+        Swal.fire({
+          title: 'Visibility Updated',
+          text: `Medicine is now ${isActive ? 'Active' : 'Inactive'}`,
+          icon: 'success',
+          toast: true,
+          position: 'bottom-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    } catch (err) {
+      console.error('Failed to update visibility', err);
+      Swal.fire('Error', 'Failed to update visibility', 'error');
+    }
+  };
+
+  const handleBulkActiveState = async (makeActive: boolean) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Are you sure you want to make ALL medicines ${makeActive ? 'Active' : 'Inactive'}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: `Yes, make ${makeActive ? 'Active' : 'Inactive'}!`
+    });
+    if (!result.isConfirmed) return;
+    try {
+      setLoading(true);
+      // We will need a bulk endpoint, but for now we'll do individual requests, 
+      // or we can just create a bulk edit endpoint, or just loop through them if it's admin (which might be slow).
+      // Assuming a bulk put endpoint `/medicines/bulk` doesn't exist, we'll try it and if it fails, maybe we need to implement it.
+      // Let's implement bulk endpoint or loop. Loop might be slow for 10000 items. Let's do a fast Promise.all in batches.
+      const ids = filteredMedicines.map(m => m.id);
+      
+      const res = await api.post('/medicines/bulk-update', { ids, updates: { isActive: makeActive } });
+      if (res.data?.success) {
+         setMedicines(medicines.map(m => ids.includes(m.id) ? { ...m, isActive: makeActive } : m));
+         alert(`Successfully updated medicines to ${makeActive ? 'Active' : 'Inactive'}.`);
+      } else {
+         alert('Failed to update medicines.');
+      }
+    } catch (err) {
+      console.error('Failed to bulk update', err);
+      alert('Failed to bulk update medicines. Make sure backend supports bulk updates.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -225,6 +281,18 @@ export default function AdminMedicinesPage() {
         </h1>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
+            onClick={() => handleBulkActiveState(true)}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            Active All
+          </button>
+          <button
+            onClick={() => handleBulkActiveState(false)}
+            className="bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
+          >
+            Inactive All
+          </button>
+          <button
             onClick={handleDeleteAll}
             className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm whitespace-nowrap"
           >
@@ -323,7 +391,7 @@ export default function AdminMedicinesPage() {
                       <select 
                         value={med.contentStatus || 'Draft'}
                         onChange={(e) => handleStatusChange(med.id, e.target.value)}
-                        className={`text-xs font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-brand-500 cursor-pointer ${
+                        className={`text-xs font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-brand-500 cursor-pointer w-full mb-2 ${
                           med.contentStatus === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
                           med.contentStatus === 'Under Review' ? 'bg-amber-100 text-amber-800' :
                           med.contentStatus === 'Rejected' ? 'bg-rose-100 text-rose-800' :
@@ -334,6 +402,17 @@ export default function AdminMedicinesPage() {
                         <option value="Under Review">Under Review</option>
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
+                      </select>
+                      
+                      <select
+                        value={med.isActive !== false ? 'true' : 'false'}
+                        onChange={(e) => handleIsActiveChange(med.id, e.target.value === 'true')}
+                        className={`text-xs font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-brand-500 cursor-pointer w-full ${
+                          med.isActive !== false ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                        }`}
+                      >
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
                       </select>
                     </td>
                     <td className="py-4 px-4">

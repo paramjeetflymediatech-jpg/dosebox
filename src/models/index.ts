@@ -260,6 +260,7 @@ export interface MedicineAttributes {
   verifierName?: string;
   verifierRegNo?: string;
   isColdChain?: boolean;
+  isActive?: boolean;
 }
 export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttributes, 'id' | 'description' | 'sideEffects' | 'storageInstructions' | 'papOffer' | 'packSize' | 'discountPrice' | 'prescriptionRequired' | 'stock' | 'images' | 'isColdChain' | 'contentStatus' | 'aiModelUsed' | 'promptVersion' | 'lastReviewedAt' | 'hsnCode'>> implements MedicineAttributes {
   declare id: number;
@@ -289,6 +290,7 @@ export class Medicine extends Model<MedicineAttributes, Optional<MedicineAttribu
   declare verifierName?: string;
   declare verifierRegNo?: string;
   declare isColdChain?: boolean;
+  declare isActive?: boolean;
 }
 Medicine.init(
   {
@@ -319,6 +321,7 @@ Medicine.init(
     verifierName: { type: DataTypes.STRING, allowNull: true },
     verifierRegNo: { type: DataTypes.STRING, allowNull: true },
     isColdChain: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
   },
   { sequelize, modelName: 'Medicine', tableName: 'medicines', timestamps: true }
 );

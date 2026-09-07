@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     const includeSections = searchParams.get('includeSections') === 'true';
     const contentStatus = searchParams.get('contentStatus');
     const pap = searchParams.get('pap');
+    const isActiveParam = searchParams.get('isActive');
 
     const cacheKey = `medicines:list:${searchParams.toString()}`;
     
@@ -93,6 +94,10 @@ export async function GET(req: NextRequest) {
           { [Op.ne]: '' }
         ]
       };
+    }
+
+    if (isActiveParam !== 'all') {
+      whereClause.isActive = isActiveParam === 'false' ? false : true;
     }
 
     const includeOptions: any[] = [
