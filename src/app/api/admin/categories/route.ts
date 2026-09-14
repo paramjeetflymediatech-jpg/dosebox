@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
     const description = formData.get('description') as string;
+    const isActive = formData.get('isActive') === 'false' ? false : true;
     const imageFile = formData.get('image') as File | string | null;
 
     if (!name || !slug) {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       imagePath = imageFile;
     }
 
-    const category = await Category.create({ name, slug, description, image: imagePath });
+    const category = await Category.create({ name, slug, description, image: imagePath, isActive });
     return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating category:', error);

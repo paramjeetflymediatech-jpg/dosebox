@@ -182,13 +182,15 @@ export interface CategoryAttributes {
   slug: string;
   description?: string;
   image?: string;
+  isActive?: boolean;
 }
-export class Category extends Model<CategoryAttributes, Optional<CategoryAttributes, 'id' | 'description' | 'image'>> implements CategoryAttributes {
+export class Category extends Model<CategoryAttributes, Optional<CategoryAttributes, 'id' | 'description' | 'image' | 'isActive'>> implements CategoryAttributes {
   declare id: number;
   declare name: string;
   declare slug: string;
   declare description?: string;
   declare image?: string;
+  declare isActive: boolean;
 }
 Category.init(
   {
@@ -197,6 +199,7 @@ Category.init(
     slug: { type: DataTypes.STRING, allowNull: false, unique: true },
     description: { type: DataTypes.TEXT, allowNull: true },
     image: { type: DataTypes.STRING, allowNull: true },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
   },
   { sequelize, modelName: 'Category', tableName: 'categories', timestamps: true }
 );

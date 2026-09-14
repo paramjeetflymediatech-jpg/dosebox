@@ -51,12 +51,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
     const description = formData.get('description') as string;
+    const isActiveStr = formData.get('isActive');
     const imageFile = formData.get('image') as File | string | null;
 
     let updateData: any = {};
     if (name) updateData.name = name;
     if (slug) updateData.slug = slug;
     if (description !== null) updateData.description = description;
+    if (isActiveStr !== null) updateData.isActive = isActiveStr === 'false' ? false : true;
 
     if (imageFile && typeof imageFile !== 'string') {
       const bytes = await imageFile.arrayBuffer();

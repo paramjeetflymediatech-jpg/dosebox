@@ -14,6 +14,7 @@ interface Category {
   slug: string;
   description: string;
   image: string;
+  isActive?: boolean;
 }
 
 export default function AdminCategoriesPage() {
@@ -27,6 +28,7 @@ export default function AdminCategoriesPage() {
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   
@@ -56,6 +58,7 @@ export default function AdminCategoriesPage() {
     setSlug('');
     setDescription('');
     setIcon('');
+    setIsActive(true);
     setImageFile(null);
     setShowModal(true);
   };
@@ -66,6 +69,7 @@ export default function AdminCategoriesPage() {
     setSlug(cat.slug);
     setDescription(cat.description || '');
     setIcon(cat.image || '');
+    setIsActive(cat.isActive ?? true);
     setImageFile(null);
     setShowModal(true);
   };
@@ -98,6 +102,7 @@ export default function AdminCategoriesPage() {
       formData.append('name', name);
       formData.append('slug', slug);
       formData.append('description', description);
+      formData.append('isActive', isActive.toString());
       
       if (imageFile) {
         formData.append('image', imageFile);
@@ -166,7 +171,10 @@ export default function AdminCategoriesPage() {
                     <Tag className="w-6 h-6 text-slate-400" />
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${cat.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {cat.isActive !== false ? 'Active' : 'Inactive'}
+                  </span>
                   <button 
                     onClick={() => openEditModal(cat)} 
                     className="p-1.5 bg-slate-50 text-brand-600 hover:bg-brand-100 rounded-full transition-colors" 
@@ -278,6 +286,21 @@ export default function AdminCategoriesPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-white border border-slate-200 text-slate-900 text-sm font-semibold rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
                 ></textarea>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div className="relative">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">Category is Active</span>
+                </label>
               </div>
 
               <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
