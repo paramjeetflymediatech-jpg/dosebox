@@ -5,6 +5,7 @@ import { Category } from '../../../models';
 export async function GET() {
   try {
     const categories = await Category.findAll({
+      where: { isActive: true },
       order: [['name', 'ASC']]
     });
     return NextResponse.json({ success: true, data: categories }, { status: 200 });
