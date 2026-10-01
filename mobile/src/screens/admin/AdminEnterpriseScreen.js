@@ -128,7 +128,7 @@ export default function AdminEnterpriseScreen({ navigation }) {
               style={styles.input}
               value={formData.enterpriseLegalName}
               onChangeText={(txt) => setFormData(prev => ({ ...prev, enterpriseLegalName: txt }))}
-              placeholder="e.g. DoseBox Healthcare Pvt Ltd"
+              placeholder="e.g. Jagbir Pharmaceuticals Private Limited"
               placeholderTextColor="#94A3B8"
             />
 

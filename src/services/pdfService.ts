@@ -35,7 +35,7 @@ export class PdfService {
     doc
       .fillColor('#005c53')
       .fontSize(20)
-      .text('DoseBox Healthcare', 50, 45)
+      .text('jagbir pharmaceuticals private limited', 50, 45)
       .fontSize(10)
       .fillColor('#718096')
       .text('Enterprise Online Pharmacy & Diagnostics', 50, 68)

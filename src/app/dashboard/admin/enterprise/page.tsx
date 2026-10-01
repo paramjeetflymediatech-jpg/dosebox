@@ -163,7 +163,7 @@ export default function EnterpriseProfilePage() {
                   name="enterprise_legal_name"
                   value={settings.enterprise_legal_name}
                   onChange={handleChange}
-                  placeholder="e.g. DoseBox Healthcare Pvt Ltd"
+                  placeholder="e.g. Jagbir Pharmaceuticals Private Limited"
                   className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 focus:bg-white transition-colors"
                 />
               </div>
