@@ -179,7 +179,18 @@ export default function PrivacyPolicyPage() {
               </ul>
             </section>
 
-          
+            {/* Section 8 */}
+            <section id="grievance" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                8. Grievance Officer
+              </h2>
+              <p>
+                In accordance with the Information Technology Act 2000 and rules made there under, the name and contact details of the Grievance Officer are provided below:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Mobile Number:</strong> 9718541733</li>
+              </ul>
+            </section>
 
           </div>
 

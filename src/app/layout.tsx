@@ -706,8 +706,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <li><Link href="/medicines" className="hover:text-brand-300 transition-colors">Browse Chronic Brands</Link></li>
                 <li><Link href="/fda-guidelines" className="hover:text-brand-300 transition-colors">FDA Guidelines (India)</Link></li>
                 <li><Link href="/institutional-supply" className="hover:text-brand-300 transition-colors">Institutional Supply</Link></li>
+                <li><Link href="/terms-and-conditions" className="hover:text-brand-300 transition-colors">Terms and Conditions</Link></li>
                 <li><Link href="/privacy-policy" className="hover:text-brand-300 transition-colors">Privacy & HIPAA Compliance</Link></li>
-                <li><Link href="/return-policy" className="hover:text-brand-300 transition-colors">Return / Safety Policy</Link></li>
+                <li><Link href="/return-policy" className="hover:text-brand-300 transition-colors">Return, Refund & Shipping Policy</Link></li>
                 <li><Link href="/data-deletion" className="hover:text-brand-300 transition-colors">Account Deletion Request</Link></li>
               </ul>
             </div>

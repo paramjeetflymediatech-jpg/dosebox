@@ -115,6 +115,7 @@ export default function HomePage() {
   const [quickViewMed, setQuickViewMed] = useState<any>(null);
   const [qty, setQty] = useState(1);
   const [dynamicFaqs, setDynamicFaqs] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
   const [expandedReviews, setExpandedReviews] = useState<number[]>([]);
   const reviewSliderRef = useRef<HTMLDivElement>(null);
 
@@ -146,7 +147,21 @@ export default function HomePage() {
         console.error('Failed to load FAQs', err);
       }
     }
+
+    async function fetchTestimonials() {
+      try {
+        const res = await fetch('/api/testimonials');
+        const data = await res.json();
+        if (data.success) {
+          setTestimonials(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load testimonials', err);
+      }
+    }
+
     fetchFaqs();
+    fetchTestimonials();
   }, []);
 
   // Force scroll to top on mount
@@ -1293,14 +1308,13 @@ export default function HomePage() {
           </button>
 
           <div ref={reviewSliderRef} className="flex overflow-x-auto gap-6 snap-x snap-mandatory hide-scrollbar pb-6 pt-2">
-            {[
-              { author_name: "Rajesh Sharma", rating: 5, relative_time_description: "2 days ago", text: "Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly. Ordering chronic care diabetes drugs on DoseBox has saved me nearly ₹800 monthly compared to local physical stores. Prescription uploads were parsed instantly" },
-              { author_name: "Priyanka Sen", rating: 5, relative_time_description: "1 week ago", text: "The video consultation slot booking is extremely clean. I booked a skin specialist at 10 AM, had session at 10:15 AM, and had my medicines shipped by afternoon!" },
-              { author_name: "Amit Verma", rating: 5, relative_time_description: "2 weeks ago", text: "Extremely impressed by the GST compliance invoice layout. I need this to file company medical reimbursement. The PDF matches physical enterprise standards." }
-            ].map((review: any, idx) => {
+            {testimonials.length === 0 ? (
+              <div className="text-center w-full py-10 text-slate-400 font-medium">Loading testimonials...</div>
+            ) : (
+              testimonials.map((review: any, idx) => {
               const colors = ["bg-blue-100 text-blue-700", "bg-emerald-100 text-emerald-700", "bg-purple-100 text-purple-700"];
               const bgClass = colors[idx % colors.length];
-              const initial = review.author_name ? review.author_name.charAt(0).toUpperCase() : 'U';
+              const initial = review.authorName ? review.authorName.charAt(0).toUpperCase() : 'U';
 
               const isExpanded = expandedReviews.includes(idx);
               const text = review.text || '';
@@ -1330,21 +1344,21 @@ export default function HomePage() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-6">
-                    {review.profile_photo_url ? (
-                      <img src={review.profile_photo_url} alt={review.author_name} className="w-10 h-10 rounded-full" />
+                    {review.profileImage ? (
+                      <img src={review.profileImage} alt={review.authorName} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${bgClass}`}>
                         {initial}
                       </div>
                     )}
                     <div>
-                      <h5 className="font-bold text-slate-900 text-sm">{review.author_name}</h5>
-                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{review.relative_time_description}</span>
+                      <h5 className="font-bold text-slate-900 text-sm">{review.authorName}</h5>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{review.relativeTime}</span>
                     </div>
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
 
           <button onClick={() => scrollReviews('right')} className="absolute -right-2 md:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg border border-slate-100 items-center justify-center text-slate-400 hover:text-brand-600 hover:scale-110 transition-all z-10 hidden sm:flex opacity-0 group-hover:opacity-100">

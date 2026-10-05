@@ -1414,6 +1414,40 @@ MobileAuthUser.init(
 MobileAuthUser.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(MobileAuthUser, { foreignKey: 'userId', as: 'mobileDevices' });
 
+// ----------------------------------------------------
+// NEW: TESTIMONIAL
+// ----------------------------------------------------
+export interface TestimonialAttributes {
+  id: number;
+  authorName: string;
+  rating: number;
+  text: string;
+  relativeTime?: string;
+  profileImage?: string;
+  isActive: boolean;
+}
+export class Testimonial extends Model<TestimonialAttributes, Optional<TestimonialAttributes, 'id' | 'relativeTime' | 'profileImage' | 'isActive'>> implements TestimonialAttributes {
+  declare id: number;
+  declare authorName: string;
+  declare rating: number;
+  declare text: string;
+  declare relativeTime?: string;
+  declare profileImage?: string;
+  declare isActive: boolean;
+}
+Testimonial.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    authorName: { type: DataTypes.STRING, allowNull: false },
+    rating: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 5 },
+    text: { type: DataTypes.TEXT, allowNull: false },
+    relativeTime: { type: DataTypes.STRING, allowNull: true },
+    profileImage: { type: DataTypes.STRING, allowNull: true },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+  },
+  { sequelize, modelName: 'Testimonial', tableName: 'testimonials', timestamps: true }
+);
+
 DoseboxTokenTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(DoseboxTokenTransaction, { foreignKey: 'userId', as: 'tokenTransactions' });
 
@@ -1451,5 +1485,6 @@ export default {
   MobileAuthUser,
   DoseboxTokenTransaction,
   SupportTicket,
-  DataDeletionRequest
+  DataDeletionRequest,
+  Testimonial
 };

@@ -98,7 +98,7 @@ export default function ReturnPolicyPage() {
                 4. Verification Window & Claim Requirements
               </h2>
               <p>
-                To request a return or replacement, you must raise a claim through the customer dashboard or via customer support within **7 days** of delivery. To ensure valid validation:
+                We have a <strong>7 day</strong> return policy. To request a return or replacement, you must raise a claim through the customer dashboard or via customer support within <strong>7 days</strong> of delivery. To ensure valid validation:
               </p>
               <ul className="list-decimal pl-6 space-y-2">
                 <li>Submit high-resolution photographs of the outer packaging, product boxes, batch numbers, and expiry stamps.</li>
@@ -110,10 +110,10 @@ export default function ReturnPolicyPage() {
             {/* Section 5 */}
             <section id="wallet-refunds" className="space-y-4">
               <h2 className="text-xl font-extrabold text-slate-900">
-                5. Wallet Credit System (No Cash Refunds)
+                5. Refund Policy
               </h2>
               <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl my-4 text-xs sm:text-sm text-slate-800">
-                <strong>Refund Disclaimer:</strong> DoseBox does not offer direct cash or bank refunds for returned products. All approved return claims are credited directly to your DoseBox user profile as **Reward Wallet Points**.
+                <strong>Refunds:</strong> Approved refunds will be credited into your original payment methods within <strong>7 days</strong>.
               </div>
               <p>
                 Wallet points are credited instantly upon claim approval. They hold perpetual validity and can be used to pay for any future medicines, prescriptions, or consultations.
@@ -150,6 +150,19 @@ export default function ReturnPolicyPage() {
                 <li>Select the reason (e.g. wrong drug, damaged) and upload your photos.</li>
                 <li>Pack the product securely in its original packaging box. A representative will inspect and collect the item.</li>
               </ol>
+              <p className="mt-4 font-semibold text-brand-700">
+                Once your return request is approved we will deliver the replacement/exchange product within <strong>7 days</strong>.
+              </p>
+            </section>
+
+            {/* Section 8: Shipping */}
+            <section id="shipping-policy" className="space-y-4">
+              <h2 className="text-xl font-extrabold text-slate-900">
+                8. Shipping Policy
+              </h2>
+              <p>
+                <strong>Shipping Timeframe:</strong> Orders will be delivered within <strong>7 days</strong>.
+              </p>
             </section>
 
           </div>
