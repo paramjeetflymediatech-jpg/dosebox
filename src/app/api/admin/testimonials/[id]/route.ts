@@ -4,8 +4,9 @@ import { Testimonial } from '@/models';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const formData = await req.formData();
     const authorName = formData.get('authorName') as string;
     const rating = parseInt(formData.get('rating') as string);
@@ -14,7 +15,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const isActiveStr = formData.get('isActive') as string;
     const profileImageFile = formData.get('profileImage') as File | string | null;
 
-    const testimonial = await Testimonial.findByPk(params.id);
+    const testimonial = await Testimonial.findByPk(id);
     if (!testimonial) {
       return NextResponse.json({ success: false, error: 'Testimonial not found' }, { status: 404 });
     }
@@ -55,9 +56,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const testimonial = await Testimonial.findByPk(params.id);
+    const { id } = await params;
+    const testimonial = await Testimonial.findByPk(id);
     if (!testimonial) {
       return NextResponse.json({ success: false, error: 'Testimonial not found' }, { status: 404 });
     }
