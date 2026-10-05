@@ -7,7 +7,7 @@ import {
   Users, Settings, Shield, ShoppingBag, LayoutGrid, 
   Menu, X, FileText, LogOut,
   Pill, Wand2, Tag, Truck, Stethoscope, Calendar, HelpCircle, Trash2, Flag,
-  Gift, MessageSquare, Building2
+  Gift, MessageSquare, Building2, Star
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -62,6 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'SEO Rules', href: '/dashboard/admin/seo', icon: Settings, allowRoles: ['Admin'] },
     { name: 'Coupons', href: '/dashboard/admin/coupons', icon: Tag, allowRoles: ['Admin'] },
     { name: 'Banners', href: '/dashboard/admin/banners', icon: Flag, allowRoles: ['Admin'] },
+    { name: 'Testimonials', href: '/dashboard/admin/testimonials', icon: Star, allowRoles: ['Admin'] },
     { name: 'Bot Simulator', href: '/dashboard/admin/bot-simulator', icon: MessageSquare, allowRoles: ['Admin', 'Leadership'] },
     { name: 'Admin Profile', href: '/dashboard/admin/enterprise', icon: Building2, allowRoles: ['Admin'] },
   ];
@@ -145,7 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <img src="/Media.jpg" alt="Logo" className="w-8 h-8 object-contain" />
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-slate-50/50 relative">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
       </div>
