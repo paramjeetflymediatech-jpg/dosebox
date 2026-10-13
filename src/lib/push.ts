@@ -3,29 +3,50 @@ import { getMessaging } from 'firebase-admin/messaging';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
-  try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      // If provided as a JSON string in env
+  let initialized = false;
+
+  // Option 1: Try JSON string
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
       initializeApp({
         credential: cert(serviceAccount),
       });
+      initialized = true;
       console.log('Firebase Admin initialized successfully using service account JSON');
-    } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      // If provided as discrete environment variables in env
+    } catch (err: any) {
+      console.warn('Could not initialize Firebase via FIREBASE_SERVICE_ACCOUNT_KEY, trying discrete variables...', err?.message || err);
+    }
+  }
+
+  // Option 2: Try discrete environment variables
+  if (!initialized && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    try {
+      const formattedKey = process.env.FIREBASE_PRIVATE_KEY
+        .replace(/\\n/g, '\n')
+        .replace(/^"(.*)"$/, '$1')
+        .replace(/^'(.*)'$/, '$1')
+        .trim();
+
       initializeApp({
         credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"(.*)"$/, '$1'),
+          privateKey: formattedKey,
         }),
       });
+      initialized = true;
       console.log('Firebase Admin initialized successfully using discrete environment variables');
-    } else {
-      console.warn('Firebase Admin credentials not defined. Push notifications will be skipped.');
+    } catch (err: any) {
+      console.warn('Could not initialize Firebase via discrete variables:', err?.message || err);
     }
-  } catch (error) {
-    console.error('Failed to initialize Firebase Admin:', error);
+  }
+
+  if (!initialized) {
+    console.warn('Firebase Admin credentials not defined or invalid. Push notifications will be skipped.');
   }
 }
 
