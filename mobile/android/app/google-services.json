@@ -14,19 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "680555726982-8c9jnb13qfui5lohe64qjeojeqo8mk1f.apps.googleusercontent.com",
+          "client_id": "680555726982-pot9eb7pt0c0hc0nftj00a1n155eshgn.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.doseboxmobile",
-            "certificate_hash": "787a36b98f84750735db8964270c4062e452ace7"
-          }
-        },
-        {
-          "client_id": "680555726982-j3ukv1pb98ss7okh54p94qoenhuk84mn.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.doseboxmobile",
-            "certificate_hash": "3596c189db9c8e866dc55fa70052a938a5370902"
+            "certificate_hash": "c0259d0e506ecc29f0462599c6f00247b7bb0f29"
           }
         },
         {
