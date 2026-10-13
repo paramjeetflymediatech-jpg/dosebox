@@ -29,8 +29,8 @@ export default function AdminOrdersPage() {
   // View Modal State
   const [viewOrder, setViewOrder] = useState<any>(null);
 
-  const fetchOrders = async () => {
-    setLoading(true);
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get('/orders?limit=1000');
       if (res.data?.success) {
@@ -39,12 +39,19 @@ export default function AdminOrdersPage() {
     } catch (err) {
       console.error('Failed to fetch orders', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchOrders();
+
+    // Auto-refresh orders every 15 seconds so admin sees incoming orders in real time
+    const interval = setInterval(() => {
+      fetchOrders(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpdateOrder = async (e: React.FormEvent) => {

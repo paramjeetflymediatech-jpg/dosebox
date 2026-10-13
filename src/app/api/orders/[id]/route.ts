@@ -5,7 +5,7 @@ import { Order, Notification, User, Address, OrderItem, Medicine } from '../../.
 import { sendOrderStatusEmail, sendOrderCancelledEmail } from '../../../../lib/email';
 import { initiatePhonePeRefund } from '../../payments/phonepe/refund/route';
 import { getLogisticsProvider } from '../../../../lib/logistics';
-import { sendPushNotification } from '../../../../lib/push';
+import { sendPushNotification, sendPushToUser } from '../../../../lib/push';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -130,19 +130,66 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
       await order.save();
       
-      if (status || trackingMessage) {
-        const title = 'Order Update';
-        const msg = `Your order #OD-${order.id} has an update: ${status || order.status}`;
-        
+      if (status || trackingMessage || paymentStatus) {
+        let title = 'Order Update';
+        let msg = `Your order #OD-${order.id} has an update: ${status || order.status}`;
+
+        if (status) {
+          switch (status) {
+            case 'Confirmed':
+              title = 'Order Confirmed! ✅';
+              msg = `Your order #OD-${order.id} has been confirmed and is being packed.`;
+              break;
+            case 'Packed':
+              title = 'Order Packed! 📦';
+              msg = `Your order #OD-${order.id} is packed and ready for dispatch.`;
+              break;
+            case 'Shipped':
+              title = 'Order Shipped! 🚚';
+              msg = `Your order #OD-${order.id} has been shipped${order.courierName ? ` via ${order.courierName}` : ''}${order.trackingId ? ` (AWB: ${order.trackingId})` : ''}.`;
+              break;
+            case 'Out For Delivery':
+              title = 'Out For Delivery! 🛵';
+              msg = `Your order #OD-${order.id} is out for delivery today. Please keep your phone available!`;
+              break;
+            case 'Delivered':
+              title = 'Order Delivered! 🎉';
+              msg = `Your order #OD-${order.id} has been successfully delivered. Thank you for choosing DoseBox!`;
+              break;
+            case 'Cancelled':
+              title = 'Order Cancelled ❌';
+              msg = `Your order #OD-${order.id} was cancelled${order.cancelReason ? `: ${order.cancelReason}` : ''}.`;
+              break;
+            default:
+              title = 'Order Status Updated';
+              msg = `Your order #OD-${order.id} status is now: ${status}`;
+          }
+        } else if (trackingMessage) {
+          title = 'Order Tracking Update 📍';
+          msg = `Update for order #OD-${order.id}: ${trackingMessage}`;
+        } else if (paymentStatus) {
+          title = 'Payment Update 💳';
+          msg = `Payment status for order #OD-${order.id} is now ${paymentStatus}.`;
+        }
+
         await Notification.create({
           userId: order.userId,
           title,
-          message: msg
+          message: msg,
+          read: false
         });
 
-        if (user.fcmToken) {
-          await sendPushNotification(user.fcmToken, title, msg, { orderId: String(order.id) }, user.id);
-        }
+        // Send push to customer's active devices
+        sendPushToUser(
+          order.userId,
+          title,
+          msg,
+          {
+            orderId: String(order.id),
+            status: String(status || order.status),
+            type: 'order_status_update'
+          }
+        ).catch(e => console.error('[Order Update Push] Failed to notify user:', e));
       }
     }
 

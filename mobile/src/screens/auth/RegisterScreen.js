@@ -93,6 +93,9 @@ export default function RegisterScreen({ navigation }) {
         if (data.user) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
         }
+        if (fcmToken) {
+          api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+        }
 
         const userRole = data.user?.role?.toLowerCase() || '';
         if (userRole === 'admin' || userRole.includes('admin') || userRole === 'super_admin' || userRole === 'super admin') {
@@ -163,6 +166,9 @@ export default function RegisterScreen({ navigation }) {
             await AsyncStorage.setItem('accessToken', data.accessToken || '');
             if (data.refreshToken) await AsyncStorage.setItem('refreshToken', data.refreshToken);
             if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+            if (fcmToken) {
+              api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+            }
 
             const userRole = data.user?.role?.toLowerCase() || '';
             if (userRole.includes('admin')) {
@@ -218,6 +224,9 @@ export default function RegisterScreen({ navigation }) {
               await AsyncStorage.setItem('accessToken', data.accessToken || '');
               if (data.refreshToken) await AsyncStorage.setItem('refreshToken', data.refreshToken);
               if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+              if (fcmToken) {
+                api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+              }
 
               const userRole = data.user?.role?.toLowerCase() || '';
               if (userRole.includes('admin')) {
@@ -342,6 +351,9 @@ export default function RegisterScreen({ navigation }) {
         await AsyncStorage.setItem('accessToken', loginData.accessToken);
         if (loginData.refreshToken) await AsyncStorage.setItem('refreshToken', loginData.refreshToken);
         await AsyncStorage.setItem('user', JSON.stringify(loginData.user));
+        if (fcmToken) {
+          api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+        }
         navigation.replace('MainTabs');
       } else {
         AlertService.show({

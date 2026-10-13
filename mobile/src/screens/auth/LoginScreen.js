@@ -87,6 +87,9 @@ export default function LoginScreen({ navigation, route }) {
         if (data.user) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
         }
+        if (fcmToken) {
+          api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+        }
 
         const returnTo = route.params?.returnTo;
         const userRole = data.user?.role?.toLowerCase() || '';
@@ -164,6 +167,9 @@ export default function LoginScreen({ navigation, route }) {
             await AsyncStorage.setItem('accessToken', data.accessToken || '');
             if (data.refreshToken) await AsyncStorage.setItem('refreshToken', data.refreshToken);
             if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+            if (fcmToken) {
+              api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+            }
 
             const returnTo = route.params?.returnTo;
             const userRole = data.user?.role?.toLowerCase() || '';
@@ -226,6 +232,9 @@ export default function LoginScreen({ navigation, route }) {
               await AsyncStorage.setItem('accessToken', data.accessToken || '');
               if (data.refreshToken) await AsyncStorage.setItem('refreshToken', data.refreshToken);
               if (data.user) await AsyncStorage.setItem('user', JSON.stringify(data.user));
+              if (fcmToken) {
+                api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
+              }
 
               const returnTo = route.params?.returnTo;
               const userRole = data.user?.role?.toLowerCase() || '';
@@ -310,6 +319,9 @@ export default function LoginScreen({ navigation, route }) {
         }
         if (data.user) {
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        }
+        if (fcmToken) {
+          api.put('/account/fcm-token', { fcmToken }).catch(e => console.log('FCM sync error:', e));
         }
 
         const returnTo = route.params?.returnTo;

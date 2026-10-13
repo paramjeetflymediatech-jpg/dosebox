@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT, authorizeRoles } from '../../../middleware/auth';
 import { Order, OrderItem, Medicine, Coupon, Address, User, Notification, Prescription, Supplier, DoseboxTokenTransaction } from '../../../models';
+import { sendPushToUser, sendPushToAdmins } from '../../../lib/push';
 
 export async function POST(req: NextRequest) {
   try {
@@ -225,8 +226,25 @@ export async function POST(req: NextRequest) {
     await Notification.create({
       userId,
       title: 'Order Placed successfully',
-      message: `Your order #${order.id} has been placed. Status: ${order.status}`
+      message: `Your order #${order.id} has been placed. Status: ${order.status}`,
+      read: false
     });
+
+    // 1. Dispatch Push Notification to Customer mobile app
+    sendPushToUser(
+      userId,
+      'Order Placed Successfully! 🛒',
+      `Your order #OD-${order.id} (₹${order.finalAmount || order.totalAmount}) has been placed. Status: ${order.status}.`,
+      { orderId: String(order.id), status: String(order.status), type: 'order_placed' }
+    ).catch(e => console.error('[Order Push] Failed to notify customer:', e));
+
+    // 2. Dispatch Push Notification and In-App alert to Admin / Staff
+    const customerName = userRecord?.name || 'Customer';
+    sendPushToAdmins(
+      '📦 New Order Received!',
+      `Order #OD-${order.id} placed by ${customerName} for ₹${order.finalAmount || order.totalAmount}.`,
+      { orderId: String(order.id), status: String(order.status), type: 'new_order_admin' }
+    ).catch(e => console.error('[Order Push] Failed to notify admins:', e));
 
     return NextResponse.json({
       success: true,

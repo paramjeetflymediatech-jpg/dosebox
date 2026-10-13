@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT } from '../../../../../middleware/auth';
-import { Order, User, DoseboxTokenTransaction } from '../../../../../models';
+import { Order, User, DoseboxTokenTransaction, Notification } from '../../../../../models';
 import { sendOrderCancelledEmail } from '../../../../../lib/email';
 import { initiatePhonePeRefund } from '../../../payments/phonepe/refund/route';
+import { sendPushToUser, sendPushToAdmins } from '../../../../../lib/push';
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -119,6 +120,29 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
     // Send Email asynchronously
     sendOrderCancelledEmail(user, order, 'customer', actualRefundMethod, finalTokensGranted).catch(console.error);
+
+    // In-app notification for customer
+    await Notification.create({
+      userId: user.id,
+      title: 'Order Cancelled ❌',
+      message: `Your order #OD-${order.id} has been cancelled successfully.`,
+      read: false
+    }).catch(e => console.error('[Cancel Notification] DB error:', e));
+
+    // Push notification to customer
+    sendPushToUser(
+      user.id,
+      'Order Cancelled ❌',
+      `Your order #OD-${order.id} has been cancelled successfully.`,
+      { orderId: String(order.id), status: 'Cancelled', type: 'order_cancelled' }
+    ).catch(e => console.error('[Cancel Notification] Push to user failed:', e));
+
+    // Notification and push to admins
+    sendPushToAdmins(
+      '⚠️ Order Cancelled by Customer',
+      `Order #OD-${order.id} was cancelled by ${user.name || 'Customer'}. Reason: ${order.cancelReason || 'Cancelled by customer'}`,
+      { orderId: String(order.id), status: 'Cancelled', type: 'order_cancelled_admin' }
+    ).catch(e => console.error('[Cancel Notification] Push to admins failed:', e));
 
     return NextResponse.json({
       success: true,

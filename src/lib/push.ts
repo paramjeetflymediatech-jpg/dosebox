@@ -16,20 +16,25 @@ if (!getApps().length) {
         credential: cert(serviceAccount),
       });
       initialized = true;
-      console.log('Firebase Admin initialized successfully using service account JSON');
+      console.log('[Firebase Admin] Initialized successfully using service account JSON');
     } catch (err: any) {
-      console.warn('Could not initialize Firebase via FIREBASE_SERVICE_ACCOUNT_KEY, trying discrete variables...', err?.message || err);
+      console.warn('[Firebase Admin] Service account JSON init failed, trying discrete variables...', err?.message || err);
     }
   }
 
   // Option 2: Try discrete environment variables
   if (!initialized && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
     try {
-      const formattedKey = process.env.FIREBASE_PRIVATE_KEY
-        .replace(/\\n/g, '\n')
-        .replace(/^"(.*)"$/, '$1')
-        .replace(/^'(.*)'$/, '$1')
-        .trim();
+      let formattedKey = process.env.FIREBASE_PRIVATE_KEY.trim();
+      // Strip any outer wrapping quotes safely
+      if (
+        (formattedKey.startsWith('"') && formattedKey.endsWith('"')) ||
+        (formattedKey.startsWith("'") && formattedKey.endsWith("'"))
+      ) {
+        formattedKey = formattedKey.slice(1, -1);
+      }
+      // Replace literal escaped newlines with actual newlines
+      formattedKey = formattedKey.replace(/\\n/g, '\n').trim();
 
       initializeApp({
         credential: cert({
@@ -39,64 +44,242 @@ if (!getApps().length) {
         }),
       });
       initialized = true;
-      console.log('Firebase Admin initialized successfully using discrete environment variables');
+      console.log('[Firebase Admin] Initialized successfully using discrete environment variables');
     } catch (err: any) {
-      console.warn('Could not initialize Firebase via discrete variables:', err?.message || err);
+      console.warn('[Firebase Admin] Discrete variables init failed:', err?.message || err);
     }
   }
 
   if (!initialized) {
-    console.warn('Firebase Admin credentials not defined or invalid. Push notifications will be skipped.');
+    console.warn('[Firebase Admin] Credentials not defined or invalid. Push notifications will be skipped.');
   }
 }
 
 /**
  * Send a push notification to a specific device via FCM Token
  */
-export async function sendPushNotification(token: string, title: string, body: string, data?: any, userId?: number) {
+export async function sendPushNotification(
+  token: string,
+  title: string,
+  body: string,
+  data?: Record<string, any>,
+  userId?: number
+) {
   if (!getApps().length) {
-    console.warn('Skipping push notification because Firebase Admin is not initialized.');
+    console.warn('[FCM Push] Firebase Admin is not initialized. Skipping notification.');
     return { success: false, error: 'Firebase not initialized' };
   }
 
-  if (!token) return { success: false, error: 'No token provided' };
-  
+  if (!token || typeof token !== 'string' || !token.trim()) {
+    return { success: false, error: 'No valid token provided' };
+  }
+
+  const cleanToken = token.trim();
+
   try {
+    // FCM data values MUST be strings only
+    const stringData: Record<string, string> = {};
+    if (data && typeof data === 'object') {
+      for (const [k, v] of Object.entries(data)) {
+        stringData[k] = typeof v === 'string' ? v : String(v ?? '');
+      }
+    }
+
     const payload = {
-      token,
+      token: cleanToken,
       notification: {
         title,
         body,
       },
-      data: data || {},
+      data: stringData,
+      android: {
+        priority: 'high' as const,
+        notification: {
+          channelId: 'default',
+          sound: 'default',
+          priority: 'high' as const,
+          defaultSound: true,
+          defaultVibrateTimings: true,
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+            contentAvailable: true,
+          },
+        },
+      },
     };
 
     const response = await getMessaging().send(payload);
-    console.log('Successfully sent push notification:', response);
+    console.log(`[FCM Push] Sent to device (${cleanToken.substring(0, 15)}...):`, { title, messageId: response });
     return { success: true, response };
   } catch (error: any) {
     const isUnregistered = 
       error.code === 'messaging/registration-token-not-registered' || 
       error.errorInfo?.code === 'messaging/registration-token-not-registered' ||
       error.message?.includes('NotRegistered') ||
-      error.message?.includes('UNREGISTERED');
+      error.message?.includes('UNREGISTERED') ||
+      error.message?.includes('invalid-registration-token');
 
     if (isUnregistered) {
-      console.warn(`[FCM Push] Device token is no longer registered. Cleaning up stale token...`);
+      console.warn(`[FCM Push] Device token is no longer registered. Cleaning up stale token (${cleanToken.substring(0, 15)}...)...`);
       try {
         const { User, MobileAuthUser } = require('../models');
         if (userId) {
-          await User.update({ fcmToken: null }, { where: { id: userId } });
+          await User.update({ fcmToken: null }, { where: { id: userId, fcmToken: cleanToken } });
         }
-        await User.update({ fcmToken: null }, { where: { fcmToken: token } });
-        await MobileAuthUser.update({ pushToken: null }, { where: { pushToken: token } });
+        await User.update({ fcmToken: null }, { where: { fcmToken: cleanToken } });
+        await MobileAuthUser.update({ pushToken: null }, { where: { pushToken: cleanToken } });
       } catch (dbErr) {
-        console.error('Failed to cleanup stale FCM token from DB:', dbErr);
+        console.error('[FCM Push] Failed to cleanup stale token from DB:', dbErr);
       }
       return { success: false, error: 'Token not registered', isUnregistered: true };
     }
 
-    console.error('Error sending push notification:', error.message || error);
+    console.error(`[FCM Push] Error sending to token (${cleanToken.substring(0, 15)}...):`, error.message || error);
     return { success: false, error: error.message || error };
+  }
+}
+
+/**
+ * Send push notification to all registered devices of a specific user
+ */
+export async function sendPushToUser(
+  userId: number,
+  title: string,
+  body: string,
+  data?: Record<string, any>
+) {
+  if (!userId) return { success: false, sentCount: 0, reason: 'Invalid userId' };
+
+  try {
+    const { User, MobileAuthUser } = require('../models');
+
+    const tokens = new Set<string>();
+
+    // 1. Fetch user's primary fcmToken
+    const user = await User.findByPk(userId, { attributes: ['id', 'fcmToken'] });
+    if (user?.fcmToken && typeof user.fcmToken === 'string' && user.fcmToken.trim()) {
+      tokens.add(user.fcmToken.trim());
+    }
+
+    // 2. Fetch all mobile devices for this user
+    const mobileDevices = await MobileAuthUser.findAll({
+      where: { userId },
+      attributes: ['pushToken'],
+    });
+
+    for (const dev of mobileDevices) {
+      if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
+        tokens.add(dev.pushToken.trim());
+      }
+    }
+
+    if (tokens.size === 0) {
+      console.log(`[Push] User #${userId} has no registered FCM tokens.`);
+      return { success: false, sentCount: 0, reason: 'No tokens found' };
+    }
+
+    console.log(`[Push] Dispatching notification to User #${userId} across ${tokens.size} active device(s)...`);
+
+    const results = [];
+    for (const token of tokens) {
+      const res = await sendPushNotification(token, title, body, data, userId);
+      results.push(res);
+    }
+
+    const sentCount = results.filter(r => r.success).length;
+    return { success: sentCount > 0, sentCount, total: tokens.size };
+  } catch (err: any) {
+    console.error(`[Push] Failed to send push to user #${userId}:`, err?.message || err);
+    return { success: false, error: err?.message || err };
+  }
+}
+
+/**
+ * Send notification and push to all Admins, SuperAdmins, and Pharmacists
+ */
+export async function sendPushToAdmins(
+  title: string,
+  body: string,
+  data?: Record<string, any>
+) {
+  try {
+    const { User, MobileAuthUser, Notification, Role } = require('../models');
+
+    // 1. Identify staff roles (SuperAdmin: 1, Admin: 4, Pharmacist: 5)
+    let staffRoleIds = [1, 4, 5];
+    try {
+      const roles = await Role.findAll({
+        where: { name: ['SuperAdmin', 'Admin', 'Pharmacist', 'Leadership'] },
+        attributes: ['id'],
+      });
+      const dynamicIds = roles.map((r: any) => r.id);
+      if (dynamicIds.length > 0) {
+        staffRoleIds = Array.from(new Set([...staffRoleIds, ...dynamicIds]));
+      }
+    } catch (e) {
+      // Use fallback staffRoleIds
+    }
+
+    // 2. Query staff user records
+    const adminUsers = await User.findAll({
+      where: { roleId: staffRoleIds },
+      attributes: ['id', 'name', 'email', 'fcmToken'],
+    });
+
+    const adminUserIds = adminUsers.map((u: any) => u.id);
+
+    // 3. Create in-app Notification for each staff user
+    for (const admin of adminUsers) {
+      try {
+        await Notification.create({
+          userId: admin.id,
+          title,
+          message: body,
+          read: false,
+        });
+      } catch (dbErr) {
+        console.warn(`[Push] Could not create in-app notification for admin #${admin.id}:`, dbErr);
+      }
+    }
+
+    // 4. Collect all distinct FCM tokens for staff
+    const tokens = new Set<string>();
+    for (const admin of adminUsers) {
+      if (admin.fcmToken && admin.fcmToken.trim()) {
+        tokens.add(admin.fcmToken.trim());
+      }
+    }
+
+    // Also collect tokens from MobileAuthUser where user is staff
+    if (adminUserIds.length > 0) {
+      const mobileStaff = await MobileAuthUser.findAll({
+        where: { userId: adminUserIds },
+        attributes: ['userId', 'pushToken'],
+      });
+      for (const dev of mobileStaff) {
+        if (dev.pushToken && dev.pushToken.trim()) {
+          tokens.add(dev.pushToken.trim());
+        }
+      }
+    }
+
+    console.log(`[Push] Dispatched in-app notification to ${adminUsers.length} staff member(s). Sending FCM to ${tokens.size} device(s)...`);
+
+    const results = [];
+    for (const token of tokens) {
+      const res = await sendPushNotification(token, title, body, data);
+      results.push(res);
+    }
+
+    const sentCount = results.filter(r => r.success).length;
+    return { success: sentCount > 0, sentCount, total: tokens.size };
+  } catch (err: any) {
+    console.error('[Push] Failed to send push to admins:', err?.message || err);
+    return { success: false, error: err?.message || err };
   }
 }

@@ -50,10 +50,17 @@ export async function POST(req: NextRequest) {
       { expiresIn: (process.env.JWT_REFRESH_EXPIRE || '7d') as any }
     );
 
+    // Track user FCM Token directly on User model
+    if (body.push_token && typeof body.push_token === 'string' && body.push_token.trim()) {
+      user.fcmToken = body.push_token.trim();
+      await user.save().catch(e => console.error('Error saving user fcmToken:', e));
+    }
+
     // Track mobile auth device
-    if (body.device_id || body.device_platform) {
+    if (body.device_id || body.device_platform || body.push_token) {
       console.log('Mobile login detected!', { device_id: body.device_id, device_platform: body.device_platform });
       try {
+        const userType: 'customer' | 'admin' = (user.roleId === 1 || user.roleId === 4 || user.roleId === 5) ? 'admin' : 'customer';
         const existingDevice = await MobileAuthUser.findOne({
           where: { userId: user.id, deviceId: body.device_id || 'unknown' }
         });
@@ -61,12 +68,14 @@ export async function POST(req: NextRequest) {
         const deviceData = {
           refreshToken,
           refreshTokenExpires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          pushToken: body.push_token,
-          pushTokenPlatform: body.device_platform,
-          deviceName: body.device_name,
-          devicePlatform: body.device_platform,
-          osVersion: body.os_version,
-          appVersion: body.app_version,
+          pushToken: body.push_token ? body.push_token.trim() : undefined,
+          pushTokenPlatform: body.device_platform || undefined,
+          pushTokenUpdatedAt: body.push_token ? new Date() : undefined,
+          deviceName: body.device_name || undefined,
+          devicePlatform: body.device_platform || undefined,
+          osVersion: body.os_version || undefined,
+          appVersion: body.app_version || undefined,
+          userType,
           lastLogin: new Date()
         };
 
@@ -77,7 +86,6 @@ export async function POST(req: NextRequest) {
           console.log('Creating new mobile device record...');
           await MobileAuthUser.create({
             userId: user.id,
-            userType: 'customer',
             deviceId: body.device_id || 'unknown',
             ...deviceData
           });
