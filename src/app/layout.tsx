@@ -16,7 +16,6 @@ import './globals.css';
 import api from '../lib/api';
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
 import { toast, Toaster } from 'react-hot-toast';
 const queryClient = new QueryClient();
 
@@ -71,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
       <body suppressHydrationWarning>
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '73308780119-gli7r3u398qmqjovnmiptbcubpl7euum.apps.googleusercontent.com'}>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '680555726982-unss1uvmtplpbe0bgs68uqmtkcrphbi6.apps.googleusercontent.com'}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <CartProvider>
@@ -923,9 +922,27 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
                   <div className="flex justify-center w-full">
                     <GoogleLogin
-                      ux_mode="redirect"
-                      login_uri={`${process.env.NEXT_PUBLIC_APP_URL || 'https://dosebox.in'}/api/auth/google/callback`}
-                      onSuccess={() => {}}
+                      onSuccess={async (credentialResponse) => {
+                        if (credentialResponse.credential) {
+                          try {
+                            const res = await api.post('/auth/google', { credential: credentialResponse.credential });
+                            if (res.data?.success) {
+                              const { accessToken, refreshToken, user: userData } = res.data;
+                              localStorage.setItem('accessToken', accessToken);
+                              localStorage.setItem('refreshToken', refreshToken);
+                              localStorage.setItem('user', JSON.stringify(userData));
+                              setShowAuthModal(false);
+                              toast.success('Signed in with Google successfully!');
+                              window.location.reload();
+                            } else {
+                              setErrorMsg(res.data?.message || 'Google login failed');
+                            }
+                          } catch (err: any) {
+                            console.error('Google login error:', err);
+                            setErrorMsg(err.response?.data?.message || 'Google Login Failed');
+                          }
+                        }
+                      }}
                       onError={() => setErrorMsg('Google Login Failed')}
                       theme="outline"
                       shape="rectangular"

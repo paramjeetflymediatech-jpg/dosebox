@@ -11,7 +11,23 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecretrefresh
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { googleId, email, name, avatar } = body;
+    let { googleId, email, name, avatar } = body;
+
+    // Decode Google ID token (credential) if sent from web popup
+    if (body.credential && (!googleId || !email || !name)) {
+      try {
+        const base64Url = body.credential.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = Buffer.from(base64, 'base64').toString('utf-8');
+        const payload = JSON.parse(jsonPayload);
+        googleId = googleId || payload.sub;
+        email = email || payload.email;
+        name = name || payload.name;
+        avatar = avatar || payload.picture;
+      } catch (decodeErr) {
+        console.error('Failed to parse Google credential token:', decodeErr);
+      }
+    }
 
     if (!googleId || !email || !name) {
       return NextResponse.json({ success: false, message: 'Google authentication details missing' }, { status: 400 });
