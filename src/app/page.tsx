@@ -78,7 +78,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  const [oncologyVal, setOncologyVal] = useState(0);
+  const [genuineVal, setGenuineVal] = useState(0);
   const [costsVal, setCostsVal] = useState(0);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function HomePage() {
       const progress = Math.min(elapsed / duration, 1);
       const ease = progress * (2 - progress);
 
-      setOncologyVal(Math.floor(ease * 80));
+      setGenuineVal(Math.floor(ease * 100));
       setCostsVal(Math.floor(ease * 18));
 
       if (progress < 1) {
@@ -549,12 +549,12 @@ export default function HomePage() {
 
             {/* Card 1 */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 group">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{oncologyVal}%+</div>
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">ONCOLOGY SAVINGS</div>
+                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{genuineVal}%</div>
+                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">VERIFIED MEDICINES</div>
               </div>
             </div>
 
