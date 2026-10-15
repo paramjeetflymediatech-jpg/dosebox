@@ -36,6 +36,56 @@ export function getDbModels() {
 /**
  * Initialize Firebase Admin if not already initialized
  */
+/**
+ * Robust formatter for Firebase private keys.
+ * Handles single quotes, double quotes, base64 encoding, escaped \n, \r\n, \\n, and space-separated lines.
+ */
+export function formatPrivateKey(raw: string | undefined): string {
+  if (!raw || typeof raw !== 'string') return '';
+  let key = raw.trim();
+
+  // Strip outer wrapping quotes if any
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+  }
+
+  // If entire key is base64 encoded, decode it
+  if (!key.includes('BEGIN') && !key.includes('PRIVATE KEY')) {
+    try {
+      const decoded = Buffer.from(key, 'base64').toString('utf8');
+      if (decoded.includes('PRIVATE KEY')) {
+        key = decoded.trim();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Handle all newline escape variants (\\\\n, \\n, \r\n, \r)
+  key = key.replace(/\\\\r\\\\n/g, '\n')
+           .replace(/\\\\n/g, '\n')
+           .replace(/\\r\\n/g, '\n')
+           .replace(/\\n/g, '\n')
+           .replace(/\r\n/g, '\n')
+           .replace(/\r/g, '\n');
+
+  // Ensure header and footer boundaries have clean newlines
+  if (key.includes('BEGIN PRIVATE KEY') && !key.includes('-----BEGIN PRIVATE KEY-----\n')) {
+    key = key.replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n');
+  }
+  if (key.includes('END PRIVATE KEY') && !key.includes('\n-----END PRIVATE KEY-----')) {
+    key = key.replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----');
+  }
+
+  return key.trim();
+}
+
+/**
+ * Initialize Firebase Admin if not already initialized
+ */
 export function initFirebaseAdmin(): boolean {
   if (getApps().length > 0) {
     return true;
@@ -43,57 +93,81 @@ export function initFirebaseAdmin(): boolean {
 
   let initialized = false;
 
-  // Option 1: Try JSON string
+  // Option 1: Try JSON string (or base64 encoded JSON string)
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     try {
-      let rawKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+      let rawJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
       if (
-        (rawKey.startsWith('"') && rawKey.endsWith('"')) ||
-        (rawKey.startsWith("'") && rawKey.endsWith("'"))
+        (rawJson.startsWith('"') && rawJson.endsWith('"')) ||
+        (rawJson.startsWith("'") && rawJson.endsWith("'"))
       ) {
-        rawKey = rawKey.slice(1, -1);
+        rawJson = rawJson.slice(1, -1).trim();
       }
-      const serviceAccount = JSON.parse(rawKey);
-      if (serviceAccount.private_key) {
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+
+      // Check if base64 encoded
+      if (!rawJson.startsWith('{') && !rawJson.startsWith('[')) {
+        try {
+          const decoded = Buffer.from(rawJson, 'base64').toString('utf8');
+          if (decoded.trim().startsWith('{')) {
+            rawJson = decoded.trim();
+          }
+        } catch (e) {}
       }
+
+      const serviceAccount = JSON.parse(rawJson);
+      const projectId = serviceAccount.project_id || serviceAccount.projectId || process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = serviceAccount.client_email || serviceAccount.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
+      const rawKey = serviceAccount.private_key || serviceAccount.privateKey || process.env.FIREBASE_PRIVATE_KEY;
+      const formattedKey = formatPrivateKey(rawKey);
+
+      if (!formattedKey) {
+        throw new Error('Service account JSON is missing a valid private_key');
+      }
+
       initializeApp({
-        credential: cert(serviceAccount),
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey: formattedKey,
+        }),
       });
       initialized = true;
       console.log('[Firebase Admin] Initialized successfully using service account JSON');
       return true;
     } catch (err: any) {
-      console.warn('[Firebase Admin] Service account JSON init failed, trying discrete variables...', err?.message || err);
+      console.warn('[Firebase Admin] Service account JSON init failed:', err?.message || err);
+      if (err?.cause) {
+        console.warn('[Firebase Admin] Root cause:', err.cause?.message || err.cause);
+      }
     }
   }
 
   // Option 2: Try discrete environment variables
-  if (!initialized && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+  if (!initialized && (process.env.FIREBASE_PRIVATE_KEY || (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL))) {
     try {
-      let formattedKey = process.env.FIREBASE_PRIVATE_KEY.trim();
-      // Strip any outer wrapping quotes safely
-      if (
-        (formattedKey.startsWith('"') && formattedKey.endsWith('"')) ||
-        (formattedKey.startsWith("'") && formattedKey.endsWith("'"))
-      ) {
-        formattedKey = formattedKey.slice(1, -1);
-      }
-      // Replace literal escaped newlines with actual newlines
-      formattedKey = formattedKey.replace(/\\n/g, '\n').trim();
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const formattedKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
-      initializeApp({
-        credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: formattedKey,
-        }),
-      });
-      initialized = true;
-      console.log('[Firebase Admin] Initialized successfully using discrete environment variables');
-      return true;
+      if (!projectId || !clientEmail || !formattedKey) {
+        console.warn('[Firebase Admin] Discrete variables check: projectId=' + !!projectId + ', clientEmail=' + !!clientEmail + ', privateKey=' + !!formattedKey);
+      } else {
+        initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey: formattedKey,
+          }),
+        });
+        initialized = true;
+        console.log('[Firebase Admin] Initialized successfully using discrete environment variables');
+        return true;
+      }
     } catch (err: any) {
       console.warn('[Firebase Admin] Discrete variables init failed:', err?.message || err);
+      if (err?.cause) {
+        console.warn('[Firebase Admin] Root cause:', err.cause?.message || err.cause);
+      }
     }
   }
 
