@@ -1,14 +1,59 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import models, {
+  User as NamedUser,
+  MobileAuthUser as NamedMobileAuthUser,
+  Notification as NamedNotification,
+  Role as NamedRole,
+} from '../models';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
+/**
+ * Safely resolves database models across all module systems & bundlers (Webpack, Next.js, Turbopack, ESM, CJS).
+ * Solves: "Cannot read properties of undefined (reading 'findByPk')" and "Cannot read properties of undefined (reading 'findAll')"
+ */
+export function getDbModels() {
+  let User = NamedUser || (models as any)?.User;
+  let MobileAuthUser = NamedMobileAuthUser || (models as any)?.MobileAuthUser;
+  let Notification = NamedNotification || (models as any)?.Notification;
+  let Role = NamedRole || (models as any)?.Role;
+
+  if (!User || !MobileAuthUser || !Role || !Notification) {
+    try {
+      const dyn = require('../models');
+      const resolved = dyn?.default || dyn;
+      User = User || resolved?.User;
+      MobileAuthUser = MobileAuthUser || resolved?.MobileAuthUser;
+      Notification = Notification || resolved?.Notification;
+      Role = Role || resolved?.Role;
+    } catch (e) {
+      // Fallback require error
+    }
+  }
+
+  return { User, MobileAuthUser, Notification, Role };
+}
+
+/**
+ * Initialize Firebase Admin if not already initialized
+ */
+export function initFirebaseAdmin(): boolean {
+  if (getApps().length > 0) {
+    return true;
+  }
+
   let initialized = false;
 
   // Option 1: Try JSON string
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     try {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      let rawKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+      if (
+        (rawKey.startsWith('"') && rawKey.endsWith('"')) ||
+        (rawKey.startsWith("'") && rawKey.endsWith("'"))
+      ) {
+        rawKey = rawKey.slice(1, -1);
+      }
+      const serviceAccount = JSON.parse(rawKey);
       if (serviceAccount.private_key) {
         serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
       }
@@ -17,6 +62,7 @@ if (!getApps().length) {
       });
       initialized = true;
       console.log('[Firebase Admin] Initialized successfully using service account JSON');
+      return true;
     } catch (err: any) {
       console.warn('[Firebase Admin] Service account JSON init failed, trying discrete variables...', err?.message || err);
     }
@@ -45,6 +91,7 @@ if (!getApps().length) {
       });
       initialized = true;
       console.log('[Firebase Admin] Initialized successfully using discrete environment variables');
+      return true;
     } catch (err: any) {
       console.warn('[Firebase Admin] Discrete variables init failed:', err?.message || err);
     }
@@ -53,7 +100,12 @@ if (!getApps().length) {
   if (!initialized) {
     console.warn('[Firebase Admin] Credentials not defined or invalid. Push notifications will be skipped.');
   }
+
+  return initialized;
 }
+
+// Initial attempt at boot
+initFirebaseAdmin();
 
 /**
  * Send a push notification to a specific device via FCM Token
@@ -66,8 +118,11 @@ export async function sendPushNotification(
   userId?: number
 ) {
   if (!getApps().length) {
-    console.warn('[FCM Push] Firebase Admin is not initialized. Skipping notification.');
-    return { success: false, error: 'Firebase not initialized' };
+    const isReady = initFirebaseAdmin();
+    if (!isReady || !getApps().length) {
+      console.warn('[FCM Push] Firebase Admin is not initialized. Skipping notification.');
+      return { success: false, error: 'Firebase not initialized' };
+    }
   }
 
   if (!token || typeof token !== 'string' || !token.trim()) {
@@ -78,7 +133,10 @@ export async function sendPushNotification(
 
   try {
     // FCM data values MUST be strings only
-    const stringData: Record<string, string> = {};
+    const stringData: Record<string, string> = {
+      title,
+      body,
+    };
     if (data && typeof data === 'object') {
       for (const [k, v] of Object.entries(data)) {
         stringData[k] = typeof v === 'string' ? v : String(v ?? '');
@@ -127,12 +185,16 @@ export async function sendPushNotification(
     if (isUnregistered) {
       console.warn(`[FCM Push] Device token is no longer registered. Cleaning up stale token (${cleanToken.substring(0, 15)}...)...`);
       try {
-        const { User, MobileAuthUser } = require('../models');
-        if (userId) {
-          await User.update({ fcmToken: null }, { where: { id: userId, fcmToken: cleanToken } });
+        const { User, MobileAuthUser } = getDbModels();
+        if (User) {
+          if (userId) {
+            await User.update({ fcmToken: null }, { where: { id: userId, fcmToken: cleanToken } });
+          }
+          await User.update({ fcmToken: null }, { where: { fcmToken: cleanToken } });
         }
-        await User.update({ fcmToken: null }, { where: { fcmToken: cleanToken } });
-        await MobileAuthUser.update({ pushToken: null }, { where: { pushToken: cleanToken } });
+        if (MobileAuthUser) {
+          await MobileAuthUser.update({ pushToken: null as any }, { where: { pushToken: cleanToken } });
+        }
       } catch (dbErr) {
         console.error('[FCM Push] Failed to cleanup stale token from DB:', dbErr);
       }
@@ -156,7 +218,12 @@ export async function sendPushToUser(
   if (!userId) return { success: false, sentCount: 0, reason: 'Invalid userId' };
 
   try {
-    const { User, MobileAuthUser } = require('../models');
+    const { User, MobileAuthUser } = getDbModels();
+
+    if (!User) {
+      console.error(`[Push] User model unavailable. Cannot send push to user #${userId}`);
+      return { success: false, error: 'User model unavailable' };
+    }
 
     const tokens = new Set<string>();
 
@@ -167,14 +234,16 @@ export async function sendPushToUser(
     }
 
     // 2. Fetch all mobile devices for this user
-    const mobileDevices = await MobileAuthUser.findAll({
-      where: { userId },
-      attributes: ['pushToken'],
-    });
+    if (MobileAuthUser) {
+      const mobileDevices = await MobileAuthUser.findAll({
+        where: { userId },
+        attributes: ['pushToken'],
+      });
 
-    for (const dev of mobileDevices) {
-      if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
-        tokens.add(dev.pushToken.trim());
+      for (const dev of mobileDevices) {
+        if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
+          tokens.add(dev.pushToken.trim());
+        }
       }
     }
 
@@ -208,21 +277,28 @@ export async function sendPushToAdmins(
   data?: Record<string, any>
 ) {
   try {
-    const { User, MobileAuthUser, Notification, Role } = require('../models');
+    const { User, MobileAuthUser, Notification, Role } = getDbModels();
+
+    if (!User) {
+      console.error('[Push] User model unavailable. Cannot send push to admins');
+      return { success: false, error: 'User model unavailable' };
+    }
 
     // 1. Identify staff roles (SuperAdmin: 1, Admin: 4, Pharmacist: 5)
     let staffRoleIds = [1, 4, 5];
-    try {
-      const roles = await Role.findAll({
-        where: { name: ['SuperAdmin', 'Admin', 'Pharmacist', 'Leadership'] },
-        attributes: ['id'],
-      });
-      const dynamicIds = roles.map((r: any) => r.id);
-      if (dynamicIds.length > 0) {
-        staffRoleIds = Array.from(new Set([...staffRoleIds, ...dynamicIds]));
+    if (Role) {
+      try {
+        const roles = await Role.findAll({
+          where: { name: ['SuperAdmin', 'Admin', 'Pharmacist', 'Leadership'] },
+          attributes: ['id'],
+        });
+        const dynamicIds = roles.map((r: any) => r.id);
+        if (dynamicIds.length > 0) {
+          staffRoleIds = Array.from(new Set([...staffRoleIds, ...dynamicIds]));
+        }
+      } catch (e) {
+        // Use fallback staffRoleIds
       }
-    } catch (e) {
-      // Use fallback staffRoleIds
     }
 
     // 2. Query staff user records
@@ -234,35 +310,37 @@ export async function sendPushToAdmins(
     const adminUserIds = adminUsers.map((u: any) => u.id);
 
     // 3. Create in-app Notification for each staff user
-    for (const admin of adminUsers) {
-      try {
-        await Notification.create({
-          userId: admin.id,
-          title,
-          message: body,
-          read: false,
-        });
-      } catch (dbErr) {
-        console.warn(`[Push] Could not create in-app notification for admin #${admin.id}:`, dbErr);
+    if (Notification) {
+      for (const admin of adminUsers) {
+        try {
+          await Notification.create({
+            userId: admin.id,
+            title,
+            message: body,
+            read: false,
+          });
+        } catch (dbErr) {
+          console.warn(`[Push] Could not create in-app notification for admin #${admin.id}:`, dbErr);
+        }
       }
     }
 
     // 4. Collect all distinct FCM tokens for staff
     const tokens = new Set<string>();
     for (const admin of adminUsers) {
-      if (admin.fcmToken && admin.fcmToken.trim()) {
+      if (admin.fcmToken && typeof admin.fcmToken === 'string' && admin.fcmToken.trim()) {
         tokens.add(admin.fcmToken.trim());
       }
     }
 
     // Also collect tokens from MobileAuthUser where user is staff
-    if (adminUserIds.length > 0) {
+    if (MobileAuthUser && adminUserIds.length > 0) {
       const mobileStaff = await MobileAuthUser.findAll({
         where: { userId: adminUserIds },
         attributes: ['userId', 'pushToken'],
       });
       for (const dev of mobileStaff) {
-        if (dev.pushToken && dev.pushToken.trim()) {
+        if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
           tokens.add(dev.pushToken.trim());
         }
       }
