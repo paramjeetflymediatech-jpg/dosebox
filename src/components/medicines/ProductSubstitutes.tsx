@@ -249,85 +249,78 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
   return (
     <section 
       id="equivalent-substitutes" 
-      className="mt-12 scroll-mt-28 bg-gradient-to-b from-white to-slate-50/50 rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm transition-all relative"
+      className="mt-12 scroll-mt-28 bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm transition-all relative"
     >
-      {/* Header with Molecule & Strength confirmation */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-6 border-b border-slate-200/80">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-brand-50 text-brand-700 border border-brand-200">
-              <Sparkles className="w-3 h-3 text-brand-600" />
-              Substitute &amp; Save
-            </span>
-            {targetInfo?.strength && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                Exact Strength: {targetInfo.strength}
+      {/* ── HEADER WITH MOLECULE & STRENGTH CONFIRMATION ── */}
+      <div className="pb-6 border-b border-slate-200/80">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200/90 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                Bioequivalent Product Substitutes
               </span>
-            )}
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-              Sorted: Lowest Price First
-            </span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/90 shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                100% Salt &amp; Strength Match
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Available Substitutes &amp; Price Comparison
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+              Verified bioequivalent alternative brands sharing the identical chemical formulation, ranked from lowest price to maximize your savings.
+            </p>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Available Substitutes &amp; Price Comparison
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Bioequivalent medicines sharing the identical active molecule{' '}
-            <strong className="text-slate-800 font-semibold">{targetInfo?.genericName || targetInfo?.composition}</strong> and dosage strength ({targetInfo?.strength || 'matching'}).
-          </p>
+          {/* Quick Stat / Available Brands Banner */}
+          <div className="flex items-center gap-3">
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 px-4 shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-black shadow-xs text-sm">
+                %
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                  Available Substitutes
+                </div>
+                <div className="text-sm font-extrabold text-slate-900">
+                  {totalItems} <span className="font-semibold text-slate-500 text-xs">Verified Brands</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Counter, Per-Page Density, and Quick Navigation */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
-          {/* Item count numbering */}
-          <div className="text-xs text-slate-500">
-            Showing <span className="font-bold text-slate-800">{startNum}–{endNum}</span> of{' '}
-            <span className="font-bold text-slate-800">{totalItems}</span>
-          </div>
-
-          {/* Density Selector */}
-          <div className="flex items-center gap-1 bg-slate-100/80 p-0.5 rounded-lg border border-slate-200 text-xs">
-            <span className="text-[10px] font-bold text-slate-600 px-1.5 uppercase">Show:</span>
-            {[4, 8, 12].map((size) => (
-              <button
-                key={size}
-                onClick={() => handlePageSizeChange(size)}
-                className={`px-2 py-0.5 rounded-md font-bold text-xs transition-colors ${
-                  pageSize === size
-                    ? 'bg-white text-brand-600 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-
-          {/* Mini Pagination Arrows */}
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full p-1 shadow-2xs">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page <= 1}
-                aria-label="Previous page"
-                className="p-1 rounded-full text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs font-bold px-2 text-slate-700">
-                {page} / {totalPages}
+        {/* Dedicated Molecule & Strength Match Banner (MrMed Style) */}
+        <div className="mt-5 bg-gradient-to-r from-slate-50 via-teal-50/30 to-emerald-50/30 border border-slate-200 rounded-2xl p-3.5 sm:px-5 sm:py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Active Molecule:</span>
+              <span className="font-extrabold text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                {targetInfo?.genericName || targetInfo?.composition || 'Active Salt'}
               </span>
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= totalPages}
-                aria-label="Next page"
-                className="p-1 rounded-full text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
             </div>
-          )}
+
+            {targetInfo?.strength && (
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Required Strength:</span>
+                <span className="font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                  {targetInfo.strength} (Exact Match)
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-slate-500 font-medium">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-slate-700 font-semibold text-xs">Sorted: Lowest Price First</span>
+            {totalPages > 1 && (
+              <span className="text-slate-400 text-xs font-semibold">
+                (Page {page} of {totalPages})
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -343,20 +336,15 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
             const { comparison } = sub;
             const isCheaper = comparison.isCheaper;
             const isExpensive = comparison.isExpensive;
+            const formattedDiff = Math.round(comparison.absDiff).toLocaleString('en-IN');
 
             return (
               <div
                 key={sub.id}
-                className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:shadow-lg ${
-                  isCheaper
-                    ? 'border-emerald-300 ring-1 ring-emerald-200/60 shadow-xs'
-                    : isExpensive
-                    ? 'border-rose-200 shadow-xs'
-                    : 'border-slate-200'
-                }`}
+                className="bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-400 hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:-translate-y-0.5"
               >
                 {/* Top Image & Savings Banner */}
-                <div className="relative aspect-4/3 p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-center overflow-hidden">
+                <div className="relative aspect-4/3 p-4 bg-white border-b border-slate-100 flex items-center justify-center overflow-hidden">
                   <Link href={`/medicines/detail?id=${sub.id}`} className="w-full h-full flex items-center justify-center">
                     <img
                       src={imagesArr[0]}
@@ -372,14 +360,14 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
                   {/* Savings / Price Comparison Badge (Point 2: Green for cheaper, Red for expensive) */}
                   <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
                     {isCheaper ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-600 text-white shadow-sm tracking-tight">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-600 text-white shadow-xs tracking-tight">
                         <ArrowDownRight className="w-3.5 h-3.5" />
-                        Save ₹{comparison.absDiff.toFixed(2)} ({comparison.percentage}%)
+                        Save ₹{formattedDiff} ({comparison.percentage}%)
                       </span>
                     ) : isExpensive ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-600 text-white shadow-sm tracking-tight">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-600 text-white shadow-xs tracking-tight">
                         <ArrowUpRight className="w-3.5 h-3.5" />
-                        +₹{comparison.absDiff.toFixed(2)} ({comparison.percentage}%)
+                        +₹{formattedDiff} ({comparison.percentage}%)
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-200 text-slate-700">
@@ -396,7 +384,7 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
 
                   {/* Strength match pill on image */}
                   {sub.strength && (
-                    <span className="absolute bottom-2 right-2 text-[10px] font-bold px-2 py-0.5 bg-white/90 backdrop-blur-xs text-slate-700 rounded-md border border-slate-200 shadow-2xs">
+                    <span className="absolute bottom-2 right-2 text-[10px] font-bold px-2 py-0.5 bg-slate-100/90 text-slate-700 rounded-md border border-slate-200 shadow-2xs">
                       {sub.strength}
                     </span>
                   )}
@@ -492,13 +480,33 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
         </div>
       </div>
 
-      {/* Numbered Pagination with Smart Ellipsis (Client Point 5) */}
+      {/* ── PAGINATION & DENSITY BAR (CLEAN BOTTOM LAYOUT) ── */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-5 border-t border-slate-200/80">
-          <p className="text-xs text-slate-600">
-            Showing <span className="font-bold text-slate-800">{startNum}–{endNum}</span> of{' '}
-            <span className="font-bold text-slate-800">{totalItems}</span> matching substitutes
-          </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-5 border-t border-slate-200/80">
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-slate-600">
+              Showing <span className="font-bold text-slate-800">{startNum}–{endNum}</span> of{' '}
+              <span className="font-bold text-slate-800">{totalItems}</span> matching substitutes
+            </p>
+
+            {/* Density Selector */}
+            <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+              <span className="text-[10px] font-bold text-slate-600 px-1.5 uppercase">Show:</span>
+              {[4, 8, 12].map((size) => (
+                <button
+                  key={size}
+                  onClick={() => handlePageSizeChange(size)}
+                  className={`px-2 py-0.5 rounded-md font-bold text-xs transition-colors ${
+                    pageSize === size
+                      ? 'bg-white text-brand-600 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="flex items-center gap-1.5 flex-wrap justify-center">
             {/* Prev Button */}
