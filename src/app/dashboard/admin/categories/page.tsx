@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Tag, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Tag, Plus, Edit, Trash2, X, RefreshCw } from 'lucide-react';
 import api from '../../../../lib/api';
 import toast from 'react-hot-toast';
 import Pagination from '../../../../components/admin/Pagination';
@@ -31,9 +31,25 @@ export default function AdminCategoriesPage() {
   const [isActive, setIsActive] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  const handleSyncCategories = async () => {
+    setSyncing(true);
+    try {
+      const res = await api.post('/admin/categories/sync');
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Categories & medicines synced successfully!');
+        fetchCategories();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to sync categories');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -151,12 +167,23 @@ export default function AdminCategoriesPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
           <Tag className="w-8 h-8 text-brand-600" /> Manage Categories
         </h1>
-        <button 
-          onClick={openAddModal}
-          className="px-6 py-2.5 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" /> New Category
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button 
+            onClick={handleSyncCategories}
+            disabled={syncing}
+            className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold rounded-xl transition-colors shadow-2xs flex items-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
+            title="Automatically activate all categories with active medicines and auto-map medicines by salt"
+          >
+            <RefreshCw className={`w-4 h-4 text-emerald-600 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Auto-Assign Medicines & Sync'}
+          </button>
+          <button 
+            onClick={openAddModal}
+            className="px-6 py-2.5 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-5 h-5" /> New Category
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
