@@ -3,13 +3,14 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
-  ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, ChevronLeft, ChevronRight, X
+  ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, ChevronLeft, ChevronRight, X, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { useCart } from '../../../context/CartContext';
 import { toast } from 'react-hot-toast';
 import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
+import ProductSubstitutes from '../../../components/medicines/ProductSubstitutes';
 
 interface Review {
   id: number;
@@ -271,6 +272,19 @@ function MedicineDetailsContent() {
                   );
                 })()}
                 <p className="text-xxs text-slate-400 mt-1">Tax inclusive (GST included in prices)</p>
+                
+                {/* Quick Anchor Callout for Substitutes (Client Point 5: Visible near main product) */}
+                <a
+                  href="#equivalent-substitutes"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300/80 py-2 px-3.5 rounded-xl mt-3 transition-all shadow-2xs group"
+                >
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-12 transition-transform" />
+                  <span>Cheaper substitute brands with same strength available — <strong className="underline underline-offset-2">Compare &amp; Save &rarr;</strong></span>
+                </a>
               </div>
             </div>
 
@@ -337,11 +351,26 @@ function MedicineDetailsContent() {
           </div>
         </div>
 
+        {/* Equivalent Substitutes & Price Comparison Section (MrMed style, matching molecule & strength) */}
+        <ProductSubstitutes 
+          currentMedicineId={medicine.id} 
+          onAddToCart={({ id, name, price, discountPrice, prescriptionRequired, image }) => {
+            addToCart({
+              id,
+              name,
+              price,
+              discountPrice,
+              prescriptionRequired,
+              image
+            });
+          }} 
+        />
+
         {/* DoseBox-style Detail Breakdowns & Navigation */}
         <MedicineScrollspy medicine={medicine} />
         
         {/* Related Products Carousel */}
-        <RelatedProducts currentMedicineId={medicine.id} />
+        <RelatedProducts currentMedicineId={medicine.id} categorySlug={(medicine as any).categoryDetail?.slug} />
 
       </div>
 
@@ -463,17 +492,17 @@ export function MedicineScrollspy({ medicine }: { medicine: any }) {
   );
 }
 
-export function RelatedProducts({ currentMedicineId }: { currentMedicineId: number }) {
+export function RelatedProducts({ currentMedicineId, categorySlug }: { currentMedicineId: number; categorySlug?: string }) {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch generic list for related products
-    api.get(`/medicines?limit=6`).then(res => {
+    const url = categorySlug ? `/medicines?category=${categorySlug}&limit=6` : `/medicines?limit=6`;
+    api.get(url).then(res => {
       if (res.data?.success) {
         setProducts(res.data.data.filter((m: any) => m.id !== currentMedicineId).slice(0, 5));
       }
     }).catch(console.error);
-  }, [currentMedicineId]);
+  }, [currentMedicineId, categorySlug]);
 
   if (products.length === 0) return null;
 
