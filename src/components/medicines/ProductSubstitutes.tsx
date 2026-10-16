@@ -341,10 +341,10 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
             return (
               <div
                 key={sub.id}
-                className="bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-400 hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:-translate-y-0.5"
+                className="bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-400 hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:-translate-y-0.5 h-full"
               >
-                {/* Top Image & Savings Banner */}
-                <div className="relative aspect-4/3 p-4 bg-white border-b border-slate-100 flex items-center justify-center overflow-hidden">
+                {/* Top Image & Savings Banner (Standardized Square Aspect Ratio like Related Products) */}
+                <div className="relative aspect-square p-5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-center overflow-hidden">
                   <Link href={`/medicines/detail?id=${sub.id}`} className="w-full h-full flex items-center justify-center">
                     <img
                       src={imagesArr[0]}
@@ -353,7 +353,7 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
                       }}
-                      className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full max-h-36 max-w-[90%] object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                     />
                   </Link>
 
@@ -384,30 +384,30 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
 
                   {/* Strength match pill on image */}
                   {sub.strength && (
-                    <span className="absolute bottom-2 right-2 text-[10px] font-bold px-2 py-0.5 bg-slate-100/90 text-slate-700 rounded-md border border-slate-200 shadow-2xs">
+                    <span className="absolute bottom-2 right-2 text-[10px] font-bold px-2 py-0.5 bg-white/95 text-slate-700 rounded-md border border-slate-200 shadow-2xs">
                       {sub.strength}
                     </span>
                   )}
                 </div>
 
-                {/* Medicine Info */}
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 line-clamp-1">
+                {/* Medicine Info (Standardized Equal Heights for Perfect Sequence) */}
+                <div className="p-4 flex flex-col flex-1 justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 line-clamp-1 block h-4">
                       {sub.brand?.name || sub.manufacturer || 'Certified Brand'}
                     </span>
-                    <Link href={`/medicines/detail?id=${sub.id}`} className="group-hover:text-brand-600 transition-colors">
-                      <h4 className="text-sm font-bold text-slate-900 line-clamp-2 mt-0.5" title={sub.name}>
+                    <Link href={`/medicines/detail?id=${sub.id}`} className="group-hover:text-brand-600 transition-colors block">
+                      <h4 className="text-sm font-bold text-slate-900 line-clamp-2 mt-1 h-10 leading-snug" title={sub.name}>
                         {sub.name}
                       </h4>
                     </Link>
-                    <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
+                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-1 h-4">
                       {sub.packSize || (sub.dosageForm ? `${sub.dosageForm}` : 'Standard Pack')}
                     </p>
                   </div>
 
                   {/* Pricing Box */}
-                  <div className="mt-auto pt-3 border-t border-slate-100">
+                  <div className="mt-4 pt-3 border-t border-slate-100">
                     <div className="flex items-baseline justify-between">
                       <div>
                         <span className="text-lg font-black text-slate-950">
