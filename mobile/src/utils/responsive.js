@@ -17,40 +17,65 @@
 
 import { Dimensions, Platform, PixelRatio } from 'react-native';
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
 // Design base dimensions (iPhone 13 / common 375×812 baseline)
 const BASE_W = 375;
 const BASE_H = 812;
 
-/** Scale relative to base width */
-export const rs = (size) => (SCREEN_W / BASE_W) * size;
+const getDims = () => {
+  const { width, height } = Dimensions.get('window');
+  return {
+    width: width || BASE_W,
+    height: height || BASE_H,
+  };
+};
 
-/** Scale relative to base height */
-export const rv = (size) => (SCREEN_H / BASE_H) * size;
+/** 
+ * Scale relative to base width.
+ * Clamped between 0.85x and 1.25x so horizontal spacing and widths never collapse excessively on small phones.
+ */
+export const rs = (size) => {
+  const { width } = getDims();
+  const scale = Math.min(Math.max(width / BASE_W, 0.85), 1.25);
+  return Math.round(size * scale);
+};
+
+/** 
+ * Scale relative to base height.
+ * CRITICAL FOR SMALL SCREENS: Clamped between 0.90x and 1.25x so vertical heights (inputs, cards, buttons, lineHeights)
+ * never collapse and cut off text or push content off screen.
+ */
+export const rv = (size) => {
+  const { height } = getDims();
+  const scale = Math.min(Math.max(height / BASE_H, 0.90), 1.25);
+  return Math.round(size * scale);
+};
 
 /**
  * Moderate scale — blends the scaled value with the original.
- * factor=0 → no scaling (same as original), factor=1 → full scaling.
- * Defaults to 0.5 which is perfect for font sizes.
+ * Clamped so fonts stay legible and proportionate across all devices.
  */
-export const rm = (size, factor = 0.5) =>
-  size + (rs(size) - size) * factor;
+export const rm = (size, factor = 0.5) => {
+  const { width } = getDims();
+  const rawScale = width / BASE_W;
+  const clampedScale = Math.min(Math.max(rawScale, 0.88), 1.15);
+  const scaled = size * clampedScale;
+  return Math.round(size + (scaled - size) * factor);
+};
 
 /** Percentage of screen width */
-export const wp = (pct) => (SCREEN_W * pct) / 100;
+export const wp = (pct) => (getDims().width * pct) / 100;
 
 /** Percentage of screen height */
-export const hp = (pct) => (SCREEN_H * pct) / 100;
+export const hp = (pct) => (getDims().height * pct) / 100;
 
 /** True when running on a tablet-sized screen */
-export const isTablet = SCREEN_W >= 768;
+export const isTablet = getDims().width >= 768;
 
 /** Convenience layout snapshot */
 export const layout = {
-  width: SCREEN_W,
-  height: SCREEN_H,
-  isPortrait: SCREEN_H >= SCREEN_W,
+  get width() { return getDims().width; },
+  get height() { return getDims().height; },
+  get isPortrait() { return getDims().height >= getDims().width; },
 };
 
 /**
@@ -58,11 +83,7 @@ export const layout = {
  * Keeps fonts legible across low/high-DPI screens.
  */
 export const fontSize = (size) => {
-  const newSize = rm(size);
-  if (Platform.OS === 'ios') {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
-  }
-  return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
+  return rm(size);
 };
 
 /**

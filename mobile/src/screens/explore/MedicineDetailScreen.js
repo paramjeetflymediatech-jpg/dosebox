@@ -4,7 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCart } from '../../context/CartContext';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
-import { getFullImageUrl } from '../../utils/image';
+import { getFullImageUrl, getAllImageUrls } from '../../utils/image';
 import MedicineCard from '../../components/MedicineCard';
 import RenderHtml from 'react-native-render-html';
 import api from '../../services/api';
@@ -117,6 +117,8 @@ export default function MedicineDetailScreen({ navigation, route }) {
 
   const [medicine, setMedicine] = useState(initialMedicine);
   const [qty, setQty] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const imageCarouselRef = useRef(null);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [substitutes, setSubstitutes] = useState([]);
@@ -146,6 +148,8 @@ export default function MedicineDetailScreen({ navigation, route }) {
 
   useEffect(() => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    setActiveImageIndex(0);
+    imageCarouselRef.current?.scrollToOffset({ offset: 0, animated: false });
     
     if (initialMedicine?.id) {
       api.get(`/medicines/${initialMedicine.id}`)
@@ -182,11 +186,31 @@ export default function MedicineDetailScreen({ navigation, route }) {
     );
   }
 
-  const imageUri = getFullImageUrl(medicine.images || medicine.image);
+  const allImages = getAllImageUrls(medicine.images);
+  if (allImages.length === 0 && medicine.image) {
+    const fallbackSingle = getFullImageUrl(medicine.image);
+    if (fallbackSingle) allImages.push(fallbackSingle);
+  }
   const price = Number(medicine.price);
   const discPrice = medicine.discountPrice ? Number(medicine.discountPrice) : null;
   const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
   const finalPrice = discPrice || price;
+
+  const handleThumbnailPress = (index) => {
+    setActiveImageIndex(index);
+    imageCarouselRef.current?.scrollToOffset({
+      offset: index * width,
+      animated: true,
+    });
+  };
+
+  const onCarouselScroll = (e) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(offsetX / width);
+    if (newIndex >= 0 && newIndex < allImages.length && newIndex !== activeImageIndex) {
+      setActiveImageIndex(newIndex);
+    }
+  };
 
   const handleAddToCart = () => {
     addToCart({
@@ -195,7 +219,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
       price: price,
       discountPrice: discPrice,
       prescriptionRequired: medicine.prescriptionRequired,
-      image: imageUri,
+      image: allImages[0] || null,
       qty: qty
     });
     navigation.goBack();
@@ -215,16 +239,85 @@ export default function MedicineDetailScreen({ navigation, route }) {
       <ScrollView ref={scrollViewRef} style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(100) }} showsVerticalScrollIndicator={false}>
         
         {/* ── IMAGE SECTION ── */}
-        <View style={styles.imageWrap}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
+        <View style={styles.imageSectionWrap}>
+          {allImages.length > 0 ? (
+            <View style={styles.carouselContainer}>
+              <FlatList
+                ref={imageCarouselRef}
+                data={allImages}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item, index) => `${item}-${index}`}
+                getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+                onMomentumScrollEnd={onCarouselScroll}
+                renderItem={({ item }) => (
+                  <View style={[styles.imageSlide, { width }]}>
+                    <Image source={{ uri: item }} style={styles.image} resizeMode="contain" />
+                  </View>
+                )}
+              />
+
+              {/* Counter Badge */}
+              {allImages.length > 1 && (
+                <View style={styles.imageCounterBadge}>
+                  <Text style={styles.imageCounterText}>
+                    {activeImageIndex + 1} / {allImages.length}
+                  </Text>
+                </View>
+              )}
+
+              {/* Dots */}
+              {allImages.length > 1 && (
+                <View style={styles.dotsWrap}>
+                  {allImages.map((_, idx) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.dot,
+                        activeImageIndex === idx ? styles.activeDot : styles.inactiveDot
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
           ) : (
-            <Ionicons name="medical" size={100} color="#E2E8F0" />
+            <View style={[styles.imageWrap, { width }]}>
+              <Ionicons name="medical" size={100} color="#E2E8F0" />
+            </View>
           )}
+
           {medicine.prescriptionRequired && (
             <View style={styles.rxBadge}>
               <Text style={styles.rxText}>RX REQUIRED</Text>
             </View>
+          )}
+
+          {/* Thumbnails Strip */}
+          {allImages.length > 1 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.thumbnailList}
+            >
+              {allImages.map((imgUri, idx) => {
+                const isSelected = activeImageIndex === idx;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    activeOpacity={0.8}
+                    onPress={() => handleThumbnailPress(idx)}
+                    style={[
+                      styles.thumbnailWrap,
+                      isSelected && styles.thumbnailWrapActive
+                    ]}
+                  >
+                    <Image source={{ uri: imgUri }} style={styles.thumbnailImage} resizeMode="contain" />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           )}
         </View>
 
@@ -433,9 +526,22 @@ const styles = StyleSheet.create({
   
   scroll: { flex: 1 },
   
-  imageWrap: { backgroundColor: C.white, height: rv(280), alignItems: 'center', justifyContent: 'center', marginBottom: rv(8), position: 'relative' },
-  image: { width: '80%', height: '80%' },
-  rxBadge: { position: 'absolute', top: rv(16), left: rs(16), backgroundColor: '#f0ecec', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6, borderWidth: 1, borderColor: '#e6dfdf' },
+  imageSectionWrap: { backgroundColor: C.white, paddingBottom: rv(12), marginBottom: rv(8), position: 'relative', borderBottomWidth: 1, borderBottomColor: C.border },
+  carouselContainer: { height: rv(280), alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  imageSlide: { height: rv(280), alignItems: 'center', justifyContent: 'center', paddingHorizontal: rs(20) },
+  imageWrap: { backgroundColor: C.white, height: rv(280), alignItems: 'center', justifyContent: 'center' },
+  image: { width: '85%', height: '85%' },
+  imageCounterBadge: { position: 'absolute', bottom: rv(12), right: rs(16), backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: rs(10), paddingVertical: rv(4), borderRadius: 16 },
+  imageCounterText: { fontSize: rm(11), fontWeight: '700', color: C.white, letterSpacing: 0.5 },
+  dotsWrap: { position: 'absolute', bottom: rv(14), flexDirection: 'row', alignItems: 'center', justifyContent: 'center', left: 0, right: 0 },
+  dot: { height: rv(6), borderRadius: rv(3), marginHorizontal: rs(3) },
+  activeDot: { width: rs(18), backgroundColor: C.primary },
+  inactiveDot: { width: rs(6), backgroundColor: '#CBD5E1' },
+  thumbnailList: { paddingHorizontal: spacing.md, paddingTop: rv(10), gap: rs(10), flexDirection: 'row', alignItems: 'center' },
+  thumbnailWrap: { width: rs(60), height: rs(60), borderRadius: radius.md, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', padding: rs(4), alignItems: 'center', justifyContent: 'center' },
+  thumbnailWrapActive: { borderColor: C.primary, borderWidth: 2, backgroundColor: C.white, elevation: 3, shadowColor: C.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  thumbnailImage: { width: '100%', height: '100%' },
+  rxBadge: { position: 'absolute', top: rv(16), left: rs(16), backgroundColor: '#f0ecec', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6, borderWidth: 1, borderColor: '#e6dfdf', zIndex: 10 },
   rxText: { fontSize: rm(10), fontWeight: '800', color: '#786c6c' },
   
   section: { backgroundColor: C.white, padding: spacing.md, marginBottom: rv(8) },

@@ -76,7 +76,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
         <Text style={[styles.medBrandText, compact && { fontSize: rm(8) }]} numberOfLines={1}>
           {med.packSize || 'Strip of 10 Tablets'} • {med.brand?.name || 'DoseBox Speciality'}
         </Text>
-        <Text style={[styles.medNameText, compact && { fontSize: rm(11), height: rv(32) }]} numberOfLines={2}>{med.name}</Text>
+        <Text style={[styles.medNameText, compact && { fontSize: rm(11), minHeight: rv(32) }]} numberOfLines={2}>{med.name}</Text>
         <View style={styles.medRatingRow}>
           <Ionicons name="star" size={compact ? 8 : 10} color="#f6a041" />
           <Text style={[styles.medRatingText, compact && { fontSize: rm(9) }]}>4.8 (42)</Text>
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   medImageWrap: { height: rv(120), alignItems: 'center', justifyContent: 'center', marginTop: rv(24), marginBottom: rv(8) },
   medDetails: { marginBottom: rv(12) },
   medBrandText: { fontSize: rm(9), fontWeight: '700', color: '#8c8c8c', textTransform: 'uppercase', marginBottom: rv(4) },
-  medNameText: { fontSize: rm(13), fontWeight: '700', color: C.text, lineHeight: rv(18), height: rv(36) },
+  medNameText: { fontSize: rm(13), fontWeight: '700', color: C.text, lineHeight: Math.max(18, rv(18)), minHeight: rv(36) },
   medRatingRow: { flexDirection: 'row', alignItems: 'center', marginTop: rv(4), gap: rs(4) },
   medRatingText: { fontSize: rm(10), fontWeight: '600', color: '#9b9b9b' },
   medFooter: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 'auto' },
