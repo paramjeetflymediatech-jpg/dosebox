@@ -125,7 +125,7 @@ export default function AdminGlobalSEOPage() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Physical Address</label>
-                  <input type="text" value={getValue('physical_address')} onChange={e => handleUpdate('physical_address', e.target.value)} placeholder="123 Pharmacy Lane, Health City" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
+                  <input type="text" value={getValue('physical_address')} onChange={e => handleUpdate('physical_address', e.target.value)} placeholder="B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP, New Delhi - 110066" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 transition-colors" />
                 </div>
               </div>
 

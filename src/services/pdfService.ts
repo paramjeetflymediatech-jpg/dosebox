@@ -39,8 +39,8 @@ export class PdfService {
       .fontSize(10)
       .fillColor('#718096')
       .text('Enterprise Online Pharmacy & Diagnostics', 50, 68)
-      .text('Regd. Office: 124, Healthcare Boulevard, Tech City', 50, 80)
-      .text('GSTIN: 27AAAAA1111A1Z1', 50, 92)
+      .text('Regd. Office: B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP, New Delhi - 110066', 50, 80)
+      .text('GSTIN: 07AAECJ0285F1ZQ', 50, 92)
       .moveDown();
 
     // Invoice Meta Information (Right Aligned)

@@ -30,10 +30,10 @@ const DEFAULT_SETTINGS: EnterpriseSettings = {
   enterprise_fssai: '',
   enterprise_email: '',
   enterprise_phone: '',
-  enterprise_address: '',
-  enterprise_city: '',
-  enterprise_state: '',
-  enterprise_pincode: '',
+  enterprise_address: 'B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP',
+  enterprise_city: 'New Delhi',
+  enterprise_state: 'Delhi',
+  enterprise_pincode: '110066',
 };
 
 export default function EnterpriseProfilePage() {
@@ -254,7 +254,7 @@ export default function EnterpriseProfilePage() {
                     name="enterprise_pincode"
                     value={settings.enterprise_pincode}
                     onChange={handleChange}
-                    placeholder="110001"
+                    placeholder="110066"
                     className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 focus:bg-white transition-colors"
                   />
                 </div>
