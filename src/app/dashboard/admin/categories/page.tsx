@@ -102,11 +102,30 @@ export default function AdminCategoriesPage() {
     });
     if (!result.isConfirmed) return;
     try {
-      await api.delete(`/admin/categories/${id}`);
-      toast.success('Category deleted');
-      fetchCategories();
-    } catch (err) {
-      toast.error('Error deleting category');
+      const res = await api.delete(`/admin/categories/${id}`);
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Category deleted');
+        fetchCategories();
+      } else {
+        toast.error(res.data?.message || 'Error deleting category');
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Error deleting category';
+      if (err.response?.status === 401) {
+        Swal.fire({
+          title: 'Authentication Required',
+          text: 'Your admin session has expired or you are not signed in. Please log in to manage categories.',
+          icon: 'error',
+          confirmButtonText: 'Go to Admin Login',
+          confirmButtonColor: '#108098'
+        }).then((res) => {
+          if (res.isConfirmed) {
+            window.location.href = '/admin/login';
+          }
+        });
+      } else {
+        toast.error(msg);
+      }
     }
   };
 

@@ -14,13 +14,11 @@ export async function GET() {
       { name: 'Anticoagulants', slug: 'anticoagulants', image: '/categories/anticoagulants.jpg', description: 'Blood thinners, cardiovascular care, and thrombosis prevention', isActive: true },
     ];
 
-    for (const cat of specialtySeed) {
-      const [existing, created] = await Category.findOrCreate({
-        where: { slug: cat.slug },
-        defaults: cat
-      });
-      if (!created && existing.image && existing.image.includes('images.unsplash.com')) {
-        await existing.update({ image: cat.image });
+    // Only seed initial specialty categories if table is completely empty, so admin deletions are respected
+    const count = await Category.count();
+    if (count === 0) {
+      for (const cat of specialtySeed) {
+        await Category.create(cat);
       }
     }
 
