@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert, Baby, Bone, Brain, Thermometer, Tag, ArrowUp, ChevronLeft, ChevronRight
+  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert, Baby, Bone, Brain, Thermometer, Tag, ArrowUp, ChevronLeft, ChevronRight, ShoppingCart
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Link from 'next/link';
@@ -72,21 +72,32 @@ function getCategoryPhoto(cat: { name: string; slug?: string; image?: string | n
   const slug = (cat.slug || '').toLowerCase();
   const name = (cat.name || '').toLowerCase();
 
-  // If category has a custom uploaded image from admin file manager, respect it
-  if (cat.image && (cat.image.startsWith('/api/file/categories/') || cat.image.startsWith('/categories/'))) {
-    return cat.image;
+  // If category has an uploaded or custom image, prioritize it
+  if (cat.image && typeof cat.image === 'string' && cat.image.trim() !== '') {
+    if (
+      cat.image.startsWith('/api/file/categories/') ||
+      cat.image.startsWith('/categories/') ||
+      cat.image.startsWith('/uploads/') ||
+      cat.image.startsWith('http://') ||
+      cat.image.startsWith('https://')
+    ) {
+      return cat.image;
+    }
   }
 
-  // Exact curated local studio images matching reference
+  // Curated studio photographic images
   if (slug === 'allergy-medication' || name.includes('allergy')) return '/categories/allergy-medication.jpg';
   if (slug === 'alzheimers' || name.includes('alzheimer') || name.includes('dementia')) return '/categories/alzheimers.jpg';
   if (slug === 'anaesthetics' || name.includes('anaesthetic') || name.includes('anesthetic')) return '/categories/anaesthetics.jpg';
   if (slug === 'anemia' || name.includes('anemia')) return '/categories/anemia.jpg';
   if (slug === 'anti-cancer' || name.includes('cancer') || name.includes('oncology')) return '/categories/anti-cancer.jpg';
-  if (slug === 'antibacterials' || name.includes('antibacterial') || name.includes('bacterial')) return '/categories/antibacterials.jpg';
+  if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return '/categories/antibacterials.jpg';
   if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return '/categories/anticoagulants.jpg';
+  if (slug === 'anti-fungals' || name.includes('fungal')) return '/categories/anti-cancer.jpg';
+  if (slug === 'arthritis' || name.includes('arthritis')) return '/categories/anemia.jpg';
+  if (slug === 'vaccines' || name.includes('vaccine')) return '/categories/anaesthetics.jpg';
 
-  if (cat.image && (cat.image.startsWith('http://') || cat.image.startsWith('https://') || cat.image.startsWith('/'))) {
+  if (cat.image && (cat.image.startsWith('/') || cat.image.startsWith('http'))) {
     return cat.image;
   }
 
@@ -109,14 +120,12 @@ export default function HomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // Dynamically show all categories from API / database, falling back to initial presets only while loading
   const displayedCategories = useMemo(() => {
-    if (!categories || categories.length === 0) return CHRONIC_SPECIALTIES;
-    return CHRONIC_SPECIALTIES.map((spec) => {
-      const found = categories.find(
-        (c) => c.slug === spec.slug || c.name.toLowerCase() === spec.name.toLowerCase()
-      );
-      return found ? { ...spec, ...found, image: found.image || spec.image } : spec;
-    });
+    if (categories && categories.length > 0) {
+      return categories;
+    }
+    return CHRONIC_SPECIALTIES;
   }, [categories]);
   const [trending, setTrending] = useState<Medicine[]>([]);
   const [recommendations, setRecommendations] = useState<Medicine[]>([]);
@@ -386,15 +395,17 @@ export default function HomePage() {
     async function loadData() {
       try {
         const [banRes, catRes, medRes/* CONSULT_DISABLED , docRes */] = await Promise.all([
-          api.get('/admin/banners'),
-          api.get('/medicines/categories'),
-          api.get('/medicines?limit=4'),
+          api.get('/admin/banners').catch(() => ({ data: { success: false, data: [] } })),
+          api.get('/categories').catch(() => api.get('/medicines/categories')).catch(() => ({ data: { success: false, data: [] } })),
+          api.get('/medicines?limit=4').catch(() => ({ data: { success: false, data: [] } })),
           // api.get('/appointments/doctors')  // CONSULT FEATURE DISABLED
         ]);
 
-        if (banRes.data?.success) setBanners(banRes.data.data);
-        if (catRes.data?.success) setCategories(catRes.data.data);
-        if (medRes.data?.success) setTrending(medRes.data.data);
+        if (banRes.data?.success && Array.isArray(banRes.data.data)) setBanners(banRes.data.data);
+        if (catRes.data?.success && Array.isArray(catRes.data.data) && catRes.data.data.length > 0) {
+          setCategories(catRes.data.data);
+        }
+        if (medRes.data?.success && Array.isArray(medRes.data.data)) setTrending(medRes.data.data);
         // if (docRes.data?.success) setHomeDoctors(docRes.data.data);  // CONSULT FEATURE DISABLED
       } catch (err) {
         console.warn('API error in homepage. Loading static fallbacks.');
@@ -809,51 +820,52 @@ export default function HomePage() {
                         <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                       </h3>
 
-                      <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 font-bold mb-4">
+                      {/* <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 font-bold mb-4">
                         <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                         <span>4.8</span>
                         <span className="text-slate-400 font-medium">(42 reviews)</span>
-                      </div>
+                      </div> */}
                     </div>
 
-                    <div className="flex items-end justify-between mt-auto pt-3 border-t border-slate-100">
-                      <div>
-                        {discPrice && savings > 0 ? (
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="line-through text-xs text-slate-400 font-semibold">₹{formatCurrency(price)}</span>
-                            <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold px-1.5 py-0.5 rounded">
-                              -{savings}% Swap
-                            </span>
+                    <div className="mt-auto pt-3 border-t border-slate-100">
+                      <div className="flex items-end justify-between gap-2 mb-3">
+                        <div>
+                          {discPrice && savings > 0 ? (
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="line-through text-xs text-slate-400 font-semibold">₹{formatCurrency(price)}</span>
+                              <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                -{savings}% Swap
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="h-4" />
+                          )}
+                          <div className="text-brand-700 font-black text-xl sm:text-2xl leading-none tracking-tight">
+                            ₹{formatCurrency(activePrice.toFixed(0))}
                           </div>
-                        ) : (
-                          <div className="h-4" />
-                        )}
-                        <div className="text-brand-700 font-black text-xl sm:text-2xl leading-none tracking-tight">
-                          ₹{formatCurrency(activePrice.toFixed(0))}
+                          {unitPriceObj && (
+                            <div className="text-[11px] text-slate-600 font-semibold mt-1">
+                              ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
+                            </div>
+                          )}
                         </div>
-                        {unitPriceObj && (
-                          <div className="text-xs text-slate-600 font-semibold mt-1">
-                            ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => { setQuickViewMed(med); setQty(1); }}
-                          className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 text-slate-600 hover:text-brand-700 flex items-center justify-center transition-all shadow-2xs"
+                          className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 text-slate-600 hover:text-brand-700 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
                           title="Quick View"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleAddToCart(med)}
-                          className="w-8 h-8 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base flex items-center justify-center transition-all shadow-xs hover:scale-105"
-                          title="Add to Cart"
-                        >
-                          +
-                        </button>
                       </div>
+
+                      <button
+                        onClick={() => handleAddToCart(med)}
+                        className="w-full bg-[#108098] hover:bg-[#0c6b80] text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>Add to Cart</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -868,7 +880,7 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
           <div>
             <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Digital Specialty Shelf</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Substitute &amp; Save Instantly</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">DoseBox Smart Savings</h2>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1004,51 +1016,52 @@ export default function HomePage() {
                       <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                     </h3>
 
-                    <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 font-bold mb-4">
+                    {/* <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 font-bold mb-4">
                       <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                       <span>4.8</span>
                       <span className="text-slate-400 font-medium">(42 reviews)</span>
-                    </div>
+                    </div> */}
                   </div>
 
-                  <div className="flex items-end justify-between mt-auto pt-3 border-t border-slate-100">
-                    <div>
-                      {discPrice && savings > 0 ? (
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="line-through text-xs text-slate-400 font-semibold">₹{formatCurrency(price)}</span>
-                          <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold px-1.5 py-0.5 rounded">
-                            -{savings}% Swap
-                          </span>
+                  <div className="mt-auto pt-3 border-t border-slate-100">
+                    <div className="flex items-end justify-between gap-2 mb-3">
+                      <div>
+                        {discPrice && savings > 0 ? (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="line-through text-xs text-slate-400 font-semibold">₹{formatCurrency(price)}</span>
+                            <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              -{savings}% Swap
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-4" />
+                        )}
+                        <div className="text-brand-700 font-black text-xl sm:text-2xl leading-none tracking-tight">
+                          ₹{formatCurrency(activePrice.toFixed(0))}
                         </div>
-                      ) : (
-                        <div className="h-4" />
-                      )}
-                      <div className="text-brand-700 font-black text-xl sm:text-2xl leading-none tracking-tight">
-                        ₹{formatCurrency(activePrice.toFixed(0))}
+                        {unitPriceObj && (
+                          <div className="text-[11px] text-slate-600 font-semibold mt-1">
+                            ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
+                          </div>
+                        )}
                       </div>
-                      {unitPriceObj && (
-                        <div className="text-xs text-slate-600 font-semibold mt-1">
-                          ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => { setQuickViewMed(med); setQty(1); }}
-                        className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 text-slate-600 hover:text-brand-700 flex items-center justify-center transition-all shadow-2xs"
+                        className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 text-slate-600 hover:text-brand-700 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
                         title="Quick View"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleAddToCart(med)}
-                        className="w-8 h-8 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base flex items-center justify-center transition-all shadow-xs hover:scale-105"
-                        title="Add to Cart"
-                      >
-                        +
-                      </button>
                     </div>
+
+                    <button
+                      onClick={() => handleAddToCart(med)}
+                      className="w-full bg-[#108098] hover:bg-[#0c6b80] text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>Add to Cart</span>
+                    </button>
                   </div>
                 </div>
               );

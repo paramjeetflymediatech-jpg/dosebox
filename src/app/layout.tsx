@@ -841,12 +841,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         )}
-      </header>
-      )}
 
-      {/* MOBILE SEARCH BAR */}
-      {!hideHeaderFooter && (
-        <div className="lg:hidden px-4 py-3 bg-white border-b border-slate-100 sticky top-[88px] z-30 shadow-sm">
+        {/* MOBILE SEARCH BAR (Inside sticky header for unified mobile stickiness) */}
+        <div className="lg:hidden px-4 py-2.5 bg-white border-t border-slate-100">
           <div className="relative w-full">
             <input
               type="text"
@@ -856,13 +853,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSearch();
               }}
-              className="w-full bg-slate-50/50 border border-slate-200 text-slate-800 rounded-full py-2.5 pl-10 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-sm font-medium"
+              className="w-full bg-slate-50/50 border border-slate-200 text-slate-800 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-xs sm:text-sm font-medium"
             />
-            <button onClick={handleSearch} className="absolute left-2.5 top-1.5 p-1 text-slate-400">
+            <button onClick={handleSearch} className="absolute left-2.5 top-1 p-1 text-slate-400">
               <Search className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </header>
       )}
 
       {/* MOBILE MENU DRAWER */}

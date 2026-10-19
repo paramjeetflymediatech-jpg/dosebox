@@ -115,33 +115,33 @@ const AnimatedMedicalCard = () => {
       {/* Background decorations */}
       <View style={{ position: 'absolute', top: -rs(30), right: -rs(20), width: rs(120), height: rs(120), borderRadius: rs(60), backgroundColor: 'rgba(255,255,255,0.08)' }} />
       <View style={{ position: 'absolute', bottom: -rs(40), left: -rs(20), width: rs(160), height: rs(160), borderRadius: rs(80), backgroundColor: 'rgba(255,255,255,0.05)' }} />
-      
+
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Animated.View style={{ transform: [{ scale: pulseAnim }], width: rs(52), height: rs(52), borderRadius: rs(26), backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center', marginRight: rs(16), shadowColor: '#34D399', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 12, elevation: 8 }}>
           <Ionicons name="pulse" size={28} color="#0D9488" />
         </Animated.View>
-        
+
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: rm(17), fontWeight: '800', color: '#F0FDFA', marginBottom: rv(2) }}>DoseBox Care+</Text>
           <Text style={{ fontSize: rm(12), color: '#99F6E4', lineHeight: rv(16) }}>24/7 Expert pharmacists & doctors on standby for your health.</Text>
         </View>
       </View>
-      
+
       <View style={{ flexDirection: 'row', marginTop: rv(20), borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: rv(16) }}>
-         <View style={{ flex: 1, alignItems: 'center' }}>
-           <Ionicons name="shield-checkmark" size={20} color="#5EEAD4" />
-           <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>100% Genuine</Text>
-         </View>
-         <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.15)' }} />
-         <View style={{ flex: 1, alignItems: 'center' }}>
-           <Ionicons name="thermometer" size={20} color="#5EEAD4" />
-           <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>Lab Tested</Text>
-         </View>
-         <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.15)' }} />
-         <View style={{ flex: 1, alignItems: 'center' }}>
-           <Ionicons name="flash" size={20} color="#5EEAD4" />
-           <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>Express Rx</Text>
-         </View>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Ionicons name="shield-checkmark" size={20} color="#5EEAD4" />
+          <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>100% Genuine</Text>
+        </View>
+        <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Ionicons name="thermometer" size={20} color="#5EEAD4" />
+          <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>Lab Tested</Text>
+        </View>
+        <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Ionicons name="flash" size={20} color="#5EEAD4" />
+          <Text style={{ fontSize: rm(11), color: '#F0FDFA', marginTop: rv(4), fontWeight: '600' }}>Express Rx</Text>
+        </View>
       </View>
     </View>
   );
@@ -344,9 +344,9 @@ export default function HomeScreen({ navigation }) {
         message: `Please login to ${label}.`,
         buttons: [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Login', 
-            onPress: () => navigation.navigate('Login') 
+          {
+            text: 'Login',
+            onPress: () => navigation.navigate('Login')
           }
         ]
       });
@@ -467,9 +467,9 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.searchText}>Search medicines, symptoms...</Text>
       </TouchableOpacity>
 
-      <ScrollView 
-        style={styles.scroll} 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + rv(100) }]} 
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + rv(100) }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
       >
@@ -494,7 +494,7 @@ export default function HomeScreen({ navigation }) {
                   activeOpacity={0.9}
                   onPress={() => {
                     if (!item.link) return;
-                    
+
                     if (item.link.startsWith('/medicines/detail')) {
                       const match = item.link.match(/id=(\d+)/);
                       if (match) {
@@ -555,7 +555,7 @@ export default function HomeScreen({ navigation }) {
             />
           ))}
         </View>
-    {/* ── WHATSAPP BOT ACTION ── */}
+        {/* ── WHATSAPP BOT ACTION ── */}
         <TouchableOpacity
           style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: rv(12), padding: rs(16), backgroundColor: '#F0FDF4', borderRadius: radius.xl, borderWidth: 1, borderColor: '#dcfce7', shadowColor: '#25D366', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}
           onPress={() => Linking.openURL('https://wa.me/919876543210?text=Hello%20DoseBox%2C%20I%20would%20like%20to%20order%20some%20medicines.')}
@@ -573,7 +573,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-    {/* ── UPLOAD PRESCRIPTION ACTION ── */}
+        {/* ── UPLOAD PRESCRIPTION ACTION ── */}
         <TouchableOpacity
           style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: rv(24), padding: rs(16), backgroundColor: '#F8FAFC', borderRadius: radius.xl, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
           onPress={() => navigateWithAuth('UploadPrescription', 'order with prescription')}
@@ -649,7 +649,7 @@ export default function HomeScreen({ navigation }) {
                 <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }]}>
                   <View>
                     <Text style={styles.sectionOverline}>DIGITAL SPECIALTY SHELF</Text>
-                    <Text style={styles.sectionTitle}>Substitute & Save Instantly</Text>
+                    <Text style={styles.sectionTitle}>DoseBox Smart Savings</Text>
                   </View>
                   <TouchableOpacity onPress={() => navigation.navigate('SearchScreen', { showAll: true })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Text style={{ color: C.primary, fontWeight: '700', fontSize: rm(13) }}>View All</Text>
@@ -724,7 +724,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={{ fontSize: rm(13), color: '#4F46E5', textAlign: 'center', marginBottom: rv(16), paddingHorizontal: rs(10), lineHeight: rv(18) }}>
             We're here to help you. If you have any issue related to your order or anything else, message us.
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={{ backgroundColor: '#4F46E5', paddingVertical: rv(12), paddingHorizontal: rs(24), borderRadius: radius.full, shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('Contact')}
