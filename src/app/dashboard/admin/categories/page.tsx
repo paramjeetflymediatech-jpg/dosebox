@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Tag, Plus, Edit, Trash2, X, RefreshCw } from 'lucide-react';
+import { Tag, Plus, Edit, Trash2, X, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
 import api from '../../../../lib/api';
 import toast from 'react-hot-toast';
 import Pagination from '../../../../components/admin/Pagination';
@@ -188,38 +188,54 @@ export default function AdminCategoriesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {currentItems.map(cat => {
+          const previewImg = cat.image || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=400';
           return (
-            <div key={cat.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group p-5 flex flex-col gap-4 hover:shadow-md hover:border-brand-300 transition-all">
-              <div className="flex justify-between items-start">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-50 shadow-inner overflow-hidden">
-                  {cat.image && cat.image.includes('.') ? (
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-contain p-2" />
-                  ) : (
-                    <Tag className="w-6 h-6 text-slate-400" />
-                  )}
+            <div key={cat.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden group flex flex-col hover:shadow-lg transition-all">
+              {/* Card Photo Preview with dark gradient */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
+                <img 
+                  src={previewImg} 
+                  alt={cat.name} 
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=400'; }}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+                <div className="absolute bottom-2 left-3 right-3 text-white font-bold text-sm drop-shadow truncate">
+                  {cat.name}
                 </div>
-                <div className="flex gap-2 items-center">
-                  <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${cat.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                <div className="absolute top-2 right-2">
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full shadow-xs ${cat.isActive !== false ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-200'}`}>
                     {cat.isActive !== false ? 'Active' : 'Inactive'}
                   </span>
-                  <button 
-                    onClick={() => openEditModal(cat)} 
-                    className="p-1.5 bg-slate-50 text-brand-600 hover:bg-brand-100 rounded-full transition-colors" 
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(cat.id)} 
-                    className="p-1.5 bg-slate-50 text-rose-500 hover:bg-rose-100 rounded-full transition-colors" 
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-lg leading-tight">{cat.name}</h4>
-                <p className="text-xs font-semibold text-slate-400 mt-0.5">/{cat.slug}</p>
-                <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed line-clamp-2">{cat.description || 'No description'}</p>
+
+              {/* Info & Actions */}
+              <div className="p-4 flex flex-col flex-1 justify-between gap-3">
+                <div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-slate-400">/{cat.slug}</span>
+                    <div className="flex gap-1.5 items-center">
+                      <button 
+                        onClick={() => openEditModal(cat)} 
+                        className="p-1.5 bg-slate-50 text-brand-600 hover:bg-brand-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" 
+                        title="Edit Category & Image"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(cat.id)} 
+                        className="p-1.5 bg-slate-50 text-rose-500 hover:bg-rose-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" 
+                        title="Delete Category"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  {cat.description && (
+                    <p className="text-xs text-slate-500 font-medium mt-2 line-clamp-2">{cat.description}</p>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -276,33 +292,62 @@ export default function AdminCategoriesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Category Icon / Image</label>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200 overflow-hidden">
-                      {imageFile ? (
-                        <img src={URL.createObjectURL(imageFile)} alt="preview" className="w-full h-full object-contain p-2" />
-                      ) : icon && icon.includes('.') ? (
-                        <img src={icon} alt="preview" className="w-full h-full object-contain p-2" />
-                      ) : (
-                        <Tag className="w-6 h-6 text-slate-300" />
-                      )}
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">
+                  Category Card Image / Photo
+                </label>
+                <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50 flex flex-col sm:flex-row items-center gap-4">
+                  {/* Live preview card matching home page */}
+                  <div className="relative w-28 h-28 aspect-square rounded-2xl overflow-hidden bg-slate-900 flex-shrink-0 shadow-md border border-slate-200">
+                    <img
+                      src={
+                        imageFile
+                          ? URL.createObjectURL(imageFile)
+                          : icon || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=400'
+                      }
+                      alt="Preview"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=400';
+                      }}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-1.5 inset-x-0 px-2 text-center">
+                      <span className="text-[10px] font-bold text-white drop-shadow block truncate">
+                        {name || 'Category Name'}
+                      </span>
                     </div>
-                    <div className="flex-1">
+                  </div>
+
+                  {/* Upload controls */}
+                  <div className="flex-1 space-y-3 w-full">
+                    <div>
+                      <span className="text-xs font-bold text-slate-700 block mb-1">Upload Photo File</span>
                       <input
                         type="file"
-                        accept="image/svg+xml,image/png,image/jpeg"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             setImageFile(e.target.files[0]);
                           }
                         }}
-                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 transition-colors cursor-pointer"
+                        className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#108098] file:text-white hover:file:bg-[#0c6b80] transition-colors cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-700 block mb-1">Or Paste Image URL</span>
+                      <input
+                        type="text"
+                        placeholder="https://images.unsplash.com/... or /uploads/..."
+                        value={icon}
+                        onChange={(e) => setIcon(e.target.value)}
+                        className="w-full bg-white border border-slate-200 text-slate-900 text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-[#108098]/20 transition-all font-mono"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-400 font-medium">Upload a custom SVG or PNG flat icon (like the ones from Flaticon).</p>
                 </div>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  Upload a photo to be displayed as the full-bleed card background on the home page Specialty section.
+                </p>
               </div>
 
               <div>

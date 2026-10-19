@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { 
-  Search, SlidersHorizontal, CheckSquare, Square, ChevronRight, Eye, AlertCircle, X, Shield, ShieldAlert
+  Search, SlidersHorizontal, CheckSquare, Square, ChevronRight, Eye, AlertCircle, X, Shield, ShieldAlert, ShoppingBag, ShoppingCart
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ import api from '../../lib/api';
 import axios from 'axios';
 import { useCart } from '../../context/CartContext';
 import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
+import { showAddedToCart } from '@/lib/sweetalert';
 
 interface Medicine {
   id: number;
@@ -29,6 +30,8 @@ interface Medicine {
   description?: string;
   dosage?: string;
   sideEffects?: string;
+  storageInstructions?: string;
+  isColdChain?: boolean;
 }
 
 interface Category {
@@ -44,6 +47,7 @@ interface Brand {
 }
 
 function MedicinesCatalogContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { addToCart } = useCart();
   
@@ -174,6 +178,8 @@ function MedicinesCatalogContent() {
       image: imagesArr[0],
       quantity: customQty || 1
     });
+
+    showAddedToCart(med.name, () => router.push('/cart'));
     
     if (quickViewMed) {
       setQuickViewMed(null);
@@ -206,27 +212,34 @@ function MedicinesCatalogContent() {
         <div className="w-full space-y-8">
           
           {/* CATEGORIES NAVIGATION */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Browse by Category
               </h2>
+              <Link 
+                href="/condition" 
+                className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-0.5 sm:hidden"
+              >
+                View all <ChevronRight className="w-3 h-3" />
+              </Link>
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center">
+            {/* Horizontal scroll container on mobile with touch swipe, flex-wrap on desktop */}
+            <div className="flex overflow-x-auto sm:flex-wrap gap-2 sm:gap-3 items-center no-scrollbar pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 touch-pan-x overscroll-x-contain">
               <button
                 onClick={() => { setSelectedCategory(''); setCurrentPage(1); }}
-                className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
+                className={`shrink-0 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
                   !selectedCategory ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 All Medicines
               </button>
-              {categories.slice(0, 7).map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
-                  className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
+                  className={`shrink-0 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all active:scale-95 ${
                     selectedCategory === cat.slug ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -235,7 +248,7 @@ function MedicinesCatalogContent() {
               ))}
               <Link
                 href="/condition"
-                className="px-6 py-2.5 rounded-full font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all flex items-center gap-1"
+                className="shrink-0 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-1"
               >
                 More Categories
                 <ChevronRight className="w-4 h-4" />
@@ -294,23 +307,43 @@ function MedicinesCatalogContent() {
               </div>
             </div>
 
+            {/* Active Category / Section Heading */}
+            <div className="pt-1">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {selectedCategory 
+                  ? (categories.find(c => c.slug === selectedCategory)?.name || selectedCategory.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
+                  : searchTerm 
+                  ? `Search results for "${searchTerm}"`
+                  : 'All Medicines'
+                }
+              </h2>
+            </div>
+
             {/* List products */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1,2,3,4,5,6].map((i) => (
-                  <div key={i} className="bg-slate-100 rounded-[2rem] h-[380px] animate-pulse" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[1,2,3,4,5,6,7,8].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 h-[380px] animate-pulse flex flex-col justify-between">
+                    <div className="w-full h-44 bg-slate-100 rounded-xl" />
+                    <div className="space-y-2 py-4">
+                      <div className="h-4 bg-slate-100 rounded w-3/4 mx-auto" />
+                      <div className="h-3 bg-slate-100 rounded w-1/2 mx-auto" />
+                      <div className="h-5 bg-slate-100 rounded w-1/3 mx-auto mt-2" />
+                    </div>
+                    <div className="h-10 bg-slate-100 rounded-xl w-full" />
+                  </div>
                 ))}
               </div>
             ) : medicines.length === 0 ? (
-              <div className="bg-slate-100/50 rounded-[2.5rem] p-16 text-center flex flex-col items-center justify-center border border-slate-100 border-dashed">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-slate-300 mb-4 shadow-sm">
+              <div className="bg-white rounded-3xl p-16 text-center flex flex-col items-center justify-center border border-slate-200">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4 shadow-sm">
                   <Search className="w-6 h-6" />
                 </div>
                 <h3 className="text-slate-900 font-extrabold text-lg mb-2">No medicines found</h3>
                 <p className="text-slate-500 text-sm font-medium mb-6">We couldn't find any items matching your current filters.</p>
                 <button 
                   onClick={handleResetFilters}
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm py-3 px-6 rounded-full transition-all"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm py-3 px-6 rounded-full transition-all shadow-sm"
                 >
                   Clear All Filters
                 </button>
@@ -318,7 +351,7 @@ function MedicinesCatalogContent() {
             ) : (
               <motion.div 
                 layout
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
               >
                 <AnimatePresence mode="popLayout">
                   {medicines.map((med, idx) => {
@@ -329,6 +362,12 @@ function MedicinesCatalogContent() {
                     
                     const discPrice = med.discountPrice ? Number(med.discountPrice) : null;
                     const price = Number(med.price);
+                    const savingsPercent = discPrice && price > 0 ? Math.round(((price - discPrice) / price) * 100) : 0;
+                    const savingsAmount = discPrice && price > discPrice ? (price - discPrice).toFixed(2) : '0';
+                    const activePrice = discPrice || price;
+                    const molecule = med.genericName || med.composition || med.categoryDetail?.name || 'GENERIC';
+                    const isColdChain = med.isColdChain || med.storageInstructions?.toLowerCase().includes('cold') || med.name.toLowerCase().includes('injection') || med.name.toLowerCase().includes('vaccine');
+                    const isRx = med.prescriptionRequired || !med.categoryDetail?.name?.toLowerCase().includes('wellness');
 
                     return (
                       <motion.div 
@@ -336,84 +375,115 @@ function MedicinesCatalogContent() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.04 }}
                         key={med.id} 
-                        className="bg-slate-50 hover:bg-white rounded-[2rem] p-5 border border-transparent hover:border-slate-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all flex flex-col justify-between group relative"
+                        className="bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden group h-full"
                       >
-                        {med.prescriptionRequired && (
-                          <div className="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-md text-rose-600 font-bold text-[10px] px-2 py-1 rounded-full flex items-center gap-1 shadow-sm border border-rose-100/50">
-                            <AlertCircle className="w-3 h-3" />
-                            Rx
-                          </div>
-                        )}
-                        {discPrice && (
-                          <div className="absolute top-4 right-4 z-10 bg-brand-600 text-white font-extrabold text-[10px] px-2 py-1 rounded-full shadow-sm">
-                            {Math.round(((price - discPrice) / price) * 100)}% OFF
-                          </div>
-                        )}
-                        {med.papOffer && (
-                          <div className="absolute bottom-4 left-4 z-10 bg-amber-500 text-white font-bold text-[9px] px-2 py-1 rounded-full shadow-sm max-w-[calc(100%-2rem)] truncate">
-                            🎁 PAP Offer
-                          </div>
-                        )}
+                        {/* Top Area: Badges & Product Image */}
+                        <div className="relative p-4 pb-2 bg-white flex flex-col">
+                          {/* Badges Row */}
+                          <div className="w-full flex items-center justify-between min-h-[26px]">
+                            {savingsPercent > 0 ? (
+                              <span className="bg-[#dcfce7] text-[#15803d] font-bold text-xs px-2.5 py-0.5 rounded-md shadow-2xs">
+                                {savingsPercent}% Off
+                              </span>
+                            ) : (
+                              <span />
+                            )}
 
-                        <div>
-                          <Link href={`/medicines/detail?id=${med.id}`}>
-                            <div className="h-52 rounded-2xl bg-white flex items-center justify-center overflow-hidden mb-5 relative mix-blend-multiply border border-slate-100/50 p-3">
-                              <img src={imagesArr[0]} alt={med.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out" />
-                            </div>
-                          </Link>
-                          
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{med.brand?.name || 'GENERIC'}</span>
-                            {(() => {
-                              const hsnVal = med.hsnCode || (med as any).hsn_code || (med as any).hsn;
-                              return hsnVal ? (
-                                <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 font-mono">
-                                  HSN: {hsnVal}
+                            <div className="flex items-center gap-1.5 ml-auto">
+                              {isRx && (
+                                <span 
+                                  className="w-5 h-5 rounded-full bg-[#3b1d60] text-white flex items-center justify-center text-[10px] font-black shadow-2xs"
+                                  title="Prescription Required (Rx)"
+                                >
+                                  ℞
                                 </span>
-                              ) : null;
-                            })()}
+                              )}
+                              {isColdChain && (
+                                <span 
+                                  className="w-5 h-5 rounded-full bg-[#0ea5e9] text-white flex items-center justify-center text-[10px] font-bold shadow-2xs"
+                                  title="Cold Chain Storage"
+                                >
+                                  ❄
+                                </span>
+                              )}
+                              {med.papOffer && (
+                                <span 
+                                  className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow-2xs"
+                                  title={`PAP Offer: ${med.papOffer}`}
+                                >
+                                  🎁
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <h3 className="font-bold text-slate-900 text-sm mt-1 line-clamp-2 leading-snug">
-                            <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
-                          </h3>
+
+                          {/* Product Image */}
+                          <Link href={`/medicines/detail?id=${med.id}`} className="w-full h-44 flex items-center justify-center my-2 overflow-hidden">
+                            <img 
+                              src={imagesArr[0]} 
+                              alt={med.name} 
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+                              }}
+                              className="w-full h-full max-h-36 object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500 ease-out" 
+                            />
+                          </Link>
                         </div>
 
-                        <div className="mt-5 flex items-end justify-between border-t border-slate-100/50 pt-4">
+                        {/* Divider */}
+                        <div className="border-t border-slate-100" />
+
+                        {/* Bottom Area: Centered Product Info */}
+                        <div className="p-4 pt-3 flex flex-col flex-1 justify-between text-center bg-white">
                           <div>
-                            {discPrice ? (
-                              <div className="flex flex-col">
-                                <span className="text-base font-extrabold text-slate-900 leading-none mb-1">₹{formatCurrency(discPrice)}</span>
-                                <span className="text-[11px] text-slate-400 line-through leading-none">₹{formatCurrency(price)}</span>
-                              </div>
+                            {/* Product Title */}
+                            <Link href={`/medicines/detail?id=${med.id}`} className="block">
+                              <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-1 group-hover:text-brand-600 transition-colors" title={med.name}>
+                                {med.name}
+                              </h3>
+                            </Link>
+
+                            {/* Molecule / Generic Composition (Underlined) */}
+                            <Link href={`/medicines?search=${encodeURIComponent(molecule)}`} className="inline-block mt-1 max-w-full">
+                              <p className="text-[11px] text-slate-500 hover:text-brand-600 font-semibold uppercase tracking-wide underline underline-offset-2 line-clamp-1 truncate" title={molecule}>
+                                {molecule}
+                              </p>
+                            </Link>
+
+                            {/* Price Line: Active Price + Strike-through */}
+                            <div className="mt-2.5 flex items-baseline justify-center gap-2">
+                              <span className="text-xl sm:text-2xl font-black text-slate-900 leading-none">
+                                ₹{formatCurrency(activePrice.toFixed(0))}
+                              </span>
+                              {discPrice && savingsPercent > 0 && (
+                                <span className="text-xs text-slate-400 line-through font-normal">
+                                  ₹{formatCurrency(price)}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* You Save Line */}
+                            {discPrice && savingsPercent > 0 ? (
+                              <p className="text-xs text-slate-500 mt-1.5 font-medium">
+                                You Save: <span className="text-emerald-600 font-bold">₹{formatCurrency(savingsAmount)} ({savingsPercent}%)</span>
+                              </p>
                             ) : (
-                              <span className="text-base font-extrabold text-slate-900 leading-none">₹{formatCurrency(price)}</span>
+                              <p className="text-xs text-slate-400 mt-1.5 font-medium">
+                                {med.packSize || 'Standard Pack'}
+                              </p>
                             )}
-                            {(() => {
-                              const activePrice = discPrice || price;
-                              const unitPriceObj = calculateUnitPrice(activePrice, med.packSize);
-                              if (!unitPriceObj) return null;
-                              return (
-                                <div className="text-[10px] text-slate-500 font-medium mt-1">
-                                  ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
-                                </div>
-                              );
-                            })()}
                           </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <button 
-                              onClick={() => { setQuickViewMed(med); setQty(1); }}
-                              className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-900 hover:bg-slate-200 flex items-center justify-center transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
+
+                          {/* Full-width Add to Cart Button */}
+                          <div className="mt-4">
                             <button 
                               onClick={() => handleAddToCart(med)}
-                              className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-brand-600 hover:scale-105 transition-all shadow-sm"
+                              className="w-full bg-[#108098] hover:bg-[#0c6b80] text-white font-semibold text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all active:scale-[0.98]"
                             >
-                              +
+                              <ShoppingCart className="w-4 h-4" />
+                              <span>Add to cart</span>
                             </button>
                           </div>
                         </div>

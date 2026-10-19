@@ -9,6 +9,7 @@ import {
 import api from '../../lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
+import { showAddedToCart } from '@/lib/sweetalert';
 
 interface SubstituteProduct {
   id: number;
@@ -172,7 +173,7 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
     }
 
     setAddedId(sub.id);
-    toast.success(`${sub.name} added to cart!`);
+    showAddedToCart(sub.name);
     setTimeout(() => {
       setAddedId((curr) => (curr === sub.id ? null : curr));
     }, 2000);
@@ -393,7 +394,7 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
                 {/* Medicine Info (Standardized Equal Heights for Perfect Sequence) */}
                 <div className="p-4 flex flex-col flex-1 justify-between">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 line-clamp-1 block h-4">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 line-clamp-1 block h-4">
                       {sub.brand?.name || sub.manufacturer || 'Certified Brand'}
                     </span>
                     <Link href={`/medicines/detail?id=${sub.id}`} className="group-hover:text-brand-600 transition-colors block">
@@ -401,7 +402,7 @@ export default function ProductSubstitutes({ currentMedicineId, onAddToCart }: P
                         {sub.name}
                       </h4>
                     </Link>
-                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-1 h-4">
+                    <p className="text-xs text-slate-600 font-medium line-clamp-1 mt-1 h-4">
                       {sub.packSize || (sub.dosageForm ? `${sub.dosageForm}` : 'Standard Pack')}
                     </p>
                   </div>
