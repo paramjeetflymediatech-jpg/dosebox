@@ -45,6 +45,41 @@ const C = {
   red: '#e68a7f',
 };
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CAT_CARD_GAP = rs(10);
+const CAT_VISIBLE_COUNT = isTablet ? 4 : 2;
+const CAT_CARD_WIDTH = Math.floor(
+  (SCREEN_WIDTH - spacing.md * 2 - CAT_CARD_GAP * (CAT_VISIBLE_COUNT - 1)) / CAT_VISIBLE_COUNT
+);
+
+const MED_CARD_GAP = rs(10);
+const MED_VISIBLE_COUNT = isTablet ? 4 : 2;
+const MED_CARD_WIDTH = Math.floor(
+  (SCREEN_WIDTH - spacing.md * 2 - MED_CARD_GAP * (MED_VISIBLE_COUNT - 1)) / MED_VISIBLE_COUNT
+);
+
+const getCategoryPhotoUrl = (cat) => {
+  const slug = (cat.slug || '').toLowerCase();
+  const name = (cat.name || '').toLowerCase();
+
+  if (cat.image && typeof cat.image === 'string' && cat.image.trim() !== '' && cat.image !== 'url' && cat.image !== '[]') {
+    return getFullImageUrl(cat.image);
+  }
+
+  // Curated photographic images matching website
+  if (slug === 'allergy-medication' || name.includes('allergy')) return getFullImageUrl('/categories/allergy-medication.jpg');
+  if (slug === 'alzheimers' || name.includes('alzheimer') || name.includes('dementia')) return getFullImageUrl('/categories/alzheimers.jpg');
+  if (slug === 'anaesthetics' || name.includes('anaesthetic') || name.includes('anesthetic')) return getFullImageUrl('/categories/anaesthetics.jpg');
+  if (slug === 'anemia' || name.includes('anemia')) return getFullImageUrl('/categories/anemia.jpg');
+  if (slug === 'anti-cancer' || name.includes('cancer') || name.includes('oncology')) return getFullImageUrl('/categories/anti-cancer.jpg');
+  if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return getFullImageUrl('/categories/antibacterials.jpg');
+  if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return getFullImageUrl('/categories/anticoagulants.jpg');
+  if (slug === 'anti-fungals' || name.includes('fungal')) return getFullImageUrl('/categories/anti-cancer.jpg');
+  if (slug === 'kidney-care' || name.includes('kidney')) return getFullImageUrl('/categories/anemia.jpg');
+
+  return getFullImageUrl('/categories/allergy-medication.jpg');
+};
+
 const CATEGORY_GRADIENTS = [
   ['#4f87c5', '#6fa3e0'],
   ['#0c888d', '#29b5bb'],
@@ -169,6 +204,58 @@ export default function HomeScreen({ navigation }) {
   // Banner logic
   const bannerListRef = useRef(null);
   const currentBannerIndexRef = useRef(0);
+
+  // Category scroll logic
+  const catListRef = useRef(null);
+  const [catIndex, setCatIndex] = useState(0);
+
+  const scrollCategories = (direction) => {
+    if (!catListRef.current || !categories || categories.length === 0) return;
+    const step = CAT_VISIBLE_COUNT;
+    let nextIdx = direction === 'left' ? catIndex - step : catIndex + step;
+    if (nextIdx < 0) nextIdx = 0;
+    if (nextIdx >= categories.length) nextIdx = Math.max(0, categories.length - CAT_VISIBLE_COUNT);
+    setCatIndex(nextIdx);
+    catListRef.current.scrollToOffset({
+      offset: nextIdx * (CAT_CARD_WIDTH + CAT_CARD_GAP),
+      animated: true,
+    });
+  };
+
+  // Trending scroll logic
+  const trendingListRef = useRef(null);
+  const [trendingIndex, setTrendingIndex] = useState(0);
+
+  const scrollTrending = (direction) => {
+    if (!trendingListRef.current || !trending || trending.length === 0) return;
+    const step = MED_VISIBLE_COUNT;
+    let nextIdx = direction === 'left' ? trendingIndex - step : trendingIndex + step;
+    if (nextIdx < 0) nextIdx = 0;
+    if (nextIdx >= trending.length) nextIdx = Math.max(0, trending.length - MED_VISIBLE_COUNT);
+    setTrendingIndex(nextIdx);
+    trendingListRef.current.scrollToOffset({
+      offset: nextIdx * (MED_CARD_WIDTH + MED_CARD_GAP),
+      animated: true,
+    });
+  };
+
+  // Recommendations scroll logic
+  const recListRef = useRef(null);
+  const [recIndex, setRecIndex] = useState(0);
+
+  const scrollRecs = (direction) => {
+    if (!recListRef.current || !recommendations || recommendations.length === 0) return;
+    const step = MED_VISIBLE_COUNT;
+    let nextIdx = direction === 'left' ? recIndex - step : recIndex + step;
+    if (nextIdx < 0) nextIdx = 0;
+    if (nextIdx >= recommendations.length) nextIdx = Math.max(0, recommendations.length - MED_VISIBLE_COUNT);
+    setRecIndex(nextIdx);
+    recListRef.current.scrollToOffset({
+      offset: nextIdx * (MED_CARD_WIDTH + MED_CARD_GAP),
+      animated: true,
+    });
+  };
+
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const { width: windowWidth } = Dimensions.get('window');
   const bannerWidth = windowWidth - spacing.md * 2;
@@ -282,7 +369,7 @@ export default function HomeScreen({ navigation }) {
       const [catRes, recRes, trendRes, bannersRes, blogsRes] = await Promise.all([
         api.get('/medicines/categories').catch(() => ({ data: { success: false } })),
         api.get('/medicines/recommendations').catch(() => ({ data: { success: false } })),
-        api.get('/medicines?limit=5').catch(() => ({ data: { success: false } })),
+        api.get('/medicines?limit=12').catch(() => ({ data: { success: false } })),
         api.get('/banners').catch(() => ({ data: { success: false } })),
         api.get('/blogs').catch(() => ({ data: { success: false } }))
       ]);
@@ -354,33 +441,56 @@ export default function HomeScreen({ navigation }) {
   };
 
   const renderMedicineCard = ({ item: med }) => {
-    return <MedicineCard med={med} containerStyle={{ marginRight: rs(12) }} />;
+    return (
+      <MedicineCard
+        med={med}
+        containerStyle={{ width: MED_CARD_WIDTH }}
+      />
+    );
   };
 
-  const renderCategoryCard = ({ item: cat, index }) => {
-    const icon = cat.icon || cat.name?.charAt(0).toUpperCase() || '✨';
-    const imageUrl = getFullImageUrl(cat.image);
+  const CategoryCardItem = ({ cat, onPress }) => {
+    const [hasError, setHasError] = useState(false);
+    const photoUrl = getCategoryPhotoUrl(cat);
 
     return (
       <TouchableOpacity
         style={styles.catCard}
         activeOpacity={0.8}
-        onPress={() => navigation.navigate('SearchScreen', { query: cat.name, categorySlug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-') })}
+        onPress={onPress}
       >
-        {imageUrl ? (
-          <View style={[styles.catIconWrap, { backgroundColor: '#F8FAFC', padding: 4 }]}>
-            <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="cover" />
-          </View>
-        ) : (
-          <View style={[styles.catIconWrap, { backgroundColor: CATEGORY_GRADIENTS[index % CATEGORY_GRADIENTS.length][0] }]}>
-            <Text style={{ fontSize: 24, color: '#fff', fontWeight: 'bold' }}>{icon}</Text>
-          </View>
-        )}
+        <View style={styles.catImageWrap}>
+          {!hasError && photoUrl ? (
+            <Image
+              source={{ uri: photoUrl }}
+              style={styles.catImage}
+              resizeMode="contain"
+              onError={() => setHasError(true)}
+            />
+          ) : (
+            <Ionicons name="medical-outline" size={rs(32)} color={C.primary} />
+          )}
+        </View>
         <View style={styles.catTextWrap}>
-          <Text style={styles.catTitle} numberOfLines={1}>{cat.name}</Text>
-          <Text style={styles.catDesc} numberOfLines={2}>{cat.description || 'View products in this category'}</Text>
+          <Text style={styles.catTitle} numberOfLines={2} ellipsizeMode="tail">
+            {cat.name}
+          </Text>
         </View>
       </TouchableOpacity>
+    );
+  };
+
+  const renderCategoryCard = ({ item: cat }) => {
+    return (
+      <CategoryCardItem
+        cat={cat}
+        onPress={() =>
+          navigation.navigate('SearchScreen', {
+            query: cat.name,
+            categorySlug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, '-'),
+          })
+        }
+      />
     );
   };
 
@@ -598,23 +708,51 @@ export default function HomeScreen({ navigation }) {
             {/* ── TARGET SPECIFIC AILMENTS (Categories) ── */}
             {categories.length > 0 && (
               <View style={styles.sectionBlock}>
-                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }]}>
-                  <View>
+                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                  <View style={{ flex: 1, marginRight: rs(10) }}>
                     <Text style={styles.sectionOverline}>TARGET SPECIFIC AILMENTS</Text>
-                    <Text style={styles.sectionTitle}>Shop by Chronic Category</Text>
+                    <Text style={styles.sectionTitle} numberOfLines={1}>Shop by Chronic Category</Text>
                   </View>
-                  <TouchableOpacity onPress={() => navigation.navigate('Categories')}>
-                    <Text style={styles.seeAll}>View all</Text>
-                  </TouchableOpacity>
+                  <View style={styles.catControlsRow}>
+                    <TouchableOpacity
+                      style={styles.catNavBtn}
+                      onPress={() => scrollCategories('left')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Previous categories"
+                    >
+                      <Ionicons name="chevron-back" size={rs(16)} color={C.text} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.catViewAllBtn}
+                      onPress={() => navigation.navigate('Categories')}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.catViewAllText}>View all</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.catNavBtn}
+                      onPress={() => scrollCategories('right')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Next categories"
+                    >
+                      <Ionicons name="chevron-forward" size={rs(16)} color={C.text} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 <FlatList
+                  ref={catListRef}
                   data={categories}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  keyExtractor={(item) => item.id.toString()}
+                  keyExtractor={(item) => (item.id || item.slug || item.name).toString()}
                   renderItem={renderCategoryCard}
                   contentContainerStyle={styles.horizontalList}
-                  ItemSeparatorComponent={() => <View style={{ width: rs(12) }} />}
+                  ItemSeparatorComponent={() => <View style={{ width: CAT_CARD_GAP }} />}
+                  snapToInterval={CAT_CARD_WIDTH + CAT_CARD_GAP}
+                  decelerationRate="fast"
+                  snapToAlignment="start"
                 />
               </View>
             )}
@@ -622,23 +760,54 @@ export default function HomeScreen({ navigation }) {
             {/* ── RECOMMENDED FOR YOU ── */}
             {recommendations.length > 0 && (
               <View style={styles.sectionBlockAlt}>
-                <View style={styles.sectionHeader}>
-                  <View>
+                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                  <View style={{ flex: 1, marginRight: rs(10) }}>
                     <View style={styles.sparkleRow}>
                       <Ionicons name="sparkles" size={12} color={C.primary} />
                       <Text style={styles.sectionOverline}>FOR YOU</Text>
                     </View>
-                    <Text style={styles.sectionTitle}>Recommended for You</Text>
+                    <Text style={styles.sectionTitle} numberOfLines={1}>Recommended for You</Text>
+                  </View>
+                  <View style={styles.catControlsRow}>
+                    <TouchableOpacity
+                      style={styles.catNavBtn}
+                      onPress={() => scrollRecs('left')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Previous recommendations"
+                    >
+                      <Ionicons name="chevron-back" size={rs(16)} color={C.text} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.catViewAllBtn}
+                      onPress={() => navigation.navigate('SearchScreen', { showAll: true })}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.catViewAllText}>View all</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.catNavBtn}
+                      onPress={() => scrollRecs('right')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Next recommendations"
+                    >
+                      <Ionicons name="chevron-forward" size={rs(16)} color={C.text} />
+                    </TouchableOpacity>
                   </View>
                 </View>
                 <FlatList
+                  ref={recListRef}
                   data={recommendations}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => item.id.toString()}
                   renderItem={renderMedicineCard}
                   contentContainerStyle={styles.horizontalList}
-                  ItemSeparatorComponent={() => <View style={{ width: rs(12) }} />}
+                  ItemSeparatorComponent={() => <View style={{ width: MED_CARD_GAP }} />}
+                  snapToInterval={MED_CARD_WIDTH + MED_CARD_GAP}
+                  decelerationRate="fast"
+                  snapToAlignment="start"
                 />
               </View>
             )}
@@ -646,23 +815,51 @@ export default function HomeScreen({ navigation }) {
             {/* ── DIGITAL SPECIALTY SHELF (Trending) ── */}
             {trending.length > 0 && (
               <View style={styles.sectionBlock}>
-                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }]}>
-                  <View>
+                <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                  <View style={{ flex: 1, marginRight: rs(10) }}>
                     <Text style={styles.sectionOverline}>DIGITAL SPECIALTY SHELF</Text>
-                    <Text style={styles.sectionTitle}>DoseBox Smart Savings</Text>
+                    <Text style={styles.sectionTitle} numberOfLines={1}>DoseBox Smart Savings</Text>
                   </View>
-                  <TouchableOpacity onPress={() => navigation.navigate('SearchScreen', { showAll: true })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Text style={{ color: C.primary, fontWeight: '700', fontSize: rm(13) }}>View All</Text>
-                  </TouchableOpacity>
+                  <View style={styles.catControlsRow}>
+                    <TouchableOpacity
+                      style={styles.catNavBtn}
+                      onPress={() => scrollTrending('left')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Previous trending medicines"
+                    >
+                      <Ionicons name="chevron-back" size={rs(16)} color={C.text} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.catViewAllBtn}
+                      onPress={() => navigation.navigate('SearchScreen', { showAll: true })}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.catViewAllText}>View all</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.catNavBtn}
+                      onPress={() => scrollTrending('right')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Next trending medicines"
+                    >
+                      <Ionicons name="chevron-forward" size={rs(16)} color={C.text} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 <FlatList
+                  ref={trendingListRef}
                   data={trending}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => item.id.toString()}
                   renderItem={renderMedicineCard}
                   contentContainerStyle={styles.horizontalList}
-                  ItemSeparatorComponent={() => <View style={{ width: rs(12) }} />}
+                  ItemSeparatorComponent={() => <View style={{ width: MED_CARD_GAP }} />}
+                  snapToInterval={MED_CARD_WIDTH + MED_CARD_GAP}
+                  decelerationRate="fast"
+                  snapToAlignment="start"
                 />
               </View>
             )}
@@ -693,101 +890,101 @@ export default function HomeScreen({ navigation }) {
           </>
         )}
 
-        {/* ── OUR STATS ── */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: rv(24), marginBottom: rv(24), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: '#F1F5F9', paddingVertical: rv(20), paddingHorizontal: rs(12), shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}>
-          <View style={{ alignItems: 'center', flex: 1 }}>
-            <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>50k+</Text>
-            <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>Happy Users</Text>
-          </View>
-          <View style={{ width: 1, height: rv(32), backgroundColor: '#F1F5F9' }} />
-          <View style={{ alignItems: 'center', flex: 1 }}>
-            <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>10k+</Text>
-            <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>Medicines</Text>
-          </View>
-          <View style={{ width: 1, height: rv(32), backgroundColor: '#F1F5F9' }} />
-          <View style={{ alignItems: 'center', flex: 1 }}>
-            <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>4.8<Text style={{ fontSize: rm(16) }}>★</Text></Text>
-            <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>App Rating</Text>
-          </View>
-        </View>
+            {/* ── OUR STATS ── */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: rv(24), marginBottom: rv(24), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: '#F1F5F9', paddingVertical: rv(20), paddingHorizontal: rs(12), shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>50k+</Text>
+                <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>Happy Users</Text>
+              </View>
+              <View style={{ width: 1, height: rv(32), backgroundColor: '#F1F5F9' }} />
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>10k+</Text>
+                <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>Medicines</Text>
+              </View>
+              <View style={{ width: 1, height: rv(32), backgroundColor: '#F1F5F9' }} />
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: rm(22), fontWeight: '800', color: C.primary, marginBottom: rv(4) }}>4.8<Text style={{ fontSize: rm(16) }}>★</Text></Text>
+                <Text style={{ fontSize: rm(11), fontWeight: '600', color: '#64748B' }}>App Rating</Text>
+              </View>
+            </View>
 
 
-        {/* ── FEATURES SECTION (ANIMATED) ── */}
-        <AnimatedMedicalCard />
+            {/* ── FEATURES SECTION (ANIMATED) ── */}
+            <AnimatedMedicalCard />
 
-        {/* ── 24/7 SUPPORT ── */}
-        <View style={{ marginHorizontal: spacing.md, marginBottom: rv(40), backgroundColor: '#EEF2FF', borderRadius: radius.xl, padding: rs(20), borderWidth: 1, borderColor: '#E0E7FF', alignItems: 'center' }}>
-          <View style={{ width: rs(56), height: rs(56), borderRadius: rs(28), backgroundColor: '#C7D2FE', alignItems: 'center', justifyContent: 'center', marginBottom: rv(12) }}>
-            <Ionicons name="chatbubbles" size={28} color="#4F46E5" />
-          </View>
-          <Text style={{ fontSize: rm(18), fontWeight: '800', color: '#312E81', marginBottom: rv(4), textAlign: 'center' }}>24/7 Support</Text>
-          <Text style={{ fontSize: rm(13), color: '#4F46E5', textAlign: 'center', marginBottom: rv(16), paddingHorizontal: rs(10), lineHeight: rv(18) }}>
-            We're here to help you. If you have any issue related to your order or anything else, message us.
-          </Text>
-          <TouchableOpacity
-            style={{ backgroundColor: '#4F46E5', paddingVertical: rv(12), paddingHorizontal: rs(24), borderRadius: radius.full, shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('Contact')}
-          >
-            <Text style={{ color: C.white, fontSize: rm(14), fontWeight: '700' }}>Submit a Request</Text>
-          </TouchableOpacity>
-        </View>
-
-
-      </ScrollView>
-
-      {/* ── LOCATION MODAL ──────────────────────────────── */}
-      <Modal visible={showLocationModal} animationType="slide" transparent onRequestClose={() => setShowLocationModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Delivery Location</Text>
-              <TouchableOpacity onPress={() => setShowLocationModal(false)} style={styles.closeBtn}>
-                <Ionicons name="close" size={20} color={C.sub} />
+            {/* ── 24/7 SUPPORT ── */}
+            <View style={{ marginHorizontal: spacing.md, marginBottom: rv(40), backgroundColor: '#EEF2FF', borderRadius: radius.xl, padding: rs(20), borderWidth: 1, borderColor: '#E0E7FF', alignItems: 'center' }}>
+              <View style={{ width: rs(56), height: rs(56), borderRadius: rs(28), backgroundColor: '#C7D2FE', alignItems: 'center', justifyContent: 'center', marginBottom: rv(12) }}>
+                <Ionicons name="chatbubbles" size={28} color="#4F46E5" />
+              </View>
+              <Text style={{ fontSize: rm(18), fontWeight: '800', color: '#312E81', marginBottom: rv(4), textAlign: 'center' }}>24/7 Support</Text>
+              <Text style={{ fontSize: rm(13), color: '#4F46E5', textAlign: 'center', marginBottom: rv(16), paddingHorizontal: rs(10), lineHeight: rv(18) }}>
+                We're here to help you. If you have any issue related to your order or anything else, message us.
+              </Text>
+              <TouchableOpacity
+                style={{ backgroundColor: '#4F46E5', paddingVertical: rv(12), paddingHorizontal: rs(24), borderRadius: radius.full, shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Contact')}
+              >
+                <Text style={{ color: C.white, fontSize: rm(14), fontWeight: '700' }}>Submit a Request</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.locationFetchBtn}
-              onPress={handleFetchCurrentLocation}
-              disabled={fetchingLocation}
-              activeOpacity={0.7}
-            >
-              {fetchingLocation ? (
-                <ActivityIndicator color={C.primary} size="small" />
-              ) : (
-                <>
-                  <Ionicons name="locate" size={18} color={C.primary} style={{ marginRight: 6 }} />
-                  <Text style={styles.locationFetchText}>Use Current Location</Text>
-                </>
-              )}
-            </TouchableOpacity>
 
-            {loadingAddresses ? (
-              <ActivityIndicator size="large" color={C.primary} style={{ marginVertical: rv(32) }} />
-            ) : addresses.length === 0 ? (
-              <Text style={styles.emptyModal}>No saved addresses found.</Text>
-            ) : (
-              <FlatList
-                data={addresses}
-                keyExtractor={(item) => String(item.id)}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.addressCard} onPress={() => { selectAddress(item); setShowLocationModal(false); }} activeOpacity={0.75}>
-                    <View style={styles.addressIcon}>
-                      <Ionicons name="location" size={16} color={C.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.addressTitle}>{item.title}</Text>
-                      <Text style={styles.addressSub}>{item.street}, {item.city}, {item.state} {item.zipCode}</Text>
-                    </View>
-                  </TouchableOpacity>
+          </ScrollView>
+
+        {/* ── LOCATION MODAL ──────────────────────────────── */}
+        <Modal visible={showLocationModal} animationType="slide" transparent onRequestClose={() => setShowLocationModal(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalSheet}>
+              <View style={styles.modalHandle} />
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Delivery Location</Text>
+                <TouchableOpacity onPress={() => setShowLocationModal(false)} style={styles.closeBtn}>
+                  <Ionicons name="close" size={20} color={C.sub} />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.locationFetchBtn}
+                onPress={handleFetchCurrentLocation}
+                disabled={fetchingLocation}
+                activeOpacity={0.7}
+              >
+                {fetchingLocation ? (
+                  <ActivityIndicator color={C.primary} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="locate" size={18} color={C.primary} style={{ marginRight: 6 }} />
+                    <Text style={styles.locationFetchText}>Use Current Location</Text>
+                  </>
                 )}
-              />
-            )}
+              </TouchableOpacity>
+
+              {loadingAddresses ? (
+                <ActivityIndicator size="large" color={C.primary} style={{ marginVertical: rv(32) }} />
+              ) : addresses.length === 0 ? (
+                <Text style={styles.emptyModal}>No saved addresses found.</Text>
+              ) : (
+                <FlatList
+                  data={addresses}
+                  keyExtractor={(item) => String(item.id)}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.addressCard} onPress={() => { selectAddress(item); setShowLocationModal(false); }} activeOpacity={0.75}>
+                      <View style={styles.addressIcon}>
+                        <Ionicons name="location" size={16} color={C.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.addressTitle}>{item.title}</Text>
+                        <Text style={styles.addressSub}>{item.street}, {item.city}, {item.state} {item.zipCode}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
     </SafeAreaView>
   );
 }
@@ -831,37 +1028,57 @@ const styles = StyleSheet.create({
   horizontalList: { paddingHorizontal: spacing.md },
   seeAll: { fontSize: rm(13), color: C.primary, fontWeight: '600', marginBottom: rv(4), marginLeft: rs(8) },
 
-  /* Category Card */
-  catCard: { width: rs(150), backgroundColor: C.white, borderRadius: radius.lg, borderWidth: 1, borderColor: '#b2d8dc', padding: rs(16), elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
-  catImageWrap: { width: rs(48), height: rs(48), borderRadius: radius.md, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F1F5F9', marginBottom: rv(12) },
-  catIconWrap: { width: rs(48), height: rs(48), borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', marginBottom: rv(12) },
-  catImage: { width: '60%', height: '60%' },
-  catTextWrap: { flex: 1 },
-  catTitle: { fontSize: rm(13), fontWeight: '700', color: C.text, marginBottom: rv(4) },
-  catDesc: { fontSize: rm(11), color: C.sub, lineHeight: rv(16) },
+  /* Category Card matching website */
+  catControlsRow: { flexDirection: 'row', alignItems: 'center', gap: rs(6) },
+  catNavBtn: { width: rs(30), height: rs(30), borderRadius: rs(15), backgroundColor: C.white, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  catViewAllBtn: { paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: radius.full, backgroundColor: C.white, borderWidth: 1, borderColor: C.border, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  catViewAllText: { fontSize: rm(12), fontWeight: '700', color: C.text },
 
-  /* Medicine Card */
-  medCardContainer: { width: rs(200), backgroundColor: C.white, borderRadius: radius.xl, borderWidth: 1, borderColor: 'rgba(27,141,145,0.4)', padding: rs(12), elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
-  medCardHeader: { flexDirection: 'row', justifyContent: 'space-between', zIndex: 10, position: 'absolute', top: rv(12), left: rs(12), right: rs(12) },
-  rxBadge: { backgroundColor: '#f0ecec', borderWidth: 1, borderColor: '#e6dfdf', paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 4 },
-  rxBadgeText: { fontSize: rm(8), fontWeight: '800', color: '#786c6c' },
-  saveBadge: { backgroundColor: C.accent, paddingHorizontal: rs(8), paddingVertical: rv(2), borderRadius: radius.full },
-  saveBadgeText: { fontSize: rm(9), fontWeight: '800', color: C.white },
-  medImageWrap: { height: rv(120), alignItems: 'center', justifyContent: 'center', marginTop: rv(24), marginBottom: rv(8) },
-  medImage: { width: '80%', height: '80%' },
-  medDetails: { marginBottom: rv(12) },
-  medBrandText: { fontSize: rm(9), fontWeight: '700', color: '#8c8c8c', textTransform: 'uppercase', marginBottom: rv(4) },
-  medNameText: { fontSize: rm(12), fontWeight: '700', color: C.text, lineHeight: Math.max(16, rv(16)), minHeight: rv(32) },
-  medRatingRow: { flexDirection: 'row', alignItems: 'center', marginTop: rv(4), gap: rs(4) },
-  medRatingText: { fontSize: rm(10), fontWeight: '600', color: '#9b9b9b' },
-  medFooter: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 'auto' },
-  medPriceBox: { flex: 1 },
-  medOldPrice: { fontSize: rm(10), color: '#9b9b9b', textDecorationLine: 'line-through', fontWeight: '600' },
-  medSaveText: { fontSize: rm(9), color: C.accent, fontWeight: '700', marginLeft: rs(4) },
-  medNewPrice: { fontSize: rm(16), fontWeight: '800', color: C.primary, marginTop: rv(2) },
-  medActions: { flexDirection: 'row', alignItems: 'center', gap: rs(8) },
-  medEyeBtn: { width: rs(28), height: rs(28), borderRadius: rs(14), borderWidth: 1, borderColor: 'rgba(12,136,141,0.3)', alignItems: 'center', justifyContent: 'center' },
-  medAddBtn: { width: rs(28), height: rs(28), borderRadius: rs(14), backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  catCard: {
+    width: CAT_CARD_WIDTH,
+    height: Math.round(CAT_CARD_WIDTH * 1.18),
+    borderRadius: radius.xl,
+    backgroundColor: C.white,
+    padding: rs(8),
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  catImageWrap: {
+    width: '100%',
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: rs(6),
+    overflow: 'hidden',
+  },
+  catImage: {
+    width: '100%',
+    height: '100%',
+  },
+  catTextWrap: {
+    width: '100%',
+    paddingTop: rv(6),
+    paddingBottom: rv(2),
+    paddingHorizontal: rs(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catTitle: {
+    fontSize: rm(12),
+    fontWeight: '700',
+    color: C.text,
+    textAlign: 'center',
+    lineHeight: rv(16),
+  },
 
   /* Prescription Banner */
   prescriptionBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1B2A', borderRadius: radius.xl, padding: rs(16), marginHorizontal: spacing.md, marginVertical: rv(24) },
