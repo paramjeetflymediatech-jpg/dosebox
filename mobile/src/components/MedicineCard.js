@@ -107,6 +107,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
             {molecule}
           </Text>
         ) : null}
+        {/* Rating Section - Commented Out
         <View style={styles.medRatingRow}>
           <Ionicons name="star" size={11} color="#F59E0B" />
           <Text style={styles.medRatingText}>4.8 (42)</Text>
@@ -114,6 +115,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
             <Text style={styles.medHsnText}>HSN: {med.hsnCode}</Text>
           ) : null}
         </View>
+        */}
       </View>
 
       {/* ── Price and Add to Cart Footer ── */}
