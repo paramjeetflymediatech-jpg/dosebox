@@ -99,7 +99,6 @@ function SubstituteCard({ item, navigation, addToCart }) {
             image: subImage,
             qty: 1
           });
-          Alert.alert('Added to Cart', `${item.name} has been added to your cart.`);
         }}
       >
         <Ionicons name="cart-outline" size={13} color={C.white} />
@@ -222,7 +221,6 @@ export default function MedicineDetailScreen({ navigation, route }) {
       image: allImages[0] || null,
       qty: qty
     });
-    navigation.goBack();
   };
 
   return (
