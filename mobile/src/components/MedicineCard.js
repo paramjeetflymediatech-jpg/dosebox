@@ -7,14 +7,14 @@ import { rs, rv, rm, radius } from '../utils/responsive';
 import { getFullImageUrl } from '../utils/image';
 
 const C = {
-  primary: '#0c888d', 
+  primary: '#0c888d',
   primaryLight: '#EAF4F2',
-  accent: '#e68a7f', 
+  accent: '#e68a7f',
   bg: '#F8FAFC',
   white: '#FFFFFF',
-  text: '#2d3748', 
-  sub: '#8c8c8c', 
-  border: '#E9EDF2',
+  text: '#0F172A', // High-contrast deep slate text
+  sub: '#64748B',  // Readable slate-500 text
+  border: '#E2E8F0',
   card: '#FFFFFF',
   red: '#e68a7f',
 };
@@ -44,93 +44,111 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
   const price = Number(med.price);
   const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
   const molecule = med.molecule || med.composition || med.genericName || '';
+  const packInfo = med.packSize || 'Strip of 10 Tablets';
+  const brandName = med.brand?.name || med.manufacturer || 'DoseBox Generics';
 
   return (
-    <TouchableOpacity 
-      style={[styles.medCardContainer, containerStyle]}
+    <TouchableOpacity
+      style={[
+        styles.medCardContainer,
+        compact && styles.medCardContainerCompact,
+        containerStyle
+      ]}
       activeOpacity={0.9}
       onPress={() => navigation.navigate('MedicineDetail', { medicine: med })}
     >
-      <View style={[styles.medCardHeader, compact && { top: rv(8), left: rs(8), right: rs(8) }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(3), flexWrap: 'wrap', flex: 1 }}>
+      {/* ── Badges Header ── */}
+      <View style={[styles.medCardHeader, compact && { marginBottom: rv(3) }]}>
+        <View style={styles.badgeRow}>
           {med.prescriptionRequired ? (
-            <View style={[styles.rxBadge, compact && { paddingHorizontal: rs(3), paddingVertical: rv(1) }]}>
-              <Text style={[styles.rxBadgeText, compact && { fontSize: rm(7) }]}>RX</Text>
+            <View style={[styles.rxBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
+              <Text style={[styles.rxBadgeText, compact && { fontSize: rm(7.5) }]}>RX</Text>
             </View>
           ) : null}
-          {med.coldChain ? (
-            <View style={[styles.coldBadge, compact && { paddingHorizontal: rs(3), paddingVertical: rv(1) }]}>
-              <Text style={[styles.coldBadgeText, compact && { fontSize: rm(7) }]}>❄ COLD</Text>
+          {(med.coldChain || med.isColdChain || med.storageInstructions === 'Cold Chain') ? (
+            <View style={[styles.coldBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
+              <Text style={[styles.coldBadgeText, compact && { fontSize: rm(7.5) }]}>❄ COLD</Text>
             </View>
           ) : null}
           {med.papOffer ? (
-            <View style={[styles.papBadge, compact && { paddingHorizontal: rs(3), paddingVertical: rv(1) }]}>
-              <Text style={[styles.papBadgeText, compact && { fontSize: rm(7) }]}>🎁 PAP</Text>
+            <View style={[styles.papBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
+              <Text style={[styles.papBadgeText, compact && { fontSize: rm(7.5) }]}>🎁 PAP</Text>
             </View>
           ) : null}
         </View>
 
         {savings > 0 && (
-          <View style={[styles.saveBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
-            <Text style={[styles.saveBadgeText, compact && { fontSize: rm(8) }]}>-{savings}%</Text>
+          <View style={[styles.saveBadge, compact && { paddingHorizontal: rs(5), paddingVertical: rv(1) }]}>
+            <Text style={[styles.saveBadgeText, compact && { fontSize: rm(8.5) }]}>{savings}% OFF</Text>
           </View>
         )}
       </View>
 
-      <View 
-        style={[styles.medImageWrap, compact && { height: rv(80), marginTop: rv(16) }]} 
-      >
+      {/* ── Product Image ── */}
+      <View style={[styles.medImageWrap, compact && styles.medImageWrapCompact]}>
         {displayImage && !imgFailed ? (
-          <Image 
-            source={{ uri: displayImage }} 
-            style={{ width: '100%', height: '100%' }} 
-            resizeMode="contain" 
+          <Image
+            source={{ uri: displayImage }}
+            style={styles.medImage}
+            resizeMode="contain"
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <Ionicons name="medical" size={compact ? 30 : 40} color="#E2E8F0" />
+          <Ionicons name="medical" size={compact ? 22 : 32} color="#CBD5E1" />
         )}
       </View>
 
-      <View style={styles.medDetails}>
-        <Text style={[styles.medBrandText, compact && { fontSize: rm(8) }]} numberOfLines={1}>
-          {med.packSize || 'Strip of 10 Tablets'} • {med.brand?.name || 'DoseBox Generics'}
+      {/* ── Medicine Details ── */}
+      <View style={[styles.medDetails, compact && { marginBottom: rv(2) }]}>
+        <Text style={[styles.medBrandText, compact && styles.medBrandTextCompact]} numberOfLines={1} ellipsizeMode="tail">
+          {packInfo} • {brandName}
         </Text>
-        <Text style={[styles.medNameText, compact && { fontSize: rm(11), minHeight: rv(30) }]} numberOfLines={2}>{med.name}</Text>
+        <Text style={[styles.medNameText, compact && styles.medNameTextCompact]} numberOfLines={compact ? 1 : 2} ellipsizeMode="tail">
+          {med.name}
+        </Text>
         {molecule ? (
-          <Text style={[styles.moleculeText, compact && { fontSize: rm(8) }]} numberOfLines={1}>
+          <Text style={[styles.moleculeText, compact && styles.moleculeTextCompact]} numberOfLines={1} ellipsizeMode="tail">
             {molecule}
           </Text>
         ) : null}
+        {/* Rating Section - Commented Out
         <View style={styles.medRatingRow}>
-          <Ionicons name="star" size={compact ? 8 : 10} color="#f6a041" />
-          <Text style={[styles.medRatingText, compact && { fontSize: rm(9) }]}>4.8 (42)</Text>
+          <Ionicons name="star" size={11} color="#F59E0B" />
+          <Text style={styles.medRatingText}>4.8 (42)</Text>
           {med.hsnCode ? (
-            <Text style={[styles.medRatingText, compact && { fontSize: rm(8) }, { marginLeft: 'auto', fontWeight: '700', color: C.primary }]}>HSN: {med.hsnCode}</Text>
+            <Text style={styles.medHsnText}>HSN: {med.hsnCode}</Text>
           ) : null}
         </View>
+        */}
       </View>
 
-      <View style={styles.medFooter}>
+      {/* ── Price and Add to Cart Footer ── */}
+      <View style={[styles.medFooter, compact && { paddingTop: rv(4) }]}>
         <View style={styles.medPriceBox}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Text style={[styles.medOldPrice, compact && { fontSize: rm(9) }]}>₹{price}</Text>
+          <View style={[styles.oldPriceRow, compact && { gap: rs(2) }]}>
+            {discPrice && discPrice < price ? (
+              <Text style={[styles.medOldPrice, compact && { fontSize: rm(9.5) }]}>₹{price}</Text>
+            ) : null}
             {savings > 0 && (
-              <Text style={[styles.medSaveText, compact && { fontSize: rm(8), marginLeft: rs(2) }]}>
-                Save ₹{price - (discPrice || price)} ({savings}%)
+              <Text style={[styles.medSaveText, compact && { fontSize: rm(9) }]} numberOfLines={1}>
+                Save ₹{Math.round(price - discPrice)}
               </Text>
             )}
           </View>
-          <Text style={[styles.medNewPrice, compact && { fontSize: rm(15) }]}>₹{discPrice ? discPrice : price}</Text>
+          <Text style={[styles.medNewPrice, compact && styles.medNewPriceCompact]}>
+            ₹{discPrice ? discPrice : price}
+          </Text>
         </View>
-        <View style={[styles.medActions, compact && { gap: rs(4) }]}>
-          {!compact && (
-            <TouchableOpacity style={styles.medEyeBtn} onPress={() => navigation.navigate('MedicineDetail', { medicine: med })}>
-              <Ionicons name="eye-outline" size={16} color={C.primary} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={[styles.medAddBtn, compact && { width: rs(24), height: rs(24), borderRadius: rs(12) }]} onPress={handleAddToCart}>
-            <Ionicons name="add" size={compact ? 16 : 18} color="#fff" />
+
+        <View style={styles.medActions}>
+          <TouchableOpacity
+            style={[styles.medAddBtn, compact && styles.medAddBtnCompact]}
+            onPress={handleAddToCart}
+            activeOpacity={0.8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={`Add ${med.name} to cart`}
+          >
+            <Ionicons name="cart-outline" size={compact ? 14 : 17} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -139,41 +157,230 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
 }
 
 const styles = StyleSheet.create({
-  medCardContainer: { 
-    width: rs(220), 
-    backgroundColor: C.white, 
-    borderRadius: radius.xl, 
-    borderWidth: 1, 
-    borderColor: 'rgba(27,141,145,0.4)', 
-    padding: rs(12), 
-    elevation: 1, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.05, 
-    shadowRadius: 4 
+  medCardContainer: {
+    width: rs(180),
+    minHeight: rv(275),
+    backgroundColor: C.white,
+    borderRadius: radius.xl,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    padding: rs(10),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    justifyContent: 'space-between',
   },
-  medCardHeader: { flexDirection: 'row', justifyContent: 'space-between', zIndex: 10, position: 'absolute', top: rv(12), left: rs(12), right: rs(12) },
-  rxBadge: { backgroundColor: '#3b1d60', paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 4 },
-  rxBadgeText: { fontSize: rm(8), fontWeight: '800', color: '#FFFFFF' },
-  coldBadge: { backgroundColor: '#0284C7', paddingHorizontal: rs(5), paddingVertical: rv(2), borderRadius: 4 },
-  coldBadgeText: { fontSize: rm(8), fontWeight: '800', color: '#FFFFFF' },
-  papBadge: { backgroundColor: '#D97706', paddingHorizontal: rs(5), paddingVertical: rv(2), borderRadius: 4 },
-  papBadgeText: { fontSize: rm(8), fontWeight: '800', color: '#FFFFFF' },
-  saveBadge: { backgroundColor: '#059669', paddingHorizontal: rs(8), paddingVertical: rv(2), borderRadius: radius.full },
-  saveBadgeText: { fontSize: rm(9), fontWeight: '800', color: C.white },
-  medImageWrap: { height: rv(120), alignItems: 'center', justifyContent: 'center', marginTop: rv(24), marginBottom: rv(8) },
-  medDetails: { marginBottom: rv(10) },
-  medBrandText: { fontSize: rm(9), fontWeight: '700', color: '#8c8c8c', textTransform: 'uppercase', marginBottom: rv(3) },
-  medNameText: { fontSize: rm(13), fontWeight: '700', color: C.text, lineHeight: Math.max(18, rv(18)), minHeight: rv(32) },
-  moleculeText: { fontSize: rm(10), fontWeight: '600', color: '#0284C7', textDecorationLine: 'underline', marginTop: rv(2), marginBottom: rv(2), textTransform: 'uppercase' },
-  medRatingRow: { flexDirection: 'row', alignItems: 'center', marginTop: rv(3), gap: rs(4) },
-  medRatingText: { fontSize: rm(10), fontWeight: '600', color: '#9b9b9b' },
-  medFooter: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 'auto' },
-  medPriceBox: { flex: 1 },
-  medOldPrice: { fontSize: rm(10), color: '#9b9b9b', textDecorationLine: 'line-through', fontWeight: '600' },
-  medSaveText: { fontSize: rm(9), color: '#059669', fontWeight: '700', marginLeft: rs(4) },
-  medNewPrice: { fontSize: rm(18), fontWeight: '800', color: C.primary, marginTop: rv(2) },
-  medActions: { flexDirection: 'row', alignItems: 'center', gap: rs(8) },
-  medEyeBtn: { width: rs(28), height: rs(28), borderRadius: rs(14), borderWidth: 1, borderColor: 'rgba(12,136,141,0.3)', alignItems: 'center', justifyContent: 'center' },
-  medAddBtn: { width: rs(28), height: rs(28), borderRadius: rs(14), backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  medCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 10,
+    marginBottom: rv(6),
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rs(3),
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  rxBadge: {
+    backgroundColor: '#3B1D60',
+    paddingHorizontal: rs(5),
+    paddingVertical: rv(2),
+    borderRadius: 4,
+  },
+  rxBadgeText: {
+    fontSize: rm(8.5),
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  coldBadge: {
+    backgroundColor: '#0284C7',
+    paddingHorizontal: rs(5),
+    paddingVertical: rv(2),
+    borderRadius: 4,
+  },
+  coldBadgeText: {
+    fontSize: rm(8.5),
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  papBadge: {
+    backgroundColor: '#D97706',
+    paddingHorizontal: rs(5),
+    paddingVertical: rv(2),
+    borderRadius: 4,
+  },
+  papBadgeText: {
+    fontSize: rm(8.5),
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  saveBadge: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: rs(6),
+    paddingVertical: rv(2),
+    borderRadius: radius.full,
+    marginLeft: rs(4),
+  },
+  saveBadgeText: {
+    fontSize: rm(9.5),
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  medImageWrap: {
+    height: rv(100),
+    backgroundColor: C.white,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: rv(8),
+    padding: rs(6),
+    overflow: 'hidden',
+  },
+  medImage: {
+    width: '100%',
+    height: '100%',
+  },
+  medDetails: {
+    flex: 1,
+    marginBottom: rv(6),
+  },
+  medBrandText: {
+    fontSize: rm(10.5),
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    marginBottom: rv(3),
+  },
+  medNameText: {
+    fontSize: rm(13),
+    fontWeight: '800',
+    color: '#0F172A',
+    lineHeight: Math.max(17, rv(17)),
+    minHeight: rv(34),
+    marginBottom: rv(2),
+  },
+  moleculeText: {
+    fontSize: rm(10.5),
+    fontWeight: '600',
+    color: '#0284C7',
+    marginBottom: rv(3),
+    textTransform: 'uppercase',
+  },
+  medRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: rv(2),
+    gap: rs(3),
+  },
+  medRatingText: {
+    fontSize: rm(11),
+    fontWeight: '700',
+    color: '#475569',
+  },
+  medHsnText: {
+    fontSize: rm(10),
+    fontWeight: '700',
+    color: '#0D9488',
+    marginLeft: 'auto',
+  },
+  medFooter: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingTop: rv(6),
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  medPriceBox: {
+    flex: 1,
+    marginRight: rs(4),
+  },
+  oldPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: rs(4),
+  },
+  medOldPrice: {
+    fontSize: rm(11),
+    color: '#94A3B8',
+    textDecorationLine: 'line-through',
+    fontWeight: '600',
+  },
+  medSaveText: {
+    fontSize: rm(10.5),
+    color: '#059669',
+    fontWeight: '700',
+  },
+  medNewPrice: {
+    fontSize: rm(16.5),
+    fontWeight: '800',
+    color: '#0C888D',
+    marginTop: rv(1),
+  },
+  medActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  medAddBtn: {
+    width: rs(30),
+    height: rs(30),
+    borderRadius: rs(15),
+    backgroundColor: '#0C888D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0C888D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  /* ── Compact Grid Overrides (For 6-card Viewport) ── */
+  medCardContainerCompact: {
+    minHeight: rv(190),
+    padding: rs(8),
+    borderRadius: radius.lg,
+    justifyContent: 'space-between',
+  },
+  medImageWrapCompact: {
+    height: rv(90),
+    backgroundColor: C.white,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: rv(5),
+    padding: rs(4),
+    overflow: 'hidden',
+  },
+  medBrandTextCompact: {
+    fontSize: rm(9),
+    marginBottom: rv(1),
+  },
+  medNameTextCompact: {
+    fontSize: rm(12),
+    lineHeight: rv(16),
+    minHeight: rv(16),
+    marginBottom: rv(1),
+  },
+  moleculeTextCompact: {
+    fontSize: rm(9.5),
+    marginBottom: rv(2),
+  },
+  medNewPriceCompact: {
+    fontSize: rm(14.5),
+    marginTop: 0,
+  },
+  medAddBtnCompact: {
+    width: rs(28),
+    height: rs(28),
+    borderRadius: rs(14),
+  },
 });

@@ -10,7 +10,8 @@ import {
   Image,
   Linking,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
 import { AlertService } from '../../services/AlertService';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +34,9 @@ const C = {
   border: '#E9EDF2',
   light: '#EAF4F2',
 };
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CAT_CARD_WIDTH = Math.max(rs(150), (SCREEN_WIDTH - spacing.md * 2 - rs(8)) / 2);
 
 const PERKS = [
   { icon: 'refresh-outline', title: 'Easy Returns', sub: '7-day hassle-free return policy' },
@@ -341,6 +345,8 @@ export default function CartCheckoutScreen({ navigation }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catStripContent}
+          snapToInterval={CAT_CARD_WIDTH + rs(8)}
+          decelerationRate="fast"
         >
           {/* All Medicines pill */}
           <TouchableOpacity
@@ -348,28 +354,19 @@ export default function CartCheckoutScreen({ navigation }) {
             onPress={() => navigation.navigate('SearchScreen', { showAll: true, query: '' })}
             activeOpacity={0.7}
           >
-            <Ionicons name="apps-outline" size={rs(13)} color={C.primary} style={{ marginRight: rs(5) }} />
+            <View style={[styles.catIconWrap, { backgroundColor: '#D4ECE7' }]}>
+              <Ionicons name="apps" size={rs(12)} color={C.primary} />
+            </View>
             <Text style={[styles.catPillText, styles.catPillTextAll]}>All Medicines</Text>
           </TouchableOpacity>
 
           {/* Dynamic Categories */}
           {categories.map((cat) => (
-            <TouchableOpacity
+            <CategoryPillItem
               key={cat.id || cat.slug || cat.name}
-              style={styles.catPill}
-              onPress={() =>
-                navigation.navigate('SearchScreen', {
-                  query: cat.name,
-                  categorySlug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, '-'),
-                })
-              }
-              activeOpacity={0.7}
-            >
-              <View style={styles.catDot} />
-              <Text style={styles.catPillText} numberOfLines={1}>
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
+              cat={cat}
+              navigation={navigation}
+            />
           ))}
 
           {/* More Categories */}
@@ -378,6 +375,9 @@ export default function CartCheckoutScreen({ navigation }) {
             onPress={() => navigation.navigate('Categories')}
             activeOpacity={0.7}
           >
+            <View style={[styles.catIconWrap, { backgroundColor: '#F1F5F9' }]}>
+              <Ionicons name="grid-outline" size={rs(12)} color={C.sub} />
+            </View>
             <Text style={[styles.catPillText, { color: C.sub }]}>More</Text>
             <Ionicons name="chevron-forward" size={rs(12)} color={C.sub} style={{ marginLeft: rs(2) }} />
           </TouchableOpacity>
@@ -1026,10 +1026,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   catPill: {
+    width: CAT_CARD_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: rs(12),
-    paddingVertical: rv(6),
+    justifyContent: 'center',
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(8),
     borderRadius: radius.full,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
@@ -1048,19 +1050,104 @@ const styles = StyleSheet.create({
     fontSize: rm(12),
     fontWeight: '600',
     color: '#334155',
+    flexShrink: 1,
   },
   catPillTextAll: {
     color: C.primary,
     fontWeight: '700',
   },
-  catDot: {
-    width: rs(6),
-    height: rs(6),
-    borderRadius: rs(3),
-    backgroundColor: '#94A3B8',
+  catIconWrap: {
+    width: rs(22),
+    height: rs(22),
+    borderRadius: rs(11),
+    backgroundColor: '#EAF4F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
     marginRight: rs(6),
   },
+  catIconImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: rs(11),
+  },
 });
+
+// ─── Category Helper Functions & Pill Item ─────────────────────
+const getCategoryPhotoUrl = (cat) => {
+  const slug = (cat.slug || '').toLowerCase();
+  const name = (cat.name || '').toLowerCase();
+
+  if (cat.image && typeof cat.image === 'string' && cat.image.trim() !== '' && cat.image !== 'url' && cat.image !== '[]') {
+    return getFullImageUrl(cat.image);
+  }
+
+  // Curated photographic images matching website
+  if (slug === 'allergy-medication' || name.includes('allergy')) return getFullImageUrl('/categories/allergy-medication.jpg');
+  if (slug === 'alzheimers' || name.includes('alzheimer') || name.includes('dementia')) return getFullImageUrl('/categories/alzheimers.jpg');
+  if (slug === 'anaesthetics' || name.includes('anaesthetic') || name.includes('anesthetic')) return getFullImageUrl('/categories/anaesthetics.jpg');
+  if (slug === 'anemia' || name.includes('anemia')) return getFullImageUrl('/categories/anemia.jpg');
+  if (slug === 'anti-cancer' || name.includes('cancer') || name.includes('oncology')) return getFullImageUrl('/categories/anti-cancer.jpg');
+  if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return getFullImageUrl('/categories/antibacterials.jpg');
+  if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return getFullImageUrl('/categories/anticoagulants.jpg');
+  if (slug === 'anti-fungals' || name.includes('fungal')) return getFullImageUrl('/categories/anti-cancer.jpg');
+  if (slug === 'kidney-care' || name.includes('kidney')) return getFullImageUrl('/categories/anemia.jpg');
+
+  return null;
+};
+
+const getCategoryIconName = (cat) => {
+  if (cat.icon && typeof cat.icon === 'string' && !cat.icon.startsWith('http') && !cat.icon.includes('/')) {
+    return cat.icon;
+  }
+  const name = (cat.name || '').toLowerCase();
+  if (name.includes('cardio') || name.includes('heart')) return 'heart-outline';
+  if (name.includes('diabet') || name.includes('sugar')) return 'water-outline';
+  if (name.includes('cancer') || name.includes('oncol')) return 'ribbon-outline';
+  if (name.includes('allergy') || name.includes('asthma') || name.includes('breath')) return 'leaf-outline';
+  if (name.includes('kidney') || name.includes('renal')) return 'shield-checkmark-outline';
+  if (name.includes('neuro') || name.includes('brain') || name.includes('alzheimer')) return 'bulb-outline';
+  if (name.includes('eye') || name.includes('vision') || name.includes('ophthal')) return 'eye-outline';
+  if (name.includes('skin') || name.includes('derma')) return 'sparkles-outline';
+  if (name.includes('bacteri') || name.includes('infect')) return 'bandage-outline';
+  if (name.includes('anemia') || name.includes('blood') || name.includes('coagulant')) return 'pulse-outline';
+  return 'medical-outline';
+};
+
+function CategoryPillItem({ cat, navigation }) {
+  const [imgError, setImgError] = useState(false);
+  const photoUrl = getCategoryPhotoUrl(cat);
+  const iconName = getCategoryIconName(cat);
+
+  return (
+    <TouchableOpacity
+      style={styles.catPill}
+      onPress={() =>
+        navigation.navigate('SearchScreen', {
+          query: cat.name,
+          categorySlug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, '-'),
+        })
+      }
+      activeOpacity={0.7}
+    >
+      <View style={styles.catIconWrap}>
+        {!imgError && photoUrl ? (
+          <Image
+            source={{ uri: photoUrl }}
+            style={styles.catIconImg}
+            resizeMode="cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <Ionicons name={iconName} size={rs(12)} color={C.primary} />
+        )}
+      </View>
+      <Text style={styles.catPillText} numberOfLines={1}>
+        {cat.name}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 // ─── Styles: Empty ────────────────────────────────────────────
 const emptyStyles = StyleSheet.create({

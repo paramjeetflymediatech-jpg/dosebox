@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest) {
     if (userAuth instanceof NextResponse) return userAuth;
 
     const body = await req.json();
-    const { name, phone, currentPassword, newPassword, age, gender, bloodGroup, height, weight, address } = body;
+    const { name, phone, currentPassword, newPassword, age, gender, bloodGroup, height, weight, address, avatar } = body;
 
     const user = await User.findByPk(userAuth.id);
     if (!user) {
@@ -39,6 +39,7 @@ export async function PUT(req: NextRequest) {
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (phone !== undefined) updates.phone = phone;
+    if (avatar !== undefined) updates.avatar = avatar;
     if (age !== undefined) updates.age = age ? parseInt(age) : null;
     if (gender !== undefined) updates.gender = gender;
     if (bloodGroup !== undefined) updates.bloodGroup = bloodGroup;
@@ -70,7 +71,14 @@ export async function PUT(req: NextRequest) {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        doseboxTokens: user.doseboxTokens
+        avatar: user.avatar,
+        doseboxTokens: user.doseboxTokens,
+        age: user.age,
+        gender: user.gender,
+        bloodGroup: user.bloodGroup,
+        height: user.height,
+        weight: user.weight,
+        address: user.address,
       }
     }, { status: 200 });
 

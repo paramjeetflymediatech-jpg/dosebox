@@ -82,7 +82,7 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <CartProvider>
         <LocationProvider>
           <AppNavigator />

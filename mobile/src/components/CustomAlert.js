@@ -77,12 +77,12 @@ export default function CustomAlert() {
               style={[
                 styles.button, 
                 isCancel ? styles.cancelButton : { backgroundColor: iconColor },
-                buttons.length > 1 ? { flex: 1, marginLeft: index > 0 ? rs(8) : 0 } : {}
+                buttons.length > 1 ? { flex: 1, width: undefined, marginLeft: index > 0 ? rs(10) : 0 } : {}
               ]} 
               onPress={() => hideModal(btn.onPress)} 
               activeOpacity={0.8}
             >
-              <Text style={[styles.buttonText, isCancel && styles.cancelButtonText]}>{btn.text}</Text>
+              <Text numberOfLines={1} style={[styles.buttonText, isCancel && styles.cancelButtonText]}>{btn.text}</Text>
             </TouchableOpacity>
           );
         })}
@@ -176,9 +176,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cancelButton: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   cancelButtonText: {
-    color: '#64748B',
+    color: '#475569',
+    fontWeight: '600',
   }
 });

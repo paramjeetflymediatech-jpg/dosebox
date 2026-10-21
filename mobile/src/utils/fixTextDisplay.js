@@ -18,22 +18,16 @@ try {
   // Ignore fallback error
 }
 
+const TextAncestorContext = ReactNative.unstable_TextAncestorContext || React.createContext(false);
+
 /**
- * Universal Text wrapper that protects text across all physical screen sizes:
+ * Universal Text wrapper:
  * 1. Disables extreme font scaling that hides or clips text in fixed containers / cards / headers.
  * 2. Provides default visible color '#1E293B' on root text so text is never invisible on Android dark mode.
  * 3. Preserves nested text inheritance without overriding parent colors.
  */
 const CustomText = React.forwardRef((props, ref) => {
-  let hasTextAncestor = false;
-  try {
-    if (ReactNative.unstable_TextAncestorContext) {
-      hasTextAncestor = useContext(ReactNative.unstable_TextAncestorContext);
-    }
-  } catch (e) {
-    // Context fallback
-  }
-
+  const hasTextAncestor = useContext(TextAncestorContext);
   const defaultStyle = hasTextAncestor ? null : { color: '#1E293B' };
 
   return (
@@ -48,7 +42,6 @@ const CustomText = React.forwardRef((props, ref) => {
 });
 
 CustomText.displayName = 'DoseboxText';
-Object.assign(CustomText, OriginalText);
 
 /**
  * Universal TextInput wrapper:
@@ -70,23 +63,6 @@ const CustomTextInput = React.forwardRef((props, ref) => {
 });
 
 CustomTextInput.displayName = 'DoseboxTextInput';
-Object.assign(CustomTextInput, OriginalTextInput);
-
-// Intercept react-native export dynamically
-try {
-  Object.defineProperty(ReactNative, 'Text', {
-    configurable: true,
-    enumerable: true,
-    get: () => CustomText,
-  });
-  Object.defineProperty(ReactNative, 'TextInput', {
-    configurable: true,
-    enumerable: true,
-    get: () => CustomTextInput,
-  });
-} catch (e) {
-  ReactNative.Text = CustomText;
-  ReactNative.TextInput = CustomTextInput;
-}
 
 export { CustomText, CustomTextInput };
+export default CustomText;

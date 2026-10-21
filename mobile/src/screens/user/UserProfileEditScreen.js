@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, ActivityIndicator, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, ActivityIndicator, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import api from '../../services/api';
 import { AlertService } from '../../services/AlertService';
+import PermissionsService from '../../services/PermissionsService';
+import { getFullImageUrl } from '../../utils/image';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 
 export default function UserProfileEditScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    avatar: '',
     age: '',
     gender: '',
     bloodGroup: '',
@@ -33,6 +39,7 @@ export default function UserProfileEditScreen({ navigation }) {
         setFormData({
           name: profile.name || '',
           phone: profile.phone || '',
+          avatar: profile.avatar || '',
           age: profile.age ? String(profile.age) : '',
           gender: profile.gender || '',
           bloodGroup: profile.bloodGroup || '',
@@ -49,6 +56,134 @@ export default function UserProfileEditScreen({ navigation }) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUploadImage = async (asset) => {
+    if (!asset || !asset.uri) return;
+    setUploadingAvatar(true);
+    setShowPhotoModal(false);
+
+    try {
+      const data = new FormData();
+      data.append('file', {
+        uri: Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri,
+        type: asset.type || 'image/jpeg',
+        name: asset.fileName || 'profile.jpg',
+      });
+
+      const res = await api.post('/upload', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.data?.success && res.data.fileUrl) {
+        const newAvatarUrl = res.data.fileUrl;
+        setFormData(prev => ({ ...prev, avatar: newAvatarUrl }));
+
+        // Instantly sync with backend & local storage
+        try {
+          await api.put('/account/profile', { avatar: newAvatarUrl });
+          const userStr = await AsyncStorage.getItem('user');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            await AsyncStorage.setItem('user', JSON.stringify({ ...user, avatar: newAvatarUrl }));
+          }
+        } catch (e) {
+          console.warn('Auto-save avatar error:', e);
+        }
+
+        AlertService.show({
+          type: 'success',
+          title: 'Success',
+          message: 'Profile photo updated successfully!'
+        });
+      } else {
+        AlertService.show({
+          type: 'error',
+          title: 'Upload Failed',
+          message: res.data?.message || 'Failed to upload photo'
+        });
+      }
+    } catch (err) {
+      console.error('Avatar upload error:', err);
+      AlertService.show({
+        type: 'error',
+        title: 'Upload Error',
+        message: err.response?.data?.message || err.message || 'Failed to upload image'
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    try {
+      const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+      if (!hasPermission) return;
+
+      const response = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+        maxWidth: 800,
+        maxHeight: 800,
+      });
+
+      if (response.didCancel) return;
+      if (response.errorCode || response.errorMessage) {
+        AlertService.show({ type: 'error', title: 'Picker Error', message: response.errorMessage || response.errorCode });
+        return;
+      }
+      if (response.assets && response.assets.length > 0) {
+        handleUploadImage(response.assets[0]);
+      }
+    } catch (err) {
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to open gallery: ' + err.message });
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+      if (!hasPermission) return;
+
+      const response = await launchCamera({
+        mediaType: 'photo',
+        quality: 0.8,
+        maxWidth: 800,
+        maxHeight: 800,
+        saveToPhotos: true,
+      });
+
+      if (response.didCancel) return;
+      if (response.errorCode || response.errorMessage) {
+        AlertService.show({ type: 'error', title: 'Camera Error', message: response.errorMessage || response.errorCode });
+        return;
+      }
+      if (response.assets && response.assets.length > 0) {
+        handleUploadImage(response.assets[0]);
+      }
+    } catch (err) {
+      AlertService.show({ type: 'error', title: 'Error', message: 'Failed to open camera: ' + err.message });
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setShowPhotoModal(false);
+    setFormData(prev => ({ ...prev, avatar: '' }));
+    try {
+      await api.put('/account/profile', { avatar: null });
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        await AsyncStorage.setItem('user', JSON.stringify({ ...user, avatar: null }));
+      }
+      AlertService.show({
+        type: 'success',
+        title: 'Photo Removed',
+        message: 'Profile photo has been removed.'
+      });
+    } catch (e) {
+      console.warn('Remove avatar error:', e);
     }
   };
 
@@ -128,6 +263,10 @@ export default function UserProfileEditScreen({ navigation }) {
     }
   };
 
+  const initials = formData.name
+    ? formData.name.trim().split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -145,6 +284,68 @@ export default function UserProfileEditScreen({ navigation }) {
         ) : (
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             
+            {/* ── PROFILE PHOTO SECTION ── */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Profile Photo</Text>
+              <View style={styles.avatarRow}>
+                <View style={styles.avatarContainer}>
+                  {formData.avatar ? (
+                    <Image
+                      source={{ uri: getFullImageUrl(formData.avatar) }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.avatarFallback}>
+                      <Text style={styles.avatarFallbackText}>{initials}</Text>
+                    </View>
+                  )}
+                  {uploadingAvatar && (
+                    <View style={styles.avatarLoadingOverlay}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.avatarEditBadge}
+                    onPress={() => setShowPhotoModal(true)}
+                    activeOpacity={0.8}
+                    disabled={uploadingAvatar}
+                    accessibilityLabel="Change profile photo"
+                  >
+                    <Ionicons name="camera" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.avatarInfo}>
+                  <Text style={styles.avatarTitle}>{formData.name || 'Your Profile'}</Text>
+                  <Text style={styles.avatarSubtitle}>Upload a clear profile picture</Text>
+                  <View style={styles.avatarBtnRow}>
+                    <TouchableOpacity
+                      style={styles.uploadPhotoBtn}
+                      onPress={() => setShowPhotoModal(true)}
+                      activeOpacity={0.8}
+                      disabled={uploadingAvatar}
+                    >
+                      <Ionicons name="cloud-upload-outline" size={15} color="#1F5C52" style={{ marginRight: rs(6) }} />
+                      <Text style={styles.uploadPhotoBtnText}>
+                        {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+                      </Text>
+                    </TouchableOpacity>
+                    {formData.avatar ? (
+                      <TouchableOpacity
+                        style={styles.removePhotoBtn}
+                        onPress={handleRemovePhoto}
+                        activeOpacity={0.8}
+                        disabled={uploadingAvatar}
+                      >
+                        <Text style={styles.removePhotoBtnText}>Remove</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                </View>
+              </View>
+            </View>
+
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Basic Details</Text>
               
@@ -283,6 +484,67 @@ export default function UserProfileEditScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       )}
+      {/* ── PHOTO ACTION MODAL ── */}
+      <Modal
+        visible={showPhotoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPhotoModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPhotoModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Profile Photo</Text>
+            
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={handleTakePhoto}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.modalOptionIcon, { backgroundColor: '#EAF4F2' }]}>
+                <Ionicons name="camera" size={20} color="#1F5C52" />
+              </View>
+              <Text style={styles.modalOptionText}>Take Photo</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={handlePickFromGallery}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.modalOptionIcon, { backgroundColor: '#EFF6FF' }]}>
+                <Ionicons name="images" size={20} color="#3B82F6" />
+              </View>
+              <Text style={styles.modalOptionText}>Choose from Gallery</Text>
+            </TouchableOpacity>
+
+            {formData.avatar ? (
+              <TouchableOpacity
+                style={styles.modalOption}
+                onPress={handleRemovePhoto}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.modalOptionIcon, { backgroundColor: '#FEE2E2' }]}>
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </View>
+                <Text style={[styles.modalOptionText, { color: '#EF4444' }]}>Remove Photo</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={() => setShowPhotoModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -386,4 +648,167 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: rm(16) },
+
+  /* ── Avatar Section Styles ── */
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    width: rs(76),
+    height: rs(76),
+    borderRadius: rs(38),
+    position: 'relative',
+    backgroundColor: '#EAF4F2',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: rs(38),
+  },
+  avatarFallback: {
+    width: '100%',
+    height: '100%',
+    borderRadius: rs(38),
+    backgroundColor: '#1F5C52',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarFallbackText: {
+    fontSize: rm(26),
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  avatarLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: rs(38),
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: rs(28),
+    height: rs(28),
+    borderRadius: rs(14),
+    backgroundColor: '#0c888d',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  avatarInfo: {
+    flex: 1,
+    marginLeft: rs(16),
+  },
+  avatarTitle: {
+    fontSize: rm(16),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: rv(2),
+  },
+  avatarSubtitle: {
+    fontSize: rm(12),
+    color: '#64748B',
+    marginBottom: rv(10),
+  },
+  avatarBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: rs(8),
+  },
+  uploadPhotoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EAF4F2',
+    paddingHorizontal: rs(12),
+    paddingVertical: rv(6),
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#C7E4DF',
+  },
+  uploadPhotoBtnText: {
+    fontSize: rm(12.5),
+    fontWeight: '700',
+    color: '#1F5C52',
+  },
+  removePhotoBtn: {
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(6),
+    borderRadius: radius.md,
+  },
+  removePhotoBtnText: {
+    fontSize: rm(12.5),
+    fontWeight: '600',
+    color: '#EF4444',
+  },
+
+  /* ── Photo Modal Styles ── */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: rv(12),
+    paddingBottom: rv(34),
+  },
+  modalHandle: {
+    width: rs(40),
+    height: rv(4),
+    borderRadius: rv(2),
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: rv(16),
+  },
+  modalTitle: {
+    fontSize: rm(18),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: rv(16),
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: rv(12),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalOptionIcon: {
+    width: rs(40),
+    height: rs(40),
+    borderRadius: rs(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: rs(14),
+  },
+  modalOptionText: {
+    fontSize: rm(15),
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  modalCancelBtn: {
+    marginTop: rv(16),
+    paddingVertical: rv(14),
+    borderRadius: radius.lg,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: rm(15),
+    fontWeight: '700',
+    color: '#475569',
+  },
 });

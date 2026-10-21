@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
-  Search, SlidersHorizontal, CheckSquare, Square, ChevronRight, Eye, AlertCircle, X, Shield, ShieldAlert, ShoppingBag, ShoppingCart
+  Search, SlidersHorizontal, CheckSquare, Square, ChevronRight, ChevronLeft, Eye, AlertCircle, X, Shield, ShieldAlert, ShoppingBag, ShoppingCart
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -70,6 +70,17 @@ function MedicinesCatalogContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [papOnly, setPapOnly] = useState(searchParams?.get('pap') === 'true');
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryScrollRef.current) {
+      const step = Math.floor(categoryScrollRef.current.clientWidth * 0.5) || 200;
+      categoryScrollRef.current.scrollBy({
+        left: direction === 'left' ? -step : step,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Load static configurations
   useEffect(() => {
@@ -217,41 +228,70 @@ function MedicinesCatalogContent() {
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Browse by Category
               </h2>
-              <Link 
-                href="/condition" 
-                className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-0.5 sm:hidden"
-              >
-                View all <ChevronRight className="w-3 h-3" />
-              </Link>
+              <div className="flex items-center gap-2">
+                {/* Scroll buttons for smooth pagination */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => scrollCategories('left')}
+                    aria-label="Scroll categories left"
+                    className="w-6 h-6 rounded-full bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 hover:bg-slate-50 transition-all cursor-pointer active:scale-90"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollCategories('right')}
+                    aria-label="Scroll categories right"
+                    className="w-6 h-6 rounded-full bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 hover:bg-slate-50 transition-all cursor-pointer active:scale-90"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <Link 
+                  href="/condition" 
+                  className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-0.5"
+                >
+                  View all <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
 
-            {/* Horizontal scroll container on mobile with touch swipe, flex-wrap on desktop */}
-            <div className="flex overflow-x-auto sm:flex-wrap gap-2 sm:gap-3 items-center no-scrollbar pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 touch-pan-x overscroll-x-contain">
+            {/* Horizontal scroll container with exact card counts per view (2 on mobile, 4 on tablet, 6-8 on desktop, zero cutting) */}
+            <div
+              ref={categoryScrollRef}
+              className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-1 w-full whitespace-nowrap touch-pan-x overscroll-x-contain"
+            >
+              {/* All Medicines Button (2 on mobile, 3 on sm, 4 on md, 6 on lg, 8 on xl) */}
               <button
                 onClick={() => { setSelectedCategory(''); setCurrentPage(1); }}
-                className={`shrink-0 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+                className={`shrink-0 snap-start inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all active:scale-95 w-[calc(50%_-_4px)] sm:w-[calc(33.333%_-_6px)] md:w-[calc(25%_-_6px)] lg:w-[calc(16.666%_-_6.7px)] xl:w-[calc(12.5%_-_7px)] ${
                   !selectedCategory ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                All Medicines
+                <span className="truncate">All Medicines</span>
               </button>
+
+              {/* Category Buttons (Zero cutting across all breakpoints) */}
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
-                  className={`shrink-0 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all active:scale-95 ${
+                  className={`shrink-0 snap-start inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all active:scale-95 w-[calc(50%_-_4px)] sm:w-[calc(33.333%_-_6px)] md:w-[calc(25%_-_6px)] lg:w-[calc(16.666%_-_6.7px)] xl:w-[calc(12.5%_-_7px)] ${
                     selectedCategory === cat.slug ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {cat.name}
+                  <span className="truncate">{cat.name}</span>
                 </button>
               ))}
+
+              {/* More Categories Link */}
               <Link
                 href="/condition"
-                className="shrink-0 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-1"
+                className="shrink-0 snap-start inline-flex items-center justify-center gap-1 px-3 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all active:scale-95 w-[calc(50%_-_4px)] sm:w-[calc(33.333%_-_6px)] md:w-[calc(25%_-_6px)] lg:w-[calc(16.666%_-_6.7px)] xl:w-[calc(12.5%_-_7px)]"
               >
-                More Categories
-                <ChevronRight className="w-4 h-4" />
+                <span className="truncate">More Categories</span>
+                <ChevronRight className="w-3.5 h-3.5 shrink-0" />
               </Link>
             </div>
           </div>

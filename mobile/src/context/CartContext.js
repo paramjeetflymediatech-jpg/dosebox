@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AlertService } from '../services/AlertService';
+import { navigate } from '../services/NavigationService';
 
 const CART_KEY = '@dosebox_cart';
 const RX_ID_KEY = '@dosebox_rx_id';
@@ -113,7 +114,20 @@ export function CartProvider({ children }) {
       AlertService.show({
         type: 'success',
         title: 'Added to Cart',
-        message: `${item.name || 'Product'} has been added to your cart.`
+        message: `${item.name || 'Product'} has been added to your cart.`,
+        buttons: [
+          {
+            text: 'Continue',
+            style: 'cancel',
+            onPress: () => {}
+          },
+          {
+            text: 'View Cart',
+            onPress: () => {
+              navigate('CartCheckout');
+            }
+          }
+        ]
       });
     }
   };
