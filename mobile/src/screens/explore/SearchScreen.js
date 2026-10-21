@@ -127,8 +127,10 @@ export default function SearchScreen({ navigation, route }) {
     
     try {
       let url = `/medicines?search=${encodeURIComponent(query)}&limit=16&page=${targetPage}`;
-      if (initialCategorySlug && query === route.params?.query) {
-         url = `/medicines?category=${encodeURIComponent(initialCategorySlug)}&limit=16&page=${targetPage}`;
+      if (route.params?.pap) {
+        url = `/medicines?pap=true&limit=16&page=${targetPage}${query ? `&search=${encodeURIComponent(query)}` : ''}`;
+      } else if (initialCategorySlug && query === route.params?.query) {
+        url = `/medicines?category=${encodeURIComponent(initialCategorySlug)}&limit=16&page=${targetPage}`;
       }
       
       const res = await api.get(url, { signal: abortControllerRef.current.signal });

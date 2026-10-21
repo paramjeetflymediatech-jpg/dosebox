@@ -94,6 +94,7 @@ export default function CartCheckoutScreen({ navigation }) {
   const [currentTokens, setCurrentTokens] = useState(0);
   const [useDoseboxTokens, setUseDoseboxTokens] = useState(false);
   const [pointsInput, setPointsInput] = useState('');
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     AsyncStorage.getItem('user').then(str => {
@@ -104,6 +105,29 @@ export default function CartCheckoutScreen({ navigation }) {
         } catch (e) {}
       }
     });
+
+    let isMounted = true;
+    const fetchCats = async () => {
+      try {
+        const res = await api.get('/medicines/categories');
+        if (isMounted && res.data?.success && Array.isArray(res.data.data)) {
+          setCategories(res.data.data);
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const res = await api.get('/categories');
+        if (isMounted && res.data?.success && Array.isArray(res.data.data)) {
+          setCategories(res.data.data);
+        }
+      } catch (e) {}
+    };
+    fetchCats();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleBack = () => {
@@ -309,6 +333,55 @@ export default function CartCheckoutScreen({ navigation }) {
           <Ionicons name="arrow-back" size={rs(22)} color={C.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
+      </View>
+
+      {/* ── Category Horizontal Scroll Strip ── */}
+      <View style={styles.catStripWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catStripContent}
+        >
+          {/* All Medicines pill */}
+          <TouchableOpacity
+            style={[styles.catPill, styles.catPillAll]}
+            onPress={() => navigation.navigate('SearchScreen', { showAll: true, query: '' })}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="apps-outline" size={rs(13)} color={C.primary} style={{ marginRight: rs(5) }} />
+            <Text style={[styles.catPillText, styles.catPillTextAll]}>All Medicines</Text>
+          </TouchableOpacity>
+
+          {/* Dynamic Categories */}
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id || cat.slug || cat.name}
+              style={styles.catPill}
+              onPress={() =>
+                navigation.navigate('SearchScreen', {
+                  query: cat.name,
+                  categorySlug: cat.slug || cat.name?.toLowerCase().replace(/\s+/g, '-'),
+                })
+              }
+              activeOpacity={0.7}
+            >
+              <View style={styles.catDot} />
+              <Text style={styles.catPillText} numberOfLines={1}>
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          {/* More Categories */}
+          <TouchableOpacity
+            style={[styles.catPill, styles.catPillMore]}
+            onPress={() => navigation.navigate('Categories')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.catPillText, { color: C.sub }]}>More</Text>
+            <Ionicons name="chevron-forward" size={rs(12)} color={C.sub} style={{ marginLeft: rs(2) }} />
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* Stepper */}
@@ -940,6 +1013,53 @@ const styles = StyleSheet.create({
   stepLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: rs(4) },
   stepLabelText: { fontSize: rm(12), color: C.sub, fontWeight: '600' },
   stepLabelTextActive: { color: C.primary },
+
+  // Horizontal Category Strip Styles
+  catStripWrap: {
+    backgroundColor: C.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    paddingVertical: rv(8),
+  },
+  catStripContent: {
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+  },
+  catPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: rs(12),
+    paddingVertical: rv(6),
+    borderRadius: radius.full,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginRight: rs(8),
+  },
+  catPillAll: {
+    backgroundColor: '#EAF4F2',
+    borderColor: '#B2D8D0',
+  },
+  catPillMore: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+  },
+  catPillText: {
+    fontSize: rm(12),
+    fontWeight: '600',
+    color: '#334155',
+  },
+  catPillTextAll: {
+    color: C.primary,
+    fontWeight: '700',
+  },
+  catDot: {
+    width: rs(6),
+    height: rs(6),
+    borderRadius: rs(3),
+    backgroundColor: '#94A3B8',
+    marginRight: rs(6),
+  },
 });
 
 // ─── Styles: Empty ────────────────────────────────────────────

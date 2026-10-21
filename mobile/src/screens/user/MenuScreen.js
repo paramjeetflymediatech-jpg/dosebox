@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { rm, rv, rs, spacing, radius } from '../../utils/responsive';
@@ -7,6 +7,15 @@ import { rm, rv, rs, spacing, radius } from '../../utils/responsive';
 export default function MenuScreen({ navigation }) {
 
   const MENU_SECTIONS = [
+    {
+      title: 'Services & Patient Programs',
+      items: [
+        { name: 'Patient Assistance Program (PAP)', icon: 'gift', screen: 'SearchScreen', params: { pap: true }, color: '#d97706', bgColor: '#fef3c7' },
+        { name: 'Upload Prescription', icon: 'document-attach', screen: 'UploadPrescription', color: '#0d9488', bgColor: '#ccfbf1' },
+        { name: 'WhatsApp Quick Ordering', icon: 'logo-whatsapp', action: () => Linking.openURL('https://api.whatsapp.com/send/?phone=919877817314&text=Hi,%20I%20would%20like%20to%20order%20medicines.'), color: '#16a34a', bgColor: '#dcfce7' },
+        { name: 'Shop by Condition / Category', icon: 'medkit', screen: 'Categories', color: '#0284c7', bgColor: '#e0f2fe' },
+      ]
+    },
     {
       title: 'Explore',
       items: [
@@ -35,6 +44,16 @@ export default function MenuScreen({ navigation }) {
     }
   ];
 
+  const handleItemPress = (item) => {
+    if (item.action) {
+      item.action();
+    } else if (item.params) {
+      navigation.navigate(item.screen, item.params);
+    } else if (item.screen) {
+      navigation.navigate(item.screen);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -50,7 +69,7 @@ export default function MenuScreen({ navigation }) {
                 <TouchableOpacity
                   key={itemIdx}
                   style={[styles.menuItem, itemIdx === section.items.length - 1 && styles.lastMenuItem]}
-                  onPress={() => navigation.navigate(item.screen)}
+                  onPress={() => handleItemPress(item)}
                 >
                   <View style={styles.menuItemLeft}>
                     <View style={[styles.iconBox, { backgroundColor: item.bgColor || '#F1F5F9' }]}>

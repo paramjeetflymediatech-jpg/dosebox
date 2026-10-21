@@ -1,4 +1,4 @@
-import './src/utils/fixTextDisplay';
+// import './src/utils/fixTextDisplay';
 import React, { useEffect, useState } from 'react';
 import { View, Text, AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
