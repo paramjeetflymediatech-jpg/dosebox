@@ -49,39 +49,43 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
 
   return (
     <TouchableOpacity
-      style={[styles.medCardContainer, containerStyle]}
+      style={[
+        styles.medCardContainer,
+        compact && styles.medCardContainerCompact,
+        containerStyle
+      ]}
       activeOpacity={0.9}
       onPress={() => navigation.navigate('MedicineDetail', { medicine: med })}
     >
       {/* ── Badges Header ── */}
-      <View style={styles.medCardHeader}>
+      <View style={[styles.medCardHeader, compact && { marginBottom: rv(3) }]}>
         <View style={styles.badgeRow}>
           {med.prescriptionRequired ? (
-            <View style={styles.rxBadge}>
-              <Text style={styles.rxBadgeText}>RX</Text>
+            <View style={[styles.rxBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
+              <Text style={[styles.rxBadgeText, compact && { fontSize: rm(7.5) }]}>RX</Text>
             </View>
           ) : null}
           {(med.coldChain || med.isColdChain || med.storageInstructions === 'Cold Chain') ? (
-            <View style={styles.coldBadge}>
-              <Text style={styles.coldBadgeText}>❄ COLD</Text>
+            <View style={[styles.coldBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
+              <Text style={[styles.coldBadgeText, compact && { fontSize: rm(7.5) }]}>❄ COLD</Text>
             </View>
           ) : null}
           {med.papOffer ? (
-            <View style={styles.papBadge}>
-              <Text style={styles.papBadgeText}>🎁 PAP</Text>
+            <View style={[styles.papBadge, compact && { paddingHorizontal: rs(4), paddingVertical: rv(1) }]}>
+              <Text style={[styles.papBadgeText, compact && { fontSize: rm(7.5) }]}>🎁 PAP</Text>
             </View>
           ) : null}
         </View>
 
         {savings > 0 && (
-          <View style={styles.saveBadge}>
-            <Text style={styles.saveBadgeText}>{savings}% OFF</Text>
+          <View style={[styles.saveBadge, compact && { paddingHorizontal: rs(5), paddingVertical: rv(1) }]}>
+            <Text style={[styles.saveBadgeText, compact && { fontSize: rm(8.5) }]}>{savings}% OFF</Text>
           </View>
         )}
       </View>
 
       {/* ── Product Image ── */}
-      <View style={styles.medImageWrap}>
+      <View style={[styles.medImageWrap, compact && styles.medImageWrapCompact]}>
         {displayImage && !imgFailed ? (
           <Image
             source={{ uri: displayImage }}
@@ -90,20 +94,20 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <Ionicons name="medical" size={32} color="#CBD5E1" />
+          <Ionicons name="medical" size={compact ? 22 : 32} color="#CBD5E1" />
         )}
       </View>
 
       {/* ── Medicine Details ── */}
-      <View style={styles.medDetails}>
-        <Text style={styles.medBrandText} numberOfLines={1} ellipsizeMode="tail">
+      <View style={[styles.medDetails, compact && { marginBottom: rv(2) }]}>
+        <Text style={[styles.medBrandText, compact && styles.medBrandTextCompact]} numberOfLines={1} ellipsizeMode="tail">
           {packInfo} • {brandName}
         </Text>
-        <Text style={styles.medNameText} numberOfLines={2} ellipsizeMode="tail">
+        <Text style={[styles.medNameText, compact && styles.medNameTextCompact]} numberOfLines={compact ? 1 : 2} ellipsizeMode="tail">
           {med.name}
         </Text>
         {molecule ? (
-          <Text style={styles.moleculeText} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={[styles.moleculeText, compact && styles.moleculeTextCompact]} numberOfLines={1} ellipsizeMode="tail">
             {molecule}
           </Text>
         ) : null}
@@ -119,32 +123,32 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
       </View>
 
       {/* ── Price and Add to Cart Footer ── */}
-      <View style={styles.medFooter}>
+      <View style={[styles.medFooter, compact && { paddingTop: rv(4) }]}>
         <View style={styles.medPriceBox}>
-          <View style={styles.oldPriceRow}>
+          <View style={[styles.oldPriceRow, compact && { gap: rs(2) }]}>
             {discPrice && discPrice < price ? (
-              <Text style={styles.medOldPrice}>₹{price}</Text>
+              <Text style={[styles.medOldPrice, compact && { fontSize: rm(9.5) }]}>₹{price}</Text>
             ) : null}
             {savings > 0 && (
-              <Text style={styles.medSaveText} numberOfLines={1}>
+              <Text style={[styles.medSaveText, compact && { fontSize: rm(9) }]} numberOfLines={1}>
                 Save ₹{Math.round(price - discPrice)}
               </Text>
             )}
           </View>
-          <Text style={styles.medNewPrice}>
+          <Text style={[styles.medNewPrice, compact && styles.medNewPriceCompact]}>
             ₹{discPrice ? discPrice : price}
           </Text>
         </View>
 
         <View style={styles.medActions}>
           <TouchableOpacity
-            style={styles.medAddBtn}
+            style={[styles.medAddBtn, compact && styles.medAddBtnCompact]}
             onPress={handleAddToCart}
             activeOpacity={0.8}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={`Add ${med.name} to cart`}
           >
-            <Ionicons name="cart-outline" size={17} color="#FFFFFF" />
+            <Ionicons name="cart-outline" size={compact ? 14 : 17} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -337,5 +341,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3,
     elevation: 2,
+  },
+
+  /* ── Compact Grid Overrides (For 6-card Viewport) ── */
+  medCardContainerCompact: {
+    minHeight: rv(172),
+    padding: rs(7),
+    borderRadius: radius.lg,
+  },
+  medImageWrapCompact: {
+    height: rv(52),
+    marginBottom: rv(3),
+    padding: rs(2),
+  },
+  medBrandTextCompact: {
+    fontSize: rm(8.5),
+    marginBottom: 0,
+  },
+  medNameTextCompact: {
+    fontSize: rm(11.5),
+    lineHeight: rv(15),
+    minHeight: rv(15),
+    marginBottom: rv(1),
+  },
+  moleculeTextCompact: {
+    fontSize: rm(9),
+    marginBottom: rv(1),
+  },
+  medNewPriceCompact: {
+    fontSize: rm(13.5),
+    marginTop: 0,
+  },
+  medAddBtnCompact: {
+    width: rs(26),
+    height: rs(26),
+    borderRadius: rs(13),
   },
 });

@@ -54,12 +54,13 @@ export default function SearchScreen({ navigation, route }) {
   const [recentSearches, setRecentSearches] = useState([]);
   const [topSelling, setTopSelling] = useState([]);
   
-  // Front-screen 4-card display and scroll-to-reveal state
+  // Front-screen 6-card display and scroll-to-reveal state
   const [hasScrolled, setHasScrolled] = useState(false);
+  const isUserDraggingRef = useRef(false);
   
-  // Available height for 2 rows of cards on initial view
-  const availableContentHeight = screenHeight - insets.top - rv(60) - rv(45) - insets.bottom - rv(40);
-  const cardMinHeight = Math.max(rv(280), Math.floor((availableContentHeight - rs(16)) / 2));
+  // Available height for 3 rows of cards on initial view (6 cards total)
+  const availableContentHeight = screenHeight - insets.top - rv(60) - rv(40) - insets.bottom - rv(20);
+  const cardMinHeight = Math.max(rv(172), Math.floor((availableContentHeight - rs(20)) / 3));
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -117,6 +118,7 @@ export default function SearchScreen({ navigation, route }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    isUserDraggingRef.current = false;
     setHasScrolled(false);
     if (searchResults !== null) {
       await performSearch(searchQuery, 1, false);
@@ -131,6 +133,7 @@ export default function SearchScreen({ navigation, route }) {
       setIsLoadingMore(true);
     } else {
       setIsSearching(true);
+      isUserDraggingRef.current = false;
       setHasScrolled(false);
     }
     
@@ -181,7 +184,10 @@ export default function SearchScreen({ navigation, route }) {
   };
 
   const handleLoadMore = () => {
-    if (!hasScrolled && searchResults && searchResults.length > 4) {
+    if (!isUserDraggingRef.current && !hasScrolled) {
+      return;
+    }
+    if (!hasScrolled && searchResults && searchResults.length > 6) {
       setHasScrolled(true);
       return;
     }
@@ -212,6 +218,7 @@ export default function SearchScreen({ navigation, route }) {
     
     setPage(1);
     setHasMore(true);
+    isUserDraggingRef.current = false;
     setHasScrolled(false);
     performSearch(query, 1, false);
   };
@@ -219,6 +226,7 @@ export default function SearchScreen({ navigation, route }) {
   const handleClearSearch = () => {
     setSearchQuery('');
     setSearchResults(null);
+    isUserDraggingRef.current = false;
     setHasScrolled(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
@@ -228,11 +236,11 @@ export default function SearchScreen({ navigation, route }) {
     AsyncStorage.removeItem(SEARCH_HISTORY_KEY);
   };
 
-  // Front-screen displays 4 cards cleanly; scrolling or tapping reveals all results
+  // Front-screen displays 6 cards cleanly (3 rows × 2 cols); scrolling or tapping reveals all results
   const displayedResults = React.useMemo(() => {
     if (!searchResults) return [];
-    if (!hasScrolled && searchResults.length > 4) {
-      return searchResults.slice(0, 4);
+    if (!hasScrolled && searchResults.length > 6) {
+      return searchResults.slice(0, 6);
     }
     return searchResults;
   }, [searchResults, hasScrolled]);
@@ -241,7 +249,7 @@ export default function SearchScreen({ navigation, route }) {
     <MedicineCard 
       med={item} 
       compact={true} 
-      containerStyle={{ flex: 1, margin: rs(6), maxWidth: '48%', minHeight: cardMinHeight }} 
+      containerStyle={{ flex: 1, margin: rs(4), maxWidth: '48%', minHeight: cardMinHeight }} 
     />
   );
 
@@ -288,11 +296,11 @@ export default function SearchScreen({ navigation, route }) {
       {searchResults !== null ? (
         <View style={{ flex: 1, backgroundColor: C.bg }}>
           {isSearching && page === 1 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: spacing.sm, justifyContent: 'space-between' }}>
-              {[1, 2, 3, 4].map(k => (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.sm, paddingTop: rv(4), justifyContent: 'space-between' }}>
+              {[1, 2, 3, 4, 5, 6].map(k => (
                 <MedicineCardSkeleton 
                   key={k} 
-                  containerStyle={{ width: '48%', minHeight: cardMinHeight, marginBottom: rv(12) }} 
+                  containerStyle={{ width: '48%', minHeight: cardMinHeight, marginBottom: rv(8) }} 
                 />
               ))}
             </View>
@@ -307,15 +315,21 @@ export default function SearchScreen({ navigation, route }) {
               renderItem={renderMedicineItem}
               numColumns={2}
               contentContainerStyle={{ 
-                padding: spacing.sm, 
+                paddingHorizontal: spacing.sm, 
+                paddingTop: rv(4),
                 paddingBottom: insets.bottom + rv(40),
-                minHeight: !hasScrolled && searchResults && searchResults.length > 4 ? screenHeight - insets.top - rv(40) : undefined
+                minHeight: !hasScrolled && searchResults && searchResults.length > 6 ? screenHeight - insets.top - rv(30) : undefined
               }}
               onScrollBeginDrag={() => {
+                isUserDraggingRef.current = true;
+                if (!hasScrolled) setHasScrolled(true);
+              }}
+              onMomentumScrollBegin={() => {
+                isUserDraggingRef.current = true;
                 if (!hasScrolled) setHasScrolled(true);
               }}
               onScroll={(e) => {
-                if (!hasScrolled && e.nativeEvent.contentOffset.y > 6) {
+                if (isUserDraggingRef.current && !hasScrolled && e.nativeEvent.contentOffset.y > 6) {
                   setHasScrolled(true);
                 }
               }}
@@ -326,7 +340,7 @@ export default function SearchScreen({ navigation, route }) {
               keyboardShouldPersistTaps="handled"
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
               ListHeaderComponent={
-                <Text style={[styles.sectionTitle, { marginHorizontal: spacing.sm, marginTop: rv(12), marginBottom: rv(8) }]}>
+                <Text style={[styles.sectionTitle, { marginHorizontal: spacing.sm, marginTop: rv(8), marginBottom: rv(6) }]}>
                   {route.params?.showAll && !searchQuery ? 'All Medicines' : 'Search Results'}
                 </Text>
               }
@@ -335,15 +349,18 @@ export default function SearchScreen({ navigation, route }) {
                   <View style={{ paddingVertical: rv(20), alignItems: 'center' }}>
                     <ActivityIndicator size="small" color={C.primary} />
                   </View>
-                ) : !hasScrolled && searchResults && searchResults.length > 4 ? (
+                ) : !hasScrolled && searchResults && searchResults.length > 6 ? (
                   <TouchableOpacity 
                     style={styles.loadMoreHint} 
                     activeOpacity={0.8}
-                    onPress={() => setHasScrolled(true)}
+                    onPress={() => {
+                      isUserDraggingRef.current = true;
+                      setHasScrolled(true);
+                    }}
                   >
                     <Ionicons name="arrow-down-circle" size={18} color={C.primary} />
                     <Text style={styles.loadMoreHintText}>
-                      Scroll to view more medicines ({searchResults.length - 4}+ more)
+                      Scroll to view remaining {searchResults.length - 6}+ medicines
                     </Text>
                   </TouchableOpacity>
                 ) : null
