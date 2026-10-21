@@ -144,7 +144,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={`Add ${med.name} to cart`}
           >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Ionicons name="cart-outline" size={17} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
