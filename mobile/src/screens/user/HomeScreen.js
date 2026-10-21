@@ -1022,17 +1022,17 @@ const styles = StyleSheet.create({
   sectionBlock: { paddingTop: rv(24), paddingBottom: rv(16), backgroundColor: C.white },
   sectionBlockAlt: { paddingTop: rv(24), paddingBottom: rv(24), backgroundColor: '#F8FAFC', borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   sectionHeader: { paddingHorizontal: spacing.md, marginBottom: rv(16) },
-  sectionOverline: { fontSize: rm(9), fontWeight: '700', color: C.primary, textTransform: 'uppercase', letterSpacing: 1 },
+  sectionOverline: { fontSize: rm(10.5), fontWeight: '800', color: C.primary, textTransform: 'uppercase', letterSpacing: 1.2 },
   sparkleRow: { flexDirection: 'row', alignItems: 'center', gap: rs(4), backgroundColor: '#E6FFFA', alignSelf: 'flex-start', paddingHorizontal: rs(8), paddingVertical: rv(2), borderRadius: radius.full, marginBottom: rv(4) },
-  sectionTitle: { fontSize: rm(18), fontWeight: '800', color: C.text, marginTop: rv(4), flexShrink: 1 },
-  horizontalList: { paddingHorizontal: spacing.md },
-  seeAll: { fontSize: rm(13), color: C.primary, fontWeight: '600', marginBottom: rv(4), marginLeft: rs(8) },
+  sectionTitle: { fontSize: rm(19), fontWeight: '800', color: '#0F172A', marginTop: rv(4), flexShrink: 1 },
+  horizontalList: { paddingHorizontal: spacing.md, paddingBottom: rv(8) },
+  seeAll: { fontSize: rm(13), color: C.primary, fontWeight: '700', marginBottom: rv(4), marginLeft: rs(8) },
 
   /* Category Card matching website */
   catControlsRow: { flexDirection: 'row', alignItems: 'center', gap: rs(6) },
   catNavBtn: { width: rs(30), height: rs(30), borderRadius: rs(15), backgroundColor: C.white, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
   catViewAllBtn: { paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: radius.full, backgroundColor: C.white, borderWidth: 1, borderColor: C.border, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
-  catViewAllText: { fontSize: rm(12), fontWeight: '700', color: C.text },
+  catViewAllText: { fontSize: rm(12.5), fontWeight: '700', color: '#0F172A' },
 
   catCard: {
     width: CAT_CARD_WIDTH,
@@ -1042,7 +1042,7 @@ const styles = StyleSheet.create({
     padding: rs(8),
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1073,11 +1073,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   catTitle: {
-    fontSize: rm(12),
+    fontSize: rm(12.5),
     fontWeight: '700',
-    color: C.text,
+    color: '#0F172A',
     textAlign: 'center',
-    lineHeight: rv(16),
+    lineHeight: rv(17),
   },
 
   /* Prescription Banner */
