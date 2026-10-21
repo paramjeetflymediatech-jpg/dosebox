@@ -60,7 +60,7 @@ export default function SearchScreen({ navigation, route }) {
   
   // Available height for 3 rows of cards on initial view (6 cards total)
   const availableContentHeight = screenHeight - insets.top - rv(60) - rv(40) - insets.bottom - rv(20);
-  const cardMinHeight = Math.max(rv(172), Math.floor((availableContentHeight - rs(20)) / 3));
+  const cardMinHeight = Math.max(rv(190), Math.floor((availableContentHeight - rs(20)) / 3));
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -184,11 +184,7 @@ export default function SearchScreen({ navigation, route }) {
   };
 
   const handleLoadMore = () => {
-    if (!isUserDraggingRef.current && !hasScrolled) {
-      return;
-    }
-    if (!hasScrolled && searchResults && searchResults.length > 6) {
-      setHasScrolled(true);
+    if (!hasScrolled) {
       return;
     }
     if (!hasMore || isLoadingMore || isSearching) return;
@@ -322,16 +318,17 @@ export default function SearchScreen({ navigation, route }) {
               }}
               onScrollBeginDrag={() => {
                 isUserDraggingRef.current = true;
-                if (!hasScrolled) setHasScrolled(true);
-              }}
-              onMomentumScrollBegin={() => {
-                isUserDraggingRef.current = true;
-                if (!hasScrolled) setHasScrolled(true);
               }}
               onScroll={(e) => {
-                if (isUserDraggingRef.current && !hasScrolled && e.nativeEvent.contentOffset.y > 6) {
+                const offsetY = e.nativeEvent.contentOffset.y;
+                if (isUserDraggingRef.current && offsetY > 10 && !hasScrolled) {
                   setHasScrolled(true);
                 }
+              }}
+              onScrollEndDrag={() => {
+                setTimeout(() => {
+                  isUserDraggingRef.current = false;
+                }, 400);
               }}
               scrollEventThrottle={16}
               onEndReached={handleLoadMore}

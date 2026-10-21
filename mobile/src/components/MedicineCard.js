@@ -345,36 +345,42 @@ const styles = StyleSheet.create({
 
   /* ── Compact Grid Overrides (For 6-card Viewport) ── */
   medCardContainerCompact: {
-    minHeight: rv(172),
-    padding: rs(7),
+    minHeight: rv(190),
+    padding: rs(8),
     borderRadius: radius.lg,
+    justifyContent: 'space-between',
   },
   medImageWrapCompact: {
-    height: rv(52),
-    marginBottom: rv(3),
-    padding: rs(2),
+    height: rv(90),
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: rv(5),
+    padding: rs(4),
+    overflow: 'hidden',
   },
   medBrandTextCompact: {
-    fontSize: rm(8.5),
-    marginBottom: 0,
-  },
-  medNameTextCompact: {
-    fontSize: rm(11.5),
-    lineHeight: rv(15),
-    minHeight: rv(15),
-    marginBottom: rv(1),
-  },
-  moleculeTextCompact: {
     fontSize: rm(9),
     marginBottom: rv(1),
   },
+  medNameTextCompact: {
+    fontSize: rm(12),
+    lineHeight: rv(16),
+    minHeight: rv(16),
+    marginBottom: rv(1),
+  },
+  moleculeTextCompact: {
+    fontSize: rm(9.5),
+    marginBottom: rv(2),
+  },
   medNewPriceCompact: {
-    fontSize: rm(13.5),
+    fontSize: rm(14.5),
     marginTop: 0,
   },
   medAddBtnCompact: {
-    width: rs(26),
-    height: rs(26),
-    borderRadius: rs(13),
+    width: rs(28),
+    height: rs(28),
+    borderRadius: rs(14),
   },
 });
