@@ -3,7 +3,7 @@
  */
 
 // Global fix for font scaling and text visibility on small and diverse physical devices
-import './src/utils/fixTextDisplay';
+// import './src/utils/fixTextDisplay';
 
 import { AppRegistry } from 'react-native';
 import App from './App';

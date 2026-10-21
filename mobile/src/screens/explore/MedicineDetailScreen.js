@@ -288,11 +288,26 @@ export default function MedicineDetailScreen({ navigation, route }) {
             </View>
           )}
 
-          {medicine.prescriptionRequired && (
-            <View style={styles.rxBadge}>
-              <Text style={styles.rxText}>RX REQUIRED</Text>
-            </View>
-          )}
+          {/* Product Badges (Rx, Cold Chain, PAP) */}
+          <View style={styles.detailBadgeRow}>
+            {medicine.prescriptionRequired ? (
+              <View style={styles.rxBadge}>
+                <Text style={styles.rxText}>RX REQUIRED</Text>
+              </View>
+            ) : null}
+            {medicine.coldChain ? (
+              <View style={styles.coldChainBadge}>
+                <Ionicons name="snow" size={11} color="#FFFFFF" style={{ marginRight: rs(4) }} />
+                <Text style={styles.coldChainText}>COLD CHAIN (2°C - 8°C)</Text>
+              </View>
+            ) : null}
+            {medicine.papOffer ? (
+              <View style={styles.papBadge}>
+                <Ionicons name="gift" size={11} color="#FFFFFF" style={{ marginRight: rs(4) }} />
+                <Text style={styles.papText}>PAP: {medicine.papOffer}</Text>
+              </View>
+            ) : null}
+          </View>
 
           {/* Thumbnails Strip */}
           {allImages.length > 1 && (
@@ -323,8 +338,23 @@ export default function MedicineDetailScreen({ navigation, route }) {
 
         {/* ── BASIC DETAILS ── */}
         <View style={styles.section}>
-          <Text style={styles.brandText}>{medicine.brand?.name || 'DoseBox Speciality'}</Text>
+          <Text style={styles.brandText}>{medicine.brand?.name || 'DoseBox Generics'}</Text>
           <Text style={styles.title}>{medicine.name}</Text>
+          {Boolean(medicine.molecule || medicine.composition || medicine.genericName) && (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() =>
+                navigation.navigate('SearchScreen', {
+                  query: medicine.molecule || medicine.composition || medicine.genericName,
+                })
+              }
+              style={{ marginBottom: rv(8) }}
+            >
+              <Text style={styles.detailMoleculeText}>
+                {medicine.molecule || medicine.composition || medicine.genericName}
+              </Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.packSize}>{medicine.packSize || 'Strip of 10 Tablets'}</Text>
           
           <View style={styles.ratingRow}>
@@ -336,12 +366,17 @@ export default function MedicineDetailScreen({ navigation, route }) {
           </View>
           
           <View style={styles.priceRow}>
-            <View>
+            <View style={{ flex: 1 }}>
               <View style={styles.oldPriceRow}>
                 <Text style={styles.oldPrice}>MRP ₹{price}</Text>
-                {savings > 0 && <Text style={styles.saveText}>{savings}% OFF</Text>}
+                {savings > 0 && (
+                  <View style={styles.saveBadgePill}>
+                    <Text style={styles.saveTextPill}>Save ₹{price - finalPrice} ({savings}%)</Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.finalPrice}>₹{finalPrice}</Text>
+              <Text style={styles.gstText}>Inclusive of all taxes (GST included)</Text>
             </View>
           </View>
         </View>
@@ -541,12 +576,18 @@ const styles = StyleSheet.create({
   thumbnailWrap: { width: rs(60), height: rs(60), borderRadius: radius.md, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', padding: rs(4), alignItems: 'center', justifyContent: 'center' },
   thumbnailWrapActive: { borderColor: C.primary, borderWidth: 2, backgroundColor: C.white, elevation: 3, shadowColor: C.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
   thumbnailImage: { width: '100%', height: '100%' },
-  rxBadge: { position: 'absolute', top: rv(16), left: rs(16), backgroundColor: '#f0ecec', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6, borderWidth: 1, borderColor: '#e6dfdf', zIndex: 10 },
-  rxText: { fontSize: rm(10), fontWeight: '800', color: '#786c6c' },
+  detailBadgeRow: { position: 'absolute', top: rv(16), left: rs(16), right: rs(16), flexDirection: 'row', flexWrap: 'wrap', gap: rs(6), zIndex: 10 },
+  rxBadge: { backgroundColor: '#3b1d60', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6 },
+  rxText: { fontSize: rm(10), fontWeight: '800', color: '#FFFFFF' },
+  coldChainBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0284C7', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6 },
+  coldChainText: { fontSize: rm(10), fontWeight: '800', color: '#FFFFFF' },
+  papBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#D97706', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6 },
+  papText: { fontSize: rm(10), fontWeight: '800', color: '#FFFFFF' },
   
   section: { backgroundColor: C.white, padding: spacing.md, marginBottom: rv(8) },
-  brandText: { fontSize: rm(13), color: C.sub, fontWeight: '600', textTransform: 'uppercase', marginBottom: rv(6) },
-  title: { fontSize: rm(22), fontWeight: '700', color: C.text, marginBottom: rv(6), lineHeight: rv(28) },
+  brandText: { fontSize: rm(13), color: C.sub, fontWeight: '600', textTransform: 'uppercase', marginBottom: rv(4) },
+  title: { fontSize: rm(22), fontWeight: '700', color: C.text, marginBottom: rv(4), lineHeight: rv(28) },
+  detailMoleculeText: { fontSize: rm(13), fontWeight: '700', color: '#0284C7', textDecorationLine: 'underline', textTransform: 'uppercase' },
   packSize: { fontSize: rm(15), color: C.sub, marginBottom: rv(16) },
   
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: rv(20) },
@@ -557,8 +598,10 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: C.border, paddingTop: rv(16) },
   oldPriceRow: { flexDirection: 'row', alignItems: 'center', marginBottom: rv(4) },
   oldPrice: { fontSize: rm(14), color: C.sub, textDecorationLine: 'line-through' },
-  saveText: { fontSize: rm(12), color: C.accent, fontWeight: '700', marginLeft: rs(8) },
+  saveBadgePill: { backgroundColor: '#DCFCE7', paddingHorizontal: rs(8), paddingVertical: rv(2), borderRadius: radius.full, marginLeft: rs(8) },
+  saveTextPill: { fontSize: rm(11), color: '#15803D', fontWeight: '800' },
   finalPrice: { fontSize: rm(28), fontWeight: '800', color: C.text },
+  gstText: { fontSize: rm(11), color: C.sub, marginTop: rv(3) },
   
   sectionTitle: { fontSize: rm(18), fontWeight: '700', color: C.text, marginBottom: rv(12) },
   descText: { fontSize: rm(15), color: '#475569', lineHeight: rv(24) },

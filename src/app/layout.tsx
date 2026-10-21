@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import {
-  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, ChevronDown, Tag, ArrowRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus, Sparkles
+  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, ChevronLeft, ChevronDown, Tag, ArrowRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -108,17 +108,22 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const navStripRef = useRef<HTMLDivElement>(null);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [navCategories, setNavCategories] = useState<any[]>(DEFAULT_NAV_CATEGORIES);
-  const [activeNavDropdown, setActiveNavDropdown] = useState<string | null>(null);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryScrollRef.current) {
+      categoryScrollRef.current.scrollBy({
+        left: direction === 'left' ? -260 : 260,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
-      }
-      if (navStripRef.current && !navStripRef.current.contains(e.target as Node)) {
-        setActiveNavDropdown(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -210,7 +215,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   // Automatically scroll to top on route change (e.g. navigating to /cart)
   React.useEffect(() => {
-    setActiveNavDropdown(null);
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const timer = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -608,238 +612,79 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* SUB-NAVBAR CATEGORIES STRIP (Full-width strip at bottom of navbar on Cart & Checkout) */}
+        {/* SUB-NAVBAR CATEGORIES STRIP (Full-width horizontal scroll strip on Cart & Checkout) */}
         {isCartOrCheckout && (
-          <div ref={navStripRef} className="w-full max-w-full overflow-hidden md:overflow-visible bg-white border-t border-slate-100 shadow-2xs relative z-40">
-            <div className="mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8">
-              <nav aria-label="Category Navigation" className="flex items-center md:justify-center gap-5 sm:gap-8 md:gap-10 lg:gap-12 overflow-x-auto md:overflow-visible no-scrollbar py-2.5 text-xs sm:text-sm font-medium text-slate-700 whitespace-nowrap">
+          <div className="w-full bg-white border-t border-b border-slate-100 shadow-2xs relative z-30">
+            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 relative flex items-center">
               
-              {/* 1. BUY MEDICINE (WITH CATEGORIES) */}
-              <div className="relative">
-                <button 
-                  type="button"
-                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'buy' ? null : 'buy')}
-                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
-                >
-                  <span>Buy Medicine</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'buy' ? 'rotate-180 text-brand-600' : ''}`} />
-                </button>
-
-                {/* Categories Dropdown Panel */}
-                <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'buy' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
-                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-5 w-[340px] sm:w-[480px]">
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Browse by Specialty</span>
-                      <Link 
-                        href="/condition" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
-                      >
-                        View all <ChevronRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
-                      {navCategories.map((cat: any) => (
-                        <Link
-                          key={cat.id || cat.slug}
-                          href={`/medicines?category=${cat.slug}`}
-                          onClick={() => setActiveNavDropdown(null)}
-                          className="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-colors group/cat"
-                        >
-                          <div className="w-6 h-6 rounded-lg bg-teal-50 text-brand-600 flex items-center justify-center shrink-0 border border-teal-100/50 group-hover/cat:scale-110 transition-transform">
-                            <Tag className="w-3 h-3" />
-                          </div>
-                          <span className="text-xs font-semibold text-slate-800 truncate group-hover/cat:text-brand-600 transition-colors">
-                            {cat.name}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <Link 
-                        href="/medicines" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="font-semibold text-slate-600 hover:text-brand-600 flex items-center gap-1"
-                      >
-                        All Medicines <ArrowRight className="w-3 h-3" />
-                      </Link>
-                      <Link 
-                        href="/condition" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="font-semibold text-brand-600 hover:underline"
-                      >
-                        Target Specific Ailments →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. IMPORTED MEDICINES */}
-              <div className="relative">
-                <button 
-                  type="button"
-                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'imported' ? null : 'imported')}
-                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
-                >
-                  <span>Imported Medicines</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'imported' ? 'rotate-180 text-brand-600' : ''}`} />
-                </button>
-
-                <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'imported' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
-                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-[320px]">
-                    <div className="pb-2 mb-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Special Access Programs
-                    </div>
-                    <div className="space-y-1">
-                      <Link 
-                        href="/medicines?type=imported" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">Named Patient Program (NPI)</div>
-                        <div className="text-[11px] text-slate-500">Legal import of unapproved global life-saving therapies</div>
-                      </Link>
-                      <Link 
-                        href="/medicines?type=imported" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">Rare & Orphan Diseases</div>
-                        <div className="text-[11px] text-slate-500">Specialized therapies with global cold chain integrity</div>
-                      </Link>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-slate-100">
-                      <Link 
-                        href="/medicines?type=imported" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="text-xs font-bold text-brand-600 hover:underline flex items-center justify-between"
-                      >
-                        <span>Browse Imported Catalog</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. PATIENT ASSISTANCE PROGRAM */}
-              <Link 
-                href="/medicines?pap=true" 
-                className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors"
+              {/* Left scroll button */}
+              <button
+                type="button"
+                onClick={() => scrollCategories('left')}
+                aria-label="Scroll categories left"
+                className="hidden md:flex shrink-0 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-xs items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 hover:bg-slate-50 transition-all mr-2 -ml-2 z-10 cursor-pointer"
               >
-                <span>Patient Assistance Program</span>
-              </Link>
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-              {/* 4. LIBRARY */}
-              <div className="relative">
-                <button 
-                  type="button"
-                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'library' ? null : 'library')}
-                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
+              {/* Horizontal Scroll Categories */}
+              <div
+                ref={categoryScrollRef}
+                className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-2.5 w-full whitespace-nowrap touch-pan-x overscroll-x-contain"
+              >
+                {/* All Medicines Chip */}
+                <Link
+                  href="/medicines"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200/80 transition-all shadow-2xs"
                 >
-                  <span>Library</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'library' ? 'rotate-180 text-brand-600' : ''}`} />
-                </button>
+                  <Tag className="w-3.5 h-3.5 text-brand-600" />
+                  <span>All Medicines</span>
+                </Link>
 
-                <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'library' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
-                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-[280px]">
-                    <div className="pb-2 mb-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Knowledge & Clinical Guides
-                    </div>
-                    <div className="space-y-1">
-                      <Link 
-                        href="/condition" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">Condition Guides</div>
-                        <div className="text-[11px] text-slate-500">Explore medical conditions & treatment pathways</div>
-                      </Link>
-                      <Link 
-                        href="/blogs" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">Health Blogs</div>
-                        <div className="text-[11px] text-slate-500">Pharmacist insights and clinical updates</div>
-                      </Link>
-                      <Link 
-                        href="/fda-guidelines" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">FDA & CDSCO Safety</div>
-                        <div className="text-[11px] text-slate-500">Regulatory standards & storage protocols</div>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                {/* Category Chips */}
+                {navCategories.map((cat: any) => (
+                  <Link
+                    key={cat.id || cat.slug}
+                    href={`/medicines?category=${cat.slug}`}
+                    className="shrink-0 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-slate-50 hover:bg-brand-50 text-slate-700 hover:text-brand-600 border border-slate-200/70 hover:border-brand-200 transition-all shadow-2xs group"
+                  >
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="w-4 h-4 rounded-full object-cover shrink-0"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-400 group-hover:scale-125 transition-transform" />
+                    )}
+                    <span>{cat.name}</span>
+                  </Link>
+                ))}
+
+                {/* More Categories */}
+                <Link
+                  href="/condition"
+                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-brand-600 hover:text-brand-700 hover:bg-brand-50 transition-colors"
+                >
+                  <span>More Categories</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
 
-              {/* 5. SERVICES (WITH NEW BADGE) */}
-              <div className="relative">
-                <button 
-                  type="button"
-                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'services' ? null : 'services')}
-                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
-                >
-                  <span>Services</span>
-                  <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                    New
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'services' ? 'rotate-180 text-brand-600' : ''}`} />
-                </button>
-
-                <div className={`absolute right-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'services' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
-                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-[320px]">
-                    <div className="pb-2 mb-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Specialized Pharmacy Services
-                    </div>
-                    <div className="space-y-1">
-                      <div className="p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <span>2°C - 8°C Cold Chain Express</span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        </div>
-                        <div className="text-[11px] text-slate-500">Calibrated real-time data logger monitored delivery</div>
-                      </div>
-                      <Link 
-                        href="/upload-prescription" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">Upload Prescription</div>
-                        <div className="text-[11px] text-slate-500">Free review & dosage verification by medicos</div>
-                      </Link>
-                      <a 
-                        href="https://api.whatsapp.com/send/?phone=919877817314&text=Hi,%20I%20would%20like%20to%20order%20medicines." 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">WhatsApp Ordering</div>
-                        <div className="text-[11px] text-slate-500">Instant medicine booking with dedicated care manager</div>
-                      </a>
-                      <Link 
-                        href="/institutional-supply" 
-                        onClick={() => setActiveNavDropdown(null)}
-                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-xs font-bold text-slate-800">Institutional Supply</div>
-                        <div className="text-[11px] text-slate-500">Bulk hospital & clinical trial pharmaceutical supply</div>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </nav>
+              {/* Right scroll button */}
+              <button
+                type="button"
+                onClick={() => scrollCategories('right')}
+                aria-label="Scroll categories right"
+                className="hidden md:flex shrink-0 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-xs items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 hover:bg-slate-50 transition-all ml-2 -mr-2 z-10 cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
         )}
 
         {/* MOBILE SEARCH BAR (Inside sticky header for unified mobile stickiness) */}

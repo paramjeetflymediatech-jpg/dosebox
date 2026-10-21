@@ -2,8 +2,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import { authenticateJWT } from '../../../../../middleware/auth';
-import { Order, OrderItem, Medicine, User, Setting } from '../../../../../models';
+import { Order, OrderItem, Medicine, User, Setting, Address } from '../../../../../models';
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 
 function numberToWords(num: number): string {
   if (num === 0) return 'Zero';
@@ -49,7 +50,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     const order: any = await Order.findByPk(params.id, {
       include: [
         { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine' }] },
-        { model: User, as: 'user' }
+        { model: User, as: 'user' },
+        { model: Address, as: 'shippingAddress' }
       ]
     });
 
@@ -81,12 +83,25 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
           ].filter(Boolean).join('\n');
         }
 
-        const sellerAddress = dynamicAddress || `B 2, Basement, Mohta Building 4,
-Bhikaji Cama Place, Near BCP,
-New Delhi - 110066`;
+        const sellerAddress = dynamicAddress || `56 7 8 B-35, BUILDING NO.-6, ANSAL CHAMBER-2
+BHIKAJI CAMA PLACE,
+NEW DELHI-110066`;
         const sellerPhone = settings.enterprise_phone || '011-43550667,9718641733,9718211733';
         const sellerDL = settings.enterprise_drug_license || 'WLF20B2025DL000670/WLF21B2025DL000659';
         const sellerGST = settings.enterprise_gst || '07AAECJ0285F1ZQ';
+
+        // Generate "Scan & Book / Improve Your Health" QR Code
+        const qrUrl = 'https://dosebox.in/blogs';
+        let qrBuffer: Buffer | null = null;
+        try {
+          qrBuffer = await QRCode.toBuffer(qrUrl, {
+            margin: 1,
+            width: 100,
+            color: { dark: '#000000', light: '#ffffff' }
+          });
+        } catch (qrErr) {
+          console.error('Failed to generate invoice QR:', qrErr);
+        }
 
         const doc = new PDFDocument({ margin: 20, size: 'A4' });
 
@@ -167,14 +182,42 @@ New Delhi - 110066`;
         doc.text('L.R. Date', 332, 112);
 
         // Right Box: Party Name (Buyer)
+        const userAddressObj = order.shippingAddress;
+        const buyerState = userAddressObj?.state || '';
+        const stateCodeMap: Record<string, string> = {
+          'delhi': '07',
+          'uttar pradesh': '09',
+          'up': '09',
+          'haryana': '06',
+          'punjab': '03',
+          'rajasthan': '08',
+          'maharashtra': '27',
+          'karnataka': '29',
+          'gujarat': '24',
+          'tamil nadu': '33',
+          'west bengal': '19'
+        };
+        const stCode = stateCodeMap[buyerState.toLowerCase().trim()] || '';
+        const stateDisplay = buyerState ? `State : ${stCode ? `${stCode} ${stCode}-` : ''}${buyerState.toUpperCase()}` : '';
+
+        let formattedBuyerAddress = '';
+        if (userAddressObj) {
+          const parts = [
+            userAddressObj.street,
+            [userAddressObj.city, stateDisplay].filter(Boolean).join(' '),
+            userAddressObj.zipCode ? `PIN: ${userAddressObj.zipCode}` : ''
+          ].filter(Boolean);
+          formattedBuyerAddress = parts.join('\n');
+        } else {
+          formattedBuyerAddress = order.user?.address || 'Address Not Provided';
+        }
+
         doc.font('Helvetica').fontSize(8).fillColor('black');
-        doc.text('Customer Name :', 408, 28);
+        doc.text('Party Name :', 408, 28);
         doc.font('Helvetica-Bold').fontSize(9).text(order.user?.name?.toUpperCase() || 'CUSTOMER', 408, 38);
-        doc.font('Helvetica').fontSize(8);
-        doc.text(order.user?.address || 'Address Not Provided', 408, 51, { width: 159 });
-        doc.text(`PHONE. : ${order.user?.phone || 'N/A'}`, 408, 81);
-        // doc.text(`D.L.No. : 21B-WLF21B2023DL000882`, 402, 85); // Placeholder DL
-        // doc.text(`GSTIN : 07AAMPB0370Q1ZI`, 402, 95); // Placeholder GSTIN
+        doc.font('Helvetica').fontSize(7.5);
+        doc.text(formattedBuyerAddress, 408, 50, { width: 160 });
+        doc.text(`PHONE. : ${order.user?.phone || 'N/A'}`, 408, 88);
 
         // 2. Table Headers (y = 140 to 155)
         doc.rect(20, 140, 555, 15).fillColor('#d1d5db').fill();
@@ -273,6 +316,43 @@ New Delhi - 110066`;
           });
         }
 
+        // Embed "Scan & Book / Improve Your Health" QR Code in items table
+        if (qrBuffer) {
+          const qrY = Math.min(Math.max(y + 10, 210), 500);
+          const qrX = 160;
+          const qrBoxW = 55;
+          const qrBoxH = 68;
+
+          // Box border
+          doc.lineWidth(0.5).strokeColor('#444444');
+          doc.rect(qrX, qrY, qrBoxW, qrBoxH).stroke();
+
+          // Header: Scan & Book
+          doc.font('Helvetica-Bold').fontSize(6).fillColor('#000000');
+          doc.text('Scan & Book', qrX, qrY + 3, { width: qrBoxW, align: 'center' });
+
+          // QR Image
+          const qrSize = 42;
+          doc.image(qrBuffer, qrX + (qrBoxW - qrSize) / 2, qrY + 13, { width: qrSize, height: qrSize });
+
+          // Subtitle: Improve Your Health
+          doc.font('Helvetica-Bold').fontSize(5).fillColor('#000000');
+          doc.text('Improve Your Health', qrX, qrY + qrBoxH - 8, { width: qrBoxW, align: 'center' });
+
+          // Vertical text to the left: Health Checkup
+          doc.save();
+          doc.rotate(-90, { origin: [qrX - 2, qrY + 45] });
+          doc.font('Helvetica').fontSize(5).fillColor('#555555');
+          doc.text('Health Checkup', qrX - 26, qrY + 43);
+          doc.restore();
+
+          // Right side callout: Phone icon + "SCAN ME!"
+          doc.font('Helvetica-Bold').fontSize(5.5).fillColor('#000000');
+          doc.rect(qrX + qrBoxW + 3, qrY + 18, 22, 22).stroke();
+          doc.text('SCAN', qrX + qrBoxW + 4, qrY + 22, { width: 20, align: 'center' });
+          doc.text('ME!', qrX + qrBoxW + 4, qrY + 29, { width: 20, align: 'center' });
+        }
+
         const baseTotal = totalMRP - totalDiscountSaved;
         let shippingFee = 0;
         if (Math.abs(finalAmount - (baseTotal + gstAmount)) <= 51) {
@@ -324,7 +404,7 @@ New Delhi - 110066`;
         doc.text('GST 5.00%', 25, 641);
         doc.text(baseTotal.toFixed(2), 92, 641);
         doc.text('0.00', 152, 641);
-        doc.text(halfGst, 212, 641);
+        doc.text('0.00', 212, 641);
         doc.text(halfGst, 282, 641);
 
         doc.moveTo(20, 655).lineTo(350, 655).stroke(); // Above TOTAL
@@ -332,7 +412,7 @@ New Delhi - 110066`;
         doc.text('TOTAL', 25, 660);
         doc.text(baseTotal.toFixed(2), 92, 660);
         doc.text('0.00', 152, 660);
-        doc.text(halfGst, 212, 660);
+        doc.text('0.00', 212, 660);
         doc.text(halfGst, 282, 660);
 
         doc.moveTo(20, 672).lineTo(450, 672).stroke();
@@ -423,8 +503,8 @@ New Delhi - 110066`;
         doc.moveTo(20, 780).lineTo(575, 780).stroke(); // Close the bottom of the table
 
         // Final bottom message
-        doc.font('Helvetica-Oblique').fontSize(7);
-        doc.text('I am satisfied with Marg ERP | Computerise YOUR SHOP Rs.5550 | Stock,Accounts & GST | Call 01146658600,7042696260,7042696263', 20, 785, { width: 555, align: 'center' });
+        doc.font('Helvetica-Oblique').fontSize(7.5).fillColor('#333333');
+        doc.text('Your Health. Your Benifits. One QR Scan for healthcare services, insurance options, and government benefits.', 20, 785, { width: 555, align: 'center' });
 
         doc.end();
       } catch (err) {

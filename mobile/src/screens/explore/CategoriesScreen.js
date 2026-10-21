@@ -65,19 +65,25 @@ export default function CategoriesScreen({ navigation }) {
                 <TouchableOpacity 
                   key={cat.id} 
                   style={styles.card} 
-                  activeOpacity={0.7}
+                  activeOpacity={0.85}
                   onPress={() => navigation.navigate('SearchScreen', { query: cat.name, categorySlug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-') })}
                 >
                   {imageUrl ? (
-                    <View style={[styles.iconBox, { backgroundColor: '#F8FAFC', padding: 4 }]}>
-                      <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 32 }} resizeMode="cover" />
+                    <View style={styles.cardCoverWrap}>
+                      <Image source={{ uri: imageUrl }} style={styles.cardCoverImage} resizeMode="cover" />
+                      <View style={styles.cardOverlay} />
+                      <View style={styles.cardCoverTextWrap}>
+                        <Text style={styles.cardCoverName} numberOfLines={2}>{cat.name}</Text>
+                      </View>
                     </View>
                   ) : (
-                    <View style={[styles.iconBox, { backgroundColor: color }]}>
-                      <Text style={styles.icon}>{icon}</Text>
+                    <View style={styles.fallbackWrap}>
+                      <View style={[styles.iconBox, { backgroundColor: color }]}>
+                        <Text style={styles.icon}>{icon}</Text>
+                      </View>
+                      <Text style={styles.name} numberOfLines={2}>{cat.name}</Text>
                     </View>
                   )}
-                  <Text style={styles.name}>{cat.name}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -102,11 +108,56 @@ const styles = StyleSheet.create({
   content: { padding: spacing.md, paddingBottom: rv(40) },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: rv(12) },
   card: {
-    width: '48%', backgroundColor: '#fff', borderRadius: radius.xl, padding: spacing.lg,
-    alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1, marginBottom: rv(8)
+    width: '48%',
+    height: rv(130),
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+    marginBottom: rv(10)
   },
-  iconBox: { width: rv(64), height: rv(64), borderRadius: rv(32), alignItems: 'center', justifyContent: 'center', marginBottom: rv(16) },
-  icon: { fontSize: rm(28) },
-  name: { fontSize: rm(15), fontWeight: '600', color: '#0F172A', textAlign: 'center' },
+  cardCoverWrap: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+    justifyContent: 'flex-end',
+  },
+  cardCoverImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  },
+  cardCoverTextWrap: {
+    padding: spacing.sm,
+    alignItems: 'center',
+    zIndex: 2,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  cardCoverName: {
+    fontSize: rm(13),
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  fallbackWrap: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  iconBox: { width: rv(54), height: rv(54), borderRadius: rv(27), alignItems: 'center', justifyContent: 'center', marginBottom: rv(8) },
+  icon: { fontSize: rm(24) },
+  name: { fontSize: rm(14), fontWeight: '700', color: '#0F172A', textAlign: 'center' },
 });

@@ -30,6 +30,14 @@ const FALLBACK_COLORS = ['#FEE2E2', '#FCE7F3', '#FEF3C7', '#E0F2FE', '#F3E8FF', 
 
 const MENU_SECTIONS = [
   {
+    title: 'Specialized Services',
+    items: [
+      { id: 'pap', title: 'Patient Assistance Program (PAP)', icon: 'gift-outline', screen: 'SearchScreen', params: { pap: true } },
+      { id: 'rx', title: 'Upload Prescription', icon: 'document-attach-outline', screen: 'UploadPrescription' },
+      { id: 'cond', title: 'Shop by Condition / Category', icon: 'medkit-outline', screen: 'Categories' },
+    ]
+  },
+  {
     title: 'Company',
     items: [
       { id: 'about', title: 'About Us', icon: 'business-outline', screen: 'About' },
@@ -147,7 +155,7 @@ export default function BrowseMedicinesScreen({ navigation }) {
                     key={item.id}
                     style={[styles.item, isLast && styles.itemLast]}
                     activeOpacity={0.7}
-                    onPress={() => navigation.navigate(item.screen, { title: item.title })}
+                    onPress={() => navigation.navigate(item.screen, item.params || { title: item.title })}
                   >
                     <View style={styles.itemLeft}>
                       <View style={styles.iconWrap}>
