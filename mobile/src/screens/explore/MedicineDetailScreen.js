@@ -111,7 +111,7 @@ function SubstituteCard({ item, navigation, addToCart }) {
 
 export default function MedicineDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { addToCart, cart, updateQty } = useCart();
+  const { addToCart, cart, updateQty, totalQty } = useCart();
   const { width } = useWindowDimensions();
   const initialMedicine = route?.params?.medicine;
 
@@ -227,13 +227,42 @@ export default function MedicineDetailScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* ── HEADER ── */}
+      {/* ── HEADER WITH BACK, SEARCH & CART ── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="arrow-back" size={24} color={C.text} />
+        <TouchableOpacity 
+          style={styles.backBtn} 
+          onPress={() => navigation.goBack()} 
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={22} color={C.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{medicine.name}</Text>
-        <View style={{ width: rs(24) }} />
+
+        <TouchableOpacity 
+          style={styles.headerSearchWrap} 
+          activeOpacity={0.8} 
+          onPress={() => navigation.navigate('SearchScreen')}
+          accessibilityLabel="Search medicines"
+        >
+          <Ionicons name="search" size={16} color={C.sub} style={{ marginRight: rs(8) }} />
+          <Text style={styles.headerSearchText} numberOfLines={1}>
+            Search medicines, symptoms...
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.cartBtn} 
+          onPress={() => navigation.navigate('CartCheckout')} 
+          activeOpacity={0.75}
+          accessibilityLabel="View Cart"
+        >
+          <Ionicons name="cart" size={22} color={C.primary} />
+          {totalQty > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{totalQty > 9 ? '9+' : totalQty}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView ref={scrollViewRef} style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(100) }} showsVerticalScrollIndicator={false}>
@@ -555,9 +584,71 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   errorText: { textAlign: 'center', marginTop: rv(40), fontSize: rm(16), color: C.text },
   
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: rv(12), backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.border },
-  backBtn: { padding: rs(4) },
-  headerTitle: { flex: 1, fontSize: rm(18), fontWeight: '700', color: C.text, textAlign: 'center', marginHorizontal: rs(12) },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: rv(10),
+    backgroundColor: C.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    gap: rs(10),
+  },
+  backBtn: {
+    width: rs(38),
+    height: rs(38),
+    borderRadius: rs(19),
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSearchWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.full,
+    paddingHorizontal: rs(12),
+    height: rv(40),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  headerSearchText: {
+    flex: 1,
+    fontSize: rm(13),
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  cartBtn: {
+    width: rs(40),
+    height: rs(40),
+    borderRadius: rs(20),
+    backgroundColor: C.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -rv(3),
+    right: -rs(3),
+    minWidth: rs(18),
+    height: rs(18),
+    borderRadius: rs(9),
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: rs(4),
+    borderWidth: 1.5,
+    borderColor: C.white,
+  },
+  cartBadgeText: {
+    fontSize: rm(9),
+    fontWeight: '800',
+    color: C.white,
+  },
   
   scroll: { flex: 1 },
   
