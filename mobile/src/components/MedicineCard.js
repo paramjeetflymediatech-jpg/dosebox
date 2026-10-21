@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   medImageWrap: {
     height: rv(100),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: C.white,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   medImageWrapCompact: {
     height: rv(90),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: C.white,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
