@@ -10,7 +10,8 @@ import {
   Image,
   Linking,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
 import { AlertService } from '../../services/AlertService';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +34,9 @@ const C = {
   border: '#E9EDF2',
   light: '#EAF4F2',
 };
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CAT_CARD_WIDTH = Math.max(rs(150), (SCREEN_WIDTH - spacing.md * 2 - rs(8)) / 2);
 
 const PERKS = [
   { icon: 'refresh-outline', title: 'Easy Returns', sub: '7-day hassle-free return policy' },
@@ -341,6 +345,8 @@ export default function CartCheckoutScreen({ navigation }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catStripContent}
+          snapToInterval={CAT_CARD_WIDTH + rs(8)}
+          decelerationRate="fast"
         >
           {/* All Medicines pill */}
           <TouchableOpacity
@@ -1026,10 +1032,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   catPill: {
+    width: CAT_CARD_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: rs(12),
-    paddingVertical: rv(6),
+    justifyContent: 'center',
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(8),
     borderRadius: radius.full,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
@@ -1048,6 +1056,7 @@ const styles = StyleSheet.create({
     fontSize: rm(12),
     fontWeight: '600',
     color: '#334155',
+    flexShrink: 1,
   },
   catPillTextAll: {
     color: C.primary,

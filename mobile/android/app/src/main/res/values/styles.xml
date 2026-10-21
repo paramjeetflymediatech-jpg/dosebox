@@ -4,10 +4,8 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
-        <!-- Prevent black screen on startup with New Architecture translucent window -->
+        <!-- Solid white window background preventing black startup screen -->
         <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:windowIsTranslucent">false</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
 </resources>
