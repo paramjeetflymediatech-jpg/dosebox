@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import {
-  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus, Sparkles
+  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, ChevronDown, Tag, ArrowRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -13,10 +13,12 @@ import TrackingProvider from '../components/TrackingProvider';
 import Chatbot from '../components/Chatbot';
 
 import './globals.css';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import api from '../lib/api';
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { toast, Toaster } from 'react-hot-toast';
+import { showWarning, showError } from '../lib/sweetalert';
 const queryClient = new QueryClient();
 
 function ScriptInjector({ html, target }: { html: string, target: 'head' | 'body' }) {
@@ -87,6 +89,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 
+const DEFAULT_NAV_CATEGORIES = [
+  { id: 16, name: 'Anti Cancer', slug: 'anti-cancer' },
+  { id: 18, name: 'Anticoagulants', slug: 'anticoagulants' },
+  { id: 15, name: 'Anemia', slug: 'anemia' },
+  { id: 12, name: 'Allergy Medication', slug: 'allergy-medication' },
+  { id: 13, name: 'Alzheimers', slug: 'alzheimers' },
+  { id: 17, name: 'Antibacterials', slug: 'antibacterials' },
+  { id: 14, name: 'Anaesthetics', slug: 'anaesthetics' },
+  { id: 19, name: 'Kidney Care', slug: 'kidney-care' },
+];
+
 // Sub-component to use context hooks safely inside layout
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user, login, googleLogin, logout, isAdmin } = useAuth();
@@ -95,15 +108,31 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const navStripRef = useRef<HTMLDivElement>(null);
+  const [navCategories, setNavCategories] = useState<any[]>(DEFAULT_NAV_CATEGORIES);
+  const [activeNavDropdown, setActiveNavDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
+      if (navStripRef.current && !navStripRef.current.contains(e.target as Node)) {
+        setActiveNavDropdown(null);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    api.get('/medicines/categories')
+      .then(res => {
+        if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setNavCategories(res.data.data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -141,7 +170,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [pincodeInput, setPincodeInput] = useState('');
-  const [deliveryLocation, setDeliveryLocation] = useState('New Delhi (110001)');
+  const [deliveryLocation, setDeliveryLocation] = useState('New Delhi (110066)');
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot' | 'verify' | 'reset'>('login');
   const [globalSettings, setGlobalSettings] = useState<Record<string, string>>({});
@@ -178,6 +207,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       })
       .catch(e => console.error('Failed to load global settings', e));
   }, []);
+
+  // Automatically scroll to top on route change (e.g. navigating to /cart)
+  React.useEffect(() => {
+    setActiveNavDropdown(null);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
   // Auto-open login modal when session expires
   React.useEffect(() => {
@@ -309,10 +348,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         setShowLocationModal(false);
         toast.success(`Delivery available in ${newLocation}`);
       } else {
-        alert('Invalid Pincode. Could not fetch details.');
+        showWarning('Invalid Pincode', 'Could not fetch details for this pincode.');
       }
     } catch (err) {
-      alert('Error fetching pincode details. Please try again.');
+      showError('Error', 'Error fetching pincode details. Please try again.');
     } finally {
       setIsFetchingLocation(false);
     }
@@ -320,7 +359,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      showWarning('Geolocation Unsupported', 'Geolocation is not supported by your browser.');
       return;
     }
     
@@ -340,22 +379,23 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             setShowLocationModal(false);
             toast.success(`Delivery available in ${newLocation}`);
           } else {
-            alert('Failed to detect precise address from coordinates.');
+            showWarning('Location Not Detected', 'Failed to detect precise address from coordinates.');
           }
         } catch (error) {
-          alert('Failed to fetch address details. Please try entering a pincode.');
+          showError('Location Error', 'Failed to fetch address details. Please try entering a pincode.');
         } finally {
           setIsFetchingLocation(false);
         }
       },
       (error) => {
-        alert('Location access denied or unavailable. Please manually enter a pincode.');
+        showWarning('Location Access Denied', 'Location access denied or unavailable. Please manually enter a pincode.');
         setIsFetchingLocation(false);
       }
     );
   };
 
   const isPlainLayout = pathname === '/pos' || pathname?.startsWith('/admin/login') || pathname?.startsWith('/dashboard/admin');
+  const isCartOrCheckout = pathname === '/cart' || pathname === '/checkout';
 
   if (isPlainLayout) {
     return <main className="min-h-screen bg-[#080b11]">{children}</main>;
@@ -567,12 +607,243 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
           </nav>
         </div>
-      </header>
-      )}
 
-      {/* MOBILE SEARCH BAR */}
-      {!hideHeaderFooter && (
-        <div className="lg:hidden px-4 py-3 bg-white border-b border-slate-100 sticky top-[88px] z-30 shadow-sm">
+        {/* SUB-NAVBAR CATEGORIES STRIP (Full-width strip at bottom of navbar on Cart & Checkout) */}
+        {isCartOrCheckout && (
+          <div ref={navStripRef} className="w-full max-w-full overflow-hidden md:overflow-visible bg-white border-t border-slate-100 shadow-2xs relative z-40">
+            <div className="mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8">
+              <nav aria-label="Category Navigation" className="flex items-center md:justify-center gap-5 sm:gap-8 md:gap-10 lg:gap-12 overflow-x-auto md:overflow-visible no-scrollbar py-2.5 text-xs sm:text-sm font-medium text-slate-700 whitespace-nowrap">
+              
+              {/* 1. BUY MEDICINE (WITH CATEGORIES) */}
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'buy' ? null : 'buy')}
+                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
+                >
+                  <span>Buy Medicine</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'buy' ? 'rotate-180 text-brand-600' : ''}`} />
+                </button>
+
+                {/* Categories Dropdown Panel */}
+                <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'buy' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
+                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-5 w-[340px] sm:w-[480px]">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Browse by Specialty</span>
+                      <Link 
+                        href="/condition" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
+                      >
+                        View all <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
+                      {navCategories.map((cat: any) => (
+                        <Link
+                          key={cat.id || cat.slug}
+                          href={`/medicines?category=${cat.slug}`}
+                          onClick={() => setActiveNavDropdown(null)}
+                          className="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-colors group/cat"
+                        >
+                          <div className="w-6 h-6 rounded-lg bg-teal-50 text-brand-600 flex items-center justify-center shrink-0 border border-teal-100/50 group-hover/cat:scale-110 transition-transform">
+                            <Tag className="w-3 h-3" />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-800 truncate group-hover/cat:text-brand-600 transition-colors">
+                            {cat.name}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <Link 
+                        href="/medicines" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="font-semibold text-slate-600 hover:text-brand-600 flex items-center gap-1"
+                      >
+                        All Medicines <ArrowRight className="w-3 h-3" />
+                      </Link>
+                      <Link 
+                        href="/condition" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="font-semibold text-brand-600 hover:underline"
+                      >
+                        Target Specific Ailments →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. IMPORTED MEDICINES */}
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'imported' ? null : 'imported')}
+                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
+                >
+                  <span>Imported Medicines</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'imported' ? 'rotate-180 text-brand-600' : ''}`} />
+                </button>
+
+                <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'imported' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
+                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-[320px]">
+                    <div className="pb-2 mb-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Special Access Programs
+                    </div>
+                    <div className="space-y-1">
+                      <Link 
+                        href="/medicines?type=imported" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">Named Patient Program (NPI)</div>
+                        <div className="text-[11px] text-slate-500">Legal import of unapproved global life-saving therapies</div>
+                      </Link>
+                      <Link 
+                        href="/medicines?type=imported" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">Rare & Orphan Diseases</div>
+                        <div className="text-[11px] text-slate-500">Specialized therapies with global cold chain integrity</div>
+                      </Link>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <Link 
+                        href="/medicines?type=imported" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="text-xs font-bold text-brand-600 hover:underline flex items-center justify-between"
+                      >
+                        <span>Browse Imported Catalog</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. PATIENT ASSISTANCE PROGRAM */}
+              <Link 
+                href="/medicines?pap=true" 
+                className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors"
+              >
+                <span>Patient Assistance Program</span>
+              </Link>
+
+              {/* 4. LIBRARY */}
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'library' ? null : 'library')}
+                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
+                >
+                  <span>Library</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'library' ? 'rotate-180 text-brand-600' : ''}`} />
+                </button>
+
+                <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'library' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
+                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-[280px]">
+                    <div className="pb-2 mb-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Knowledge & Clinical Guides
+                    </div>
+                    <div className="space-y-1">
+                      <Link 
+                        href="/condition" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">Condition Guides</div>
+                        <div className="text-[11px] text-slate-500">Explore medical conditions & treatment pathways</div>
+                      </Link>
+                      <Link 
+                        href="/blogs" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">Health Blogs</div>
+                        <div className="text-[11px] text-slate-500">Pharmacist insights and clinical updates</div>
+                      </Link>
+                      <Link 
+                        href="/fda-guidelines" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">FDA & CDSCO Safety</div>
+                        <div className="text-[11px] text-slate-500">Regulatory standards & storage protocols</div>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. SERVICES (WITH NEW BADGE) */}
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => setActiveNavDropdown(activeNavDropdown === 'services' ? null : 'services')}
+                  className="flex items-center gap-1.5 py-1 text-slate-700 hover:text-brand-600 font-medium transition-colors cursor-pointer"
+                >
+                  <span>Services</span>
+                  <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                    New
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${activeNavDropdown === 'services' ? 'rotate-180 text-brand-600' : ''}`} />
+                </button>
+
+                <div className={`absolute right-0 sm:left-1/2 sm:-translate-x-1/2 top-full pt-2 transition-all duration-200 z-50 ${activeNavDropdown === 'services' ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}`}>
+                  <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 w-[320px]">
+                    <div className="pb-2 mb-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Specialized Pharmacy Services
+                    </div>
+                    <div className="space-y-1">
+                      <div className="p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <span>2°C - 8°C Cold Chain Express</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        </div>
+                        <div className="text-[11px] text-slate-500">Calibrated real-time data logger monitored delivery</div>
+                      </div>
+                      <Link 
+                        href="/upload-prescription" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">Upload Prescription</div>
+                        <div className="text-[11px] text-slate-500">Free review & dosage verification by medicos</div>
+                      </Link>
+                      <a 
+                        href="https://api.whatsapp.com/send/?phone=919877817314&text=Hi,%20I%20would%20like%20to%20order%20medicines." 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">WhatsApp Ordering</div>
+                        <div className="text-[11px] text-slate-500">Instant medicine booking with dedicated care manager</div>
+                      </a>
+                      <Link 
+                        href="/institutional-supply" 
+                        onClick={() => setActiveNavDropdown(null)}
+                        className="block p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-xs font-bold text-slate-800">Institutional Supply</div>
+                        <div className="text-[11px] text-slate-500">Bulk hospital & clinical trial pharmaceutical supply</div>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </nav>
+          </div>
+        </div>
+        )}
+
+        {/* MOBILE SEARCH BAR (Inside sticky header for unified mobile stickiness) */}
+        <div className="lg:hidden px-4 py-2.5 bg-white border-t border-slate-100">
           <div className="relative w-full">
             <input
               type="text"
@@ -582,13 +853,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSearch();
               }}
-              className="w-full bg-slate-50/50 border border-slate-200 text-slate-800 rounded-full py-2.5 pl-10 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-sm font-medium"
+              className="w-full bg-slate-50/50 border border-slate-200 text-slate-800 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-brand-500 focus:bg-white transition-all text-xs sm:text-sm font-medium"
             />
-            <button onClick={handleSearch} className="absolute left-2.5 top-1.5 p-1 text-slate-400">
+            <button onClick={handleSearch} className="absolute left-2.5 top-1 p-1 text-slate-400">
               <Search className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </header>
       )}
 
       {/* MOBILE MENU DRAWER */}
@@ -606,6 +878,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </div>
             <div className="p-4 flex-1 overflow-y-auto space-y-2">
               <Link href="/medicines" onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-3 text-slate-700 font-semibold hover:bg-slate-50 rounded-xl">Browse Medicines</Link>
+              <Link href="/condition" onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-3 text-brand-600 font-semibold bg-brand-50/50 rounded-xl">Shop by Condition / Specialty</Link>
               <Link href="/medicines?pap=true" onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-3 text-amber-700 font-semibold bg-amber-50 rounded-xl flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <span>PAP Assist (Patient Program)</span>
@@ -679,7 +952,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <ul className="space-y-4 text-sm text-slate-300">
                 <li className="flex items-start gap-3">
                   <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
-                  {globalSettings['physical_address'] || 'Jagbir Pharmaceuticals Private Limited. C1 - 2, Okhla Ind. Marg, Connaught Place, New Delhi - 110001'}
+                  {globalSettings['physical_address'] || 'B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP, New Delhi, Delhi - 110066'}
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="mt-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg></div>

@@ -1,59 +1,185 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import models, {
+  User as NamedUser,
+  MobileAuthUser as NamedMobileAuthUser,
+  Notification as NamedNotification,
+  Role as NamedRole,
+} from '../models';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  let initialized = false;
+/**
+ * Safely resolves database models across all module systems & bundlers (Webpack, Next.js, Turbopack, ESM, CJS).
+ * Solves: "Cannot read properties of undefined (reading 'findByPk')" and "Cannot read properties of undefined (reading 'findAll')"
+ */
+export function getDbModels() {
+  let User = NamedUser || (models as any)?.User;
+  let MobileAuthUser = NamedMobileAuthUser || (models as any)?.MobileAuthUser;
+  let Notification = NamedNotification || (models as any)?.Notification;
+  let Role = NamedRole || (models as any)?.Role;
 
-  // Option 1: Try JSON string
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+  if (!User || !MobileAuthUser || !Role || !Notification) {
     try {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-      if (serviceAccount.private_key) {
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-      }
-      initializeApp({
-        credential: cert(serviceAccount),
-      });
-      initialized = true;
-      console.log('[Firebase Admin] Initialized successfully using service account JSON');
-    } catch (err: any) {
-      console.warn('[Firebase Admin] Service account JSON init failed, trying discrete variables...', err?.message || err);
+      const dyn = require('../models');
+      const resolved = dyn?.default || dyn;
+      User = User || resolved?.User;
+      MobileAuthUser = MobileAuthUser || resolved?.MobileAuthUser;
+      Notification = Notification || resolved?.Notification;
+      Role = Role || resolved?.Role;
+    } catch (e) {
+      // Fallback require error
     }
   }
 
-  // Option 2: Try discrete environment variables
-  if (!initialized && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+  return { User, MobileAuthUser, Notification, Role };
+}
+
+/**
+ * Initialize Firebase Admin if not already initialized
+ */
+/**
+ * Robust formatter for Firebase private keys.
+ * Handles single quotes, double quotes, base64 encoding, escaped \n, \r\n, \\n, and space-separated lines.
+ */
+export function formatPrivateKey(raw: string | undefined): string {
+  if (!raw || typeof raw !== 'string') return '';
+  let key = raw.trim();
+
+  // Strip outer wrapping quotes if any
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+  }
+
+  // If entire key is base64 encoded, decode it
+  if (!key.includes('BEGIN') && !key.includes('PRIVATE KEY')) {
     try {
-      let formattedKey = process.env.FIREBASE_PRIVATE_KEY.trim();
-      // Strip any outer wrapping quotes safely
-      if (
-        (formattedKey.startsWith('"') && formattedKey.endsWith('"')) ||
-        (formattedKey.startsWith("'") && formattedKey.endsWith("'"))
-      ) {
-        formattedKey = formattedKey.slice(1, -1);
+      const decoded = Buffer.from(key, 'base64').toString('utf8');
+      if (decoded.includes('PRIVATE KEY')) {
+        key = decoded.trim();
       }
-      // Replace literal escaped newlines with actual newlines
-      formattedKey = formattedKey.replace(/\\n/g, '\n').trim();
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Handle all newline escape variants (\\\\n, \\n, \r\n, \r)
+  key = key.replace(/\\\\r\\\\n/g, '\n')
+           .replace(/\\\\n/g, '\n')
+           .replace(/\\r\\n/g, '\n')
+           .replace(/\\n/g, '\n')
+           .replace(/\r\n/g, '\n')
+           .replace(/\r/g, '\n');
+
+  // Ensure header and footer boundaries have clean newlines
+  if (key.includes('BEGIN PRIVATE KEY') && !key.includes('-----BEGIN PRIVATE KEY-----\n')) {
+    key = key.replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n');
+  }
+  if (key.includes('END PRIVATE KEY') && !key.includes('\n-----END PRIVATE KEY-----')) {
+    key = key.replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----');
+  }
+
+  return key.trim();
+}
+
+/**
+ * Initialize Firebase Admin if not already initialized
+ */
+export function initFirebaseAdmin(): boolean {
+  if (getApps().length > 0) {
+    return true;
+  }
+
+  let initialized = false;
+
+  // Option 1: Try JSON string (or base64 encoded JSON string)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    try {
+      let rawJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+      if (
+        (rawJson.startsWith('"') && rawJson.endsWith('"')) ||
+        (rawJson.startsWith("'") && rawJson.endsWith("'"))
+      ) {
+        rawJson = rawJson.slice(1, -1).trim();
+      }
+
+      // Check if base64 encoded
+      if (!rawJson.startsWith('{') && !rawJson.startsWith('[')) {
+        try {
+          const decoded = Buffer.from(rawJson, 'base64').toString('utf8');
+          if (decoded.trim().startsWith('{')) {
+            rawJson = decoded.trim();
+          }
+        } catch (e) {}
+      }
+
+      const serviceAccount = JSON.parse(rawJson);
+      const projectId = serviceAccount.project_id || serviceAccount.projectId || process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = serviceAccount.client_email || serviceAccount.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
+      const rawKey = serviceAccount.private_key || serviceAccount.privateKey || process.env.FIREBASE_PRIVATE_KEY;
+      const formattedKey = formatPrivateKey(rawKey);
+
+      if (!formattedKey) {
+        throw new Error('Service account JSON is missing a valid private_key');
+      }
 
       initializeApp({
         credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          projectId,
+          clientEmail,
           privateKey: formattedKey,
         }),
       });
       initialized = true;
-      console.log('[Firebase Admin] Initialized successfully using discrete environment variables');
+      console.log('[Firebase Admin] Initialized successfully using service account JSON');
+      return true;
+    } catch (err: any) {
+      console.warn('[Firebase Admin] Service account JSON init failed:', err?.message || err);
+      if (err?.cause) {
+        console.warn('[Firebase Admin] Root cause:', err.cause?.message || err.cause);
+      }
+    }
+  }
+
+  // Option 2: Try discrete environment variables
+  if (!initialized && (process.env.FIREBASE_PRIVATE_KEY || (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL))) {
+    try {
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const formattedKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+
+      if (!projectId || !clientEmail || !formattedKey) {
+        console.warn('[Firebase Admin] Discrete variables check: projectId=' + !!projectId + ', clientEmail=' + !!clientEmail + ', privateKey=' + !!formattedKey);
+      } else {
+        initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey: formattedKey,
+          }),
+        });
+        initialized = true;
+        console.log('[Firebase Admin] Initialized successfully using discrete environment variables');
+        return true;
+      }
     } catch (err: any) {
       console.warn('[Firebase Admin] Discrete variables init failed:', err?.message || err);
+      if (err?.cause) {
+        console.warn('[Firebase Admin] Root cause:', err.cause?.message || err.cause);
+      }
     }
   }
 
   if (!initialized) {
     console.warn('[Firebase Admin] Credentials not defined or invalid. Push notifications will be skipped.');
   }
+
+  return initialized;
 }
+
+// Initial attempt at boot
+initFirebaseAdmin();
 
 /**
  * Send a push notification to a specific device via FCM Token
@@ -66,8 +192,11 @@ export async function sendPushNotification(
   userId?: number
 ) {
   if (!getApps().length) {
-    console.warn('[FCM Push] Firebase Admin is not initialized. Skipping notification.');
-    return { success: false, error: 'Firebase not initialized' };
+    const isReady = initFirebaseAdmin();
+    if (!isReady || !getApps().length) {
+      console.warn('[FCM Push] Firebase Admin is not initialized. Skipping notification.');
+      return { success: false, error: 'Firebase not initialized' };
+    }
   }
 
   if (!token || typeof token !== 'string' || !token.trim()) {
@@ -78,7 +207,10 @@ export async function sendPushNotification(
 
   try {
     // FCM data values MUST be strings only
-    const stringData: Record<string, string> = {};
+    const stringData: Record<string, string> = {
+      title,
+      body,
+    };
     if (data && typeof data === 'object') {
       for (const [k, v] of Object.entries(data)) {
         stringData[k] = typeof v === 'string' ? v : String(v ?? '');
@@ -127,12 +259,16 @@ export async function sendPushNotification(
     if (isUnregistered) {
       console.warn(`[FCM Push] Device token is no longer registered. Cleaning up stale token (${cleanToken.substring(0, 15)}...)...`);
       try {
-        const { User, MobileAuthUser } = require('../models');
-        if (userId) {
-          await User.update({ fcmToken: null }, { where: { id: userId, fcmToken: cleanToken } });
+        const { User, MobileAuthUser } = getDbModels();
+        if (User) {
+          if (userId) {
+            await User.update({ fcmToken: null }, { where: { id: userId, fcmToken: cleanToken } });
+          }
+          await User.update({ fcmToken: null }, { where: { fcmToken: cleanToken } });
         }
-        await User.update({ fcmToken: null }, { where: { fcmToken: cleanToken } });
-        await MobileAuthUser.update({ pushToken: null }, { where: { pushToken: cleanToken } });
+        if (MobileAuthUser) {
+          await MobileAuthUser.update({ pushToken: null as any }, { where: { pushToken: cleanToken } });
+        }
       } catch (dbErr) {
         console.error('[FCM Push] Failed to cleanup stale token from DB:', dbErr);
       }
@@ -156,7 +292,12 @@ export async function sendPushToUser(
   if (!userId) return { success: false, sentCount: 0, reason: 'Invalid userId' };
 
   try {
-    const { User, MobileAuthUser } = require('../models');
+    const { User, MobileAuthUser } = getDbModels();
+
+    if (!User) {
+      console.error(`[Push] User model unavailable. Cannot send push to user #${userId}`);
+      return { success: false, error: 'User model unavailable' };
+    }
 
     const tokens = new Set<string>();
 
@@ -167,14 +308,16 @@ export async function sendPushToUser(
     }
 
     // 2. Fetch all mobile devices for this user
-    const mobileDevices = await MobileAuthUser.findAll({
-      where: { userId },
-      attributes: ['pushToken'],
-    });
+    if (MobileAuthUser) {
+      const mobileDevices = await MobileAuthUser.findAll({
+        where: { userId },
+        attributes: ['pushToken'],
+      });
 
-    for (const dev of mobileDevices) {
-      if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
-        tokens.add(dev.pushToken.trim());
+      for (const dev of mobileDevices) {
+        if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
+          tokens.add(dev.pushToken.trim());
+        }
       }
     }
 
@@ -208,21 +351,28 @@ export async function sendPushToAdmins(
   data?: Record<string, any>
 ) {
   try {
-    const { User, MobileAuthUser, Notification, Role } = require('../models');
+    const { User, MobileAuthUser, Notification, Role } = getDbModels();
+
+    if (!User) {
+      console.error('[Push] User model unavailable. Cannot send push to admins');
+      return { success: false, error: 'User model unavailable' };
+    }
 
     // 1. Identify staff roles (SuperAdmin: 1, Admin: 4, Pharmacist: 5)
     let staffRoleIds = [1, 4, 5];
-    try {
-      const roles = await Role.findAll({
-        where: { name: ['SuperAdmin', 'Admin', 'Pharmacist', 'Leadership'] },
-        attributes: ['id'],
-      });
-      const dynamicIds = roles.map((r: any) => r.id);
-      if (dynamicIds.length > 0) {
-        staffRoleIds = Array.from(new Set([...staffRoleIds, ...dynamicIds]));
+    if (Role) {
+      try {
+        const roles = await Role.findAll({
+          where: { name: ['SuperAdmin', 'Admin', 'Pharmacist', 'Leadership'] },
+          attributes: ['id'],
+        });
+        const dynamicIds = roles.map((r: any) => r.id);
+        if (dynamicIds.length > 0) {
+          staffRoleIds = Array.from(new Set([...staffRoleIds, ...dynamicIds]));
+        }
+      } catch (e) {
+        // Use fallback staffRoleIds
       }
-    } catch (e) {
-      // Use fallback staffRoleIds
     }
 
     // 2. Query staff user records
@@ -234,35 +384,37 @@ export async function sendPushToAdmins(
     const adminUserIds = adminUsers.map((u: any) => u.id);
 
     // 3. Create in-app Notification for each staff user
-    for (const admin of adminUsers) {
-      try {
-        await Notification.create({
-          userId: admin.id,
-          title,
-          message: body,
-          read: false,
-        });
-      } catch (dbErr) {
-        console.warn(`[Push] Could not create in-app notification for admin #${admin.id}:`, dbErr);
+    if (Notification) {
+      for (const admin of adminUsers) {
+        try {
+          await Notification.create({
+            userId: admin.id,
+            title,
+            message: body,
+            read: false,
+          });
+        } catch (dbErr) {
+          console.warn(`[Push] Could not create in-app notification for admin #${admin.id}:`, dbErr);
+        }
       }
     }
 
     // 4. Collect all distinct FCM tokens for staff
     const tokens = new Set<string>();
     for (const admin of adminUsers) {
-      if (admin.fcmToken && admin.fcmToken.trim()) {
+      if (admin.fcmToken && typeof admin.fcmToken === 'string' && admin.fcmToken.trim()) {
         tokens.add(admin.fcmToken.trim());
       }
     }
 
     // Also collect tokens from MobileAuthUser where user is staff
-    if (adminUserIds.length > 0) {
+    if (MobileAuthUser && adminUserIds.length > 0) {
       const mobileStaff = await MobileAuthUser.findAll({
         where: { userId: adminUserIds },
         attributes: ['userId', 'pushToken'],
       });
       for (const dev of mobileStaff) {
-        if (dev.pushToken && dev.pushToken.trim()) {
+        if (dev.pushToken && typeof dev.pushToken === 'string' && dev.pushToken.trim()) {
           tokens.add(dev.pushToken.trim());
         }
       }

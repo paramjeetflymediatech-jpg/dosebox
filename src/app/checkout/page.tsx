@@ -23,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../lib/api";
 import { formatCurrency } from "@/lib/utils";
 import toast from 'react-hot-toast';
+import { showWarning, showError } from "@/lib/sweetalert";
 
 interface Address {
   id: number;
@@ -355,21 +356,22 @@ export default function CheckoutPage() {
       requiresPrescription &&
       !sessionStorage.getItem("attachedPrescriptionId")
     ) {
-      alert(
-        "Order contains prescription-required medicines. Please go back to the cart and upload a prescription.",
+      showWarning(
+        "Prescription Required",
+        "Order contains prescription-required medicines. Please go back to the cart and upload a prescription."
       );
       return;
     }
     if (!paymentMethod) {
-      alert("Please select a payment method.");
+      showWarning("Payment Method Required", "Please select a payment method.");
       return;
     }
     if (!selectedAddressId) {
-      alert("Please select or add a shipping address.");
+      showWarning("Shipping Address Required", "Please select or add a shipping address.");
       return;
     }
     if (pointsError) {
-      alert(pointsError);
+      showWarning("Tokens Notice", pointsError);
       return;
     }
 
@@ -424,14 +426,14 @@ export default function CheckoutPage() {
               window.location.href = phonepeRes.data.redirectUrl;
               return; // Halt and redirect
             } else {
-              alert("Failed to initiate PhonePe payment.");
+              showError("Payment Error", "Failed to initiate PhonePe payment.");
               setProcessing(false);
               return;
             }
           } catch (phonePeErr: any) {
-            alert(
-              "PhonePe init error: " +
-                (phonePeErr.response?.data?.message || phonePeErr.message),
+            showError(
+              "PhonePe Payment Error",
+              phonePeErr.response?.data?.message || phonePeErr.message
             );
             setProcessing(false);
             return;
@@ -443,11 +445,12 @@ export default function CheckoutPage() {
         sessionStorage.removeItem("attachedPrescriptionId");
         setOrderComplete(true);
       } else {
-        alert("Checkout failed: " + res.data?.message);
+        showError("Checkout Failed", res.data?.message || "Order placement failed.");
       }
     } catch (err: any) {
-      alert(
-        "Checkout order error: " + (err.response?.data?.message || err.message),
+      showError(
+        "Checkout Order Error",
+        err.response?.data?.message || err.message
       );
     } finally {
       setProcessing(false);
@@ -478,18 +481,20 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-slate-50/50 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-50/50 min-h-screen py-8">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-6">
+          <Link href="/" className="hover:text-slate-800 transition-colors">Home</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
           <Link
             href="/cart"
-            className="hover:text-slate-900 transition-colors flex items-center gap-1"
+            className="hover:text-slate-800 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Bag
+            Cart
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 mx-2" />
-          <span className="text-slate-900">Checkout</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-700 font-medium">Checkout</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

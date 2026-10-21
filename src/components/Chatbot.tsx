@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { showAddedToCart } from '@/lib/sweetalert';
 
 interface Message {
   id: string;
@@ -111,7 +112,7 @@ export default function Chatbot() {
       prescriptionRequired: medicine.prescriptionRequired || false
     });
     setAddedItems(prev => ({ ...prev, [medicine.id]: true }));
-    toast.success(`${medicine.name} added to cart! Check your cart to checkout.`);
+    showAddedToCart(medicine.name);
   };
 
   return (
@@ -154,10 +155,12 @@ export default function Chatbot() {
               </div>
             </div>
 
-            {/* Mobile Close Button (visible only on small screens since toggle button might be obscured or awkward) */}
+            {/* Close Button inside the chatbot */}
             <button
               onClick={() => setIsOpen(false)}
-              className="sm:hidden p-2 text-white/80 hover:text-white bg-white/10 rounded-full"
+              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 bg-white/10 rounded-full transition-all active:scale-95 cursor-pointer"
+              aria-label="Close Chatbot"
+              title="Close"
             >
               <X className="w-5 h-5" />
             </button>

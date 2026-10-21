@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { Medicine, Category, Brand, Inventory, Review, User, MedicineSection } from '../../../../models';
 import redisClient from '../../../../config/redis';
+import { detectCategoryId, ensureCategoryActiveForMedicine } from '@/lib/autoCategorize';
 
 async function clearMedicinesCache() {
   if (redisClient.isOpen) {
@@ -55,7 +56,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ success: false, message: 'Medicine not found' }, { status: 404 });
     }
 
+    // Auto-detect categoryId if not provided or missing
+    if (!body.categoryId && !medicine.categoryId) {
+      body.categoryId = detectCategoryId(
+        body.name || medicine.name,
+        body.composition || medicine.composition,
+        body.genericName || medicine.genericName
+      );
+    }
+
     await medicine.update(body);
+
+    // If medicine is activated, automatically ensure its category is also active!
+    if (medicine.isActive || body.isActive || body.contentStatus === 'Approved') {
+      await ensureCategoryActiveForMedicine(medicine.categoryId || body.categoryId);
+    }
 
     if (body.minStockAlertThreshold || body.locationInWarehouse) {
       const inv = await Inventory.findOne({ where: { medicineId: id } });

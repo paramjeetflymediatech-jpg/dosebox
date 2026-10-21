@@ -39,10 +39,10 @@ export default function AdminEnterpriseScreen({ navigation }) {
           enterpriseLegalName: findVal('enterpriseLegalName'),
           enterpriseEmail: findVal('enterpriseEmail'),
           enterprisePhone: findVal('enterprisePhone'),
-          enterpriseAddressStreet: findVal('enterpriseAddressStreet'),
-          enterpriseAddressCity: findVal('enterpriseAddressCity'),
-          enterpriseAddressState: findVal('enterpriseAddressState'),
-          enterpriseAddressPincode: findVal('enterpriseAddressPincode'),
+          enterpriseAddressStreet: findVal('enterpriseAddressStreet') || findVal('enterprise_address') || 'B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP',
+          enterpriseAddressCity: findVal('enterpriseAddressCity') || findVal('enterprise_city') || 'New Delhi',
+          enterpriseAddressState: findVal('enterpriseAddressState') || findVal('enterprise_state') || 'Delhi',
+          enterpriseAddressPincode: findVal('enterpriseAddressPincode') || findVal('enterprise_pincode') || '110066',
           enterpriseGST: findVal('enterpriseGST'),
           enterpriseDrugLicense: findVal('enterpriseDrugLicense'),
           enterpriseFSSAI: findVal('enterpriseFSSAI'),
@@ -196,7 +196,7 @@ export default function AdminEnterpriseScreen({ navigation }) {
               style={styles.input}
               value={formData.enterpriseAddressPincode}
               onChangeText={(txt) => setFormData(prev => ({ ...prev, enterpriseAddressPincode: txt }))}
-              placeholder="110001"
+              placeholder="110066"
               placeholderTextColor="#94A3B8"
               keyboardType="numeric"
             />

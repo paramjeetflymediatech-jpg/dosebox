@@ -31,3 +31,38 @@ export const getFullImageUrl = (imgUri) => {
   }
   return parsedUri || null;
 };
+
+export const getAllImageUrls = (imgData) => {
+  if (!imgData) return [];
+
+  let rawList = [];
+  if (Array.isArray(imgData)) {
+    rawList = imgData;
+  } else if (typeof imgData === 'string') {
+    const trimmed = imgData.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          rawList = parsed;
+        }
+      } catch (e) {}
+    } else if (trimmed && trimmed !== 'url' && trimmed !== '[]') {
+      rawList = [trimmed];
+    }
+  }
+
+  const baseUrl = API_URL.replace('/api', '');
+
+  return rawList
+    .filter(item => item && typeof item === 'string' && item !== 'url' && item !== '[]' && item.trim() !== '')
+    .map(item => {
+      const trimmed = item.trim();
+      if (!trimmed.startsWith('http')) {
+        const prefix = trimmed.startsWith('/') ? '' : '/';
+        return `${baseUrl}${prefix}${trimmed}`;
+      }
+      return trimmed;
+    });
+};
+

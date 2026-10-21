@@ -81,8 +81,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
           ].filter(Boolean).join('\n');
         }
 
-        const sellerAddress = dynamicAddress || `B-35, Building No. 6, Ansal Chamber-2,
-Bhikaji Cama Place,
+        const sellerAddress = dynamicAddress || `B 2, Basement, Mohta Building 4,
+Bhikaji Cama Place, Near BCP,
 New Delhi - 110066`;
         const sellerPhone = settings.enterprise_phone || '011-43550667,9718641733,9718211733';
         const sellerDL = settings.enterprise_drug_license || 'WLF20B2025DL000670/WLF21B2025DL000659';

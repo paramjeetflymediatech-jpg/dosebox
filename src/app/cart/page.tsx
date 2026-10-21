@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Trash2, AlertCircle, FileText, CheckCircle, Upload, ArrowRight, ArrowLeft, Percent, ShieldCheck, Sparkles, ChevronDown, ChevronUp, X
+  Trash2, AlertCircle, FileText, CheckCircle, Upload, ArrowRight, ArrowLeft, Percent, ShieldCheck, Sparkles, ChevronDown, ChevronUp, ChevronRight, X
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
+import { showSignInRequired, showAddedToCart, showSuccess } from '@/lib/sweetalert';
 
 export default function CartPage() {
   const { 
@@ -35,6 +36,33 @@ export default function CartPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [isMounted, setIsMounted] = useState(false);
+
+  // Force scroll to top on mount
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    // Immediate scroll to top
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
+    // Fallbacks to handle hydration and dynamic height layout renders
+    const timer1 = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 50);
+
+    const timer2 = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 150);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -86,7 +114,7 @@ export default function CartPage() {
       image: imagesArr[0],
       quantity: medObj.extracted?.quantity || 1
     });
-    toast.success(`${med.name} added to cart!`);
+    showAddedToCart(med.name);
   };
 
   const addAllScannedToCart = () => {
@@ -111,7 +139,7 @@ export default function CartPage() {
       });
       count++;
     });
-    if (count > 0) toast.success(`All ${count} scanned medicines added to cart!`);
+    if (count > 0) showSuccess('Added to Cart!', `All ${count} scanned medicines added to cart!`);
   };
 
   const handleApplyPromo = async (e: React.FormEvent) => {
@@ -259,9 +287,16 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-slate-50/50 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-50/50 min-h-screen py-8">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8">
         
+        {/* Breadcrumb matching reference */}
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-6">
+          <Link href="/" className="hover:text-slate-800 transition-colors">Home</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-700 font-medium">Cart</span>
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Review Bag</h1>
           <span className="text-sm font-bold text-slate-500 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
@@ -645,9 +680,10 @@ export default function CartPage() {
                   onClick={(e) => {
                     if (!user) {
                       e.preventDefault();
-                      toast.error('Please sign in to proceed with checkout.');
-                      const signInBtn = document.querySelector('button[class*="bg-slate-900"]');
-                      if (signInBtn) (signInBtn as HTMLButtonElement).click();
+                      showSignInRequired('Please sign in to proceed with checkout.', () => {
+                        const signInBtn = document.querySelector('button[class*="bg-slate-900"]');
+                        if (signInBtn) (signInBtn as HTMLButtonElement).click();
+                      });
                     }
                   }}
                   className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 text-sm transition-all text-center shadow-lg shadow-brand-500/20"

@@ -2,7 +2,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { Category } from '../../../../../models';
+import { Op } from 'sequelize';
+import { Category, Medicine } from '../../../../../models';
 import { authenticateJWT } from '../../../../../middleware/auth';
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -10,8 +11,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+    const roleLower = (authResult.roleName || '').toLowerCase().trim();
+    if (roleLower !== 'admin' && roleLower !== 'superadmin' && roleLower !== 'leadership') {
+      return NextResponse.json({ success: false, message: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -22,8 +24,27 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ success: false, message: 'Category not found' }, { status: 404 });
     }
 
+    // Safely re-assign any medicines associated with this category to a general category
+    // so medicines are preserved and foreign keys never fail
+    const medicineCount = await Medicine.count({ where: { categoryId } });
+    if (medicineCount > 0) {
+      let fallbackCat = await Category.findOne({ where: { slug: 'general', id: { [Op.ne]: categoryId } } });
+      if (!fallbackCat) {
+        fallbackCat = await Category.findOne({ where: { id: { [Op.ne]: categoryId } } });
+      }
+      if (!fallbackCat) {
+        fallbackCat = await Category.create({
+          name: 'General',
+          slug: 'general',
+          description: 'General medicines',
+          isActive: true
+        });
+      }
+      await Medicine.update({ categoryId: fallbackCat.id }, { where: { categoryId } });
+    }
+
     await category.destroy();
-    return NextResponse.json({ success: true, message: 'Category deleted' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Category deleted successfully' }, { status: 200 });
   } catch (error: any) {
     console.error('Error deleting category:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
@@ -35,8 +56,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+    const roleLower = (authResult.roleName || '').toLowerCase().trim();
+    if (roleLower !== 'admin' && roleLower !== 'superadmin' && roleLower !== 'leadership') {
+      return NextResponse.json({ success: false, message: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const { id } = await params;

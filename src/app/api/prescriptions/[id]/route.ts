@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateJWT } from '../../../../middleware/auth';
 import { Prescription, Notification, ExtractedMedicine, MatchedProduct } from '../../../../models';
+import { sendPushToUser } from '../../../../lib/push';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -31,11 +32,25 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
     // Notify user if status changed
     if (status && status !== oldStatus) {
+      const notifTitle = 'Prescription Status Updated 📋';
+      const notifMsg = `Your uploaded prescription #${prescription.id} is now marked as ${status}.`;
+
       await Notification.create({
         userId: prescription.userId,
-        title: 'Prescription Status Updated',
-        message: `Your uploaded prescription is now marked as ${status}.`
+        title: notifTitle,
+        message: notifMsg
       });
+
+      sendPushToUser(
+        prescription.userId,
+        notifTitle,
+        notifMsg,
+        {
+          prescriptionId: String(prescription.id),
+          status: String(status),
+          type: 'prescription_status_update'
+        }
+      ).catch(e => console.error('[Prescription Status Push] Failed:', e));
     }
 
     return NextResponse.json({ success: true, message: 'Prescription updated successfully', data: prescription }, { status: 200 });

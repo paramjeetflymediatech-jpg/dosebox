@@ -4,6 +4,8 @@ import models from '../../../../../models';
 import { authenticateJWT, authorizeRoles } from '../../../../../middleware/auth';
 import sequelize from '../../../../../config/database';
 
+import { sendPushToUser } from '../../../../../lib/push';
+
 const { Prescription, DraftCart, DraftCartItem, Notification, AuditLog } = models;
 
 export async function POST(req: NextRequest) {
@@ -75,6 +77,15 @@ export async function POST(req: NextRequest) {
     }, { transaction });
 
     await transaction.commit();
+
+    // Send push notification to customer
+    sendPushToUser(
+      userId,
+      'Prescription Approved! ✅',
+      `Your prescription #${prescriptionId} has been verified! Your custom cart is ready for checkout.`,
+      { prescriptionId: String(prescriptionId), type: 'prescription_approved' }
+    ).catch(e => console.error('[Prescription Push] Failed to notify customer:', e));
+
     return NextResponse.json({ success: true, message: 'Draft Cart created and approved successfully' }, { status: 200 });
 
   } catch (error: any) {

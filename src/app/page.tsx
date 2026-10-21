@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert, Baby, Bone, Brain, Thermometer, Tag
+  Search, ShieldCheck, Truck, Percent, Activity, Star, ArrowRight, ChevronDown, Award, Sparkles, AlertCircle, FileText, CheckCircle2, ThermometerSnowflake, FileCheck, Stethoscope, Droplets, Heart, ActivitySquare, Pill, Beaker, Filter, Calendar, X, Clipboard, Eye, Shield, ShieldAlert, Baby, Bone, Brain, Thermometer, Tag, ArrowUp, ChevronLeft, ChevronRight, ShoppingCart
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import api from '../lib/api';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
+import { showAddedToCart } from '../lib/sweetalert';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -42,6 +44,8 @@ interface Medicine {
   description?: string;
   dosage?: string;
   sideEffects?: string;
+  storageInstructions?: string;
+  isColdChain?: boolean;
   brand?: { name: string };
 }
 
@@ -64,10 +68,65 @@ interface Doctor {
   rating: number;
 }
 
+function getCategoryPhoto(cat: { name: string; slug?: string; image?: string | null }): string {
+  const slug = (cat.slug || '').toLowerCase();
+  const name = (cat.name || '').toLowerCase();
+
+  // If category has an uploaded or custom image, prioritize it
+  if (cat.image && typeof cat.image === 'string' && cat.image.trim() !== '') {
+    if (
+      cat.image.startsWith('/api/file/categories/') ||
+      cat.image.startsWith('/categories/') ||
+      cat.image.startsWith('/uploads/') ||
+      cat.image.startsWith('http://') ||
+      cat.image.startsWith('https://')
+    ) {
+      return cat.image;
+    }
+  }
+
+  // Curated studio photographic images
+  if (slug === 'allergy-medication' || name.includes('allergy')) return '/categories/allergy-medication.jpg';
+  if (slug === 'alzheimers' || name.includes('alzheimer') || name.includes('dementia')) return '/categories/alzheimers.jpg';
+  if (slug === 'anaesthetics' || name.includes('anaesthetic') || name.includes('anesthetic')) return '/categories/anaesthetics.jpg';
+  if (slug === 'anemia' || name.includes('anemia')) return '/categories/anemia.jpg';
+  if (slug === 'anti-cancer' || name.includes('cancer') || name.includes('oncology')) return '/categories/anti-cancer.jpg';
+  if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return '/categories/antibacterials.jpg';
+  if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return '/categories/anticoagulants.jpg';
+  if (slug === 'anti-fungals' || name.includes('fungal')) return '/categories/anti-cancer.jpg';
+  if (slug === 'arthritis' || name.includes('arthritis')) return '/categories/anemia.jpg';
+  if (slug === 'vaccines' || name.includes('vaccine')) return '/categories/anaesthetics.jpg';
+
+  if (cat.image && (cat.image.startsWith('/') || cat.image.startsWith('http'))) {
+    return cat.image;
+  }
+
+  return '/categories/allergy-medication.jpg';
+}
+
+const CHRONIC_SPECIALTIES = [
+  { id: 12, name: 'Allergy Medication', slug: 'allergy-medication', image: '/categories/allergy-medication.jpg' },
+  { id: 13, name: 'Alzheimers', slug: 'alzheimers', image: '/categories/alzheimers.jpg' },
+  { id: 14, name: 'Anaesthetics', slug: 'anaesthetics', image: '/categories/anaesthetics.jpg' },
+  { id: 15, name: 'Anemia', slug: 'anemia', image: '/categories/anemia.jpg' },
+  { id: 16, name: 'Anti Cancer', slug: 'anti-cancer', image: '/categories/anti-cancer.jpg' },
+  { id: 17, name: 'Antibacterials', slug: 'antibacterials', image: '/categories/antibacterials.jpg' },
+  { id: 18, name: 'Anticoagulants', slug: 'anticoagulants', image: '/categories/anticoagulants.jpg' },
+];
+
 export default function HomePage() {
+  const router = useRouter();
   const { addToCart } = useCart();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // Dynamically show all categories from API / database, falling back to initial presets only while loading
+  const displayedCategories = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return categories;
+    }
+    return CHRONIC_SPECIALTIES;
+  }, [categories]);
   const [trending, setTrending] = useState<Medicine[]>([]);
   const [recommendations, setRecommendations] = useState<Medicine[]>([]);
   const [homeDoctors, setHomeDoctors] = useState<Doctor[]>([
@@ -78,7 +137,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  const [oncologyVal, setOncologyVal] = useState(0);
+  const [genuineVal, setGenuineVal] = useState(0);
   const [costsVal, setCostsVal] = useState(0);
 
   useEffect(() => {
@@ -90,7 +149,7 @@ export default function HomePage() {
       const progress = Math.min(elapsed / duration, 1);
       const ease = progress * (2 - progress);
 
-      setOncologyVal(Math.floor(ease * 80));
+      setGenuineVal(Math.floor(ease * 100));
       setCostsVal(Math.floor(ease * 18));
 
       if (progress < 1) {
@@ -126,12 +185,43 @@ export default function HomePage() {
     }
   };
 
+  const scrollCategories = (dir: 'left' | 'right') => {
+    if (categoriesScrollRef.current) {
+      const scrollAmount = categoriesScrollRef.current.clientWidth;
+      categoriesScrollRef.current.scrollBy({ left: dir === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   const toggleReview = (idx: number) => {
     if (expandedReviews.includes(idx)) {
       setExpandedReviews(expandedReviews.filter(i => i !== idx));
     } else {
       setExpandedReviews([...expandedReviews, idx]);
     }
+  };
+
+  // Scroll to top button state
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 250) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   };
 
 
@@ -196,45 +286,7 @@ export default function HomePage() {
   const faqRef = useRef<HTMLElement>(null);
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll logic for categories
-  useEffect(() => {
-    const container = categoriesScrollRef.current;
-    if (!container || categories.length === 0) return;
-    let intervalId: ReturnType<typeof setInterval>;
-    const startAutoScroll = () => {
-      intervalId = setInterval(() => {
-        if (container) {
-          // If scrolled near the end, reset to start smoothly or instantly
-          if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
-            container.scrollTo({ left: 0, behavior: 'smooth' });
-          } else {
-            // Scroll by approximately one card width + gap
-            const cardWidth = 220; // estimate based on w-52 (13rem=208px) + gap
-            container.scrollBy({ left: cardWidth, behavior: 'smooth' });
-          }
-        }
-      }, 3000); // Scroll every 3 seconds
-    };
-
-    startAutoScroll();
-
-    // Pause on hover or touch
-    const handlePause = () => clearInterval(intervalId);
-    const handleResume = () => startAutoScroll();
-
-    container.addEventListener('mouseenter', handlePause);
-    container.addEventListener('mouseleave', handleResume);
-    container.addEventListener('touchstart', handlePause, { passive: true });
-    container.addEventListener('touchend', handleResume, { passive: true });
-
-    return () => {
-      clearInterval(intervalId);
-      container.removeEventListener('mouseenter', handlePause);
-      container.removeEventListener('mouseleave', handleResume);
-      container.removeEventListener('touchstart', handlePause);
-      container.removeEventListener('touchend', handleResume);
-    };
-  }, [categories]);
+  // Categories auto-scroll removed per user request
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -343,15 +395,17 @@ export default function HomePage() {
     async function loadData() {
       try {
         const [banRes, catRes, medRes/* CONSULT_DISABLED , docRes */] = await Promise.all([
-          api.get('/admin/banners'),
-          api.get('/medicines/categories'),
-          api.get('/medicines?limit=4'),
+          api.get('/admin/banners').catch(() => ({ data: { success: false, data: [] } })),
+          api.get('/categories').catch(() => api.get('/medicines/categories')).catch(() => ({ data: { success: false, data: [] } })),
+          api.get('/medicines?limit=4').catch(() => ({ data: { success: false, data: [] } })),
           // api.get('/appointments/doctors')  // CONSULT FEATURE DISABLED
         ]);
 
-        if (banRes.data?.success) setBanners(banRes.data.data);
-        if (catRes.data?.success) setCategories(catRes.data.data);
-        if (medRes.data?.success) setTrending(medRes.data.data);
+        if (banRes.data?.success && Array.isArray(banRes.data.data)) setBanners(banRes.data.data);
+        if (catRes.data?.success && Array.isArray(catRes.data.data) && catRes.data.data.length > 0) {
+          setCategories(catRes.data.data);
+        }
+        if (medRes.data?.success && Array.isArray(medRes.data.data)) setTrending(medRes.data.data);
         // if (docRes.data?.success) setHomeDoctors(docRes.data.data);  // CONSULT FEATURE DISABLED
       } catch (err) {
         console.warn('API error in homepage. Loading static fallbacks.');
@@ -423,7 +477,7 @@ export default function HomePage() {
       image: imagesArr[0],
       quantity: customQty || 1
     });
-    toast.success(`${med.name} added to cart!`);
+    showAddedToCart(med.name, () => router.push('/cart'));
 
     if (quickViewMed) {
       setQuickViewMed(null);
@@ -549,12 +603,12 @@ export default function HomePage() {
 
             {/* Card 1 */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 group">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{oncologyVal}%+</div>
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">ONCOLOGY SAVINGS</div>
+                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{genuineVal}%</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">VERIFIED MEDICINES</div>
               </div>
             </div>
 
@@ -565,7 +619,7 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">₹{costsVal} Cr+</div>
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">COSTS SAVED</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">COSTS SAVED</div>
               </div>
             </div>
 
@@ -579,7 +633,7 @@ export default function HomePage() {
                   <span>2°C - 8°C</span>
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 </div>
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">COLD CHAIN</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">COLD CHAIN</div>
               </div>
             </div>
 
@@ -590,7 +644,7 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">WHO-GMP</div>
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">LICENSED PHARMACIES</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">LICENSED PHARMACIES</div>
               </div>
             </div>
 
@@ -598,64 +652,97 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. SHOP BY CHRONIC CATEGORY */}
-      <section ref={categoriesRef} className="py-16 bg-white">
+      {/* 3. SHOP BY CHRONIC CATEGORY / SPECIALTY */}
+      <section ref={categoriesRef} className="py-10 sm:py-12 bg-white">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-end justify-between gap-4">
+          {/* Header Row: Target Specific Ailments / Shop by Specialty on Left, Nav Controls on Right */}
+          <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Target Specific Ailments</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Shop by Specialty</h2>
+              <span className="text-xs font-bold text-[#108098] tracking-widest uppercase block mb-1">
+                Target Specific Ailments
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">
+                Shop by Specialty
+              </h2>
+              <p className="text-slate-600 text-xs sm:text-sm font-normal max-w-2xl leading-relaxed">
+                We bring Advanced Care Medicines for complex conditions to your doorstep, helping families spend less time searching and more time where it matters: caring for the people they love.
+              </p>
             </div>
-            <Link href="/condition" className="text-sm font-bold text-brand-600 hover:text-brand-700 hover:underline whitespace-nowrap flex items-center gap-1">
-              View All <ArrowRight className="w-4 h-4" />
-            </Link>
+
+            {/* Desktop Navigation Controls */}
+            <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => scrollCategories('left')}
+                className="w-9 h-9 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                aria-label="Previous categories"
+                title="Previous"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <Link
+                href="/condition"
+                className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm px-4 py-2 rounded-full transition-colors shadow-2xs whitespace-nowrap active:scale-95"
+              >
+                View all
+              </Link>
+              <button
+                onClick={() => scrollCategories('right')}
+                className="w-9 h-9 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                aria-label="Next categories"
+                title="Next"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
+          {/* Single-row Horizontal Category Slider (3 in mobile, 4 in tablet, 6 in desktop, not cut from left or right) */}
           <div
             ref={categoriesScrollRef}
-            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className="flex overflow-x-auto gap-2 sm:gap-3 lg:gap-4 pb-3 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full"
           >
-            {(() => {
-              const CATEGORY_GRADIENTS = [
-                'linear-gradient(135deg, #4f87c5, #6fa3e0)',
-                'linear-gradient(135deg, #0c888d, #29b5bb)',
-                'linear-gradient(135deg, #e8783a, #f0974e)',
-                'linear-gradient(135deg, #7c6fc4, #a494e0)',
-                'linear-gradient(135deg, #3ea8b0, #5dc8d0)',
-                'linear-gradient(135deg, #6b6b6b, #8c8c8c)'
-              ];
-              if (categories.length === 0) {
-                return (
-                  <div className="col-span-full py-8 text-center text-slate-500 font-medium bg-slate-50 rounded-2xl border border-slate-100">
-                    Loading Categories...
+            {displayedCategories.map((cat) => {
+              const photoUrl = getCategoryPhoto(cat);
+
+              return (
+                <Link
+                  key={cat.id || cat.slug}
+                  href={`/medicines?category=${cat.slug}`}
+                  className="flex-shrink-0 w-[calc((100%-16px)/3)] sm:w-[calc((100%-36px)/4)] lg:w-[calc((100%-80px)/6)] aspect-square rounded-2xl overflow-hidden bg-slate-100 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-300 border border-slate-200/80 block relative group"
+                >
+                  {/* Background Photographic Image */}
+                  <img
+                    src={photoUrl}
+                    alt={cat.name}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/categories/allergy-medication.jpg';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
+                  />
+
+                  {/* Gradient Overlay at Bottom */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
+
+                  {/* Centered White Category Title at Bottom */}
+                  <div className="absolute bottom-0 inset-x-0 p-2 sm:p-2.5 text-center z-10">
+                    <h4 className="font-bold text-white text-[11px] sm:text-xs md:text-sm lg:text-base leading-tight drop-shadow-md px-0.5">
+                      {cat.name}
+                    </h4>
                   </div>
-                );
-              }
+                </Link>
+              );
+            })}
+          </div>
 
-              return categories.map((cat, idx) => {
-                const gradient = CATEGORY_GRADIENTS[idx % CATEGORY_GRADIENTS.length];
-                const isImageFile = cat.image && cat.image.includes('.');
-                const IconComp = !isImageFile ? ((LucideIcons as any)[cat.image] || LucideIcons.FileText) : null;
-
-                return (
-                  <Link key={cat.id} href={`/medicines?category=${cat.slug}`} className="snap-start flex-shrink-0 w-40 sm:w-48 lg:w-52 category-card group rounded-2xl border border-[#b2d8dc] p-5 hover:shadow-lg hover:border-brand-400 transition-all flex flex-col gap-4 bg-white">
-                    {isImageFile ? (
-                      <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-slate-50 border border-slate-100 shadow-inner overflow-hidden">
-                        <img src={cat.image} alt={cat.name} className="w-full h-full object-contain p-2" />
-                      </div>
-                    ) : (
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: gradient }}>
-                        {IconComp && <IconComp className="w-5 h-5" />}
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm leading-tight">{cat.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed line-clamp-2">{cat.description || 'View products in this category'}</p>
-                    </div>
-                  </Link>
-                );
-              });
-            })()}
+          {/* Mobile Full-width View All Condition Button */}
+          <div className="mt-4 block md:hidden">
+            <Link
+              href="/condition"
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-colors active:scale-98"
+            >
+              <span>View all Condition</span>
+              <ChevronRight className="w-4 h-4 text-slate-500" />
+            </Link>
           </div>
         </div>
       </section>
@@ -694,77 +781,91 @@ export default function HomePage() {
                     key={med.id}
                     className="bg-white rounded-2xl border border-[#1b8d91]/60 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
                   >
-                    <div className="flex justify-between items-start absolute top-4 left-4 right-4 z-10 pointer-events-none">
+                    <div className="flex justify-between items-start absolute top-3 left-3 right-3 z-10 pointer-events-none">
                       {med.prescriptionRequired ? (
-                        <div className="bg-[#f0ecec] border border-[#e6dfdf] text-[#786c6c] font-bold text-[8px] uppercase tracking-wide px-2 py-0.5 rounded-sm pointer-events-auto">
-                          RX REQUIRED
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md pointer-events-auto shadow-2xs">
+                          Rx Required
                         </div>
                       ) : (
                         <div />
                       )}
                       {savings > 0 && (
-                        <div className="bg-[#e68a7f] text-white font-bold text-[9px] px-2.5 py-0.5 rounded-full shadow-sm pointer-events-auto">
+                        <div className="bg-emerald-600 text-white font-extrabold text-[11px] px-2.5 py-0.5 rounded-full shadow-sm pointer-events-auto">
                           Save {savings}%
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-6 mb-4 relative z-0">
-                      <Link href={`/medicines/detail?id=${med.id}`} className="block h-40 flex items-center justify-center overflow-hidden">
+                    <div className="mt-5 mb-3 relative z-0">
+                      <Link href={`/medicines/detail?id=${med.id}`} className="block h-44 flex items-center justify-center overflow-hidden p-2">
                         <img
                           src={imagesArr[0]}
                           alt={med.name}
-                          className="object-contain w-full h-full mix-blend-multiply transition-transform duration-500 "
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+                          }}
+                          className="object-contain w-full h-full mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
                         />
                       </Link>
                     </div>
 
                     <div>
-                      <div className="flex items-center gap-1 text-[8px] text-[#8c8c8c] font-semibold uppercase mb-1">
-                        <span>{med.packSize || 'Strip of 10 Tablets'}</span>
-                        <span>&bull;</span>
-                        <span className="truncate">{med.brand?.name || 'DoseBox Speciality Generics'}</span>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
+                        <span className="truncate">{med.packSize || 'Strip of 10 Tablets'}</span>
+                        <span className="text-slate-400">&bull;</span>
+                        <span className="truncate font-bold text-slate-700">{med.brand?.name || 'DoseBox Generics'}</span>
                       </div>
 
-                      <h3 className="font-bold text-[#2d3748] text-xs leading-snug line-clamp-2 min-h-[34px]">
+                      <h3 className="font-bold text-slate-900 group-hover:text-brand-600 text-sm sm:text-base leading-snug line-clamp-2 min-h-[44px] transition-colors">
                         <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                       </h3>
 
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-[#9b9b9b] font-semibold mb-6">
-                        <Star className="w-3 h-3 text-[#f6a041] fill-[#f6a041]" /> 4.8 (42)
-                      </div>
+                      {/* <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 font-bold mb-4">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <span>4.8</span>
+                        <span className="text-slate-400 font-medium">(42 reviews)</span>
+                      </div> */}
                     </div>
 
-                    <div className="flex items-end justify-between mt-auto">
-                      <div>
-                        <div className="flex items-center gap-1 text-[8px] mb-0.5 font-semibold">
-                          <span className="line-through text-[#9b9b9b]">₹{formatCurrency(price)}</span>
-                          {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
-                        </div>
-                        <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
-                          ₹{formatCurrency(activePrice.toFixed(0))}
-                        </div>
-                        {unitPriceObj && (
-                          <div className="text-[10px] text-[#9b9b9b] font-medium mt-0.5">
-                            ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                    <div className="mt-auto pt-3 border-t border-slate-100">
+                      <div className="flex items-end justify-between gap-2 mb-3">
+                        <div>
+                          {discPrice && savings > 0 ? (
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="line-through text-xs text-slate-400 font-semibold">₹{formatCurrency(price)}</span>
+                              <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                -{savings}% Swap
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="h-4" />
+                          )}
+                          <div className="text-brand-700 font-black text-xl sm:text-2xl leading-none tracking-tight">
+                            ₹{formatCurrency(activePrice.toFixed(0))}
                           </div>
-                        )}
-                      </div>
+                          {unitPriceObj && (
+                            <div className="text-[11px] text-slate-600 font-semibold mt-1">
+                              ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => { setQuickViewMed(med); setQty(1); }}
-                          className="w-7 h-7 rounded-full border border-[#0c888d]/30 text-[#0c888d] hover:bg-[#0c888d]/10 flex items-center justify-center transition-colors"
+                          className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 text-slate-600 hover:text-brand-700 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
+                          title="Quick View"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleAddToCart(med)}
-                          className="w-7 h-7 rounded-full bg-[#0c888d] text-white flex items-center justify-center hover:bg-[#0a7378] hover:scale-105 transition-all shadow-sm"
-                        >
-                          +
+                          <Eye className="w-4 h-4" />
                         </button>
                       </div>
+
+                      <button
+                        onClick={() => handleAddToCart(med)}
+                        className="w-full bg-[#108098] hover:bg-[#0c6b80] text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>Add to Cart</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -779,7 +880,7 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
           <div>
             <span className="text-[10px] text-brand-600 font-bold uppercase tracking-widest">Digital Specialty Shelf</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Substitute &amp; Save Instantly</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">DoseBox Smart Savings</h2>
           </div>
 
           <div className="flex items-center gap-3">
@@ -876,77 +977,91 @@ export default function HomePage() {
                   key={med.id}
                   className="bg-white rounded-2xl border border-[#1b8d91]/60 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-start absolute top-4 left-4 right-4 z-10 pointer-events-none">
+                  <div className="flex justify-between items-start absolute top-3 left-3 right-3 z-10 pointer-events-none">
                     {med.prescriptionRequired ? (
-                      <div className="bg-[#f0ecec] border border-[#e6dfdf] text-[#786c6c] font-bold text-[8px] uppercase tracking-wide px-2 py-0.5 rounded-sm pointer-events-auto">
-                        RX REQUIRED
+                      <div className="bg-rose-50 border border-rose-200 text-rose-700 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md pointer-events-auto shadow-2xs">
+                        Rx Required
                       </div>
                     ) : (
                       <div />
                     )}
                     {savings > 0 && (
-                      <div className="bg-[#e68a7f] text-white font-bold text-[9px] px-2.5 py-0.5 rounded-full shadow-sm pointer-events-auto">
+                      <div className="bg-emerald-600 text-white font-extrabold text-[11px] px-2.5 py-0.5 rounded-full shadow-sm pointer-events-auto">
                         Save {savings}%
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-6 mb-4 relative z-0">
-                    <Link href={`/medicines/detail?id=${med.id}`} className="block h-40 flex items-center justify-center overflow-hidden">
+                  <div className="mt-5 mb-3 relative z-0">
+                    <Link href={`/medicines/detail?id=${med.id}`} className="block h-44 flex items-center justify-center overflow-hidden p-2">
                       <img
                         src={imagesArr[0]}
                         alt={med.name}
-                        className="object-contain w-full h-full mix-blend-multiply transition-transform duration-500 "
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+                        }}
+                        className="object-contain w-full h-full mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
                       />
                     </Link>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-1 text-[8px] text-[#8c8c8c] font-semibold uppercase mb-1">
-                      <span>{med.packSize || 'Strip of 10 Tablets'}</span>
-                      <span>&bull;</span>
-                      <span className="truncate">{med.brand?.name || 'DoseBox Speciality Generics'}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
+                      <span className="truncate">{med.packSize || 'Strip of 10 Tablets'}</span>
+                      <span className="text-slate-400">&bull;</span>
+                      <span className="truncate font-bold text-slate-700">{med.brand?.name || 'DoseBox Generics'}</span>
                     </div>
 
-                    <h3 className="font-bold text-[#2d3748] text-xs leading-snug line-clamp-2 min-h-[34px]">
+                    <h3 className="font-bold text-slate-900 group-hover:text-brand-600 text-sm sm:text-base leading-snug line-clamp-2 min-h-[44px] transition-colors">
                       <Link href={`/medicines/detail?id=${med.id}`}>{med.name}</Link>
                     </h3>
 
-                    <div className="flex items-center gap-1 mt-1 text-[10px] text-[#9b9b9b] font-semibold mb-6">
-                      <Star className="w-3 h-3 text-[#f6a041] fill-[#f6a041]" /> 4.8 (42)
-                    </div>
+                    {/* <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 font-bold mb-4">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span>4.8</span>
+                      <span className="text-slate-400 font-medium">(42 reviews)</span>
+                    </div> */}
                   </div>
 
-                  <div className="flex items-end justify-between mt-auto">
-                    <div>
-                      <div className="flex items-center gap-1 text-[8px] mb-0.5 font-semibold">
-                        <span className="line-through text-[#9b9b9b]">₹{formatCurrency(price)}</span>
-                        {savings > 0 && <span className="text-[#e68a7f]">-{savings}% Swap Savings</span>}
-                      </div>
-                      <div className="text-[#0c888d] font-extrabold text-[20px] leading-none tracking-tight">
-                        ₹{formatCurrency(activePrice.toFixed(0))}
-                      </div>
-                      {unitPriceObj && (
-                        <div className="text-[10px] text-[#9b9b9b] font-medium mt-0.5">
-                          ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                  <div className="mt-auto pt-3 border-t border-slate-100">
+                    <div className="flex items-end justify-between gap-2 mb-3">
+                      <div>
+                        {discPrice && savings > 0 ? (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="line-through text-xs text-slate-400 font-semibold">₹{formatCurrency(price)}</span>
+                            <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              -{savings}% Swap
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-4" />
+                        )}
+                        <div className="text-brand-700 font-black text-xl sm:text-2xl leading-none tracking-tight">
+                          ₹{formatCurrency(activePrice.toFixed(0))}
                         </div>
-                      )}
-                    </div>
+                        {unitPriceObj && (
+                          <div className="text-[11px] text-slate-600 font-semibold mt-1">
+                            ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => { setQuickViewMed(med); setQty(1); }}
-                        className="w-7 h-7 rounded-full border border-[#0c888d]/30 text-[#0c888d] hover:bg-[#0c888d]/10 flex items-center justify-center transition-colors"
+                        className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 text-slate-600 hover:text-brand-700 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
+                        title="Quick View"
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleAddToCart(med)}
-                        className="w-7 h-7 rounded-full bg-[#0c888d] text-white flex items-center justify-center hover:bg-[#0a7378] hover:scale-105 transition-all shadow-sm"
-                      >
-                        +
+                        <Eye className="w-4 h-4" />
                       </button>
                     </div>
+
+                    <button
+                      onClick={() => handleAddToCart(med)}
+                      className="w-full bg-[#108098] hover:bg-[#0c6b80] text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>Add to Cart</span>
+                    </button>
                   </div>
                 </div>
               );
@@ -1668,6 +1783,24 @@ export default function HomePage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Fixed Scroll-To-Top Button (Bottom Left Corner) */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.6, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.6, y: 15 }}
+            transition={{ duration: 0.2 }}
+            onClick={scrollToTop}
+            aria-label="Scroll to top"
+            title="Scroll to top"
+            className="fixed bottom-6 left-6 z-50 w-12 h-12 rounded-full bg-[#108098] hover:bg-[#0c6b80] text-white flex items-center justify-center shadow-xl shadow-[#108098]/35 hover:shadow-2xl hover:shadow-[#108098]/50 border-2 border-white transition-all duration-200 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-[#108098] focus:ring-offset-2"
+          >
+            <ArrowUp className="w-5 h-5 stroke-[2.5] group-hover:-translate-y-0.5 transition-transform duration-200" />
+          </motion.button>
         )}
       </AnimatePresence>
 

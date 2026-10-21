@@ -2,6 +2,9 @@
  * @format
  */
 
+// Global fix for font scaling and text visibility on small and diverse physical devices
+import './src/utils/fixTextDisplay';
+
 import { AppRegistry } from 'react-native';
 import App from './App';
 import { name as appName } from './app.json';
@@ -20,8 +23,11 @@ try {
     // If it's a data-only payload without a standard notification block, display via Notifee
     if (remoteMessage && !remoteMessage.notification) {
       try {
-        const PushNotificationService = require('./src/services/PushNotificationService').default;
-        await PushNotificationService.displayNotification(remoteMessage);
+        const service = require('./src/services/PushNotificationService');
+        const PushNotificationService = service.default || service;
+        if (PushNotificationService && PushNotificationService.displayNotification) {
+          await PushNotificationService.displayNotification(remoteMessage);
+        }
       } catch (displayErr) {
         console.log('[FCM Background] Error displaying background notification:', displayErr);
       }

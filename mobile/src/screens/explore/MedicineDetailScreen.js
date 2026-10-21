@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCart } from '../../context/CartContext';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
-import { getFullImageUrl } from '../../utils/image';
+import { getFullImageUrl, getAllImageUrls } from '../../utils/image';
 import MedicineCard from '../../components/MedicineCard';
 import RenderHtml from 'react-native-render-html';
 import api from '../../services/api';
@@ -19,8 +19,95 @@ const C = {
   sub: '#64748B',
   border: '#E9EDF2',
   card: '#FFFFFF',
-  yellow: '#F59E0B'
+  yellow: '#F59E0B',
+  greenBg: '#DCFCE7',
+  greenText: '#15803D',
+  redBg: '#FEE2E2',
+  redText: '#B91C1C',
+  grayBg: '#F1F5F9',
+  grayText: '#475569'
 };
+
+function SubstituteCard({ item, navigation, addToCart }) {
+  const [imgError, setImgError] = useState(false);
+  const subImage = getFullImageUrl(item.images || item.image);
+  const comp = item.comparison || {};
+  const isCheaper = comp.isCheaper;
+  const isExpensive = comp.isExpensive;
+
+  return (
+    <View style={[styles.subCard, isCheaper && styles.subCardCheaper]}>
+      <TouchableOpacity 
+        activeOpacity={0.88}
+        onPress={() => navigation.push('MedicineDetail', { medicine: item })}
+      >
+        <View style={styles.subImageWrap}>
+          {subImage && !imgError ? (
+            <Image 
+              source={{ uri: subImage }} 
+              style={styles.subImage} 
+              resizeMode="contain" 
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <Ionicons name="medical" size={32} color="#CBD5E1" />
+          )}
+          {/* Savings Badge */}
+          <View style={styles.subSavingsBadgeWrap}>
+            {isCheaper ? (
+              <View style={styles.subCheaperBadge}>
+                <Ionicons name="arrow-down" size={9} color="#15803D" />
+                <Text style={styles.subCheaperText}>SAVE ₹{comp.absDiff?.toFixed(0)} ({comp.percentage}%)</Text>
+              </View>
+            ) : isExpensive ? (
+              <View style={styles.subExpensiveBadge}>
+                <Ionicons name="arrow-up" size={9} color="#B91C1C" />
+                <Text style={styles.subExpensiveText}>+₹{comp.absDiff?.toFixed(0)} ({comp.percentage}%)</Text>
+              </View>
+            ) : (
+              <View style={styles.subSameBadge}>
+                <Text style={styles.subSameText}>SAME PRICE</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.subBody}>
+          <Text style={styles.subBrand} numberOfLines={1}>{item.brand?.name || item.manufacturer || 'Brand'}</Text>
+          <Text style={styles.subName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.subPackSize} numberOfLines={1}>{item.packSize || (item.dosageForm ? `${item.dosageForm}` : 'Standard')}</Text>
+          
+          <View style={styles.subPriceRow}>
+            <Text style={styles.subPrice}>₹{item.effectivePrice}</Text>
+            {item.discountPrice && (
+              <Text style={styles.subOldPrice}>₹{item.price}</Text>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      {/* Quick Add / Switch */}
+      <TouchableOpacity
+        style={[styles.subAddBtn, isCheaper ? { backgroundColor: '#15803D' } : { backgroundColor: C.primary }]}
+        onPress={() => {
+          addToCart({
+            id: item.id,
+            name: item.name,
+            price: Number(item.price),
+            discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
+            prescriptionRequired: item.prescriptionRequired,
+            image: subImage,
+            qty: 1
+          });
+          Alert.alert('Added to Cart', `${item.name} has been added to your cart.`);
+        }}
+      >
+        <Ionicons name="cart-outline" size={13} color={C.white} />
+        <Text style={styles.subAddBtnText}>{isCheaper ? 'Switch & Add' : 'Add to Cart'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 export default function MedicineDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -30,12 +117,39 @@ export default function MedicineDetailScreen({ navigation, route }) {
 
   const [medicine, setMedicine] = useState(initialMedicine);
   const [qty, setQty] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const imageCarouselRef = useRef(null);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [substitutes, setSubstitutes] = useState([]);
+  const [subTarget, setSubTarget] = useState(null);
+  const [loadingSubstitutes, setLoadingSubstitutes] = useState(true);
+  const [subPage, setSubPage] = useState(1);
+  const [subTotalPages, setSubTotalPages] = useState(1);
+  const [subTotalItems, setSubTotalItems] = useState(0);
   const scrollViewRef = useRef(null);
+
+  const loadSubstitutes = (pageNum = 1) => {
+    if (!initialMedicine?.id) return;
+    setLoadingSubstitutes(true);
+    api.get(`/medicines/${initialMedicine.id}/substitutes?page=${pageNum}&limit=5`)
+      .then(res => {
+        if (res.data?.success && res.data.data) {
+          setSubstitutes(res.data.data.substitutes || []);
+          setSubTarget(res.data.data.targetMedicine || null);
+          setSubTotalPages(res.data.data.pagination?.totalPages || 1);
+          setSubTotalItems(res.data.data.pagination?.totalItems || 0);
+          setSubPage(res.data.data.pagination?.currentPage || 1);
+        }
+      })
+      .catch(err => console.log('Error fetching substitutes:', err))
+      .finally(() => setLoadingSubstitutes(false));
+  };
 
   useEffect(() => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    setActiveImageIndex(0);
+    imageCarouselRef.current?.scrollToOffset({ offset: 0, animated: false });
     
     if (initialMedicine?.id) {
       api.get(`/medicines/${initialMedicine.id}`)
@@ -47,6 +161,9 @@ export default function MedicineDetailScreen({ navigation, route }) {
         .catch(err => console.log('Error fetching detailed medicine data:', err))
         .finally(() => setLoadingDetails(false));
 
+      // Fetch substitutes matching molecule and strength
+      loadSubstitutes(1);
+
       // Fetch related products
       api.get('/medicines?limit=6')
         .then(res => {
@@ -57,6 +174,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
         .catch(err => console.log('Error fetching related medicines:', err));
     } else {
       setLoadingDetails(false);
+      setLoadingSubstitutes(false);
     }
   }, [initialMedicine?.id]);
 
@@ -68,11 +186,31 @@ export default function MedicineDetailScreen({ navigation, route }) {
     );
   }
 
-  const imageUri = getFullImageUrl(medicine.images || medicine.image);
+  const allImages = getAllImageUrls(medicine.images);
+  if (allImages.length === 0 && medicine.image) {
+    const fallbackSingle = getFullImageUrl(medicine.image);
+    if (fallbackSingle) allImages.push(fallbackSingle);
+  }
   const price = Number(medicine.price);
   const discPrice = medicine.discountPrice ? Number(medicine.discountPrice) : null;
   const savings = discPrice ? Math.round(((price - discPrice) / price) * 100) : 0;
   const finalPrice = discPrice || price;
+
+  const handleThumbnailPress = (index) => {
+    setActiveImageIndex(index);
+    imageCarouselRef.current?.scrollToOffset({
+      offset: index * width,
+      animated: true,
+    });
+  };
+
+  const onCarouselScroll = (e) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(offsetX / width);
+    if (newIndex >= 0 && newIndex < allImages.length && newIndex !== activeImageIndex) {
+      setActiveImageIndex(newIndex);
+    }
+  };
 
   const handleAddToCart = () => {
     addToCart({
@@ -81,7 +219,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
       price: price,
       discountPrice: discPrice,
       prescriptionRequired: medicine.prescriptionRequired,
-      image: imageUri,
+      image: allImages[0] || null,
       qty: qty
     });
     navigation.goBack();
@@ -101,16 +239,85 @@ export default function MedicineDetailScreen({ navigation, route }) {
       <ScrollView ref={scrollViewRef} style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + rv(100) }} showsVerticalScrollIndicator={false}>
         
         {/* ── IMAGE SECTION ── */}
-        <View style={styles.imageWrap}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
+        <View style={styles.imageSectionWrap}>
+          {allImages.length > 0 ? (
+            <View style={styles.carouselContainer}>
+              <FlatList
+                ref={imageCarouselRef}
+                data={allImages}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item, index) => `${item}-${index}`}
+                getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+                onMomentumScrollEnd={onCarouselScroll}
+                renderItem={({ item }) => (
+                  <View style={[styles.imageSlide, { width }]}>
+                    <Image source={{ uri: item }} style={styles.image} resizeMode="contain" />
+                  </View>
+                )}
+              />
+
+              {/* Counter Badge */}
+              {allImages.length > 1 && (
+                <View style={styles.imageCounterBadge}>
+                  <Text style={styles.imageCounterText}>
+                    {activeImageIndex + 1} / {allImages.length}
+                  </Text>
+                </View>
+              )}
+
+              {/* Dots */}
+              {allImages.length > 1 && (
+                <View style={styles.dotsWrap}>
+                  {allImages.map((_, idx) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.dot,
+                        activeImageIndex === idx ? styles.activeDot : styles.inactiveDot
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
           ) : (
-            <Ionicons name="medical" size={100} color="#E2E8F0" />
+            <View style={[styles.imageWrap, { width }]}>
+              <Ionicons name="medical" size={100} color="#E2E8F0" />
+            </View>
           )}
+
           {medicine.prescriptionRequired && (
             <View style={styles.rxBadge}>
               <Text style={styles.rxText}>RX REQUIRED</Text>
             </View>
+          )}
+
+          {/* Thumbnails Strip */}
+          {allImages.length > 1 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.thumbnailList}
+            >
+              {allImages.map((imgUri, idx) => {
+                const isSelected = activeImageIndex === idx;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    activeOpacity={0.8}
+                    onPress={() => handleThumbnailPress(idx)}
+                    style={[
+                      styles.thumbnailWrap,
+                      isSelected && styles.thumbnailWrapActive
+                    ]}
+                  >
+                    <Image source={{ uri: imgUri }} style={styles.thumbnailImage} resizeMode="contain" />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           )}
         </View>
 
@@ -137,6 +344,77 @@ export default function MedicineDetailScreen({ navigation, route }) {
               <Text style={styles.finalPrice}>₹{finalPrice}</Text>
             </View>
           </View>
+        </View>
+
+        {/* ── EQUIVALENT SUBSTITUTES & SAVINGS SECTION ── */}
+        <View style={styles.substitutesSection}>
+          <View style={styles.subHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.subBadgeRow}>
+                <View style={styles.subBadgeMatch}>
+                  <Ionicons name="sparkles" size={11} color="#0D9488" />
+                  <Text style={styles.subBadgeMatchText}>SAME SALT & STRENGTH</Text>
+                </View>
+                {subTarget?.strength && (
+                  <View style={styles.subStrengthBadge}>
+                    <Text style={styles.subStrengthText}>{subTarget.strength}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.subSectionTitle}>Available Substitutes</Text>
+              <Text style={styles.subSectionSub}>
+                Bioequivalent alternatives • Lowest price first
+              </Text>
+            </View>
+            {subTotalPages > 1 && (
+              <View style={styles.subPaginationPills}>
+                <TouchableOpacity
+                  disabled={subPage <= 1}
+                  onPress={() => loadSubstitutes(subPage - 1)}
+                  style={[styles.subPageArrow, subPage <= 1 && { opacity: 0.3 }]}
+                >
+                  <Ionicons name="chevron-back" size={14} color={C.text} />
+                </TouchableOpacity>
+                <Text style={styles.subPageCountText}>{subPage}/{subTotalPages}</Text>
+                <TouchableOpacity
+                  disabled={subPage >= subTotalPages}
+                  onPress={() => loadSubstitutes(subPage + 1)}
+                  style={[styles.subPageArrow, subPage >= subTotalPages && { opacity: 0.3 }]}
+                >
+                  <Ionicons name="chevron-forward" size={14} color={C.text} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {loadingSubstitutes ? (
+            <View style={{ paddingVertical: rv(20), alignItems: 'center' }}>
+              <ActivityIndicator size="small" color={C.primary} />
+              <Text style={{ fontSize: rm(12), color: C.sub, marginTop: rv(6) }}>Finding matching substitutes...</Text>
+            </View>
+          ) : substitutes.length === 0 ? (
+            <View style={styles.noSubBox}>
+              <Ionicons name="shield-checkmark" size={18} color="#0D9488" />
+              <Text style={styles.noSubText}>
+                No other alternative brands currently stocked with matching strength ({subTarget?.strength || 'standard'}). The selected medicine is verified.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={substitutes}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <SubstituteCard 
+                  item={item} 
+                  navigation={navigation} 
+                  addToCart={addToCart} 
+                />
+              )}
+              contentContainerStyle={{ paddingRight: spacing.md }}
+            />
+          )}
         </View>
 
         {/* ── ABOUT PRODUCT ── */}
@@ -248,9 +526,22 @@ const styles = StyleSheet.create({
   
   scroll: { flex: 1 },
   
-  imageWrap: { backgroundColor: C.white, height: rv(280), alignItems: 'center', justifyContent: 'center', marginBottom: rv(8), position: 'relative' },
-  image: { width: '80%', height: '80%' },
-  rxBadge: { position: 'absolute', top: rv(16), left: rs(16), backgroundColor: '#f0ecec', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6, borderWidth: 1, borderColor: '#e6dfdf' },
+  imageSectionWrap: { backgroundColor: C.white, paddingBottom: rv(12), marginBottom: rv(8), position: 'relative', borderBottomWidth: 1, borderBottomColor: C.border },
+  carouselContainer: { height: rv(280), alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  imageSlide: { height: rv(280), alignItems: 'center', justifyContent: 'center', paddingHorizontal: rs(20) },
+  imageWrap: { backgroundColor: C.white, height: rv(280), alignItems: 'center', justifyContent: 'center' },
+  image: { width: '85%', height: '85%' },
+  imageCounterBadge: { position: 'absolute', bottom: rv(12), right: rs(16), backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: rs(10), paddingVertical: rv(4), borderRadius: 16 },
+  imageCounterText: { fontSize: rm(11), fontWeight: '700', color: C.white, letterSpacing: 0.5 },
+  dotsWrap: { position: 'absolute', bottom: rv(14), flexDirection: 'row', alignItems: 'center', justifyContent: 'center', left: 0, right: 0 },
+  dot: { height: rv(6), borderRadius: rv(3), marginHorizontal: rs(3) },
+  activeDot: { width: rs(18), backgroundColor: C.primary },
+  inactiveDot: { width: rs(6), backgroundColor: '#CBD5E1' },
+  thumbnailList: { paddingHorizontal: spacing.md, paddingTop: rv(10), gap: rs(10), flexDirection: 'row', alignItems: 'center' },
+  thumbnailWrap: { width: rs(60), height: rs(60), borderRadius: radius.md, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', padding: rs(4), alignItems: 'center', justifyContent: 'center' },
+  thumbnailWrapActive: { borderColor: C.primary, borderWidth: 2, backgroundColor: C.white, elevation: 3, shadowColor: C.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  thumbnailImage: { width: '100%', height: '100%' },
+  rxBadge: { position: 'absolute', top: rv(16), left: rs(16), backgroundColor: '#f0ecec', paddingHorizontal: rs(8), paddingVertical: rv(4), borderRadius: 6, borderWidth: 1, borderColor: '#e6dfdf', zIndex: 10 },
   rxText: { fontSize: rm(10), fontWeight: '800', color: '#786c6c' },
   
   section: { backgroundColor: C.white, padding: spacing.md, marginBottom: rv(8) },
@@ -284,5 +575,49 @@ const styles = StyleSheet.create({
   
   addCartBtn: { flex: 1, backgroundColor: C.primary, borderRadius: radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: rs(20), height: rv(48) },
   addCartBtnText: { fontSize: rm(16), fontWeight: '700', color: C.white },
-  addCartTotal: { fontSize: rm(16), fontWeight: '800', color: C.white }
+  addCartTotal: { fontSize: rm(16), fontWeight: '800', color: C.white },
+
+  // Substitutes Section Styles
+  substitutesSection: { backgroundColor: C.white, paddingVertical: spacing.md, paddingLeft: spacing.md, marginBottom: rv(8), borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.border },
+  subHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: spacing.md, marginBottom: rv(12) },
+  subBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: rs(6), marginBottom: rv(4) },
+  subBadgeMatch: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDFA', borderColor: '#CCFBF1', borderWidth: 1, paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 6, gap: rs(4) },
+  subBadgeMatchText: { fontSize: rm(9), fontWeight: '800', color: '#0F766E', letterSpacing: 0.5 },
+  subStrengthBadge: { backgroundColor: '#FEF3C7', borderColor: '#FDE68A', borderWidth: 1, paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 6 },
+  subStrengthText: { fontSize: rm(9), fontWeight: '800', color: '#92400E' },
+  subSectionTitle: { fontSize: rm(17), fontWeight: '800', color: C.text, marginTop: rv(2) },
+  subSectionSub: { fontSize: rm(11), color: C.sub, marginTop: rv(1) },
+  
+  subPaginationPills: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: C.border, borderRadius: radius.full, paddingHorizontal: rs(6), paddingVertical: rv(2) },
+  subPageArrow: { padding: rs(3) },
+  subPageCountText: { fontSize: rm(11), fontWeight: '700', color: C.text, marginHorizontal: rs(4) },
+  
+  noSubBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: C.border, borderRadius: radius.md, padding: spacing.md, marginRight: spacing.md, gap: rs(8) },
+  noSubText: { fontSize: rm(12), color: C.sub, flex: 1, lineHeight: rv(16) },
+
+  subCard: { width: rs(170), backgroundColor: C.white, borderWidth: 1, borderColor: C.border, borderRadius: radius.lg, marginRight: rs(12), overflow: 'hidden', justifyContent: 'space-between' },
+  subCardCheaper: { borderColor: '#86EFAC', shadowColor: '#15803D', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  
+  subImageWrap: { height: rv(110), backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', position: 'relative', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  subImage: { width: '85%', height: '85%' },
+  
+  subSavingsBadgeWrap: { position: 'absolute', top: rv(6), left: rs(6), right: rs(6) },
+  subCheaperBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#15803D', paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 4, gap: rs(2), alignSelf: 'flex-start' },
+  subCheaperText: { fontSize: rm(8.5), fontWeight: '800', color: C.white },
+  subExpensiveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#B91C1C', paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 4, gap: rs(2), alignSelf: 'flex-start' },
+  subExpensiveText: { fontSize: rm(8.5), fontWeight: '800', color: C.white },
+  subSameBadge: { backgroundColor: '#E2E8F0', paddingHorizontal: rs(6), paddingVertical: rv(2), borderRadius: 4, alignSelf: 'flex-start' },
+  subSameText: { fontSize: rm(8), fontWeight: '700', color: '#475569' },
+
+  subBody: { padding: spacing.sm },
+  subBrand: { fontSize: rm(10), fontWeight: '700', color: C.sub, textTransform: 'uppercase' },
+  subName: { fontSize: rm(13), fontWeight: '700', color: C.text, marginTop: rv(2), lineHeight: rv(17), height: rv(34) },
+  subPackSize: { fontSize: rm(11), color: C.sub, marginTop: rv(2) },
+  
+  subPriceRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: rv(6), gap: rs(6) },
+  subPrice: { fontSize: rm(16), fontWeight: '800', color: C.text },
+  subOldPrice: { fontSize: rm(11), color: C.sub, textDecorationLine: 'line-through' },
+  
+  subAddBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: rv(8), gap: rs(4), borderBottomLeftRadius: radius.lg - 1, borderBottomRightRadius: radius.lg - 1 },
+  subAddBtnText: { fontSize: rm(12), fontWeight: '700', color: C.white }
 });

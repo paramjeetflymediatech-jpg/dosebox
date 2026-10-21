@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Op, col } from 'sequelize';
 import { Medicine, Category, Brand, Inventory, MedicineSection } from '../../../models';
 import redisClient from '../../../config/redis';
+import { detectCategoryId, ensureCategoryActiveForMedicine } from '@/lib/autoCategorize';
 
 async function clearMedicinesCache() {
   if (redisClient.isOpen) {
@@ -181,7 +182,16 @@ export async function POST(req: NextRequest) {
   try {
     // Note: Admin authentication should be applied here (e.g. verifyAuth)
     const body = await req.json();
+
+    if (!body.categoryId) {
+      body.categoryId = detectCategoryId(body.name, body.composition, body.genericName);
+    }
+
     const medicine = await Medicine.create(body);
+    
+    if (medicine.isActive || body.isActive) {
+      await ensureCategoryActiveForMedicine(medicine.categoryId);
+    }
     
     await Inventory.create({
       medicineId: medicine.id,

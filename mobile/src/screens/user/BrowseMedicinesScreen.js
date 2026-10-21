@@ -228,6 +228,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: rs(14),
+    flex: 1,
+    marginRight: rs(10),
   },
   iconWrap: {
     width: rs(36),
@@ -241,5 +243,6 @@ const styles = StyleSheet.create({
     fontSize: rm(15),
     fontWeight: '600',
     color: C.text,
+    flex: 1,
   },
 });

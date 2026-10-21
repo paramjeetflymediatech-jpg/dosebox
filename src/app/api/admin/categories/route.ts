@@ -22,8 +22,9 @@ export async function POST(req: NextRequest) {
     const authResult = await authenticateJWT(req);
     if (authResult instanceof NextResponse) return authResult;
     
-    if (authResult.roleName !== 'Admin' && authResult.roleName !== 'SuperAdmin') {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+    const roleLower = (authResult.roleName || '').toLowerCase().trim();
+    if (roleLower !== 'admin' && roleLower !== 'superadmin' && roleLower !== 'leadership') {
+      return NextResponse.json({ success: false, message: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const formData = (await req.formData()) as any;

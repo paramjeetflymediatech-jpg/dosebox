@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    overflow-x: clip;
+    max-width: 100vw;
+    width: 100%;
+  }
   body {
     @apply bg-neutral-background text-slate-800 antialiased min-h-screen flex flex-col;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -39,4 +44,13 @@
 
 .gradient-text {
   @apply bg-gradient-to-r from-brand-700 via-brand-500 to-secondary bg-clip-text text-transparent;
+}
+
+/* Hide scrollbar for Chrome, Safari, Opera and Firefox */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

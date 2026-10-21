@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Edit2, Trash2, XCircle } from 'lucide-react';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
+import { showDeleteConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 interface Address {
   id: number;
@@ -183,13 +184,14 @@ export default function AddressesPage() {
   };
 
   const handleDeleteAddress = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+    const result = await showDeleteConfirm('Delete Address?', 'Are you sure you want to delete this address?');
+    if (!result.isConfirmed) return;
     try {
       await api.delete(`/account/addresses/${id}`);
-      toast.success('Address deleted');
+      showSuccess('Deleted!', 'Address deleted successfully.');
       setAddresses(addresses.filter(a => a.id !== id));
     } catch (err) {
-      toast.error('Failed to delete address');
+      showError('Error', 'Failed to delete address');
     }
   };
 

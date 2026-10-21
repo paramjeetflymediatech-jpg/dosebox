@@ -103,7 +103,7 @@ export default function LeadershipProfileScreen({ navigation }) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{top:10,bottom:10,left:10,right:10}}>
-          <Ionicons name="arrow-back" style={styles.backIcon} />
+          <Ionicons name="arrow-back" size={rs(24)} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Executive Hub</Text>
         <View style={{ width: 24 }} />
@@ -125,7 +125,7 @@ export default function LeadershipProfileScreen({ navigation }) {
           <Text style={styles.userName}>{user?.name || 'Executive Leader'}</Text>
           <Text style={styles.userEmail}>{user?.email || ''}</Text>
           
-          <View style={{ flexDirection: 'row', gap: rs(8), alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', gap: rs(8), alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
             <View style={styles.roleBadge}>
               <Ionicons name="flash" size={rs(12)} color="#F59E0B" />
               <Text style={styles.roleText}>LEADERSHIP</Text>
@@ -146,7 +146,7 @@ export default function LeadershipProfileScreen({ navigation }) {
             </View>
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoLabel}>App Version</Text>
-              <Text style={styles.infoValue}>v1.0.0 (Build 42)</Text>
+              <Text style={styles.infoValue}>v1.0.2 (Build 16)</Text>
             </View>
           </View>
 

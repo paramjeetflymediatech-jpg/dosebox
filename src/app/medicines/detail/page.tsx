@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
-  ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, ChevronLeft, ChevronRight, X
+  ShieldCheck, AlertTriangle, HelpCircle, Star, ShoppingBag, Truck, Info, ChevronLeft, ChevronRight, X, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { useCart } from '../../../context/CartContext';
 import { toast } from 'react-hot-toast';
 import { formatCurrency, calculateUnitPrice } from '@/lib/utils';
+import ProductSubstitutes from '../../../components/medicines/ProductSubstitutes';
+import { showAddedToCart } from '@/lib/sweetalert';
 
 interface Review {
   id: number;
@@ -46,6 +48,7 @@ interface MedicineDetails {
 }
 
 function MedicineDetailsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const { addToCart } = useCart();
@@ -91,7 +94,7 @@ function MedicineDetailsContent() {
         image: imagesArr[0]
       });
     }
-    toast.success(`${medicine.name} (${quantity} items) added to cart!`);
+    showAddedToCart(medicine.name, () => router.push('/cart'));
   };
 
   if (loading) {
@@ -99,7 +102,7 @@ function MedicineDetailsContent() {
       <div className="max-w-7xl mx-auto px-4 py-16 animate-pulse space-y-8">
         <div className="h-10 bg-slate-200 rounded-lg w-1/3" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div className="h-96 bg-slate-200 rounded-3xl" />
+          <div className="h-96 bg-slate-200 rounded-3xl"/>
           <div className="space-y-4">
             <div className="h-8 bg-slate-200 rounded-lg w-3/4" />
             <div className="h-6 bg-slate-200 rounded-lg w-1/2" />
@@ -112,12 +115,26 @@ function MedicineDetailsContent() {
 
   if (!medicine) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h3 className="text-xl font-bold text-slate-800">Medicine details not found.</h3>
-        <p className="text-slate-400 mt-2">The medication item may have been deleted or doesn&apos;t exist.</p>
-        <Link href="/medicines" className="mt-6 inline-block bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-6 rounded-full transition-all">
-          Back to Store
-        </Link>
+      <div className="bg-slate-50 min-h-screen py-24 flex items-center justify-center">
+        <div className="max-w-xl mx-auto px-4 w-full">
+          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-md text-center flex flex-col items-center">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-5">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Medicine Details Not Found</h2>
+            <p className="text-slate-600 text-sm sm:text-base mt-2 max-w-md font-medium leading-relaxed">
+              The medication with ID <span className="font-bold text-slate-900">#{id}</span> could not be found or may have been updated in the catalog.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-3 mt-8 w-full sm:w-auto">
+              <Link href="/medicines" className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-8 rounded-full shadow-md transition-all text-sm">
+                Browse All Medicines
+              </Link>
+              <Link href="/" className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3.5 px-8 rounded-full transition-all text-sm">
+                Return to Home
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -144,10 +161,13 @@ function MedicineDetailsContent() {
               <img
                 src={imagesArr[currentImageIndex]}
                 alt={medicine.name}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+                }}
                 className="absolute inset-0 w-full h-full object-contain mix-blend-multiply transition-transform hover:scale-105 duration-300"
               />
               {medicine.prescriptionRequired && (
-                <div className="absolute top-4 left-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-sm z-10">
+                <div className="absolute top-4 left-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-sm z-10">
                   <AlertTriangle className="w-4 h-4" />
                   Doctor Prescription Required (Rx)
                 </div>
@@ -181,7 +201,14 @@ function MedicineDetailsContent() {
                     onClick={() => setCurrentImageIndex(idx)}
                     className={`shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-brand-600 shadow-md' : 'border-transparent bg-slate-100 hover:border-slate-300'}`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain mix-blend-multiply" />
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+                      }}
+                      className="w-full h-full object-contain mix-blend-multiply"
+                    />
                   </button>
                 ))}
               </div>
@@ -192,16 +219,16 @@ function MedicineDetailsContent() {
           <div className="flex flex-col justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-xs font-bold text-brand-600  tracking-widest bg-brand-50 py-1 px-3.5 rounded-full w-max inline-block">
-                  {medicine.brand?.name || 'CIpla'}
+                <span className="text-xs font-bold text-brand-700 tracking-wider bg-brand-50 border border-brand-200/80 py-1 px-3.5 rounded-full w-max inline-block">
+                  {medicine.brand?.name || 'Cipla'}
                 </span>
                 {medicine.packSize && (
-                  <span className="text-xs font-bold text-slate-500  tracking-widest bg-slate-100 py-1 px-3.5 rounded-full w-max inline-block border border-slate-200">
+                  <span className="text-xs font-bold text-slate-700 tracking-wider bg-slate-100 py-1 px-3.5 rounded-full w-max inline-block border border-slate-200">
                     {medicine.packSize}
                   </span>
                 )}
                 {medicine.contentStatus === 'Approved' && (
-                  <span className="text-xs font-bold text-emerald-700 tracking-widest bg-emerald-50 py-1 px-3.5 rounded-full inline-flex items-center gap-1.5 border border-emerald-200" title={`Medically Reviewed by ${medicine.verifierName || 'Professional'} (${medicine.verifierRegNo || 'Reg: N/A'})`}>
+                  <span className="text-xs font-bold text-emerald-700 tracking-wider bg-emerald-50 py-1 px-3.5 rounded-full inline-flex items-center gap-1.5 border border-emerald-200" title={`Medically Reviewed by ${medicine.verifierName || 'Professional'} (${medicine.verifierRegNo || 'Reg: N/A'})`}>
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Verified by {medicine.verifierName || 'Doctor'}
                   </span>
@@ -209,27 +236,27 @@ function MedicineDetailsContent() {
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3">{medicine.name}</h1>
-              <p className="text-sm font-semibold text-slate-500 italic mt-1">{medicine.genericName}</p>
+              <p className="text-sm font-semibold text-slate-600 mt-1">{medicine.genericName}</p>
 
               {/* Details Grid */}
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Manufacturer</h4>
-                  <p className="text-sm font-semibold text-slate-800 line-clamp-2">{medicine.manufacturer || medicine.brand?.name || 'Unknown'}</p>
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Manufacturer</h4>
+                  <p className="text-sm font-bold text-slate-900 line-clamp-2">{medicine.manufacturer || medicine.brand?.name || 'Unknown'}</p>
                 </div>
-                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">HSN Code</h4>
-                  <p className="text-sm font-semibold text-slate-800 font-mono">
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">HSN Code</h4>
+                  <p className="text-sm font-bold text-slate-900 font-mono">
                     {medicine.hsnCode || (medicine as any).hsn_code || (medicine as any).hsn || 'N/A'}
                   </p>
                 </div>
-                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage</h4>
-                  <p className="text-sm font-semibold text-slate-800">{medicine.storageInstructions || 'Store in dry condition.'}</p>
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Storage</h4>
+                  <p className="text-sm font-bold text-slate-900">{medicine.storageInstructions || 'Store in dry condition.'}</p>
                 </div>
-                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Pack Size</h4>
-                  <p className="text-sm font-semibold text-slate-800">{medicine.packSize || 'Standard'}</p>
+                <div className="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Pack Size</h4>
+                  <p className="text-sm font-bold text-slate-900">{medicine.packSize || 'Standard'}</p>
                 </div>
               </div>
 
@@ -246,18 +273,18 @@ function MedicineDetailsContent() {
 
               {/* Price & Savings */}
               <div className="mt-6">
-                <span className="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Pricing</span>
+                <span className="text-xs text-slate-600 block font-bold uppercase tracking-wider">Pricing</span>
                 <div className="flex items-baseline gap-3 mt-1">
                   {discPrice ? (
                     <>
-                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{formatCurrency(discPrice)}</span>
-                      <span className="text-slate-400 line-through text-sm">₹{formatCurrency(price)}</span>
-                      <span className="text-emerald-600 text-xs font-bold bg-emerald-50 py-0.5 px-2 rounded-lg border border-emerald-100">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-950">₹{formatCurrency(discPrice)}</span>
+                      <span className="text-slate-400 line-through text-base font-semibold">₹{formatCurrency(price)}</span>
+                      <span className="text-emerald-700 text-xs font-bold bg-emerald-50 py-1 px-2.5 rounded-lg border border-emerald-200">
                         Save {Math.round(((price - discPrice) / price) * 100)}%
                       </span>
                     </>
                   ) : (
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">₹{formatCurrency(price)}</span>
+                    <span className="text-2xl sm:text-3xl font-black text-slate-950">₹{formatCurrency(price)}</span>
                   )}
                 </div>
                 {(() => {
@@ -265,12 +292,25 @@ function MedicineDetailsContent() {
                   const unitPriceObj = calculateUnitPrice(activePrice, medicine.packSize);
                   if (!unitPriceObj) return null;
                   return (
-                    <p className="text-sm text-slate-500 font-medium mt-1">
-                      ₹{formatCurrency(unitPriceObj.price)} per {unitPriceObj.unit}
+                    <p className="text-sm text-slate-600 font-semibold mt-1">
+                      ₹{formatCurrency(unitPriceObj.price)} <span className="text-slate-500 font-normal">per {unitPriceObj.unit}</span>
                     </p>
                   );
                 })()}
-                <p className="text-xxs text-slate-400 mt-1">Tax inclusive (GST included in prices)</p>
+                <p className="text-xs text-slate-500 mt-1">Tax inclusive (GST included in prices)</p>
+                
+                {/* Quick Anchor Callout for Substitutes (Client Point 5: Visible near main product) */}
+                <a
+                  href="#equivalent-substitutes"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300/80 py-2 px-3.5 rounded-xl mt-3 transition-all shadow-2xs group"
+                >
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-12 transition-transform" />
+                  <span>Cheaper substitute brands with same strength available — <strong className="underline underline-offset-2">Compare &amp; Save &rarr;</strong></span>
+                </a>
               </div>
             </div>
 
@@ -286,14 +326,14 @@ function MedicineDetailsContent() {
                   <div className="flex items-center border border-slate-200 rounded-full py-1.5 px-3 bg-slate-50">
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="text-slate-500 font-extrabold text-sm px-2.5 focus:outline-none"
+                      className="text-slate-600 font-extrabold text-sm px-2.5 focus:outline-none"
                     >
                       -
                     </button>
-                    <span className="text-slate-800 font-bold text-sm px-4">{quantity}</span>
+                    <span className="text-slate-900 font-bold text-sm px-4">{quantity}</span>
                     <button
                       onClick={() => setQuantity((q) => Math.min(medicine.stock, q + 1))}
-                      className="text-slate-500 font-extrabold text-sm px-2.5 focus:outline-none"
+                      className="text-slate-600 font-extrabold text-sm px-2.5 focus:outline-none"
                     >
                       +
                     </button>
@@ -328,7 +368,7 @@ function MedicineDetailsContent() {
               )}
 
               {/* Delivery badge */}
-              <div className="flex items-center gap-2 mt-4 text-xxs font-semibold text-slate-400 uppercase tracking-widest justify-center sm:justify-start">
+              <div className="flex items-center gap-2 mt-4 text-xs font-semibold text-slate-600 uppercase tracking-wider justify-center sm:justify-start">
                 <Truck className="w-4 h-4 text-emerald-600" />
                 Delivery to major cities within 24-48 hours
               </div>
@@ -337,11 +377,26 @@ function MedicineDetailsContent() {
           </div>
         </div>
 
+        {/* Equivalent Substitutes & Price Comparison Section (MrMed style, matching molecule & strength) */}
+        <ProductSubstitutes 
+          currentMedicineId={medicine.id} 
+          onAddToCart={({ id, name, price, discountPrice, prescriptionRequired, image }) => {
+            addToCart({
+              id,
+              name,
+              price,
+              discountPrice,
+              prescriptionRequired,
+              image
+            });
+          }} 
+        />
+
         {/* DoseBox-style Detail Breakdowns & Navigation */}
         <MedicineScrollspy medicine={medicine} />
         
         {/* Related Products Carousel */}
-        <RelatedProducts currentMedicineId={medicine.id} />
+        <RelatedProducts currentMedicineId={medicine.id} categorySlug={(medicine as any).categoryDetail?.slug} />
 
       </div>
 
@@ -463,17 +518,17 @@ export function MedicineScrollspy({ medicine }: { medicine: any }) {
   );
 }
 
-export function RelatedProducts({ currentMedicineId }: { currentMedicineId: number }) {
+export function RelatedProducts({ currentMedicineId, categorySlug }: { currentMedicineId: number; categorySlug?: string }) {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch generic list for related products
-    api.get(`/medicines?limit=6`).then(res => {
+    const url = categorySlug ? `/medicines?category=${categorySlug}&limit=6` : `/medicines?limit=6`;
+    api.get(url).then(res => {
       if (res.data?.success) {
         setProducts(res.data.data.filter((m: any) => m.id !== currentMedicineId).slice(0, 5));
       }
     }).catch(console.error);
-  }, [currentMedicineId]);
+  }, [currentMedicineId, categorySlug]);
 
   if (products.length === 0) return null;
 
@@ -495,10 +550,17 @@ export function RelatedProducts({ currentMedicineId }: { currentMedicineId: numb
             <div key={product.id} className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow relative flex flex-col">
               <Link href={`/medicines/detail?id=${product.id}`}>
                 <div className="relative aspect-square p-4 bg-slate-50 border-b border-slate-100">
-                  <img src={imagesArr[0]} alt={product.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
+                  <img
+                    src={imagesArr[0]}
+                    alt={product.name}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=250';
+                    }}
+                    className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform"
+                  />
                   
                   {discPrice && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md uppercase tracking-widest">
+                    <div className="absolute top-2 left-2 px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-extrabold rounded-md uppercase tracking-wider shadow-xs">
                       {Math.round(((price - discPrice) / price) * 100)}% Off
                     </div>
                   )}
@@ -515,17 +577,17 @@ export function RelatedProducts({ currentMedicineId }: { currentMedicineId: numb
                 <Link href={`/medicines/detail?id=${product.id}`}>
                   <h3 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-brand-600 text-center">{product.name}</h3>
                 </Link>
-                <p className="text-xs text-slate-500 text-center mt-1 uppercase tracking-wider underline line-clamp-1 mb-2">{product.genericName || 'MEDICINE'}</p>
+                <p className="text-xs text-slate-600 font-medium text-center mt-1 uppercase tracking-wider line-clamp-1 mb-2">{product.genericName || 'MEDICINE'}</p>
                 
                 <Link href={`/medicines/detail?id=${product.id}`} className="mt-auto">
                   <div className="flex justify-center items-baseline gap-2">
                     {discPrice ? (
                       <>
-                        <h4 className="text-brand-600 text-lg font-black leading-none">₹{discPrice}</h4>
-                        <p className="text-xs text-slate-400 line-through font-medium">₹{price}</p>
+                        <h4 className="text-brand-700 text-lg font-black leading-none">₹{discPrice}</h4>
+                        <p className="text-xs text-slate-400 line-through font-semibold">₹{price}</p>
                       </>
                     ) : (
-                      <h4 className="text-brand-600 text-lg font-black leading-none">₹{price}</h4>
+                      <h4 className="text-brand-700 text-lg font-black leading-none">₹{price}</h4>
                     )}
                   </div>
                   

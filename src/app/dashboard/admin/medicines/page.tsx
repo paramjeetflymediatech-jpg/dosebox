@@ -185,13 +185,16 @@ export default function AdminMedicinesPage() {
     
     setExporting(true);
     try {
-      // Fetch full data with sections included
-      const res = await api.get('/medicines?limit=10000&includeSections=true');
+      // Fetch full data with sections included and all active/inactive statuses
+      const res = await api.get('/medicines?limit=50000&includeSections=true&isActive=all');
       const allExportData = res.data?.data || [];
       
-      // Filter to match the currently filtered view on the client
-      const exportIds = new Set(filteredMedicines.map(m => m.id));
-      const finalExportData = allExportData.filter((m: any) => exportIds.has(m.id));
+      // If user has filtered by search, export the filtered set, otherwise export all medicines
+      let finalExportData = allExportData;
+      if (search && search.trim().length > 0) {
+        const exportIds = new Set(filteredMedicines.map(m => m.id));
+        finalExportData = allExportData.filter((m: any) => exportIds.has(m.id));
+      }
 
       // Gather all unique section titles for dynamic columns
       const sectionTitles = new Set<string>();
@@ -202,20 +205,46 @@ export default function AdminMedicinesPage() {
       });
       const sectionHeaders = Array.from(sectionTitles).map(t => `Section: ${t}`);
 
-      const headers = ['ID', 'Name', 'Generic Name', 'Brand', 'Category', 'HSN Code', 'Price', 'Stock', 'Prescription Required', 'Status', ...sectionHeaders];
+      const headers = [
+        'ID',
+        'Name',
+        'Generic Name',
+        'Manufacturer',
+        'Brand',
+        'Composition',
+        'Dosage',
+        'Pack Size',
+        'Category',
+        'HSN Code',
+        'Price',
+        'Discount Price',
+        'Stock',
+        'Prescription Required',
+        'Content Status',
+        'Is Active',
+        'Images',
+        ...sectionHeaders
+      ];
       
       const rows = finalExportData.map((m: any) => {
         const row = [
           m.id,
           `"${(m.name || '').replace(/"/g, '""')}"`,
           `"${(m.genericName || '').replace(/"/g, '""')}"`,
+          `"${(m.manufacturer || '').replace(/"/g, '""')}"`,
           `"${(m.brand?.name || '').replace(/"/g, '""')}"`,
+          `"${(m.composition || '').replace(/"/g, '""')}"`,
+          `"${(m.dosage || '').replace(/"/g, '""')}"`,
+          `"${(m.packSize || '').replace(/"/g, '""')}"`,
           `"${(m.categoryDetail?.name || '').replace(/"/g, '""')}"`,
           `"${(m.hsnCode || '').replace(/"/g, '""')}"`,
-          m.price,
-          m.stock,
+          m.price ?? 0,
+          m.discountPrice ?? 0,
+          m.stock ?? 0,
           m.prescriptionRequired ? 'Yes' : 'No',
-          `"${(m.contentStatus || 'Draft').replace(/"/g, '""')}"`
+          `"${(m.contentStatus || 'Draft').replace(/"/g, '""')}"`,
+          m.isActive ? 'Yes' : 'No',
+          `"${(m.images || '').replace(/"/g, '""')}"`
         ];
         
         // Append section contents in the same order as headers
