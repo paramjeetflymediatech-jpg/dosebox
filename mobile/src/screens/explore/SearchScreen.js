@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   FlatList,
   Animated,
-  RefreshControl
+  RefreshControl,
+  useWindowDimensions
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -43,6 +44,7 @@ const SEARCH_HISTORY_KEY = '@dosebox_search_history';
 
 export default function SearchScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
   const inputRef = useRef(null);
   const { totalQty } = useCart();
   
@@ -52,6 +54,13 @@ export default function SearchScreen({ navigation, route }) {
   const [recentSearches, setRecentSearches] = useState([]);
   const [topSelling, setTopSelling] = useState([]);
   
+  // Front-screen 4-card display and scroll-to-reveal state
+  const [hasScrolled, setHasScrolled] = useState(false);
+  
+  // Available height for 2 rows of cards on initial view
+  const availableContentHeight = screenHeight - insets.top - rv(60) - rv(45) - insets.bottom - rv(40);
+  const cardMinHeight = Math.max(rv(280), Math.floor((availableContentHeight - rs(16)) / 2));
+
   // Pagination State
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -108,6 +117,7 @@ export default function SearchScreen({ navigation, route }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    setHasScrolled(false);
     if (searchResults !== null) {
       await performSearch(searchQuery, 1, false);
     } else {
@@ -117,8 +127,12 @@ export default function SearchScreen({ navigation, route }) {
   };
 
   const performSearch = async (query, targetPage = 1, isLoadMore = false) => {
-    if (isLoadMore) setIsLoadingMore(true);
-    else setIsSearching(true);
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsSearching(true);
+      setHasScrolled(false);
+    }
     
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -167,6 +181,10 @@ export default function SearchScreen({ navigation, route }) {
   };
 
   const handleLoadMore = () => {
+    if (!hasScrolled && searchResults && searchResults.length > 4) {
+      setHasScrolled(true);
+      return;
+    }
     if (!hasMore || isLoadingMore || isSearching) return;
     performSearch(searchQuery.trim(), page + 1, true);
   };
@@ -194,12 +212,14 @@ export default function SearchScreen({ navigation, route }) {
     
     setPage(1);
     setHasMore(true);
+    setHasScrolled(false);
     performSearch(query, 1, false);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
     setSearchResults(null);
+    setHasScrolled(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -208,11 +228,20 @@ export default function SearchScreen({ navigation, route }) {
     AsyncStorage.removeItem(SEARCH_HISTORY_KEY);
   };
 
+  // Front-screen displays 4 cards cleanly; scrolling or tapping reveals all results
+  const displayedResults = React.useMemo(() => {
+    if (!searchResults) return [];
+    if (!hasScrolled && searchResults.length > 4) {
+      return searchResults.slice(0, 4);
+    }
+    return searchResults;
+  }, [searchResults, hasScrolled]);
+
   const renderMedicineItem = ({ item }) => (
     <MedicineCard 
       med={item} 
       compact={true} 
-      containerStyle={{ flex: 1, margin: rs(6), maxWidth: '48%' }} 
+      containerStyle={{ flex: 1, margin: rs(6), maxWidth: '48%', minHeight: cardMinHeight }} 
     />
   );
 
@@ -260,7 +289,12 @@ export default function SearchScreen({ navigation, route }) {
         <View style={{ flex: 1, backgroundColor: C.bg }}>
           {isSearching && page === 1 ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: spacing.sm, justifyContent: 'space-between' }}>
-              {[1, 2, 3, 4, 5, 6].map(k => <MedicineCardSkeleton key={k} containerStyle={{ width: '48%', marginBottom: rv(16) }} />)}
+              {[1, 2, 3, 4].map(k => (
+                <MedicineCardSkeleton 
+                  key={k} 
+                  containerStyle={{ width: '48%', minHeight: cardMinHeight, marginBottom: rv(12) }} 
+                />
+              ))}
             </View>
           ) : searchResults.length === 0 ? (
             <Text style={{ fontSize: rm(15), color: C.sub, textAlign: 'center', marginTop: rv(40) }}>
@@ -268,13 +302,26 @@ export default function SearchScreen({ navigation, route }) {
             </Text>
           ) : (
             <FlatList
-              data={searchResults}
+              data={displayedResults}
               keyExtractor={item => item.id.toString()}
               renderItem={renderMedicineItem}
               numColumns={2}
-              contentContainerStyle={{ padding: spacing.sm, paddingBottom: insets.bottom + rv(40) }}
+              contentContainerStyle={{ 
+                padding: spacing.sm, 
+                paddingBottom: insets.bottom + rv(40),
+                minHeight: !hasScrolled && searchResults && searchResults.length > 4 ? screenHeight - insets.top - rv(40) : undefined
+              }}
+              onScrollBeginDrag={() => {
+                if (!hasScrolled) setHasScrolled(true);
+              }}
+              onScroll={(e) => {
+                if (!hasScrolled && e.nativeEvent.contentOffset.y > 6) {
+                  setHasScrolled(true);
+                }
+              }}
+              scrollEventThrottle={16}
               onEndReached={handleLoadMore}
-              onEndReachedThreshold={0.3}
+              onEndReachedThreshold={0.4}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} />}
@@ -288,6 +335,17 @@ export default function SearchScreen({ navigation, route }) {
                   <View style={{ paddingVertical: rv(20), alignItems: 'center' }}>
                     <ActivityIndicator size="small" color={C.primary} />
                   </View>
+                ) : !hasScrolled && searchResults && searchResults.length > 4 ? (
+                  <TouchableOpacity 
+                    style={styles.loadMoreHint} 
+                    activeOpacity={0.8}
+                    onPress={() => setHasScrolled(true)}
+                  >
+                    <Ionicons name="arrow-down-circle" size={18} color={C.primary} />
+                    <Text style={styles.loadMoreHintText}>
+                      Scroll to view more medicines ({searchResults.length - 4}+ more)
+                    </Text>
+                  </TouchableOpacity>
                 ) : null
               }
             />
@@ -403,5 +461,26 @@ const styles = StyleSheet.create({
   prescriptionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0D1B2A', borderRadius: radius.lg, padding: rs(20) },
   rxIconWrap: { width: rs(48), height: rs(48), borderRadius: rs(24), backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: rs(16) },
   rxTitle: { fontSize: rm(16), fontWeight: '700', color: C.white, marginBottom: rv(4) },
-  rxSub: { fontSize: rm(13), color: 'rgba(255,255,255,0.7)', lineHeight: rv(18) }
+  rxSub: { fontSize: rm(13), color: 'rgba(255,255,255,0.7)', lineHeight: rv(18) },
+
+  loadMoreHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EAF4F2',
+    borderWidth: 1,
+    borderColor: '#BFE0DA',
+    borderRadius: radius.full,
+    paddingVertical: rv(10),
+    paddingHorizontal: rs(16),
+    marginHorizontal: spacing.sm,
+    marginTop: rv(14),
+    marginBottom: rv(24),
+    gap: rs(8),
+  },
+  loadMoreHintText: {
+    fontSize: rm(13),
+    fontWeight: '700',
+    color: C.primary,
+  }
 });
