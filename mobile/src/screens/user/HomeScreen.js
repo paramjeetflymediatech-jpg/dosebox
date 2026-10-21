@@ -713,33 +713,13 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.sectionOverline}>TARGET SPECIFIC AILMENTS</Text>
                     <Text style={styles.sectionTitle} numberOfLines={1}>Shop by Chronic Category</Text>
                   </View>
-                  <View style={styles.catControlsRow}>
-                    <TouchableOpacity
-                      style={styles.catNavBtn}
-                      onPress={() => scrollCategories('left')}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Previous categories"
-                    >
-                      <Ionicons name="chevron-back" size={rs(16)} color={C.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.catViewAllBtn}
-                      onPress={() => navigation.navigate('Categories')}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.catViewAllText}>View all</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.catNavBtn}
-                      onPress={() => scrollCategories('right')}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Next categories"
-                    >
-                      <Ionicons name="chevron-forward" size={rs(16)} color={C.text} />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    style={styles.catViewAllBtn}
+                    onPress={() => navigation.navigate('Categories')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.catViewAllText}>View all</Text>
+                  </TouchableOpacity>
                 </View>
                 <FlatList
                   ref={catListRef}
@@ -768,33 +748,13 @@ export default function HomeScreen({ navigation }) {
                     </View>
                     <Text style={styles.sectionTitle} numberOfLines={1}>Recommended for You</Text>
                   </View>
-                  <View style={styles.catControlsRow}>
-                    <TouchableOpacity
-                      style={styles.catNavBtn}
-                      onPress={() => scrollRecs('left')}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Previous recommendations"
-                    >
-                      <Ionicons name="chevron-back" size={rs(16)} color={C.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.catViewAllBtn}
-                      onPress={() => navigation.navigate('SearchScreen', { showAll: true })}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.catViewAllText}>View all</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.catNavBtn}
-                      onPress={() => scrollRecs('right')}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Next recommendations"
-                    >
-                      <Ionicons name="chevron-forward" size={rs(16)} color={C.text} />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    style={styles.catViewAllBtn}
+                    onPress={() => navigation.navigate('SearchScreen', { showAll: true })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.catViewAllText}>View all</Text>
+                  </TouchableOpacity>
                 </View>
                 <FlatList
                   ref={recListRef}
@@ -820,33 +780,13 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.sectionOverline}>DIGITAL SPECIALTY SHELF</Text>
                     <Text style={styles.sectionTitle} numberOfLines={1}>DoseBox Smart Savings</Text>
                   </View>
-                  <View style={styles.catControlsRow}>
-                    <TouchableOpacity
-                      style={styles.catNavBtn}
-                      onPress={() => scrollTrending('left')}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Previous trending medicines"
-                    >
-                      <Ionicons name="chevron-back" size={rs(16)} color={C.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.catViewAllBtn}
-                      onPress={() => navigation.navigate('SearchScreen', { showAll: true })}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.catViewAllText}>View all</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.catNavBtn}
-                      onPress={() => scrollTrending('right')}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Next trending medicines"
-                    >
-                      <Ionicons name="chevron-forward" size={rs(16)} color={C.text} />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    style={styles.catViewAllBtn}
+                    onPress={() => navigation.navigate('SearchScreen', { showAll: true })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.catViewAllText}>View all</Text>
+                  </TouchableOpacity>
                 </View>
                 <FlatList
                   ref={trendingListRef}

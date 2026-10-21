@@ -7,12 +7,14 @@ import {
   ScrollView,
   Platform,
   Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 import api from '../../services/api';
+import { getFullImageUrl } from '../../utils/image';
 import { rs, rv, rm, spacing, radius, isTablet } from '../../utils/responsive';
 
 export default function ProfileScreen({ navigation }) {
@@ -92,10 +94,18 @@ export default function ProfileScreen({ navigation }) {
         {/* Premium Profile Card */}
         <View style={styles.premiumProfileCard}>
           <View style={styles.profileContentRow}>
-            <View style={[styles.avatarPremium, isTablet && styles.avatarTablet]}>
-              <Text style={[styles.avatarTextPremium, isTablet && styles.avatarTextTablet]}>
-                {initials}
-              </Text>
+            <View style={[styles.avatarPremium, isTablet && styles.avatarTablet, { overflow: 'hidden' }]}>
+              {user?.avatar ? (
+                <Image
+                  source={{ uri: getFullImageUrl(user.avatar) }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={[styles.avatarTextPremium, isTablet && styles.avatarTextTablet]}>
+                  {initials}
+                </Text>
+              )}
             </View>
             <View style={styles.profileInfoPremium}>
               <Text style={styles.userNamePremium}>{user?.name || 'Guest User'}</Text>
