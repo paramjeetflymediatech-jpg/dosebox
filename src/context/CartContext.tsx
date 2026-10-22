@@ -11,6 +11,13 @@ export interface CartItem {
   quantity: number;
   prescriptionRequired: boolean;
   image: string;
+  manufacturer?: string;
+  brandName?: string;
+  genericName?: string;
+  composition?: string;
+  packSize?: string;
+  dosageForm?: string;
+  isColdChain?: boolean;
 }
 
 interface CartContextType {

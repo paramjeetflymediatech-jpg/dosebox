@@ -101,6 +101,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
   const [tokenRefundCount, setTokenRefundCount] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [previewRx, setPreviewRx] = useState(null);
 
   useEffect(() => {
     if (route?.params?.autoOpenCancel) {
@@ -340,6 +341,72 @@ export default function OrderTrackingScreen({ route, navigation }) {
           )}
         </View>
 
+        {/* Attached Doctor's Prescription */}
+        {order.prescription ? (
+          <View style={[styles.card, styles.shadow, { marginBottom: rv(20), backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rv(12) }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(8) }}>
+                <Ionicons name="document-text" size={rs(18)} color="#1F5C52" />
+                <Text style={[styles.sectionTitle, { marginBottom: 0, color: '#166534' }]}>Doctor's Prescription</Text>
+              </View>
+              <View style={{
+                backgroundColor: order.prescription.status === 'Approved' ? '#DCFCE7' : order.prescription.status === 'Rejected' ? '#FEE2E2' : '#FEF3C7',
+                paddingHorizontal: rs(10),
+                paddingVertical: rv(4),
+                borderRadius: 20
+              }}>
+                <Text style={{
+                  fontSize: rm(11),
+                  fontWeight: '700',
+                  color: order.prescription.status === 'Approved' ? '#166534' : order.prescription.status === 'Rejected' ? '#DC2626' : '#B45309'
+                }}>
+                  {order.prescription.status || 'Under Review'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: rs(14), alignItems: 'center', backgroundColor: '#FFFFFF', padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: '#DCFCE7' }}>
+              {(() => {
+                const rxUrl = getFullImageUrl(order.prescription.fileUrl);
+                return (
+                  <>
+                    {rxUrl ? (
+                      <TouchableOpacity 
+                        style={{ width: rs(64), height: rs(80), borderRadius: radius.sm, overflow: 'hidden', backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1', position: 'relative' }}
+                        activeOpacity={0.8}
+                        onPress={() => setPreviewRx({ id: order.prescription.id, url: rxUrl, status: order.prescription.status })}
+                      >
+                        <Image source={{ uri: rxUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                        <View style={{ position: 'absolute', bottom: 3, right: 3, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 3, padding: 2 }}>
+                          <Ionicons name="expand" size={rs(12)} color="#FFF" />
+                        </View>
+                      </TouchableOpacity>
+                    ) : null}
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: rm(14), fontWeight: '700', color: '#0F172A' }}>Rx #{order.prescription.id}</Text>
+                      <Text style={{ fontSize: rm(12), color: '#64748B', marginTop: 2, marginBottom: 8 }}>Uploaded with order for validation.</Text>
+                      {order.prescription.pharmacistNotes ? (
+                        <Text style={{ fontSize: rm(11), color: '#92400E', backgroundColor: '#FEF3C7', padding: 6, borderRadius: 6, marginBottom: 8 }}>
+                          <Text style={{ fontWeight: '700' }}>Pharmacist Note: </Text>{order.prescription.pharmacistNotes}
+                        </Text>
+                      ) : null}
+                      <TouchableOpacity 
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#DCFCE7', alignSelf: 'flex-start', paddingHorizontal: rs(12), paddingVertical: rv(6), borderRadius: radius.sm }}
+                        onPress={() => setPreviewRx({ id: order.prescription.id, url: rxUrl, status: order.prescription.status })}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="eye-outline" size={rs(14)} color="#166534" />
+                        <Text style={{ fontSize: rm(12), fontWeight: '700', color: '#166534' }}>View Uploaded Rx</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                );
+              })()}
+            </View>
+          </View>
+        ) : null}
+
         {/* Timeline */}
         <View style={[styles.card, styles.shadow, { marginBottom: rv(20) }]}>
           <Text style={styles.sectionTitle}>Tracking Timeline</Text>
@@ -556,6 +623,41 @@ export default function OrderTrackingScreen({ route, navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* Full-Screen Doctor's Prescription Lightbox Modal */}
+      <Modal visible={!!previewRx} transparent animationType="fade" onRequestClose={() => setPreviewRx(null)}>
+        <View style={styles.imageModalOverlay}>
+          <SafeAreaView style={styles.imageModalContainer}>
+            <View style={styles.imageModalHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.imageModalTitle}>Your Doctor's Prescription</Text>
+                <Text style={styles.imageModalSub}>
+                  Rx #{previewRx?.id} • Status: {previewRx?.status || 'Under Review'}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.imageModalClose}
+                onPress={() => setPreviewRx(null)}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              >
+                <Ionicons name="close" size={rs(24)} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.imageModalBody}>
+              {previewRx?.url ? (
+                <Image 
+                  source={{ uri: previewRx.url }} 
+                  style={styles.fullPrescriptionImage} 
+                  resizeMode="contain" 
+                />
+              ) : (
+                <Text style={{ color: '#94A3B8', fontSize: rm(15) }}>No image preview available</Text>
+              )}
+            </View>
+          </SafeAreaView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -632,5 +734,48 @@ const styles = StyleSheet.create({
   refundDesc: { fontSize: rm(13), color: C.textSub, lineHeight: 18 },
   warningText: { fontSize: rm(11), fontWeight: '600', color: C.danger, marginTop: 8 },
   submitBtn: { backgroundColor: C.primary, paddingVertical: rv(18), borderRadius: 999, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, marginTop: rv(8) },
-  submitBtnText: { color: C.white, fontSize: rm(16), fontWeight: '700' }
+  submitBtnText: { color: C.white, fontSize: rm(16), fontWeight: '700' },
+
+  // Full-Screen Image Lightbox Modal
+  imageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+  },
+  imageModalContainer: {
+    flex: 1,
+  },
+  imageModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: rv(12),
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  imageModalTitle: {
+    fontSize: rm(17),
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  imageModalSub: {
+    fontSize: rm(13),
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  imageModalClose: {
+    padding: 6,
+    backgroundColor: '#1E293B',
+    borderRadius: 20,
+  },
+  imageModalBody: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  fullPrescriptionImage: {
+    width: '100%',
+    height: '100%',
+  },
 });

@@ -33,6 +33,11 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
       discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
       prescriptionRequired: med.prescriptionRequired,
       image: imageUri,
+      packSize: med.packSize || null,
+      brandName: med.brand?.name || med.manufacturer || null,
+      dosageForm: med.dosageForm || null,
+      molecule: med.molecule || med.composition || med.genericName || null,
+      coldChain: Boolean(med.coldChain || med.isColdChain),
       qty: 1
     });
   };
@@ -131,7 +136,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
             ) : null}
             {savings > 0 && (
               <Text style={[styles.medSaveText, compact && { fontSize: rm(9) }]} numberOfLines={1}>
-                Save ₹{Math.round(price - discPrice)}
+                Save ₹{parseFloat((price - discPrice).toFixed(2))}
               </Text>
             )}
           </View>

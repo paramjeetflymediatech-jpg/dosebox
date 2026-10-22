@@ -1,8 +1,8 @@
-﻿import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, FlatList, 
-  ActivityIndicator, Modal, TextInput, Alert, RefreshControl, ScrollView 
+  ActivityIndicator, Modal, TextInput, Alert, RefreshControl, ScrollView, Image 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
@@ -10,6 +10,7 @@ import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import Pagination from '../../components/admin/Pagination';
 import AdminListControls from '../../components/admin/AdminListControls';
 import { AlertService } from '../../services/AlertService';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function AdminOrdersScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -45,6 +46,7 @@ export default function AdminOrdersScreen({ navigation }) {
   const [currentId, setCurrentId] = useState(null);
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [previewRx, setPreviewRx] = useState(null);
 
   const loadData = async () => {
     try {
@@ -83,6 +85,8 @@ export default function AdminOrdersScreen({ navigation }) {
       status: item ? (item.status !== undefined ? String(item.status) : '') : '',
       paymentStatus: item ? (item.paymentStatus !== undefined ? String(item.paymentStatus) : '') : '',
       trackingNumber: item ? (item.trackingNumber !== undefined ? String(item.trackingNumber) : '') : '',
+      prescription: item ? item.prescription : null,
+      user: item ? item.user : null,
     });
     setModalVisible(true);
   };
@@ -147,6 +151,68 @@ export default function AdminOrdersScreen({ navigation }) {
             {"Total: ₹" + (item.finalAmount || item.totalAmount || 0)}
           </Text>
         </View>
+
+        {/* Prescription Status / Thumbnail Card */}
+        {item.prescription ? (
+          <View style={styles.rxCard}>
+            <View style={styles.rxHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                <Ionicons name="document-text" size={rs(16)} color="#1F5C52" />
+                <Text style={styles.rxTitle}>Prescription #{item.prescription.id}</Text>
+              </View>
+              <View style={[
+                styles.rxStatusBadge, 
+                { backgroundColor: item.prescription.status === 'Approved' ? '#DCFCE7' : item.prescription.status === 'Rejected' ? '#FEE2E2' : '#FEF3C7' }
+              ]}>
+                <Text style={[
+                  styles.rxStatusText, 
+                  { color: item.prescription.status === 'Approved' ? '#166534' : item.prescription.status === 'Rejected' ? '#DC2626' : '#B45309' }
+                ]}>
+                  {item.prescription.status || 'Pending'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.rxBody}>
+              {(() => {
+                const rxUrl = getFullImageUrl(item.prescription.fileUrl);
+                return (
+                  <>
+                    {rxUrl ? (
+                      <TouchableOpacity 
+                        style={styles.rxThumbWrap} 
+                        activeOpacity={0.8}
+                        onPress={() => setPreviewRx({ id: item.prescription.id, url: rxUrl, userName: item.user?.name, status: item.prescription.status })}
+                      >
+                        <Image source={{ uri: rxUrl }} style={styles.rxThumb} resizeMode="cover" />
+                        <View style={styles.rxThumbOverlay}>
+                          <Ionicons name="expand" size={rs(12)} color="#FFF" />
+                        </View>
+                      </TouchableOpacity>
+                    ) : null}
+
+                    <View style={{ flex: 1, justifyContent: 'center' }}>
+                      <Text style={styles.rxInfoText}>Doctor Rx uploaded by user</Text>
+                      <TouchableOpacity 
+                        style={styles.rxViewBtn}
+                        onPress={() => setPreviewRx({ id: item.prescription.id, url: rxUrl, userName: item.user?.name, status: item.prescription.status })}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="eye-outline" size={rs(13)} color="#1F5C52" />
+                        <Text style={styles.rxViewBtnText}>View Prescription</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                );
+              })()}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.otcBadge}>
+            <Ionicons name="shield-checkmark-outline" size={rs(14)} color="#64748B" />
+            <Text style={styles.otcBadgeText}>OTC Order (No prescription required)</Text>
+          </View>
+        )}
 
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
           <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#E0F2FE'}]} onPress={() => handleOpenModal(item)}>
@@ -239,6 +305,45 @@ export default function AdminOrdersScreen({ navigation }) {
             </View>
 
             <ScrollView contentContainerStyle={styles.formScroll}>
+              {formData.prescription ? (
+                <View style={styles.modalRxBox}>
+                  <Text style={styles.fieldLabel}>Uploaded Prescription (Rx)</Text>
+                  <View style={styles.modalRxInner}>
+                    {(() => {
+                      const rxUrl = getFullImageUrl(formData.prescription.fileUrl);
+                      return (
+                        <>
+                          {rxUrl ? (
+                            <TouchableOpacity 
+                              style={styles.modalRxThumbWrap}
+                              activeOpacity={0.8}
+                              onPress={() => setPreviewRx({ id: formData.prescription.id, url: rxUrl, userName: formData.user?.name, status: formData.prescription.status })}
+                            >
+                              <Image source={{ uri: rxUrl }} style={styles.modalRxThumb} resizeMode="cover" />
+                              <View style={styles.modalRxOverlay}>
+                                <Ionicons name="expand" size={rs(14)} color="#FFF" />
+                              </View>
+                            </TouchableOpacity>
+                          ) : null}
+                          <View style={{ flex: 1, justifyContent: 'center' }}>
+                            <Text style={styles.modalRxTitle}>Rx #{formData.prescription.id}</Text>
+                            <Text style={styles.modalRxSub}>Status: {formData.prescription.status || 'Pending'}</Text>
+                            <TouchableOpacity 
+                              style={styles.modalRxBtn}
+                              onPress={() => setPreviewRx({ id: formData.prescription.id, url: rxUrl, userName: formData.user?.name, status: formData.prescription.status })}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="eye-outline" size={rs(13)} color="#1F5C52" />
+                              <Text style={styles.modalRxBtnText}>View Full Prescription</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </>
+                      );
+                    })()}
+                  </View>
+                </View>
+              ) : null}
+
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>Order Status *</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
@@ -290,6 +395,41 @@ export default function AdminOrdersScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
+      </Modal>
+
+      {/* Full-Screen Doctor's Prescription Lightbox Modal */}
+      <Modal visible={!!previewRx} transparent animationType="fade" onRequestClose={() => setPreviewRx(null)}>
+        <View style={styles.imageModalOverlay}>
+          <SafeAreaView style={styles.imageModalContainer}>
+            <View style={styles.imageModalHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.imageModalTitle}>Doctor's Prescription</Text>
+                <Text style={styles.imageModalSub}>
+                  Rx #{previewRx?.id} • {previewRx?.userName || 'Customer'} ({previewRx?.status || 'Pending'})
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.imageModalClose}
+                onPress={() => setPreviewRx(null)}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              >
+                <Ionicons name="close" size={rs(24)} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.imageModalBody}>
+              {previewRx?.url ? (
+                <Image 
+                  source={{ uri: previewRx.url }} 
+                  style={styles.fullPrescriptionImage} 
+                  resizeMode="contain" 
+                />
+              ) : (
+                <Text style={{ color: '#94A3B8', fontSize: rm(15) }}>No image preview available</Text>
+              )}
+            </View>
+          </SafeAreaView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -357,4 +497,207 @@ const styles = StyleSheet.create({
   statusPillActive: { backgroundColor: '#EAF4F2', borderColor: '#1F5C52' },
   statusPillText: { fontSize: rm(13), color: '#64748B', fontWeight: '600' },
   statusPillTextActive: { color: '#1F5C52', fontWeight: '700' },
+
+  // Rx Card Styles
+  rxCard: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: 12,
+  },
+  rxHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  rxTitle: {
+    fontSize: rm(13),
+    fontWeight: '700',
+    color: '#166534',
+  },
+  rxStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  rxStatusText: {
+    fontSize: rm(11),
+    fontWeight: '700',
+  },
+  rxBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rs(10),
+  },
+  rxThumbWrap: {
+    width: rs(50),
+    height: rs(64),
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    backgroundColor: '#E2E8F0',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  rxThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  rxThumbOverlay: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 4,
+    padding: 2,
+  },
+  rxInfoText: {
+    fontSize: rm(12),
+    color: '#475569',
+    marginBottom: 6,
+  },
+  rxViewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  rxViewBtnText: {
+    fontSize: rm(12),
+    fontWeight: '700',
+    color: '#166534',
+  },
+
+  // OTC Badge
+  otcBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    marginBottom: 12,
+  },
+  otcBadgeText: {
+    fontSize: rm(12),
+    color: '#64748B',
+    fontWeight: '500',
+  },
+
+  // Modal Rx Box
+  modalRxBox: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: rv(16),
+  },
+  modalRxInner: {
+    flexDirection: 'row',
+    gap: rs(12),
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  modalRxThumbWrap: {
+    width: rs(64),
+    height: rs(80),
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    backgroundColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    position: 'relative',
+  },
+  modalRxThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  modalRxOverlay: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 4,
+    padding: 3,
+  },
+  modalRxTitle: {
+    fontSize: rm(14),
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  modalRxSub: {
+    fontSize: rm(12),
+    color: '#64748B',
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  modalRxBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+  },
+  modalRxBtnText: {
+    fontSize: rm(12),
+    fontWeight: '700',
+    color: '#166534',
+  },
+
+  // Full-screen Image Modal Lightbox
+  imageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+  },
+  imageModalContainer: {
+    flex: 1,
+  },
+  imageModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: rv(12),
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  imageModalTitle: {
+    fontSize: rm(17),
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  imageModalSub: {
+    fontSize: rm(13),
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  imageModalClose: {
+    padding: 6,
+    backgroundColor: '#1E293B',
+    borderRadius: 20,
+  },
+  imageModalBody: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  fullPrescriptionImage: {
+    width: '100%',
+    height: '100%',
+  },
 });

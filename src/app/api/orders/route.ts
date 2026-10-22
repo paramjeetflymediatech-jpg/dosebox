@@ -305,7 +305,8 @@ export async function GET(req: NextRequest) {
         where: { userId: userAuth.id },
         include: [
           { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine', attributes: ['id', 'name', 'images'] }] },
-          { model: Address, as: 'shippingAddress' }
+          { model: Address, as: 'shippingAddress' },
+          { model: Prescription, as: 'prescription' }
         ],
         order: [['createdAt', 'DESC']],
         limit,

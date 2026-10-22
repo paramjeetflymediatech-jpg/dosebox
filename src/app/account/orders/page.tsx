@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Eye, Download, CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Eye, Download, CheckCircle2, XCircle, Loader2, AlertCircle, FileText, ExternalLink, ZoomIn } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
@@ -33,6 +33,12 @@ interface Order {
   refundMethod?: string;
   refundStatus?: string;
   trackingId?: string;
+  prescription?: {
+    id: number;
+    fileUrl: string;
+    status: string;
+    pharmacistNotes?: string;
+  };
 }
 
 const getRichTimeline = (order: Order, timeline: any[]) => {
@@ -84,6 +90,30 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [orderPage, setOrderPage] = useState(1);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+  const [previewRxUrl, setPreviewRxUrl] = useState<string | null>(null);
+
+  const getSafeFileUrl = (url: any) => {
+    let finalUrl = '';
+    if (!url) return '';
+    if (typeof url === 'string') {
+      try {
+        const parsed = JSON.parse(url);
+        if (Array.isArray(parsed) && parsed.length > 0) finalUrl = parsed[0];
+        else finalUrl = url;
+      } catch(e) {
+        finalUrl = url;
+      }
+    } else if (Array.isArray(url) && url.length > 0) {
+      finalUrl = url[0];
+    } else {
+      finalUrl = url;
+    }
+    
+    if (typeof finalUrl === 'string') {
+      return finalUrl.replace(/^\/uploads\//, '/api/file/');
+    }
+    return finalUrl;
+  };
 
   const handleOrderAgain = (order: Order) => {
     if (!order.items || order.items.length === 0) {
@@ -254,11 +284,26 @@ export default function OrdersPage() {
               <div key={order.id} className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm transition-all">
                 <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/50">
                   <div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 flex-wrap">
                       <span className="font-extrabold text-slate-900 text-sm">Order #OD-{order.id}</span>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                         {order.status}
                       </span>
+                      {order.prescription && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = getSafeFileUrl(order.prescription?.fileUrl);
+                            if (url) setPreviewRxUrl(url);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors cursor-pointer"
+                          title="Click to view your uploaded prescription"
+                        >
+                          <FileText className="w-3 h-3 text-teal-600" />
+                          <span>Rx Attached</span>
+                        </button>
+                      )}
                     </div>
                     <p className="text-xs text-slate-400 mt-1">Placed on {new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
@@ -310,6 +355,85 @@ export default function OrdersPage() {
                 {isExpanded && (
                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100">
                     <div className="space-y-4">
+                      {order.prescription && (
+                        <div className="bg-teal-50/70 p-4 rounded-xl border border-teal-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="font-extrabold text-teal-900 text-xs uppercase tracking-wider flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-teal-600" /> Attached Doctor's Prescription
+                            </h5>
+                            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                              order.prescription.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              order.prescription.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}>
+                              Rx #{order.prescription.id} • {order.prescription.status || 'Under Review'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-teal-100">
+                            <div 
+                              onClick={() => {
+                                const url = getSafeFileUrl(order.prescription?.fileUrl);
+                                if (url) setPreviewRxUrl(url);
+                              }}
+                              className="w-16 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer hover:border-teal-500 transition-all flex items-center justify-center relative group"
+                              title="Click to preview prescription"
+                            >
+                              {(() => {
+                                const rxUrl = getSafeFileUrl(order.prescription.fileUrl);
+                                if (!rxUrl) return <span className="text-[10px] text-slate-400">No Image</span>;
+                                if (rxUrl.toLowerCase().endsWith('.pdf')) {
+                                  return (
+                                    <div className="text-center p-1">
+                                      <FileText className="w-6 h-6 text-rose-500 mx-auto" />
+                                      <span className="text-[9px] font-bold text-slate-600 uppercase">PDF</span>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <>
+                                    <img src={rxUrl} alt="Prescription" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                    <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                      <ZoomIn className="w-4 h-4" />
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-800">Prescription for Order #OD-{order.id}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">Uploaded during checkout for medical verification.</p>
+                              {order.prescription.pharmacistNotes && (
+                                <p className="text-xs text-amber-800 bg-amber-50 p-2 rounded mt-1.5 border border-amber-200">
+                                  <strong>Pharmacist Note:</strong> {order.prescription.pharmacistNotes}
+                                </p>
+                              )}
+                              <div className="flex gap-2 mt-2">
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    const url = getSafeFileUrl(order.prescription?.fileUrl);
+                                    if (url) setPreviewRxUrl(url);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <Eye className="w-3 h-3" /> View Prescription
+                                </button>
+                                <a 
+                                  href={getSafeFileUrl(order.prescription.fileUrl)} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                  <ExternalLink className="w-3 h-3" /> Full Size
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <h4 className="font-bold text-slate-950 text-xs uppercase tracking-wider">Ordered Items</h4>
                       <div className="space-y-3">
                         {order.items?.map((item) => {
@@ -626,6 +750,47 @@ export default function OrdersPage() {
               >
                 {isSubmittingCancel ? 'Processing...' : isClaimMode ? 'Claim Refund' : 'Confirm Cancel'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Doctor's Prescription Lightbox Modal */}
+      {previewRxUrl && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <FileText className="w-5 h-5 text-teal-400" />
+                <h4 className="font-bold text-sm tracking-wide">Your Uploaded Doctor's Prescription</h4>
+              </div>
+              <div className="flex items-center gap-3">
+                <a 
+                  href={previewRxUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-xs font-semibold px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1.5 transition-colors border border-slate-700"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Original
+                </a>
+                <button 
+                  onClick={() => setPreviewRxUrl(null)} 
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-slate-100 p-4 overflow-auto flex items-center justify-center min-h-[400px]">
+              {previewRxUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={previewRxUrl} className="w-full h-[75vh] rounded-xl border border-slate-200 shadow-sm" />
+              ) : (
+                <img 
+                  src={previewRxUrl} 
+                  alt="Prescription Full Preview" 
+                  className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-md border border-slate-200" 
+                />
+              )}
             </div>
           </div>
         </div>
