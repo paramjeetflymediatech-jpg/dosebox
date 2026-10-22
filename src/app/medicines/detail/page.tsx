@@ -45,6 +45,7 @@ interface MedicineDetails {
   contentStatus?: string;
   verifierName?: string;
   verifierRegNo?: string;
+  isColdChain?: boolean;
 }
 
 function MedicineDetailsContent() {
@@ -91,7 +92,13 @@ function MedicineDetailsContent() {
         price: Number(medicine.price),
         discountPrice: medicine.discountPrice ? Number(medicine.discountPrice) : undefined,
         prescriptionRequired: medicine.prescriptionRequired,
-        image: imagesArr[0]
+        image: imagesArr[0],
+        manufacturer: medicine.manufacturer || medicine.brand?.name,
+        brandName: medicine.brand?.name,
+        genericName: medicine.genericName,
+        composition: medicine.composition || medicine.genericName,
+        packSize: medicine.packSize,
+        isColdChain: medicine.isColdChain || medicine.storageInstructions?.toLowerCase().includes('2-8') || medicine.storageInstructions?.toLowerCase().includes('cold')
       });
     }
     showAddedToCart(medicine.name, () => router.push('/cart'));

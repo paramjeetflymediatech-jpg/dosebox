@@ -1,3 +1,12 @@
+# Release Notes - Version 1.0.3 (Build 17)
+
+## What's New
+- **Order Prescription Inspection**: Customers and Admins can now view attached doctor prescriptions directly inside their order details with tap-to-zoom full-screen preview.
+- **Dynamic Coupons & Checkout Enhancements**: Real-time coupon validation, active discounts, and smooth payment flow.
+- **Performance & UI Improvements**: Smoother loading across health categories, cart, and order tracking.
+
+---
+
 # Release Notes - Version 1.1
 
 ## What's New
@@ -9,3 +18,4 @@
 ## Under the Hood
 - Switched application environment to production.
 - Upgraded the API endpoint for improved stability and live data access.
+

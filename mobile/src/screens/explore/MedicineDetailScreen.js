@@ -97,6 +97,11 @@ function SubstituteCard({ item, navigation, addToCart }) {
             discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
             prescriptionRequired: item.prescriptionRequired,
             image: subImage,
+            packSize: item.packSize || item.dosageForm || null,
+            brandName: item.brand?.name || item.manufacturer || null,
+            dosageForm: item.dosageForm || null,
+            molecule: item.molecule || item.composition || item.genericName || null,
+            coldChain: Boolean(item.coldChain || item.isColdChain),
             qty: 1
           });
         }}
@@ -110,7 +115,7 @@ function SubstituteCard({ item, navigation, addToCart }) {
 
 export default function MedicineDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { addToCart, cart, updateQty, totalQty } = useCart();
+  const { addToCart, removeFromCart, items, totalQty } = useCart();
   const { width } = useWindowDimensions();
   const initialMedicine = route?.params?.medicine;
 
@@ -211,6 +216,9 @@ export default function MedicineDetailScreen({ navigation, route }) {
     }
   };
 
+  const cartItem = items?.find((i) => i.id === medicine?.id);
+  const inCartQty = cartItem ? cartItem.qty : 0;
+
   const handleAddToCart = () => {
     addToCart({
       id: medicine.id,
@@ -219,8 +227,54 @@ export default function MedicineDetailScreen({ navigation, route }) {
       discountPrice: discPrice,
       prescriptionRequired: medicine.prescriptionRequired,
       image: allImages[0] || null,
-      qty: qty
+      packSize: medicine.packSize || null,
+      brandName: medicine.brand?.name || medicine.manufacturer || null,
+      dosageForm: medicine.dosageForm || null,
+      molecule: medicine.molecule || medicine.composition || medicine.genericName || null,
+      coldChain: Boolean(medicine.coldChain || medicine.isColdChain),
+      qty: 1
     });
+  };
+
+  const handleIncreaseQty = () => {
+    addToCart({
+      id: medicine.id,
+      name: medicine.name,
+      price: price,
+      discountPrice: discPrice,
+      prescriptionRequired: medicine.prescriptionRequired,
+      image: allImages[0] || null,
+      packSize: medicine.packSize || null,
+      brandName: medicine.brand?.name || medicine.manufacturer || null,
+      dosageForm: medicine.dosageForm || null,
+      molecule: medicine.molecule || medicine.composition || medicine.genericName || null,
+      coldChain: Boolean(medicine.coldChain || medicine.isColdChain),
+      qty: 1
+    }, true);
+  };
+
+  const handleDecreaseQty = () => {
+    removeFromCart(medicine.id);
+  };
+
+  const handleBuyNow = () => {
+    if (inCartQty === 0) {
+      addToCart({
+        id: medicine.id,
+        name: medicine.name,
+        price: price,
+        discountPrice: discPrice,
+        prescriptionRequired: medicine.prescriptionRequired,
+        image: allImages[0] || null,
+        packSize: medicine.packSize || null,
+        brandName: medicine.brand?.name || medicine.manufacturer || null,
+        dosageForm: medicine.dosageForm || null,
+        molecule: medicine.molecule || medicine.composition || medicine.genericName || null,
+        coldChain: Boolean(medicine.coldChain || medicine.isColdChain),
+        qty: 1
+      }, true);
+    }
+    navigation.navigate('CartCheckout');
   };
 
   return (
@@ -384,13 +438,13 @@ export default function MedicineDetailScreen({ navigation, route }) {
           )}
           <Text style={styles.packSize}>{medicine.packSize || 'Strip of 10 Tablets'}</Text>
           
-          <View style={styles.ratingRow}>
+          {/* <View style={styles.ratingRow}>
             <View style={styles.ratingBadge}>
               <Ionicons name="star" size={12} color={C.white} />
               <Text style={styles.ratingVal}>4.8</Text>
             </View>
             <Text style={styles.ratingCount}>42 Ratings & 12 Reviews</Text>
-          </View>
+          </View> */}
           
           <View style={styles.priceRow}>
             <View style={{ flex: 1 }}>
@@ -398,7 +452,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
                 <Text style={styles.oldPrice}>MRP ₹{price}</Text>
                 {savings > 0 && (
                   <View style={styles.saveBadgePill}>
-                    <Text style={styles.saveTextPill}>Save ₹{price - finalPrice} ({savings}%)</Text>
+                    <Text style={styles.saveTextPill}>Save ₹{parseFloat((price - finalPrice).toFixed(2))} ({savings}%)</Text>
                   </View>
                 )}
               </View>
@@ -480,10 +534,10 @@ export default function MedicineDetailScreen({ navigation, route }) {
         </View>
 
         {/* ── ABOUT PRODUCT ── */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>About Product</Text>
           <Text style={styles.descText}>{medicine.description || 'No description available for this product.'}</Text>
-        </View>
+        </View> */}
 
         {/* ── COMPOSITION & DETAILS ── */}
         <View style={styles.section}>
@@ -554,24 +608,49 @@ export default function MedicineDetailScreen({ navigation, route }) {
 
       {/* ── BOTTOM STICKY BAR ── */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, rv(16)) }]}>
-        <View style={styles.qtyWrap}>
+        {inCartQty > 0 ? (
+          <View style={styles.qtyStepperWrap}>
+            <TouchableOpacity 
+              style={styles.qtyStepperBtn} 
+              onPress={handleDecreaseQty}
+              activeOpacity={0.7}
+              accessibilityLabel="Decrease quantity"
+            >
+              <Ionicons name="remove" size={18} color={C.primary} />
+            </TouchableOpacity>
+            <View style={styles.qtyStepperTextWrap}>
+              <Text style={styles.qtyStepperText}>{inCartQty}</Text>
+              <Text style={styles.qtyStepperSubText}>in cart</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.qtyStepperBtn} 
+              onPress={handleIncreaseQty}
+              activeOpacity={0.7}
+              accessibilityLabel="Increase quantity"
+            >
+              <Ionicons name="add" size={18} color={C.primary} />
+            </TouchableOpacity>
+          </View>
+        ) : (
           <TouchableOpacity 
-            style={styles.qtyBtn} 
-            onPress={() => setQty(Math.max(1, qty - 1))}
+            style={styles.addCartBtn} 
+            onPress={handleAddToCart} 
+            activeOpacity={0.8}
+            accessibilityLabel="Add to Cart"
           >
-            <Ionicons name="remove" size={20} color={C.text} />
+            <Ionicons name="cart-outline" size={18} color={C.primary} style={{ marginRight: rs(6) }} />
+            <Text style={styles.addCartBtnText}>Add to Cart</Text>
           </TouchableOpacity>
-          <Text style={styles.qtyText}>{qty}</Text>
-          <TouchableOpacity 
-            style={styles.qtyBtn} 
-            onPress={() => setQty(qty + 1)}
-          >
-            <Ionicons name="add" size={20} color={C.text} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={styles.addCartBtn} onPress={handleAddToCart} activeOpacity={0.8}>
-          <Text style={styles.addCartBtnText}>Add to Cart</Text>
-          <Text style={styles.addCartTotal}>₹{finalPrice * qty}</Text>
+        )}
+
+        <TouchableOpacity 
+          style={styles.buyNowBtn} 
+          onPress={handleBuyNow} 
+          activeOpacity={0.85}
+          accessibilityLabel="Buy Now"
+        >
+          <Ionicons name="flash" size={17} color={C.white} style={{ marginRight: rs(4) }} />
+          <Text style={styles.buyNowBtnText}>Buy Now</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -700,14 +779,91 @@ const styles = StyleSheet.create({
   detailLabel: { fontSize: rm(14), color: C.sub, flex: 1 },
   detailValue: { fontSize: rm(14), color: C.text, fontWeight: '500', flex: 2, textAlign: 'right' },
   
-  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.white, flexDirection: 'row', paddingHorizontal: spacing.md, paddingTop: rv(12), borderTopWidth: 1, borderTopColor: C.border, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 10 },
-  qtyWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.border, borderRadius: radius.md, marginRight: rs(16), height: rv(48) },
-  qtyBtn: { width: rs(40), height: '100%', alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontSize: rm(16), fontWeight: '700', color: C.text, minWidth: rs(30), textAlign: 'center' },
-  
-  addCartBtn: { flex: 1, backgroundColor: C.primary, borderRadius: radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: rs(20), height: rv(48) },
-  addCartBtnText: { fontSize: rm(16), fontWeight: '700', color: C.white },
-  addCartTotal: { fontSize: rm(16), fontWeight: '800', color: C.white },
+  bottomBar: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    backgroundColor: C.white, 
+    flexDirection: 'row', 
+    alignItems: 'center',
+    paddingHorizontal: spacing.md, 
+    paddingTop: rv(12), 
+    gap: rs(10),
+    borderTopWidth: 1, 
+    borderTopColor: C.border, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: -4 }, 
+    shadowOpacity: 0.06, 
+    shadowRadius: 10, 
+    elevation: 10 
+  },
+  addCartBtn: { 
+    flex: 1, 
+    backgroundColor: '#EAF4F2', 
+    borderWidth: 1.5,
+    borderColor: C.primary,
+    borderRadius: radius.md, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    height: rv(48) 
+  },
+  addCartBtnText: { fontSize: rm(15), fontWeight: '700', color: C.primary },
+
+  qtyStepperWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: C.primary,
+    borderRadius: radius.md,
+    backgroundColor: '#F0FDFA',
+    height: rv(48),
+    paddingHorizontal: rs(6),
+  },
+  qtyStepperBtn: {
+    width: rs(36),
+    height: rv(36),
+    borderRadius: radius.sm,
+    backgroundColor: C.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+  },
+  qtyStepperTextWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyStepperText: {
+    fontSize: rm(15),
+    fontWeight: '800',
+    color: C.primary,
+    lineHeight: rv(17),
+  },
+  qtyStepperSubText: {
+    fontSize: rm(9),
+    fontWeight: '600',
+    color: C.sub,
+  },
+
+  buyNowBtn: { 
+    flex: 1, 
+    backgroundColor: C.primary, 
+    borderRadius: radius.md, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    height: rv(48),
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buyNowBtnText: { fontSize: rm(15), fontWeight: '800', color: C.white },
 
   // Substitutes Section Styles
   substitutesSection: { backgroundColor: C.white, paddingVertical: spacing.md, paddingLeft: spacing.md, marginBottom: rv(8), borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.border },

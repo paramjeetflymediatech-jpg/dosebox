@@ -10,6 +10,7 @@ import { navigate } from '../services/NavigationService';
 
 const CART_KEY = '@dosebox_cart';
 const RX_ID_KEY = '@dosebox_rx_id';
+const RX_URL_KEY = '@dosebox_rx_url';
 const RX_STATUS_KEY = '@dosebox_rx_status';
 
 const CartContext = createContext(null);
@@ -68,6 +69,7 @@ export function CartProvider({ children }) {
 
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [attachedPrescriptionId, setAttachedPrescriptionId] = React.useState(null);
+  const [attachedPrescriptionUrl, setAttachedPrescriptionUrl] = React.useState(null);
   const [attachedPrescriptionStatus, setAttachedPrescriptionStatus] = React.useState(null);
 
   // Load from storage on mount
@@ -75,14 +77,16 @@ export function CartProvider({ children }) {
     Promise.all([
       AsyncStorage.getItem(CART_KEY),
       AsyncStorage.getItem(RX_ID_KEY),
+      AsyncStorage.getItem(RX_URL_KEY),
       AsyncStorage.getItem(RX_STATUS_KEY)
-    ]).then(([raw, rxId, rxStatus]) => {
+    ]).then(([raw, rxId, rxUrl, rxStatus]) => {
       if (raw) {
         try {
           dispatch({ type: 'LOAD', payload: JSON.parse(raw) });
         } catch {}
       }
       if (rxId) setAttachedPrescriptionId(rxId);
+      if (rxUrl) setAttachedPrescriptionUrl(rxUrl);
       if (rxStatus) setAttachedPrescriptionStatus(rxStatus);
       setIsLoaded(true);
     });
@@ -92,13 +96,16 @@ export function CartProvider({ children }) {
   useEffect(() => {
     if (isLoaded) {
       AsyncStorage.setItem(CART_KEY, JSON.stringify(state.items));
-      if (attachedPrescriptionId) AsyncStorage.setItem(RX_ID_KEY, attachedPrescriptionId);
+      if (attachedPrescriptionId) AsyncStorage.setItem(RX_ID_KEY, String(attachedPrescriptionId));
       else AsyncStorage.removeItem(RX_ID_KEY);
+
+      if (attachedPrescriptionUrl) AsyncStorage.setItem(RX_URL_KEY, attachedPrescriptionUrl);
+      else AsyncStorage.removeItem(RX_URL_KEY);
       
       if (attachedPrescriptionStatus) AsyncStorage.setItem(RX_STATUS_KEY, attachedPrescriptionStatus);
       else AsyncStorage.removeItem(RX_STATUS_KEY);
     }
-  }, [state.items, attachedPrescriptionId, attachedPrescriptionStatus, isLoaded]);
+  }, [state.items, attachedPrescriptionId, attachedPrescriptionUrl, attachedPrescriptionStatus, isLoaded]);
 
   const totalQty = state.items.reduce((sum, i) => sum + i.qty, 0);
   const totalPrice = state.items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -107,6 +114,7 @@ export function CartProvider({ children }) {
     if (item.prescriptionRequired && attachedPrescriptionId && !suppressPopup) {
       // Loophole prevention: If user adds a new Rx item while holding an approved cart, invalidate the approval
       setAttachedPrescriptionId(null);
+      setAttachedPrescriptionUrl(null);
       setAttachedPrescriptionStatus(null);
     }
     dispatch({ type: 'ADD', item });
@@ -133,12 +141,22 @@ export function CartProvider({ children }) {
   };
   const removeFromCart = (id) => dispatch({ type: 'REMOVE', id });
   const deleteFromCart = (id) => dispatch({ type: 'DELETE', id });
-  const clearCart = () => dispatch({ type: 'CLEAR' });
-  const setVerifiedCart = (items, rxId) => {
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR' });
+    setAttachedPrescriptionId(null);
+    setAttachedPrescriptionUrl(null);
+    setAttachedPrescriptionStatus(null);
+  };
+  const setVerifiedCart = (items, rxId, rxUrl = null) => {
     dispatch({ type: 'SET_VERIFIED_CART', payload: items });
     setAttachedPrescriptionId(String(rxId));
+    if (rxUrl) setAttachedPrescriptionUrl(rxUrl);
     setAttachedPrescriptionStatus('Approved');
   };
+
+  const requiresPrescription = state.items.some(
+    (i) => i.prescriptionRequired === true || i.isPrescriptionRequired === true || i.requiresPrescription === true
+  );
 
   return (
     <CartContext.Provider
@@ -146,8 +164,13 @@ export function CartProvider({ children }) {
         items: state.items,
         totalQty,
         totalPrice,
+        requiresPrescription,
         attachedPrescriptionId,
+        setAttachedPrescriptionId,
+        attachedPrescriptionUrl,
+        setAttachedPrescriptionUrl,
         attachedPrescriptionStatus,
+        setAttachedPrescriptionStatus,
         addToCart,
         removeFromCart,
         deleteFromCart,

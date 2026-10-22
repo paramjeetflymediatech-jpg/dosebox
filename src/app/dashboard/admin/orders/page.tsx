@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Eye, Edit2, Search, XCircle, Package, Truck, CheckCircle, CreditCard } from 'lucide-react';
+import { ShoppingBag, Eye, Edit2, Search, XCircle, Package, Truck, CheckCircle, CreditCard, FileText, ExternalLink, ZoomIn } from 'lucide-react';
 import api from '../../../../lib/api';
 import { formatCurrency } from '@/lib/utils';
 import Pagination from '../../../../components/admin/Pagination';
@@ -28,6 +28,30 @@ export default function AdminOrdersPage() {
   
   // View Modal State
   const [viewOrder, setViewOrder] = useState<any>(null);
+  const [previewRxUrl, setPreviewRxUrl] = useState<string | null>(null);
+
+  const getSafeFileUrl = (url: any) => {
+    let finalUrl = '';
+    if (!url) return '';
+    if (typeof url === 'string') {
+      try {
+        const parsed = JSON.parse(url);
+        if (Array.isArray(parsed) && parsed.length > 0) finalUrl = parsed[0];
+        else finalUrl = url;
+      } catch(e) {
+        finalUrl = url;
+      }
+    } else if (Array.isArray(url) && url.length > 0) {
+      finalUrl = url[0];
+    } else {
+      finalUrl = url;
+    }
+    
+    if (typeof finalUrl === 'string') {
+      return finalUrl.replace(/^\/uploads\//, '/api/file/');
+    }
+    return finalUrl;
+  };
 
   const fetchOrders = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -275,6 +299,7 @@ export default function AdminOrdersPage() {
               <tr className="bg-slate-50 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-bold">
                 <th className="p-4">Order ID</th>
                 <th className="p-4">Customer</th>
+                <th className="p-4">Prescription</th>
                 <th className="p-4">Date</th>
                 <th className="p-4">Total Amount</th>
                 <th className="p-4">Order Status</th>
@@ -285,11 +310,11 @@ export default function AdminOrdersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">Loading orders...</td>
+                  <td colSpan={8} className="p-8 text-center text-slate-500 font-medium">Loading orders...</td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No orders found matching criteria.</td>
+                  <td colSpan={8} className="p-8 text-center text-slate-500 font-medium">No orders found matching criteria.</td>
                 </tr>
               ) : (
                 filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => (
@@ -298,6 +323,26 @@ export default function AdminOrdersPage() {
                     <td className="p-4">
                       <p className="font-bold text-slate-800 text-sm">{order.user?.name}</p>
                       <p className="text-xs text-slate-500">{order.user?.phone || order.user?.email}</p>
+                    </td>
+                    <td className="p-4">
+                      {order.prescription ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = getSafeFileUrl(order.prescription?.fileUrl);
+                            if (url) setPreviewRxUrl(url);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 hover:border-teal-300 transition-all cursor-pointer shadow-xs group"
+                          title="Click to preview uploaded prescription"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-teal-600 group-hover:scale-110 transition-transform" />
+                          <span>Rx Attached</span>
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-slate-400 bg-slate-50 border border-slate-200/60">
+                          OTC (No Rx)
+                        </span>
+                      )}
                     </td>
                     <td className="p-4 text-sm text-slate-600 font-medium">{new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                     <td className="p-4 font-extrabold text-slate-900">₹{formatCurrency(Number(order.finalAmount))}</td>
@@ -420,6 +465,104 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Uploaded Doctor's Prescription Section */}
+              {viewOrder.prescription ? (
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-brand-600" /> Uploaded Doctor's Prescription
+                    </h4>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                      viewOrder.prescription.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      viewOrder.prescription.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      Rx #{viewOrder.prescription.id} • {viewOrder.prescription.status || 'Pending Review'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 bg-white p-4 rounded-xl border border-slate-200/80">
+                    <div 
+                      onClick={() => {
+                        const url = getSafeFileUrl(viewOrder.prescription.fileUrl);
+                        if (url) setPreviewRxUrl(url);
+                      }}
+                      className="group relative w-32 h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 flex items-center justify-center cursor-pointer shadow-xs hover:border-brand-500 transition-all"
+                      title="Click to view full prescription"
+                    >
+                      {(() => {
+                        const rxUrl = getSafeFileUrl(viewOrder.prescription.fileUrl);
+                        if (!rxUrl) return <span className="text-xs text-slate-400 font-medium">No document</span>;
+                        if (rxUrl.toLowerCase().endsWith('.pdf')) {
+                          return (
+                            <div className="text-center p-3">
+                              <FileText className="w-10 h-10 text-rose-500 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+                              <span className="text-[11px] font-bold text-slate-600 uppercase">PDF Document</span>
+                            </div>
+                          );
+                        }
+                        return (
+                          <>
+                            <img 
+                              src={rxUrl} 
+                              alt="Doctor's Prescription" 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                            />
+                            <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <ZoomIn className="w-6 h-6" />
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="flex-1 space-y-3 text-center sm:text-left w-full">
+                      <div>
+                        <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Uploaded By Customer</span>
+                        <p className="text-sm font-bold text-slate-900">{viewOrder.user?.name || 'Customer'}</p>
+                        <p className="text-xs text-slate-500">{viewOrder.user?.phone || viewOrder.user?.email}</p>
+                      </div>
+
+                      {viewOrder.prescription.pharmacistNotes && (
+                        <div className="bg-amber-50/80 p-3 rounded-xl border border-amber-200/80 text-xs text-amber-900">
+                          <strong className="font-bold">Pharmacist / Medico Notes: </strong>
+                          {viewOrder.prescription.pharmacistNotes}
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 flex-wrap pt-1 justify-center sm:justify-start">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const url = getSafeFileUrl(viewOrder.prescription.fileUrl);
+                            if (url) setPreviewRxUrl(url);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View / Zoom Prescription
+                        </button>
+                        <a 
+                          href={getSafeFileUrl(viewOrder.prescription.fileUrl)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" /> Open in New Tab
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4 text-slate-400" />
+                    <span>Prescription Status: <strong className="text-slate-800">OTC Order</strong> (No Doctor's Prescription Required)</span>
+                  </div>
+                  <span className="px-2.5 py-1 bg-slate-200/70 text-slate-600 rounded-md text-[11px] font-bold">OTC</span>
+                </div>
+              )}
 
               <div>
                 <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2"><Package className="w-4 h-4 text-brand-500" /> Order Items</h4>
@@ -629,6 +772,47 @@ export default function AdminOrdersPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Doctor's Prescription Lightbox Modal */}
+      {previewRxUrl && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <FileText className="w-5 h-5 text-teal-400" />
+                <h4 className="font-bold text-sm tracking-wide">Doctor's Prescription Preview</h4>
+              </div>
+              <div className="flex items-center gap-3">
+                <a 
+                  href={previewRxUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-xs font-semibold px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1.5 transition-colors border border-slate-700"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Original
+                </a>
+                <button 
+                  onClick={() => setPreviewRxUrl(null)} 
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-slate-100 p-4 overflow-auto flex items-center justify-center min-h-[400px]">
+              {previewRxUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={previewRxUrl} className="w-full h-[75vh] rounded-xl border border-slate-200 shadow-sm" />
+              ) : (
+                <img 
+                  src={previewRxUrl} 
+                  alt="Prescription Full Preview" 
+                  className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-md border border-slate-200" 
+                />
+              )}
+            </div>
           </div>
         </div>
       )}

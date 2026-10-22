@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider, useCart } from '../context/CartContext';
 import {
-  ShoppingBag, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, ChevronLeft, ChevronDown, Tag, ArrowRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus, Sparkles
+  ShoppingCart, Search, User, LogOut, LayoutDashboard, Stethoscope, BookOpen, Clipboard, LogIn, X, ChevronRight, ChevronLeft, ChevronDown, Tag, ArrowRight, UserPlus, Upload, Shield, ThermometerSnowflake, BadgeCheck, CheckSquare, Menu, Eye, EyeOff, Plus, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -562,8 +562,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2 sm:gap-4 pl-2 sm:pl-4 border-l border-slate-200">
 
 
-                <Link href="/cart" className="relative p-2 text-slate-600 hover:text-brand-600 transition-colors">
-                  <ShoppingBag className="w-6 h-6" />
+                <Link href="/cart" className="relative p-2 text-slate-600 hover:text-brand-600 transition-colors" title="Cart">
+                  <ShoppingCart className="w-6 h-6" />
                   {cartItems.length > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
                       {cartItems.reduce((sum, item) => sum + item.quantity, 0)}

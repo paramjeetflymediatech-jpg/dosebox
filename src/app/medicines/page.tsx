@@ -187,6 +187,12 @@ function MedicinesCatalogContent() {
       discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
       prescriptionRequired: med.prescriptionRequired,
       image: imagesArr[0],
+      manufacturer: (med as any).manufacturer || med.brand?.name,
+      brandName: med.brand?.name,
+      genericName: med.genericName,
+      composition: med.composition || med.genericName,
+      packSize: med.packSize,
+      isColdChain: med.isColdChain || med.storageInstructions?.toLowerCase().includes('2-8') || med.storageInstructions?.toLowerCase().includes('cold'),
       quantity: customQty || 1
     });
 
