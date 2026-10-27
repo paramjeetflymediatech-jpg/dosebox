@@ -85,22 +85,22 @@ function MedicineDetailsContent() {
       if (medicine.images) imagesArr = JSON.parse(medicine.images);
     } catch (e) { }
 
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: medicine.id,
-        name: medicine.name,
-        price: Number(medicine.price),
-        discountPrice: medicine.discountPrice ? Number(medicine.discountPrice) : undefined,
-        prescriptionRequired: medicine.prescriptionRequired,
-        image: imagesArr[0],
-        manufacturer: medicine.manufacturer || medicine.brand?.name,
-        brandName: medicine.brand?.name,
-        genericName: medicine.genericName,
-        composition: medicine.composition || medicine.genericName,
-        packSize: medicine.packSize,
-        isColdChain: medicine.isColdChain || medicine.storageInstructions?.toLowerCase().includes('2-8') || medicine.storageInstructions?.toLowerCase().includes('cold')
-      });
-    }
+    addToCart({
+      id: medicine.id,
+      name: medicine.name,
+      price: Number(medicine.price),
+      discountPrice: medicine.discountPrice ? Number(medicine.discountPrice) : undefined,
+      prescriptionRequired: medicine.prescriptionRequired,
+      image: imagesArr[0],
+      manufacturer: medicine.manufacturer || medicine.brand?.name,
+      brandName: medicine.brand?.name,
+      genericName: medicine.genericName,
+      composition: medicine.composition || medicine.genericName,
+      packSize: medicine.packSize,
+      isColdChain: medicine.isColdChain || medicine.storageInstructions?.toLowerCase().includes('2-8') || medicine.storageInstructions?.toLowerCase().includes('cold'),
+      quantity: quantity,
+      papOffer: medicine.papOffer || undefined
+    });
     showAddedToCart(medicine.name, () => router.push('/cart'));
   };
 

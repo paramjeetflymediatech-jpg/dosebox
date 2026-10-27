@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useWindowDimensions, FlatList, ActivityIndicator, Alert, Modal, StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCart } from '../../context/CartContext';
@@ -133,6 +133,38 @@ export default function MedicineDetailScreen({ navigation, route }) {
   const [subTotalItems, setSubTotalItems] = useState(0);
   const scrollViewRef = useRef(null);
 
+  // Zoom / Lightbox modal state
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [zoomScale, setZoomScale] = useState(1);
+  const lastTapRef = useRef(0);
+
+  const openImageViewer = (idx = activeImageIndex) => {
+    setViewerIndex(idx);
+    setZoomScale(1);
+    setIsImageViewerOpen(true);
+  };
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      setZoomScale((prev) => (prev > 1.2 ? 1 : 2.5));
+    }
+    lastTapRef.current = now;
+  };
+
+  const handleZoomIn = () => {
+    setZoomScale((prev) => Math.min(Number((prev + 0.5).toFixed(1)), 4));
+  };
+
+  const handleZoomOut = () => {
+    setZoomScale((prev) => Math.max(Number((prev - 0.5).toFixed(1)), 1));
+  };
+
+  const handleResetZoom = () => {
+    setZoomScale(1);
+  };
+
   const loadSubstitutes = (pageNum = 1) => {
     if (!initialMedicine?.id) return;
     setLoadingSubstitutes(true);
@@ -180,6 +212,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
       setLoadingDetails(false);
       setLoadingSubstitutes(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMedicine?.id]);
 
   if (!medicine) {
@@ -232,6 +265,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
       dosageForm: medicine.dosageForm || null,
       molecule: medicine.molecule || medicine.composition || medicine.genericName || null,
       coldChain: Boolean(medicine.coldChain || medicine.isColdChain),
+      papOffer: medicine.papOffer || null,
       qty: 1
     });
   };
@@ -249,6 +283,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
       dosageForm: medicine.dosageForm || null,
       molecule: medicine.molecule || medicine.composition || medicine.genericName || null,
       coldChain: Boolean(medicine.coldChain || medicine.isColdChain),
+      papOffer: medicine.papOffer || null,
       qty: 1
     }, true);
   };
@@ -271,6 +306,7 @@ export default function MedicineDetailScreen({ navigation, route }) {
         dosageForm: medicine.dosageForm || null,
         molecule: medicine.molecule || medicine.composition || medicine.genericName || null,
         coldChain: Boolean(medicine.coldChain || medicine.isColdChain),
+        papOffer: medicine.papOffer || null,
         qty: 1
       }, true);
     }
@@ -332,12 +368,26 @@ export default function MedicineDetailScreen({ navigation, route }) {
                 keyExtractor={(item, index) => `${item}-${index}`}
                 getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
                 onMomentumScrollEnd={onCarouselScroll}
-                renderItem={({ item }) => (
-                  <View style={[styles.imageSlide, { width }]}>
+                renderItem={({ item, index }) => (
+                  <TouchableOpacity 
+                    style={[styles.imageSlide, { width }]} 
+                    activeOpacity={0.92}
+                    onPress={() => openImageViewer(index)}
+                  >
                     <Image source={{ uri: item }} style={styles.image} resizeMode="contain" />
-                  </View>
+                  </TouchableOpacity>
                 )}
               />
+
+              {/* Tap to Zoom Badge */}
+              <TouchableOpacity
+                style={styles.tapToZoomBadge}
+                activeOpacity={0.8}
+                onPress={() => openImageViewer(activeImageIndex)}
+              >
+                <Ionicons name="expand-outline" size={13} color="#FFFFFF" style={{ marginRight: rs(4) }} />
+                <Text style={styles.tapToZoomText}>Tap to zoom</Text>
+              </TouchableOpacity>
 
               {/* Counter Badge */}
               {allImages.length > 1 && (
@@ -460,6 +510,20 @@ export default function MedicineDetailScreen({ navigation, route }) {
               <Text style={styles.gstText}>Inclusive of all taxes (GST included)</Text>
             </View>
           </View>
+
+          {/* Dedicated PAP Offer Highlight Card */}
+          {medicine.papOffer ? (
+            <View style={styles.papDetailBanner}>
+              <View style={styles.papDetailIconWrap}>
+                <Ionicons name="gift" size={rs(18)} color="#7E22CE" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.papDetailTitle}>Patient Assistance Program (PAP)</Text>
+                <Text style={styles.papDetailDesc}>{medicine.papOffer}</Text>
+                <Text style={styles.papDetailHint}>Complimentary unit(s) automatically added when order qualifies.</Text>
+              </View>
+            </View>
+          ) : null}
         </View>
 
         {/* ── EQUIVALENT SUBSTITUTES & SAVINGS SECTION ── */}
@@ -653,6 +717,141 @@ export default function MedicineDetailScreen({ navigation, route }) {
           <Text style={styles.buyNowBtnText}>Buy Now</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ── FULL-SCREEN IMAGE VIEWER & ZOOM MODAL ── */}
+      <Modal
+        visible={isImageViewerOpen}
+        transparent={false}
+        animationType="fade"
+        onRequestClose={() => setIsImageViewerOpen(false)}
+        statusBarTranslucent
+      >
+        <SafeAreaView style={styles.viewerModalContainer} edges={['top', 'bottom']}>
+          <StatusBar barStyle="light-content" backgroundColor="#0B131E" />
+
+          {/* Viewer Header */}
+          <View style={styles.viewerHeader}>
+            <TouchableOpacity
+              style={styles.viewerCloseBtn}
+              onPress={() => setIsImageViewerOpen(false)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Close image viewer"
+            >
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <View style={styles.viewerTitleWrap}>
+              <Text style={styles.viewerTitle} numberOfLines={1}>
+                {medicine.name}
+              </Text>
+              {allImages.length > 0 && (
+                <Text style={styles.viewerCounter}>
+                  {viewerIndex + 1} of {allImages.length}
+                </Text>
+              )}
+            </View>
+
+            {/* Zoom Controls */}
+            <View style={styles.viewerZoomControls}>
+              <TouchableOpacity
+                style={[styles.zoomControlBtn, zoomScale <= 1 && styles.zoomControlBtnDisabled]}
+                onPress={handleZoomOut}
+                disabled={zoomScale <= 1}
+                accessibilityLabel="Zoom out"
+              >
+                <Ionicons name="remove" size={18} color={zoomScale <= 1 ? '#64748B' : '#FFFFFF'} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.zoomScaleBadge}
+                onPress={handleResetZoom}
+                activeOpacity={0.8}
+                accessibilityLabel="Reset zoom to 1x"
+              >
+                <Text style={styles.zoomScaleText}>{zoomScale.toFixed(1)}x</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.zoomControlBtn, zoomScale >= 4 && styles.zoomControlBtnDisabled]}
+                onPress={handleZoomIn}
+                disabled={zoomScale >= 4}
+                accessibilityLabel="Zoom in"
+              >
+                <Ionicons name="add" size={18} color={zoomScale >= 4 ? '#64748B' : '#FFFFFF'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Hint Bar */}
+          <View style={styles.viewerHintBar}>
+            <Ionicons name="scan-outline" size={13} color="#94A3B8" style={{ marginRight: rs(6) }} />
+            <Text style={styles.viewerHintText}>
+              Double-tap or use +/- buttons to zoom into details
+            </Text>
+          </View>
+
+          {/* Main Zoomable Image View */}
+          <View style={styles.viewerImageStage}>
+            {allImages[viewerIndex] ? (
+              <ScrollView
+                style={styles.zoomScrollView}
+                contentContainerStyle={styles.zoomScrollContent}
+                maximumZoomScale={4}
+                minimumZoomScale={1}
+                showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
+                centerContent={true}
+              >
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={handleDoubleTap}
+                  style={styles.zoomImageTouchArea}
+                >
+                  <Image
+                    source={{ uri: allImages[viewerIndex] }}
+                    style={[
+                      styles.viewerMainImage,
+                      {
+                        transform: [{ scale: zoomScale }],
+                      },
+                    ]}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </ScrollView>
+            ) : (
+              <Ionicons name="medical" size={100} color="#334155" />
+            )}
+          </View>
+
+          {/* Bottom Thumbnails Strip (if multiple images) */}
+          {allImages.length > 1 && (
+            <View style={styles.viewerThumbnailsWrap}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.viewerThumbnailsList}>
+                {allImages.map((imgUri, idx) => {
+                  const isSelected = viewerIndex === idx;
+                  return (
+                    <TouchableOpacity
+                      key={idx}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setViewerIndex(idx);
+                        setZoomScale(1);
+                      }}
+                      style={[
+                        styles.viewerThumbItem,
+                        isSelected && styles.viewerThumbItemActive,
+                      ]}
+                    >
+                      <Image source={{ uri: imgUri }} style={styles.viewerThumbImage} resizeMode="contain" />
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -907,5 +1106,197 @@ const styles = StyleSheet.create({
   subOldPrice: { fontSize: rm(11), color: C.sub, textDecorationLine: 'line-through' },
   
   subAddBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: rv(8), gap: rs(4), borderBottomLeftRadius: radius.lg - 1, borderBottomRightRadius: radius.lg - 1 },
-  subAddBtnText: { fontSize: rm(12), fontWeight: '700', color: C.white }
+  subAddBtnText: { fontSize: rm(12), fontWeight: '700', color: C.white },
+
+  // Tap to Zoom Badge
+  tapToZoomBadge: {
+    position: 'absolute',
+    top: rv(12),
+    right: rs(14),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.76)',
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(5),
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tapToZoomText: {
+    fontSize: rm(11),
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+
+  // Full-Screen Image Viewer Styles
+  viewerModalContainer: {
+    flex: 1,
+    backgroundColor: '#0B131E',
+  },
+  viewerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: rs(16),
+    paddingVertical: rv(12),
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E293B',
+  },
+  viewerCloseBtn: {
+    width: rs(38),
+    height: rs(38),
+    borderRadius: rs(19),
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewerTitleWrap: {
+    flex: 1,
+    marginHorizontal: rs(12),
+  },
+  viewerTitle: {
+    fontSize: rm(14),
+    fontWeight: '700',
+    color: '#F8FAFC',
+  },
+  viewerCounter: {
+    fontSize: rm(12),
+    color: '#94A3B8',
+    marginTop: rv(2),
+  },
+  viewerZoomControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: radius.full,
+    padding: rs(2),
+  },
+  zoomControlBtn: {
+    width: rs(32),
+    height: rs(32),
+    borderRadius: rs(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomControlBtnDisabled: {
+    opacity: 0.35,
+  },
+  zoomScaleBadge: {
+    paddingHorizontal: rs(8),
+    paddingVertical: rv(4),
+  },
+  zoomScaleText: {
+    fontSize: rm(12),
+    fontWeight: '800',
+    color: '#5EEAD4',
+  },
+  viewerHintBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: rv(8),
+    backgroundColor: '#0F172A',
+  },
+  viewerHintText: {
+    fontSize: rm(11.5),
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  viewerImageStage: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: '#0B131E',
+  },
+  zoomScrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  zoomScrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomImageTouchArea: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewerMainImage: {
+    width: '92%',
+    height: '86%',
+  },
+  viewerThumbnailsWrap: {
+    paddingVertical: rv(12),
+    borderTopWidth: 1,
+    borderTopColor: '#1E293B',
+    backgroundColor: '#0B131E',
+  },
+  viewerThumbnailsList: {
+    paddingHorizontal: rs(16),
+    gap: rs(10),
+  },
+  viewerThumbItem: {
+    width: rs(56),
+    height: rs(56),
+    borderRadius: radius.md,
+    backgroundColor: '#1E293B',
+    padding: rs(4),
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewerThumbItemActive: {
+    borderColor: '#0D9488',
+    backgroundColor: '#134E4A',
+  },
+  viewerThumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  papDetailBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FBF8FF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    borderRadius: radius.md,
+    padding: rs(12),
+    marginTop: rv(12),
+    gap: rs(10),
+  },
+  papDetailIconWrap: {
+    width: rs(32),
+    height: rs(32),
+    borderRadius: rs(16),
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  papDetailTitle: {
+    fontSize: rm(13),
+    fontWeight: '700',
+    color: '#6B21A8',
+    marginBottom: rv(2),
+  },
+  papDetailDesc: {
+    fontSize: rm(14),
+    fontWeight: '800',
+    color: '#581C87',
+    marginBottom: rv(2),
+  },
+  papDetailHint: {
+    fontSize: rm(11),
+    fontWeight: '500',
+    color: '#7E22CE',
+  },
 });

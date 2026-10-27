@@ -5,6 +5,7 @@ import { authenticateJWT } from '../../../../../middleware/auth';
 import { Order, OrderItem, Medicine, User, Setting, Address } from '../../../../../models';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
+import { calculatePapBenefit } from '../../../../../lib/papHelper';
 
 function numberToWords(num: number): string {
   if (num === 0) return 'Zero';
@@ -83,9 +84,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
           ].filter(Boolean).join('\n');
         }
 
-        const sellerAddress = dynamicAddress || `56 7 8 B-35, BUILDING NO.-6, ANSAL CHAMBER-2
-BHIKAJI CAMA PLACE,
-NEW DELHI-110066`;
+        const sellerAddress = dynamicAddress || `B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP, New Delhi, Delhi - 110066`;
         const sellerPhone = settings.enterprise_phone || '011-43550667,9718641733,9718211733';
         const sellerDL = settings.enterprise_drug_license || 'WLF20B2025DL000670/WLF21B2025DL000659';
         const sellerGST = settings.enterprise_gst || '07AAECJ0285F1ZQ';
@@ -171,7 +170,9 @@ NEW DELHI-110066`;
         doc.text('Invoice Date', 207, 100);
         doc.text('Due Date', 207, 112);
 
-        doc.text(`OD-${order.id}`, 267, 60);
+        // Generate random 6-digit invoice number
+        const randomInvoiceNo = Math.floor(100000 + Math.random() * 900000);
+        doc.text(`${randomInvoiceNo}`, 267, 60);
         const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB');
         doc.text(orderDate, 267, 100);
         doc.text(orderDate, 267, 112);
@@ -260,6 +261,7 @@ NEW DELHI-110066`;
         // 3. Table Rows
         let y = 160;
         let totalQty = 0;
+        let totalPapBonusQty = 0;
         let totalValue = 0;
 
         const totalMRP = Number(order.totalAmount) || 0;
@@ -313,6 +315,28 @@ NEW DELHI-110066`;
             doc.text('2.50%', cx, y, { width: 26, align: 'right' }); cx += 30;
             doc.text(value.toFixed(2), cx, y, { width: 31, align: 'right' });
             y += 12;
+
+            // If item qualified for PAP, add bonus row
+            const benefit = calculatePapBenefit(qty, medicine.papOffer);
+            if (benefit.freeUnits > 0) {
+              totalPapBonusQty += benefit.freeUnits;
+              doc.font('Helvetica-Oblique').fontSize(7.5);
+              let cxFree = startX;
+              doc.text('*', cxFree, y, { width: 20, align: 'center' }); cxFree += 20;
+              doc.text(`+${benefit.freeUnits}`, cxFree, y, { width: 30, align: 'center' }); cxFree += 30;
+              doc.text(medicine.manufacturer?.substring(0, 6)?.toUpperCase() || 'PAP', cxFree + 2, y, { width: 36 }); cxFree += 40;
+              doc.text(medicine.packSize?.substring(0, 8)?.toUpperCase() || 'FREE', cxFree + 2, y, { width: 36 }); cxFree += 40;
+              doc.text(`[PAP BONUS] ${(medicine.name || 'ITEM').toUpperCase()} (FREE)`, cxFree + 2, y, { width: 126 }); cxFree += 130;
+              doc.text('MB' + String(order.id).padStart(4, '0'), cxFree + 2, y, { width: 46 }); cxFree += 50;
+              doc.text('12/28', cxFree + 2, y, { width: 31 }); cxFree += 35;
+              doc.text(medicine.hsnCode || '300490', cxFree + 2, y, { width: 36 }); cxFree += 40;
+              doc.text('0.00', cxFree, y, { width: 36, align: 'right' }); cxFree += 40;
+              doc.text('0.00', cxFree, y, { width: 36, align: 'right' }); cxFree += 40;
+              doc.text('100%', cxFree, y, { width: 21, align: 'right' }); cxFree += 25;
+              doc.text('0.00%', cxFree, y, { width: 26, align: 'right' }); cxFree += 30;
+              doc.text('0.00', cxFree, y, { width: 31, align: 'right' });
+              y += 12;
+            }
           });
         }
 
@@ -428,6 +452,12 @@ NEW DELHI-110066`;
         doc.text((order.items?.length || 0).toString(), 420, 615);
         doc.text('Total Qty :-', 355, 627);
         doc.text(totalQty.toString(), 420, 627);
+        if (totalPapBonusQty > 0) {
+          doc.font('Helvetica-Bold').fontSize(8);
+          doc.text('PAP Free :-', 355, 639);
+          doc.text(`+${totalPapBonusQty} FREE`, 420, 639);
+          doc.font('Helvetica');
+        }
 
         // Right Footer: Values
         doc.font('Helvetica-Bold').fontSize(8);

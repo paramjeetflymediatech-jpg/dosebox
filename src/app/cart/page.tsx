@@ -13,6 +13,7 @@ import api from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
 import { showSignInRequired, showAddedToCart, showSuccess } from '@/lib/sweetalert';
+import { calculatePapBenefit } from '@/lib/papHelper';
 
 export default function CartPage() {
   const { 
@@ -539,8 +540,63 @@ export default function CartPage() {
                           )}
                         </div>
                       </div>
-
                     </div>
+
+                    {/* PAP Offer Notification & Helper Button (Full-width below the product row) */}
+                    {(() => {
+                      const papBenefit = calculatePapBenefit(item.quantity, item.papOffer);
+                      if (!papBenefit.pap) return null;
+
+                      // Clean up title text to avoid "PAP Offer: Pap Offer: ..." duplication
+                      const cleanOfferText = papBenefit.pap.rawOffer.replace(/^pap\s*offer:\s*/i, '');
+
+                      return (
+                        <div className={`mt-3.5 p-3 sm:p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs w-full transition-all ${
+                          papBenefit.isEligible
+                            ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+                            : 'bg-amber-50/90 border-amber-200 text-amber-950'
+                        }`}>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              papBenefit.isEligible ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              <Sparkles className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-xs sm:text-sm block truncate">
+                                {papBenefit.isEligible
+                                  ? `PAP Qualified: ${cleanOfferText}`
+                                  : `PAP Offer Available: ${cleanOfferText}`}
+                              </span>
+                              <p className={`text-[11px] sm:text-xs font-medium mt-0.5 ${
+                                papBenefit.isEligible ? 'text-emerald-700 font-semibold' : 'text-amber-800'
+                              }`}>
+                                {papBenefit.isEligible
+                                  ? `You will receive +${papBenefit.freeUnits} FREE bonus unit(s) under Patient Assistance!`
+                                  : `Add ${papBenefit.neededForNext} more to get ${papBenefit.pap.freeQty} FREE unit(s)!`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {papBenefit.isEligible ? (
+                            <span className="bg-emerald-600 text-white font-black px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider shrink-0 self-start sm:self-auto shadow-2xs">
+                              +{papBenefit.freeUnits} Free Unit{papBenefit.freeUnits > 1 ? 's' : ''} (₹0)
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, papBenefit.pap!.buyQty)}
+                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg shadow-2xs transition-all shrink-0 self-start sm:self-auto cursor-pointer flex items-center gap-1.5"
+                            >
+                              <span>Set Qty to {papBenefit.pap!.buyQty}</span>
+                              <span className="text-[10px] bg-amber-800/60 px-1.5 py-0.5 rounded font-black tracking-wide">
+                                Get Free Unit
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </motion.div>
                 );
               })}
@@ -819,9 +875,20 @@ export default function CartPage() {
                   <span>Cart Total</span>
                   <span>₹{formatCurrency(subtotal - savings)}</span>
                 </div>
-                <div className="flex justify-between text-slate-500">
-                  <span>GST (5%)</span>
-                  <span className="text-slate-800">₹{formatCurrency(gstAmount)}</span>
+                {cartItems.reduce((acc, item) => acc + calculatePapBenefit(item.quantity, item.papOffer).freeUnits, 0) > 0 && (
+                  <div className="flex justify-between font-bold text-emerald-600">
+                    <span>PAP Free Units</span>
+                    <span>+{cartItems.reduce((acc, item) => acc + calculatePapBenefit(item.quantity, item.papOffer).freeUnits, 0)} Units (₹0)</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-slate-500">
+                  <span className="flex items-center gap-1.5">
+                    <span>GST (5% Included)</span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded">
+                      Inclusive
+                    </span>
+                  </span>
+                  <span className="text-slate-800 font-semibold">₹{formatCurrency(gstAmount)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500">
                   <span>Delivery Charges</span>

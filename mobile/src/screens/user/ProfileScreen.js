@@ -75,6 +75,7 @@ export default function ProfileScreen({ navigation }) {
     { label: 'Manage Addresses', route: 'UserAddresses', icon: 'location', color: '#8b5cf6', bgColor: '#f5f3ff' },
     { label: 'My Orders', route: 'Proceed', icon: 'cube', color: '#ec4899', bgColor: '#fdf2f8' },
     { label: 'Personal Information', route: 'UserProfileEdit', icon: 'person', color: '#0ea5e9', bgColor: '#f0f9ff' },
+    { label: 'Contact Support & Compliance', route: 'Contact', icon: 'shield-checkmark', color: '#1F5C52', bgColor: '#EAF4F2' },
     { label: 'Account Deletion', route: 'DataDeletion', icon: 'trash', color: '#ef4444', bgColor: '#fef2f2' },
   ];
 

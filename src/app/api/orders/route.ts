@@ -129,9 +129,10 @@ export async function POST(req: NextRequest) {
     }
 
     const totalBill = subtotal - totalSavings - couponDiscount;
-    const gstAmount = totalBill * 0.05;
+    // GST is 5% inclusive in prices
+    const gstAmount = totalBill - (totalBill / 1.05);
     const shippingFee = totalBill > 500 ? 0 : 50.00;
-    let finalAmount = totalBill + gstAmount + shippingFee;
+    let finalAmount = totalBill + shippingFee;
 
     let pointsUsed = 0;
     const userRecord = await User.findByPk(userId);
@@ -304,7 +305,7 @@ export async function GET(req: NextRequest) {
       const { count, rows: orders } = await Order.findAndCountAll({
         where: { userId: userAuth.id },
         include: [
-          { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine', attributes: ['id', 'name', 'images'] }] },
+          { model: OrderItem, as: 'items', include: [{ model: Medicine, as: 'medicine', attributes: ['id', 'name', 'images', 'papOffer', 'prescriptionRequired', 'packSize', 'manufacturer'] }] },
           { model: Address, as: 'shippingAddress' },
           { model: Prescription, as: 'prescription' }
         ],

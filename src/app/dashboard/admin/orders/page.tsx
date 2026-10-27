@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Eye, Edit2, Search, XCircle, Package, Truck, CheckCircle, CreditCard, FileText, ExternalLink, ZoomIn } from 'lucide-react';
+import { ShoppingBag, Eye, Edit2, Search, XCircle, Package, Truck, CheckCircle, CreditCard, FileText, ExternalLink, ZoomIn, Gift } from 'lucide-react';
 import api from '../../../../lib/api';
 import { formatCurrency } from '@/lib/utils';
 import Pagination from '../../../../components/admin/Pagination';
+import { calculatePapBenefit } from '@/lib/papHelper';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -12,6 +13,7 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
+  const [papOnlyFilter, setPapOnlyFilter] = useState(false);
   const [dateFilter, setDateFilter] = useState('');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -154,6 +156,9 @@ export default function AdminOrdersPage() {
     const matchesSearch = `OD-${o.id}`.toLowerCase().includes(searchTerm.toLowerCase()) || o.user?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter ? o.status === statusFilter : true;
     const matchesPayment = paymentFilter ? o.paymentStatus === paymentFilter : true;
+    const matchesPap = papOnlyFilter 
+      ? (o.items || []).some((i: any) => calculatePapBenefit(i.quantity, i.medicine?.papOffer).freeUnits > 0)
+      : true;
     
     let matchesDate = true;
     if (dateFilter) {
@@ -185,7 +190,7 @@ export default function AdminOrdersPage() {
       }
     }
     
-    return matchesSearch && matchesStatus && matchesPayment && matchesDate;
+    return matchesSearch && matchesStatus && matchesPayment && matchesPap && matchesDate;
   });
 
   return (
@@ -283,13 +288,32 @@ export default function AdminOrdersPage() {
             <select 
               value={paymentFilter}
               onChange={e => { setPaymentFilter(e.target.value); setCurrentPage(1); }}
-              className="w-full md:w-40 px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm font-medium"
+              className="w-full md:w-36 px-3 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm font-medium"
             >
               <option value="">All Payments</option>
               <option value="Unpaid">Unpaid</option>
               <option value="Paid">Paid</option>
               <option value="Failed">Failed</option>
             </select>
+
+            {(() => {
+              const papCount = orders.filter(o => (o.items || []).some((i: any) => calculatePapBenefit(i.quantity, i.medicine?.papOffer).freeUnits > 0)).length;
+              return (
+                <button
+                  type="button"
+                  onClick={() => { setPapOnlyFilter(!papOnlyFilter); setCurrentPage(1); }}
+                  className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer shadow-2xs ${
+                    papOnlyFilter 
+                      ? 'bg-purple-600 border-purple-600 text-white shadow-sm ring-2 ring-purple-200' 
+                      : 'bg-white border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300'
+                  }`}
+                  title="Filter orders containing Patient Assistance Program (PAP) free units"
+                >
+                  <Gift className="w-3.5 h-3.5" />
+                  <span>PAP Orders {papCount > 0 ? `(${papCount})` : ''}</span>
+                </button>
+              );
+            })()}
           </div>
         </div>
 
@@ -317,9 +341,28 @@ export default function AdminOrdersPage() {
                   <td colSpan={8} className="p-8 text-center text-slate-500 font-medium">No orders found matching criteria.</td>
                 </tr>
               ) : (
-                filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => (
+                filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => {
+                  const totalFreePapUnits = (order.items || []).reduce((acc: number, item: any) => {
+                    const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                    return acc + (benefit.freeUnits || 0);
+                  }, 0);
+
+                  return (
                   <tr key={order.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 font-bold text-slate-900">#OD-{order.id}</td>
+                    <td className="p-4 font-bold text-slate-900">
+                      <div>#OD-{order.id}</div>
+                      {totalFreePapUnits > 0 && (
+                        <div className="mt-1">
+                          <span 
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-300 shadow-2xs whitespace-nowrap" 
+                            title={`Patient Assistance Program: Include ${totalFreePapUnits} Free Unit(s) in Package`}
+                          >
+                            <Gift className="w-3 h-3 text-purple-600 flex-shrink-0" />
+                            <span>+{totalFreePapUnits} Free PAP</span>
+                          </span>
+                        </div>
+                      )}
+                    </td>
                     <td className="p-4">
                       <p className="font-bold text-slate-800 text-sm">{order.user?.name}</p>
                       <p className="text-xs text-slate-500">{order.user?.phone || order.user?.email}</p>
@@ -404,8 +447,9 @@ export default function AdminOrdersPage() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
+                    );
+                  })
+                )}
             </tbody>
           </table>
         </div>
@@ -465,6 +509,73 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
+
+              {/* PAP Dispatch & Packaging Alert Banner */}
+              {(() => {
+                const papItems = (viewOrder.items || [])
+                  .map((item: any) => {
+                    const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                    return {
+                      item,
+                      medicineName: item.medicine?.name || 'Medicine',
+                      billedQty: item.quantity,
+                      freeUnits: benefit.freeUnits || 0,
+                      totalDispatch: item.quantity + (benefit.freeUnits || 0),
+                      offerText: benefit.pap?.rawOffer || item.medicine?.papOffer
+                    };
+                  })
+                  .filter((p: any) => p.freeUnits > 0);
+
+                const totalFree = papItems.reduce((acc: number, p: any) => acc + p.freeUnits, 0);
+                if (totalFree <= 0) return null;
+
+                return (
+                  <div className="bg-gradient-to-r from-purple-50 via-indigo-50/60 to-purple-50 p-5 rounded-2xl border-2 border-purple-300 shadow-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-purple-600 text-white rounded-xl shadow-xs">
+                          <Gift className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-purple-900 text-sm tracking-wide uppercase flex items-center gap-2">
+                            <span>📦 PACKAGING & DISPATCH INSTRUCTION: PAP BONUS APPLIED</span>
+                          </h4>
+                          <p className="text-xs text-purple-700 font-semibold mt-0.5">
+                            Customer qualified for free medicine unit(s) under the Patient Assistance Program. Ensure packaging team adds these extra units into the parcel:
+                          </p>
+                        </div>
+                      </div>
+                      <span className="self-start sm:self-auto px-3.5 py-1.5 bg-purple-600 text-white font-black text-xs rounded-full shadow-xs whitespace-nowrap">
+                        +{totalFree} Extra Free Unit{totalFree > 1 ? 's' : ''} to Pack
+                      </span>
+                    </div>
+
+                    <div className="bg-white/90 rounded-xl p-3.5 border border-purple-200/80 space-y-2">
+                      {papItems.map((p: any, idx: number) => (
+                        <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-purple-50/60 border border-purple-100 text-xs">
+                          <div className="min-w-0">
+                            <p className="font-extrabold text-purple-950 text-sm">{p.medicineName}</p>
+                            <p className="text-purple-600 font-medium text-[11px] mt-0.5">Offer: {p.offerText}</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap font-bold">
+                            <span className="bg-white px-2.5 py-1 rounded-md text-slate-700 border border-slate-200 shadow-2xs">
+                              Billed: <strong className="text-slate-900">{p.billedQty}</strong>
+                            </span>
+                            <span className="text-purple-600 font-black text-sm">+</span>
+                            <span className="bg-purple-100 text-purple-900 px-2.5 py-1 rounded-md border border-purple-200 shadow-2xs">
+                              PAP Free: <strong className="text-purple-900 font-black">+{p.freeUnits}</strong>
+                            </span>
+                            <span className="text-slate-400 font-black">=</span>
+                            <span className="bg-emerald-100 text-emerald-900 px-3 py-1 rounded-md border border-emerald-300 font-black text-xs shadow-2xs">
+                              Total to Pack: <strong className="text-emerald-950 text-sm">{p.totalDispatch} units</strong>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Uploaded Doctor's Prescription Section */}
               {viewOrder.prescription ? (
@@ -565,28 +676,59 @@ export default function AdminOrdersPage() {
               )}
 
               <div>
-                <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2"><Package className="w-4 h-4 text-brand-500" /> Order Items</h4>
-                <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2"><Package className="w-4 h-4 text-brand-500" /> Order Items & Dispatch Quantities</h4>
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
                   <table className="w-full text-left">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
                         <th className="p-4 text-xs font-bold text-slate-500">Item</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 text-center">Qty</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 text-center">Billed Qty</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 text-center">PAP Free Bonus</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 text-center">Total To Pack</th>
                         <th className="p-4 text-xs font-bold text-slate-500 text-right">Price</th>
                         <th className="p-4 text-xs font-bold text-slate-500 text-right">Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {viewOrder.items?.map((item: any) => (
-                        <tr key={item.id} className="border-b border-slate-100 last:border-0">
-                          <td className="p-4">
-                            <p className="font-bold text-sm text-slate-900">{item.medicine?.name}</p>
-                          </td>
-                          <td className="p-4 text-center text-sm font-medium text-slate-700">{item.quantity}</td>
-                          <td className="p-4 text-right text-sm font-medium text-slate-700">₹{formatCurrency(Number(item.price))}</td>
-                          <td className="p-4 text-right text-sm font-bold text-slate-900">₹{formatCurrency(Number(item.price) * item.quantity)}</td>
-                        </tr>
-                      ))}
+                      {viewOrder.items?.map((item: any) => {
+                        const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                        const freeUnits = benefit.freeUnits || 0;
+                        const totalDispatch = item.quantity + freeUnits;
+
+                        return (
+                          <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                            <td className="p-4">
+                              <p className="font-bold text-sm text-slate-900">{item.medicine?.name}</p>
+                              {item.medicine?.papOffer && (
+                                <p className="text-[11px] text-purple-700 font-semibold mt-0.5 flex items-center gap-1">
+                                  <Gift className="w-3 h-3 text-purple-600" /> {item.medicine.papOffer}
+                                </p>
+                              )}
+                            </td>
+                            <td className="p-4 text-center text-sm font-semibold text-slate-700">{item.quantity}</td>
+                            <td className="p-4 text-center">
+                              {freeUnits > 0 ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-100 text-purple-800 border border-purple-200">
+                                  <Gift className="w-3 h-3 text-purple-600" /> +{freeUnits} Free
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-xs">—</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className={`inline-block px-3 py-1 rounded-lg text-xs font-black ${
+                                freeUnits > 0 
+                                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {totalDispatch} units
+                              </span>
+                            </td>
+                            <td className="p-4 text-right text-sm font-medium text-slate-700">₹{formatCurrency(Number(item.price))}</td>
+                            <td className="p-4 text-right text-sm font-bold text-slate-900">₹{formatCurrency(Number(item.price) * item.quantity)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -651,6 +793,21 @@ export default function AdminOrdersPage() {
                               <span className="text-sm font-bold text-amber-600">-₹{formatCurrency(tokensUsed)}</span>
                             </div>
                           )}
+                          {(() => {
+                            const totalFree = (viewOrder.items || []).reduce((acc: number, item: any) => {
+                              const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                              return acc + (benefit.freeUnits || 0);
+                            }, 0);
+                            if (totalFree <= 0) return null;
+                            return (
+                              <div className="flex justify-between items-center bg-purple-50/80 px-3 py-2 rounded-xl border border-purple-200/80">
+                                <span className="text-xs text-purple-700 font-bold flex items-center gap-1.5">
+                                  <Gift className="w-3.5 h-3.5 text-purple-600" /> PAP Bonus Units Included
+                                </span>
+                                <span className="text-xs font-black text-purple-900">+{totalFree} Free (₹0.00)</span>
+                              </div>
+                            );
+                          })()}
                           <div className="pt-3 mt-3 border-t border-slate-200 flex justify-between items-center">
                             <span className="text-base font-extrabold text-slate-900">Order Total</span>
                             <span className="text-lg font-extrabold text-brand-600">₹{formatCurrency(finalAmount)}</span>

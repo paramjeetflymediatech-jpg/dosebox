@@ -27,6 +27,7 @@ import { getFullImageUrl } from '../../utils/image';
 import PermissionsService from '../../services/PermissionsService';
 import Geolocation from '@react-native-community/geolocation';
 import MedicineCard from '../../components/MedicineCard';
+import { calculatePapBenefit } from '../../utils/papHelper';
 
 const C = {
   primary: '#1F5C52',
@@ -135,6 +136,7 @@ export default function CartCheckoutScreen({ navigation }) {
     totalPrice,
     clearCart,
     addToCart,
+    updateQuantity,
     removeFromCart,
     deleteFromCart,
     attachedPrescriptionStatus,
@@ -357,8 +359,6 @@ export default function CartCheckoutScreen({ navigation }) {
   const [isVerifyingPromo, setIsVerifyingPromo] = useState(false);
   const [showAdditionalCharges, setShowAdditionalCharges] = useState(false);
 
-  const deliveryFee = items.length > 0 ? 50.00 : 0.00;
-
   const totalMRP = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const cartTotal = items.reduce((sum, item) => sum + (item.discountPrice || item.price) * item.qty, 0);
   const doseboxDiscount = totalMRP - cartTotal;
@@ -375,8 +375,18 @@ export default function CartCheckoutScreen({ navigation }) {
     }
   }
 
-  const gstAmount = Math.max(0, cartTotal - couponDiscount) * 0.05;
-  const finalTotal = Math.max(0, cartTotal - couponDiscount + gstAmount + deliveryFee);
+  const cartTotalAfterCoupon = Math.max(0, cartTotal - couponDiscount);
+  // Delivery Fee: Free above ₹500, else ₹50
+  const deliveryFee = (cartTotalAfterCoupon > 500 || items.length === 0) ? 0.00 : 50.00;
+  // GST 5% inclusive in prices
+  const gstAmount = cartTotalAfterCoupon - (cartTotalAfterCoupon / 1.05);
+  const finalTotal = Math.max(0, cartTotalAfterCoupon + deliveryFee);
+
+  // Total free bonus units from PAP offers across all items
+  const totalPapFreeUnits = items.reduce(
+    (sum, item) => sum + calculatePapBenefit(item.qty, item.papOffer).freeUnits,
+    0
+  );
 
   const pointsUsed = useDoseboxTokens ? Math.min(Number(pointsInput) || 0, currentTokens, finalTotal) : 0;
   let pointsError = '';
@@ -490,7 +500,8 @@ export default function CartCheckoutScreen({ navigation }) {
         prescriptionId: attachedPrescriptionId || null,
         couponCode: appliedPromo || undefined,
         useDoseboxTokens: useDoseboxTokens && !pointsError,
-        doseboxTokensToUse: pointsUsed
+        doseboxTokensToUse: pointsUsed,
+        papBonusUnits: totalPapFreeUnits > 0 ? totalPapFreeUnits : undefined
       };
 
       const res = await api.post('/orders', body);
@@ -1029,6 +1040,74 @@ export default function CartCheckoutScreen({ navigation }) {
                             </TouchableOpacity>
                           </View>
                         </View>
+
+                        {/* PAP Offer Banner */}
+                        {(() => {
+                          const papBenefit = calculatePapBenefit(item.qty, item.papOffer);
+                          if (!papBenefit.pap) return null;
+                          const cleanOfferText = papBenefit.pap.rawOffer.replace(/^pap\s*offer:\s*/i, '');
+
+                          return (
+                            <View style={[
+                              styles.papCartBanner,
+                              papBenefit.isEligible ? styles.papCartBannerActive : styles.papCartBannerInactive
+                            ]}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(8), flex: 1 }}>
+                                <View style={[
+                                  styles.papIconCircle,
+                                  papBenefit.isEligible ? styles.papIconCircleActive : styles.papIconCircleInactive
+                                ]}>
+                                  <Ionicons name="gift" size={rs(13)} color={papBenefit.isEligible ? '#059669' : '#D97706'} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={[
+                                    styles.papBannerTitle,
+                                    { color: papBenefit.isEligible ? '#065F46' : '#92400E' }
+                                  ]} numberOfLines={1}>
+                                    {papBenefit.isEligible
+                                      ? `PAP Qualified: ${cleanOfferText}`
+                                      : `PAP Offer: ${cleanOfferText}`}
+                                  </Text>
+                                  <Text style={[
+                                    styles.papBannerSub,
+                                    { color: papBenefit.isEligible ? '#047857' : '#B45309' }
+                                  ]}>
+                                    {papBenefit.isEligible
+                                      ? `You will receive +${papBenefit.freeUnits} Free Unit(s) (₹0)`
+                                      : `Add ${papBenefit.neededForNext} more to get ${papBenefit.pap.freeQty} Free Unit!`}
+                                  </Text>
+                                </View>
+                              </View>
+
+                              {papBenefit.isEligible ? (
+                                <View style={styles.papFreeTag}>
+                                  <Text style={styles.papFreeTagText}>
+                                    +{papBenefit.freeUnits} FREE (₹0)
+                                  </Text>
+                                </View>
+                              ) : (
+                                <TouchableOpacity
+                                  style={styles.papAddMoreBtn}
+                                  onPress={() => {
+                                    if (updateQuantity) {
+                                      updateQuantity(item.id, papBenefit.pap.buyQty);
+                                    } else {
+                                      const diff = papBenefit.pap.buyQty - item.qty;
+                                      for (let i = 0; i < diff; i++) {
+                                        addToCart(item, true);
+                                      }
+                                    }
+                                  }}
+                                  activeOpacity={0.8}
+                                >
+                                  <Text style={styles.papAddMoreBtnText}>
+                                    Set Qty {papBenefit.pap.buyQty}
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          );
+                        })()}
                       </View>
                     );
                   })}
@@ -1347,7 +1426,7 @@ export default function CartCheckoutScreen({ navigation }) {
                       <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
                     </View>
                     <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>GST (5%)</Text>
+                      <Text style={styles.summaryLabel}>GST (5% Included)</Text>
                       <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>
                     </View>
 
@@ -2010,6 +2089,30 @@ export default function CartCheckoutScreen({ navigation }) {
                 </>
               )}
 
+                  {/* Highlighted PAP Bonus Banner if free units unlocked */}
+                  {totalPapFreeUnits > 0 && (
+                    <View style={styles.papSummaryHighlight}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(8), flex: 1 }}>
+                        <View style={styles.papSummaryHighlightIcon}>
+                          <Ionicons name="sparkles" size={rs(13)} color="#FFFFFF" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.papSummaryHighlightTitle}>
+                            Patient Assistance Program (PAP)
+                          </Text>
+                          <Text style={styles.papSummaryHighlightSub}>
+                            +{totalPapFreeUnits} Free bonus unit{totalPapFreeUnits > 1 ? 's' : ''} included under PAP offer
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.papSummaryHighlightBadge}>
+                        <Text style={styles.papSummaryHighlightBadgeText}>
+                          +{totalPapFreeUnits} Free (₹0)
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
                   {/* Final Order Summary */}
                   <Text style={styles.sectionLabel}>Order Summary</Text>
                   <View style={styles.summaryCard}>
@@ -2031,14 +2134,14 @@ export default function CartCheckoutScreen({ navigation }) {
                       <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.text }]}>Cart Total</Text>
                       <Text style={[styles.summaryValue, { fontWeight: '700' }]}>₹{cartTotal.toFixed(2)}</Text>
                     </View>
-                    {couponDiscount > 0 && (
+                    {totalPapFreeUnits > 0 && (
                       <View style={styles.summaryRow}>
-                        <Text style={[styles.summaryLabel, { color: '#166534' }]}>Promo Discount</Text>
-                        <Text style={[styles.summaryValue, { color: '#166534' }]}>-₹{couponDiscount.toFixed(2)}</Text>
+                        <Text style={[styles.summaryLabel, { color: '#047857', fontWeight: '700' }]}>PAP Free Units</Text>
+                        <Text style={[styles.summaryValue, { color: '#047857', fontWeight: '700' }]}>+{totalPapFreeUnits} Units Included (₹0.00)</Text>
                       </View>
                     )}
                     <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>GST (5%)</Text>
+                      <Text style={styles.summaryLabel}>GST (5% Inclusive)</Text>
                       <Text style={styles.summaryValue}>₹{gstAmount.toFixed(2)}</Text>
                     </View>
                     <View style={styles.summaryRow}>
@@ -2248,19 +2351,42 @@ export default function CartCheckoutScreen({ navigation }) {
                     }}
                     activeOpacity={0.8}
                   >
-                    <View style={styles.savedRxThumbWrap}>
+                    <TouchableOpacity 
+                      style={styles.savedRxThumbWrap}
+                      onPress={() => rxImg && setSelectedImageModal(rxImg)}
+                      activeOpacity={0.7}
+                    >
                       {rxImg ? (
                         <Image source={{ uri: rxImg }} style={styles.savedRxThumbImg} resizeMode="cover" />
                       ) : (
                         <Ionicons name="document-text" size={rs(20)} color={C.primary} />
                       )}
-                    </View>
+                    </TouchableOpacity>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.savedRxItemId}>Prescription #RX-{rx.id}</Text>
                       <Text style={styles.savedRxItemDate}>
                         Uploaded {rx.createdAt ? new Date(rx.createdAt).toLocaleDateString() : 'Recently'}
                       </Text>
                     </View>
+                    {rxImg && (
+                      <TouchableOpacity
+                        style={{
+                          paddingHorizontal: rs(8),
+                          paddingVertical: rv(6),
+                          marginRight: rs(6),
+                          backgroundColor: '#EAF4F2',
+                          borderRadius: radius.md,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: rs(3),
+                        }}
+                        onPress={() => setSelectedImageModal(rxImg)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="eye-outline" size={rs(13)} color={C.primary} />
+                        <Text style={{ fontSize: rm(11), fontWeight: '700', color: C.primary }}>Preview</Text>
+                      </TouchableOpacity>
+                    )}
                     <View style={[styles.savedRxSelectBtn, isCurrent && styles.savedRxSelectBtnActive]}>
                       <Text style={[styles.savedRxSelectText, isCurrent && styles.savedRxSelectTextActive]}>
                         {isCurrent ? 'Attached ✓' : 'Select'}
@@ -3824,6 +3950,114 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: rs(11),
   },
+
+  /* PAP Offer Cart Item Banner */
+  papCartBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(8),
+    borderRadius: radius.md,
+    marginTop: rv(10),
+    borderWidth: 1,
+  },
+  papCartBannerActive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  papCartBannerInactive: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  papIconCircle: {
+    width: rs(24),
+    height: rs(24),
+    borderRadius: rs(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  papIconCircleActive: {
+    backgroundColor: '#D1FAE5',
+  },
+  papIconCircleInactive: {
+    backgroundColor: '#FEF3C7',
+  },
+  papBannerTitle: {
+    fontSize: rm(12),
+    fontWeight: '800',
+  },
+  papBannerSub: {
+    fontSize: rm(10.5),
+    fontWeight: '600',
+    marginTop: rv(1),
+  },
+  papFreeTag: {
+    backgroundColor: '#059669',
+    paddingHorizontal: rs(8),
+    paddingVertical: rv(4),
+    borderRadius: radius.sm,
+  },
+  papFreeTagText: {
+    color: '#FFFFFF',
+    fontSize: rm(10.5),
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  papAddMoreBtn: {
+    backgroundColor: '#D97706',
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(5),
+    borderRadius: radius.sm,
+  },
+  papAddMoreBtnText: {
+    color: '#FFFFFF',
+    fontSize: rm(11),
+    fontWeight: '700',
+  },
+
+  /* PAP Summary Highlight */
+  papSummaryHighlight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: radius.lg,
+    padding: rs(12),
+    marginBottom: rv(12),
+  },
+  papSummaryHighlightIcon: {
+    width: rs(26),
+    height: rs(26),
+    borderRadius: rs(13),
+    backgroundColor: '#059669',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  papSummaryHighlightTitle: {
+    fontSize: rm(12.5),
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  papSummaryHighlightSub: {
+    fontSize: rm(10.5),
+    color: '#047857',
+    fontWeight: '500',
+    marginTop: rv(1),
+  },
+  papSummaryHighlightBadge: {
+    backgroundColor: '#059669',
+    paddingHorizontal: rs(8),
+    paddingVertical: rv(4),
+    borderRadius: radius.sm,
+  },
+  papSummaryHighlightBadgeText: {
+    color: '#FFFFFF',
+    fontSize: rm(10.5),
+    fontWeight: '800',
+  },
 });
 
 // ─── Category Helper Functions & Pill Item ─────────────────────
@@ -3844,6 +4078,7 @@ const getCategoryPhotoUrl = (cat) => {
   if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return getFullImageUrl('/categories/antibacterials.jpg');
   if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return getFullImageUrl('/categories/anticoagulants.jpg');
   if (slug === 'anti-fungals' || name.includes('fungal')) return getFullImageUrl('/categories/anti-cancer.jpg');
+  if (slug === 'arthritis' || name.includes('arthritis')) return getFullImageUrl('/categories/arthritis.jpg');
   if (slug === 'kidney-care' || name.includes('kidney')) return getFullImageUrl('/categories/anemia.jpg');
 
   return null;

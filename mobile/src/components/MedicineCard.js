@@ -38,6 +38,7 @@ export default function MedicineCard({ med, containerStyle, compact = false }) {
       dosageForm: med.dosageForm || null,
       molecule: med.molecule || med.composition || med.genericName || null,
       coldChain: Boolean(med.coldChain || med.isColdChain),
+      papOffer: med.papOffer || null,
       qty: 1
     });
   };

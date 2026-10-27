@@ -46,6 +46,7 @@ interface Medicine {
   sideEffects?: string;
   storageInstructions?: string;
   isColdChain?: boolean;
+  papOffer?: string;
   brand?: { name: string };
 }
 
@@ -94,7 +95,7 @@ function getCategoryPhoto(cat: { name: string; slug?: string; image?: string | n
   if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return '/categories/antibacterials.jpg';
   if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return '/categories/anticoagulants.jpg';
   if (slug === 'anti-fungals' || name.includes('fungal')) return '/categories/anti-cancer.jpg';
-  if (slug === 'arthritis' || name.includes('arthritis')) return '/categories/anemia.jpg';
+  if (slug === 'arthritis' || name.includes('arthritis')) return '/categories/arthritis.jpg';
   if (slug === 'vaccines' || name.includes('vaccine')) return '/categories/anaesthetics.jpg';
 
   if (cat.image && (cat.image.startsWith('/') || cat.image.startsWith('http'))) {
@@ -475,7 +476,8 @@ export default function HomePage() {
       discountPrice: med.discountPrice ? Number(med.discountPrice) : undefined,
       prescriptionRequired: med.prescriptionRequired,
       image: imagesArr[0],
-      quantity: customQty || 1
+      quantity: customQty || 1,
+      papOffer: med.papOffer || undefined
     });
     showAddedToCart(med.name, () => router.push('/cart'));
 

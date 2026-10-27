@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  ShoppingBag, Clipboard, MapPin, Eye, FileText, CheckCircle2, AlertCircle, XCircle, ArrowRight, Download, Calendar, HelpCircle, Upload, ShieldCheck
+  ShoppingBag, Clipboard, MapPin, Eye, FileText, CheckCircle2, AlertCircle, XCircle, ArrowRight, Download, Calendar, HelpCircle, Upload, ShieldCheck, Gift
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
@@ -10,12 +10,13 @@ import { useCart } from '../../../context/CartContext';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
+import { calculatePapBenefit } from '@/lib/papHelper';
 
 interface OrderItem {
   id: number;
   quantity: number;
   price: string;
-  medicine?: { name: string; images: string };
+  medicine?: { name: string; images: string; papOffer?: string };
 }
 
 interface Order {
@@ -263,6 +264,19 @@ export default function CustomerDashboardPage() {
                             }`}>
                             {order.status}
                           </span>
+                          {(() => {
+                            const totalFree = (order.items || []).reduce((acc: number, item: any) => {
+                              const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                              return acc + (benefit.freeUnits || 0);
+                            }, 0);
+                            if (totalFree <= 0) return null;
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                                <Gift className="w-3 h-3 text-purple-600" />
+                                <span>+{totalFree} Free PAP</span>
+                              </span>
+                            );
+                          })()}
                         </div>
                         <p className="text-xxs text-slate-400 mt-1">Placed on {new Date(order.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
@@ -309,6 +323,9 @@ export default function CustomerDashboardPage() {
                                 }
                               } catch (e) { }
 
+                              const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                              const freeUnits = benefit.freeUnits || 0;
+
                               return (
                                 <div key={item.id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                                   <div className="flex items-center gap-3">
@@ -318,6 +335,16 @@ export default function CustomerDashboardPage() {
                                     <div>
                                       <h5 className="font-bold text-slate-800 text-xs line-clamp-1">{item.medicine?.name || 'Unknown medicine'}</h5>
                                       <span className="text-xxs text-slate-400 block mt-0.5">Qty: {item.quantity} • Unit: ₹{formatCurrency(Number(item.price))}</span>
+                                      {freeUnits > 0 && (
+                                        <div className="mt-1 flex items-center gap-1 flex-wrap">
+                                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                                            <Gift className="w-2.5 h-2.5 text-purple-600" /> +{freeUnits} Free Bonus
+                                          </span>
+                                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">
+                                            Total: {item.quantity + freeUnits} Units
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   <span className="text-xs font-bold text-slate-800">₹{formatCurrency((Number(item.price) * item.quantity))}</span>

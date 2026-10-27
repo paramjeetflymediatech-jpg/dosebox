@@ -877,6 +877,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <ul className="space-y-3 text-sm font-medium">
                 <li><Link href="/medicines" className="hover:text-brand-300 transition-colors">Browse Chronic Brands</Link></li>
                 <li><Link href="/fda-guidelines" className="hover:text-brand-300 transition-colors">FDA Guidelines (India)</Link></li>
+                <li><Link href="/contact" className="hover:text-brand-300 transition-colors">Contact & Compliance Officer</Link></li>
                 <li><Link href="/institutional-supply" className="hover:text-brand-300 transition-colors">Institutional Supply</Link></li>
                 <li><Link href="/terms-and-conditions" className="hover:text-brand-300 transition-colors">Terms and Conditions</Link></li>
                 <li><Link href="/privacy-policy" className="hover:text-brand-300 transition-colors">Privacy & HIPAA Compliance</Link></li>

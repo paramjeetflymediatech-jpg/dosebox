@@ -5,8 +5,15 @@ import fs from 'fs';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   try {
     const resolvedParams = await params;
-    const filename = resolvedParams.path.join('/');
-    const filepath = path.join(process.cwd(), 'public/uploads', filename);
+    let filename = resolvedParams.path.join('/');
+    if (filename.startsWith('uploads/')) {
+      filename = filename.replace(/^uploads\//, '');
+    }
+
+    let filepath = path.join(process.cwd(), 'public/uploads', filename);
+    if (!fs.existsSync(filepath)) {
+      filepath = path.join(process.cwd(), 'public', filename);
+    }
 
     if (!fs.existsSync(filepath)) {
       return new NextResponse('File not found', { status: 404 });

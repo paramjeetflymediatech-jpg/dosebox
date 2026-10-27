@@ -10,6 +10,7 @@ const ISSUE_TYPES = [
   'Order Issue',
   'Product Inquiry',
   'Billing / Invoicing',
+  'Grievance / Compliance Concern',
   'Other'
 ];
 
@@ -66,18 +67,37 @@ export default function ContactScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* <View style={styles.infoCards}>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoIcon}>✉️</Text>
-            <Text style={styles.infoTitle}>Email Us</Text>
-            <Text style={styles.infoDetail}>support@dosebox.com</Text>
+        {/* Grievance & Compliance Officer Card */}
+        <View style={styles.complianceCard}>
+          <View style={styles.complianceHeader}>
+            <View style={styles.complianceBadge}>
+              <Text style={styles.complianceBadgeText}>OFFICIAL REGULATORY CONTACT</Text>
+            </View>
           </View>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoIcon}>📞</Text>
-            <Text style={styles.infoTitle}>Call Us</Text>
-            <Text style={styles.infoDetail}>+91 1800-123-4567</Text>
+          <Text style={styles.complianceTitle}>Grievance & Compliance Officer</Text>
+          <Text style={styles.complianceSub}>
+            In accordance with the Information Technology Act & Pharmacy Rules, please reach out directly for compliance or statutory matters.
+          </Text>
+
+          <View style={styles.complianceDetailRow}>
+            <Text style={styles.complianceDetailLabel}>Officer:</Text>
+            <Text style={styles.complianceDetailValue}>Paramjeet Singh</Text>
           </View>
-        </View> */}
+          <View style={styles.complianceDetailRow}>
+            <Text style={styles.complianceDetailLabel}>Email:</Text>
+            <Text style={[styles.complianceDetailValue, { color: '#0c888d', fontWeight: '700' }]}>compliance@dosebox.in</Text>
+          </View>
+          <View style={styles.complianceDetailRow}>
+            <Text style={styles.complianceDetailLabel}>Address:</Text>
+            <Text style={styles.complianceDetailValue}>
+              B 2, Basement, Mohta Building 4, Bhikaji Cama Place, Near BCP, New Delhi, Delhi - 110066
+            </Text>
+          </View>
+          <View style={styles.complianceDetailRow}>
+            <Text style={styles.complianceDetailLabel}>Hours:</Text>
+            <Text style={styles.complianceDetailValue}>Mon – Sat: 10:00 AM – 6:00 PM IST</Text>
+          </View>
+        </View>
 
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Submit a Request</Text>
@@ -179,7 +199,65 @@ const styles = StyleSheet.create({
   dropdownMenu: { width: '85%', backgroundColor: '#fff', borderRadius: radius.xl, paddingVertical: rv(16), elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
   dropdownTitle: { fontSize: rm(16), fontWeight: '700', color: '#0F172A', textAlign: 'center', marginBottom: rv(12) },
   dropdownItem: { paddingVertical: rv(14), paddingHorizontal: rs(20), borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  dropdownItemText: { fontSize: rm(15), color: '#475569' },
   submitBtn: { backgroundColor: '#0c888d', paddingVertical: rv(16), borderRadius: radius.md, alignItems: 'center', marginTop: rv(12) },
   submitText: { color: '#fff', fontSize: rm(16), fontWeight: '700', letterSpacing: 0.3 },
+  complianceCard: {
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: rv(16),
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  complianceHeader: {
+    marginBottom: rv(8),
+  },
+  complianceBadge: {
+    backgroundColor: '#EAF4F2',
+    alignSelf: 'flex-start',
+    paddingHorizontal: rs(10),
+    paddingVertical: rv(3),
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#1F5C52',
+  },
+  complianceBadgeText: {
+    fontSize: rm(9.5),
+    fontWeight: '800',
+    color: '#1F5C52',
+    letterSpacing: 0.6,
+  },
+  complianceTitle: {
+    fontSize: rm(17),
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: rv(4),
+  },
+  complianceSub: {
+    fontSize: rm(12),
+    color: '#64748B',
+    lineHeight: rv(17),
+    marginBottom: rv(12),
+  },
+  complianceDetailRow: {
+    flexDirection: 'row',
+    marginBottom: rv(6),
+  },
+  complianceDetailLabel: {
+    width: rs(70),
+    fontSize: rm(12.5),
+    fontWeight: '700',
+    color: '#475569',
+  },
+  complianceDetailValue: {
+    flex: 1,
+    fontSize: rm(12.5),
+    color: '#0F172A',
+    lineHeight: rv(18),
+  },
 });

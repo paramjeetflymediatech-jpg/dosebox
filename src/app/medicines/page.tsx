@@ -193,7 +193,8 @@ function MedicinesCatalogContent() {
       composition: med.composition || med.genericName,
       packSize: med.packSize,
       isColdChain: med.isColdChain || med.storageInstructions?.toLowerCase().includes('2-8') || med.storageInstructions?.toLowerCase().includes('cold'),
-      quantity: customQty || 1
+      quantity: customQty || 1,
+      papOffer: med.papOffer || undefined
     });
 
     showAddedToCart(med.name, () => router.push('/cart'));

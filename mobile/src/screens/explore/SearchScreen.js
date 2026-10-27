@@ -44,9 +44,12 @@ const SEARCH_HISTORY_KEY = '@dosebox_search_history';
 
 export default function SearchScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { height: screenHeight } = useWindowDimensions();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const inputRef = useRef(null);
   const { totalQty } = useCart();
+  
+  const topCardGap = rs(10);
+  const topCardWidth = Math.floor((screenWidth - spacing.md * 2 - topCardGap) / 2);
   
   const [searchQuery, setSearchQuery] = useState(route.params?.query || '');
   const [searchResults, setSearchResults] = useState(null);
@@ -93,6 +96,7 @@ export default function SearchScreen({ navigation, route }) {
     }
     loadRecentSearches();
     fetchTopSelling();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Live search with debounce
@@ -114,6 +118,7 @@ export default function SearchScreen({ navigation, route }) {
     }, 400); 
 
     return () => clearTimeout(delayDebounceFn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const onRefresh = async () => {
@@ -408,11 +413,21 @@ export default function SearchScreen({ navigation, route }) {
 
           {/* ── TOP SELLING ── */}
           {topSelling.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Top Selling</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+            <View style={styles.topSellingSection}>
+              <View style={styles.topSellingHeader}>
+                <Text style={styles.sectionTitle}>Top Selling</Text>
+              </View>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                contentContainerStyle={styles.topSellingScroll}
+              >
                 {topSelling.map((med) => (
-                  <MedicineCard key={med.id} med={med} containerStyle={{ marginRight: rs(12) }} />
+                  <MedicineCard 
+                    key={med.id} 
+                    med={med} 
+                    containerStyle={{ width: topCardWidth }} 
+                  />
                 ))}
               </ScrollView>
             </View>
@@ -465,12 +480,9 @@ const styles = StyleSheet.create({
   tagPill: { backgroundColor: C.bg, paddingHorizontal: rs(14), paddingVertical: rv(8), borderRadius: radius.full, borderWidth: 1, borderColor: C.border },
   tagText: { fontSize: rm(13), color: C.text, fontWeight: '500' },
   
-  horizontalScroll: { gap: rs(12), paddingRight: spacing.md },
-  topCard: { width: rs(130), backgroundColor: C.card, borderRadius: radius.md, borderWidth: 1, borderColor: C.border, padding: rs(10) },
-  topImgWrap: { width: '100%', height: rs(90), backgroundColor: C.bg, borderRadius: radius.sm, marginBottom: rv(10), alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  topImg: { width: '100%', height: '100%', resizeMode: 'cover' },
-  topName: { fontSize: rm(13), fontWeight: '600', color: C.text, marginBottom: rv(4), lineHeight: rv(18) },
-  topPrice: { fontSize: rm(14), fontWeight: '800', color: C.primary },
+  topSellingSection: { backgroundColor: C.white, marginBottom: rv(12), paddingVertical: rv(20) },
+  topSellingHeader: { paddingHorizontal: spacing.md },
+  topSellingScroll: { paddingHorizontal: spacing.md, gap: rs(10) },
   
   prescriptionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0D1B2A', borderRadius: radius.lg, padding: rs(20) },
   rxIconWrap: { width: rs(48), height: rs(48), borderRadius: rs(24), backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: rs(16) },

@@ -21,6 +21,7 @@ import { useCart } from '../../context/CartContext';
 import api from '../../services/api';
 import { rs, rv, rm, spacing, radius } from '../../utils/responsive';
 import { getFullImageUrl } from '../../utils/image';
+import { calculatePapBenefit } from '../../utils/papHelper';
 
 const C = {
   primary: '#1F5C52',
@@ -161,6 +162,11 @@ export default function ProceedScreen({ navigation }) {
     if (displayStatus.toLowerCase() === 'prescription review') displayStatus = 'Pending';
     
     const cfg = getStatusColor(displayStatus);
+
+    const totalFreeUnits = (item.items || []).reduce((acc, prod) => {
+      const b = calculatePapBenefit(prod.quantity, prod.medicine?.papOffer);
+      return acc + (b.freeUnits || 0);
+    }, 0);
     
     return (
       <TouchableOpacity 
@@ -170,7 +176,15 @@ export default function ProceedScreen({ navigation }) {
       >
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.orderId}>Order #{item.id}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <Text style={styles.orderId}>Order #{item.id}</Text>
+              {totalFreeUnits > 0 && (
+                <View style={styles.papBadge}>
+                  <Ionicons name="gift" size={rs(10)} color="#7E22CE" />
+                  <Text style={styles.papBadgeText}>+{totalFreeUnits} Free PAP</Text>
+                </View>
+              )}
+            </View>
             {item.createdAt && (
               <Text style={styles.orderDate}>
                 {new Date(item.createdAt).toLocaleString('en-IN', {
@@ -189,7 +203,10 @@ export default function ProceedScreen({ navigation }) {
 
         {/* Ordered Product Listing */}
         <View style={styles.productList}>
-          {item.items?.map((prod, index) => (
+          {item.items?.map((prod, index) => {
+            const b = calculatePapBenefit(prod.quantity, prod.medicine?.papOffer);
+            const freeUnits = b.freeUnits || 0;
+            return (
              <View key={prod.id} style={[styles.productRow, index === item.items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
                <View style={styles.productImgWrapper}>
                  <Image source={{ uri: getImg(prod) }} style={styles.productImg} resizeMode="contain" />
@@ -197,11 +214,25 @@ export default function ProceedScreen({ navigation }) {
                <View style={{ flex: 1 }}>
                  <Text style={styles.productName} numberOfLines={1}>{prod.medicine?.name || 'Item'}</Text>
                  <Text style={styles.productQty}>Qty: {prod.quantity}</Text>
+                 {freeUnits > 0 && (
+                   <View style={styles.papItemTag}>
+                     <Ionicons name="gift-outline" size={rs(10)} color="#7E22CE" />
+                     <Text style={styles.papItemTagText}>+{freeUnits} Free Bonus (Total {prod.quantity + freeUnits})</Text>
+                   </View>
+                 )}
                </View>
                <Text style={styles.productTotal}>₹{Number(prod.price) * prod.quantity}</Text>
              </View>
-          ))}
+            );
+          })}
         </View>
+
+        {totalFreeUnits > 0 && (
+          <View style={styles.papSummaryRow}>
+            <Ionicons name="gift" size={rs(12)} color="#7E22CE" />
+            <Text style={styles.papSummaryText}>PAP Bonus Units: +{totalFreeUnits} Free Included (₹0.00)</Text>
+          </View>
+        )}
 
         {/* Attached Prescription Preview Card */}
         {item.prescription && (
@@ -599,5 +630,56 @@ const styles = StyleSheet.create({
   fullPrescriptionImage: {
     width: '100%',
     height: '100%',
+  },
+  papBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: rs(6),
+    paddingVertical: rv(2),
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  papBadgeText: {
+    fontSize: rm(10),
+    fontWeight: '800',
+    color: '#7E22CE',
+  },
+  papItemTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F3E8FF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: rs(6),
+    paddingVertical: rv(2),
+    borderRadius: radius.xs,
+    marginTop: rv(3),
+    borderWidth: 0.5,
+    borderColor: '#D8B4FE',
+  },
+  papItemTagText: {
+    fontSize: rm(10),
+    fontWeight: '700',
+    color: '#6B21A8',
+  },
+  papSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FAF5FF',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: rv(6),
+    borderRadius: radius.sm,
+    marginTop: rv(6),
+    borderWidth: 1,
+    borderColor: '#F3E8FF',
+  },
+  papSummaryText: {
+    fontSize: rm(11),
+    fontWeight: '700',
+    color: '#7E22CE',
   },
 });

@@ -71,19 +71,20 @@ export default function SplashScreen({ navigation }) {
           }
         }
 
-        // Wait a bit so the splash animation is fully visible
+        // Transition promptly after smooth entry animation (~800ms)
         setTimeout(() => {
           navigation.replace(nextRoute);
-        }, 2000);
+        }, 800);
 
       } catch (e) {
         console.error('Splash routing error', e);
-        setTimeout(() => navigation.replace('Welcome'), 2000);
+        setTimeout(() => navigation.replace('Welcome'), 800);
       }
     };
 
     checkRouting();
-  }, [fadeAnim, scaleAnim, navigation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fadeAnim, scaleAnim, subtitleFadeAnim, subtitleTranslateY, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>

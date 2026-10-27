@@ -11,6 +11,7 @@ import Pagination from '../../components/admin/Pagination';
 import AdminListControls from '../../components/admin/AdminListControls';
 import { AlertService } from '../../services/AlertService';
 import { getFullImageUrl } from '../../utils/image';
+import { calculatePapBenefit } from '../../utils/papHelper';
 
 export default function AdminOrdersScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -22,7 +23,12 @@ export default function AdminOrdersScreen({ navigation }) {
   let filteredData = data.filter(item => {
     if (!item || typeof item !== 'object') return false;
     const matchesSearch = Object.values(item).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
+    let matchesStatus = true;
+    if (statusFilter === 'PAP') {
+      matchesStatus = (item.items || []).some(prod => calculatePapBenefit(prod.quantity, prod.medicine?.papOffer).freeUnits > 0);
+    } else if (statusFilter !== 'All') {
+      matchesStatus = item.status === statusFilter;
+    }
     return matchesSearch && matchesStatus;
   });
 
@@ -126,10 +132,23 @@ export default function AdminOrdersScreen({ navigation }) {
 
   const renderItem = ({ item }) => {
     const formattedDate = new Date(item.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const totalFreeUnits = (item.items || []).reduce((acc, prod) => {
+      const b = calculatePapBenefit(prod.quantity, prod.medicine?.papOffer);
+      return acc + (b.freeUnits || 0);
+    }, 0);
+
     return (
       <View style={[styles.card, { flexDirection: 'column', alignItems: 'stretch' }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <Text style={[styles.cardTitle, {marginBottom: 0}]}>{"Order #" + item.id}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <Text style={[styles.cardTitle, {marginBottom: 0}]}>{"Order #" + item.id}</Text>
+            {totalFreeUnits > 0 && (
+              <View style={styles.adminPapBadge}>
+                <Ionicons name="gift" size={rs(10)} color="#7E22CE" />
+                <Text style={styles.adminPapBadgeText}>+{totalFreeUnits} Free PAP</Text>
+              </View>
+            )}
+          </View>
           <View style={{backgroundColor: item.status === 'Delivered' ? '#DCFCE7' : '#FEF9C3', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12}}>
             <Text style={{fontSize: 12, color: item.status === 'Delivered' ? '#166534' : '#854D0E', fontWeight: '700'}}>
               {item.status}
@@ -151,6 +170,29 @@ export default function AdminOrdersScreen({ navigation }) {
             {"Total: ₹" + (item.finalAmount || item.totalAmount || 0)}
           </Text>
         </View>
+
+        {/* Packaging instruction alert card for admin packaging team */}
+        {totalFreeUnits > 0 && (
+          <View style={styles.adminPapAlertBox}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Ionicons name="gift" size={rs(15)} color="#7E22CE" />
+              <Text style={styles.adminPapAlertTitle}>PACKAGING INSTRUCTION: PAP BONUS</Text>
+            </View>
+            <Text style={styles.adminPapAlertDesc}>Pack +{totalFreeUnits} extra complimentary unit(s) under PAP:</Text>
+            {item.items?.map((prod) => {
+              const b = calculatePapBenefit(prod.quantity, prod.medicine?.papOffer);
+              if (!b.freeUnits) return null;
+              return (
+                <View key={prod.id} style={styles.adminPapItemLine}>
+                  <Text style={styles.adminPapItemName} numberOfLines={1}>{prod.medicine?.name || 'Item'}</Text>
+                  <Text style={styles.adminPapItemBreakdown}>
+                    Billed: {prod.quantity} + <Text style={{color: '#7E22CE', fontWeight: 'bold'}}>PAP Free: +{b.freeUnits}</Text> = <Text style={{color: '#166534', fontWeight: 'bold'}}>Total: {prod.quantity + b.freeUnits} to Pack</Text>
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         {/* Prescription Status / Thumbnail Card */}
         {item.prescription ? (
@@ -247,6 +289,7 @@ export default function AdminOrdersScreen({ navigation }) {
             onSearchChange={(text) => { setSearchQuery(text); setCurrentPage(1); }}
             filterOptions={[
               { id: 'All', label: 'All Statuses' },
+              { id: 'PAP', label: '🎁 PAP Orders' },
               { id: 'Pending', label: 'Pending' },
               { id: 'Confirmed', label: 'Confirmed' },
               { id: 'Shipped', label: 'Shipped' },
@@ -699,5 +742,60 @@ const styles = StyleSheet.create({
   fullPrescriptionImage: {
     width: '100%',
     height: '100%',
+  },
+  adminPapBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: rs(6),
+    paddingVertical: rv(2),
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#D8B4FE',
+  },
+  adminPapBadgeText: {
+    fontSize: rm(10),
+    fontWeight: '800',
+    color: '#7E22CE',
+  },
+  adminPapAlertBox: {
+    backgroundColor: '#FAF5FF',
+    borderWidth: 1.5,
+    borderColor: '#D8B4FE',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: 12,
+  },
+  adminPapAlertTitle: {
+    fontSize: rm(11),
+    fontWeight: '800',
+    color: '#6B21A8',
+    letterSpacing: 0.5,
+  },
+  adminPapAlertDesc: {
+    fontSize: rm(11),
+    color: '#7E22CE',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  adminPapItemLine: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.xs,
+    paddingHorizontal: rs(8),
+    paddingVertical: rv(4),
+    marginTop: 4,
+    borderWidth: 0.5,
+    borderColor: '#E9D5FF',
+  },
+  adminPapItemName: {
+    fontSize: rm(12),
+    fontWeight: '700',
+    color: '#1E1B4B',
+  },
+  adminPapItemBreakdown: {
+    fontSize: rm(11),
+    color: '#475569',
+    marginTop: 2,
   },
 });

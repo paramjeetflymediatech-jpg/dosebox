@@ -53,6 +53,18 @@ function cartReducer(state, action) {
     case 'DELETE':
       return { ...state, items: state.items.filter((i) => i.id !== action.id) };
 
+    case 'SET_QTY': {
+      if (action.qty <= 0) {
+        return { ...state, items: state.items.filter((i) => i.id !== action.id) };
+      }
+      return {
+        ...state,
+        items: state.items.map((i) =>
+          i.id === action.id ? { ...i, qty: action.qty } : i
+        ),
+      };
+    }
+
     case 'CLEAR':
       return { ...state, items: [] };
 
@@ -140,6 +152,7 @@ export function CartProvider({ children }) {
     }
   };
   const removeFromCart = (id) => dispatch({ type: 'REMOVE', id });
+  const updateQuantity = (id, qty) => dispatch({ type: 'SET_QTY', id, qty });
   const deleteFromCart = (id) => dispatch({ type: 'DELETE', id });
   const clearCart = () => {
     dispatch({ type: 'CLEAR' });
@@ -172,6 +185,7 @@ export function CartProvider({ children }) {
         attachedPrescriptionStatus,
         setAttachedPrescriptionStatus,
         addToCart,
+        updateQuantity,
         removeFromCart,
         deleteFromCart,
         clearCart,

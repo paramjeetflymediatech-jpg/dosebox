@@ -1,19 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Eye, Download, CheckCircle2, XCircle, Loader2, AlertCircle, FileText, ExternalLink, ZoomIn } from 'lucide-react';
+import { ShoppingBag, Eye, Download, CheckCircle2, XCircle, Loader2, AlertCircle, FileText, ExternalLink, ZoomIn, Gift } from 'lucide-react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '../../../context/CartContext';
+import { calculatePapBenefit } from '@/lib/papHelper';
 
 interface OrderItem {
   id: number;
   quantity: number;
   price: string;
   medicineId: number;
-  medicine?: { id: number; name: string; images: string; prescriptionRequired?: boolean };
+  medicine?: { id: number; name: string; images: string; papOffer?: string; prescriptionRequired?: boolean };
 }
 
 interface Order {
@@ -289,6 +290,22 @@ export default function OrdersPage() {
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                         {order.status}
                       </span>
+                      {(() => {
+                        const totalFree = (order.items || []).reduce((acc: number, item: any) => {
+                          const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                          return acc + (benefit.freeUnits || 0);
+                        }, 0);
+                        if (totalFree <= 0) return null;
+                        return (
+                          <span 
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs"
+                            title={`Patient Assistance Program: +${totalFree} Free Unit(s) Included in package`}
+                          >
+                            <Gift className="w-3 h-3 text-purple-600" />
+                            <span>PAP Benefit: +{totalFree} Free</span>
+                          </span>
+                        );
+                      })()}
                       {order.prescription && (
                         <button
                           type="button"
@@ -448,6 +465,22 @@ export default function OrdersPage() {
                                 <div className="min-w-0">
                                   <h5 className="font-bold text-slate-800 text-xs truncate group-hover:text-brand-600 transition-colors">{item.medicine?.name || 'Unknown item'}</h5>
                                   <span className="text-xs text-slate-400 block mt-0.5">Qty: {item.quantity} • ₹{formatCurrency(Number(item.price))}</span>
+                                  {(() => {
+                                    const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                                    const freeUnits = benefit.freeUnits || 0;
+                                    if (freeUnits <= 0) return null;
+                                    return (
+                                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                                          <Gift className="w-3 h-3 text-purple-600" />
+                                          <span>+{freeUnits} Free Bonus Unit (₹0.00)</span>
+                                        </span>
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                                          Total Receiving: {item.quantity + freeUnits} Units
+                                        </span>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                               <span className="text-xs font-bold text-slate-800 flex-shrink-0">₹{formatCurrency((Number(item.price) * item.quantity))}</span>
@@ -476,6 +509,11 @@ export default function OrdersPage() {
                           shippingFee = Math.max(0, Math.round(finalAmount - baseTotal));
                         }
 
+                        const totalFreeUnits = (order.items || []).reduce((sum: number, item: any) => {
+                          const benefit = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+                          return sum + (benefit.freeUnits || 0);
+                        }, 0);
+
                         return (
                           <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
                             <h4 className="font-bold text-slate-950 text-xs uppercase tracking-wider mb-4">Order Summary</h4>
@@ -493,6 +531,14 @@ export default function OrdersPage() {
                               <div className="flex justify-between items-center text-sm font-bold text-indigo-600">
                                 <span>Promo Discount</span>
                                 <span>- ₹{formatCurrency(couponDiscount)}</span>
+                              </div>
+                            )}
+                            {totalFreeUnits > 0 && (
+                              <div className="flex justify-between items-center bg-purple-50/80 px-3 py-2 rounded-xl border border-purple-200/80">
+                                <span className="text-xs text-purple-700 font-bold flex items-center gap-1.5">
+                                  <Gift className="w-3.5 h-3.5 text-purple-600" /> PAP Free Units Included
+                                </span>
+                                <span className="text-xs font-black text-purple-900">+{totalFreeUnits} Free Units (₹0.00)</span>
                               </div>
                             )}
                             <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-2 border-t border-slate-50">

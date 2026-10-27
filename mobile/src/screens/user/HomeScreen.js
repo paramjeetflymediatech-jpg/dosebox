@@ -75,6 +75,7 @@ const getCategoryPhotoUrl = (cat) => {
   if (slug === 'antibacterials' || slug === 'anti-bacterials' || name.includes('antibacterial') || name.includes('bacterial')) return getFullImageUrl('/categories/antibacterials.jpg');
   if (slug === 'anticoagulants' || name.includes('anticoagulant') || name.includes('coagulant')) return getFullImageUrl('/categories/anticoagulants.jpg');
   if (slug === 'anti-fungals' || name.includes('fungal')) return getFullImageUrl('/categories/anti-cancer.jpg');
+  if (slug === 'arthritis' || name.includes('arthritis')) return getFullImageUrl('/categories/arthritis.jpg');
   if (slug === 'kidney-care' || name.includes('kidney')) return getFullImageUrl('/categories/anemia.jpg');
 
   return getFullImageUrl('/categories/allergy-medication.jpg');
@@ -315,8 +316,31 @@ export default function HomeScreen({ navigation }) {
     );
   };
 
+  const HOME_CACHE_KEY = '@dosebox_home_cache_v2';
+
+  // Load cached home data immediately for instant zero-delay rendering
+  const loadCachedData = async () => {
+    try {
+      const cached = await AsyncStorage.getItem(HOME_CACHE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (Array.isArray(data.categories) && data.categories.length > 0) setCategories(data.categories);
+        if (Array.isArray(data.banners) && data.banners.length > 0) setBanners(data.banners);
+        if (Array.isArray(data.recommendations) && data.recommendations.length > 0) setRecommendations(data.recommendations);
+        if (Array.isArray(data.trending) && data.trending.length > 0) setTrending(data.trending);
+        if (Array.isArray(data.blogs) && data.blogs.length > 0) setBlogs(data.blogs);
+        setLoadingData(false);
+      }
+    } catch (err) {
+      console.log('Error reading home cache:', err);
+    }
+  };
+
   useEffect(() => {
-    fetchHomeData();
+    loadCachedData().finally(() => {
+      fetchHomeData(true);
+    });
+
     const checkLocationPermission = async () => {
       try {
         const token = await AsyncStorage.getItem('accessToken');
@@ -337,6 +361,7 @@ export default function HomeScreen({ navigation }) {
       }
     };
     checkLocationPermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -359,12 +384,14 @@ export default function HomeScreen({ navigation }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchHomeData();
+    await fetchHomeData(false);
     setRefreshing(false);
   };
 
-  const fetchHomeData = async () => {
-    setLoadingData(true);
+  const fetchHomeData = async (isBackground = false) => {
+    if (!isBackground) {
+      setLoadingData(true);
+    }
     try {
       const [catRes, recRes, trendRes, bannersRes, blogsRes] = await Promise.all([
         api.get('/medicines/categories').catch(() => ({ data: { success: false } })),
@@ -374,11 +401,35 @@ export default function HomeScreen({ navigation }) {
         api.get('/blogs').catch(() => ({ data: { success: false } }))
       ]);
 
-      if (catRes.data?.success) setCategories(catRes.data.data);
-      if (recRes.data?.success) setRecommendations(recRes.data.data);
-      if (trendRes.data?.success) setTrending(trendRes.data.data);
-      if (bannersRes.data?.success) setBanners(bannersRes.data.data);
-      if (blogsRes.data?.success) setBlogs(blogsRes.data.data);
+      const freshCache = {};
+      if (catRes.data?.success && catRes.data.data) {
+        setCategories(catRes.data.data);
+        freshCache.categories = catRes.data.data;
+      }
+      if (recRes.data?.success && recRes.data.data) {
+        setRecommendations(recRes.data.data);
+        freshCache.recommendations = recRes.data.data;
+      }
+      if (trendRes.data?.success && trendRes.data.data) {
+        setTrending(trendRes.data.data);
+        freshCache.trending = trendRes.data.data;
+      }
+      if (bannersRes.data?.success && bannersRes.data.data) {
+        setBanners(bannersRes.data.data);
+        freshCache.banners = bannersRes.data.data;
+      }
+      if (blogsRes.data?.success && blogsRes.data.data) {
+        setBlogs(blogsRes.data.data);
+        freshCache.blogs = blogsRes.data.data;
+      }
+
+      // Persist to cache asynchronously for instant startup next time
+      if (Object.keys(freshCache).length > 0) {
+        AsyncStorage.getItem(HOME_CACHE_KEY).then((prev) => {
+          const merged = { ...(prev ? JSON.parse(prev) : {}), ...freshCache };
+          AsyncStorage.setItem(HOME_CACHE_KEY, JSON.stringify(merged)).catch(() => {});
+        }).catch(() => {});
+      }
     } catch (e) {
       console.warn('Failed to load home data', e);
     } finally {
@@ -585,7 +636,7 @@ export default function HomeScreen({ navigation }) {
       >
 
         {/* ── BANNERS ── */}
-        {banners.length > 0 && (
+        {banners.length > 0 ? (
           <View style={{ marginBottom: rv(16), marginHorizontal: spacing.md, overflow: 'hidden' }}>
             <FlatList
               ref={bannerListRef}
@@ -646,7 +697,11 @@ export default function HomeScreen({ navigation }) {
               </View>
             )}
           </View>
-        )}
+        ) : loadingData ? (
+          <View style={{ marginBottom: rv(16), marginHorizontal: spacing.md, height: bannerHeight, borderRadius: radius.lg, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="small" color={C.primary} />
+          </View>
+        ) : null}
 
         {/* Quick Links */}
         <View style={styles.quickGrid}>

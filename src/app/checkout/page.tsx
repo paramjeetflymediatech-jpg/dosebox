@@ -38,6 +38,16 @@ import api from "../../lib/api";
 import { formatCurrency } from "@/lib/utils";
 import toast from 'react-hot-toast';
 import { showWarning, showError } from "@/lib/sweetalert";
+import { calculatePapBenefit } from "@/lib/papHelper";
+
+const getRxPreviewUrl = (url?: string | null) => {
+  if (!url) return '';
+  let clean = url.trim();
+  if (clean.startsWith('/uploads/')) {
+    clean = clean.replace(/^\/uploads\//, '/api/file/');
+  }
+  return clean;
+};
 
 interface Address {
   id: number;
@@ -104,13 +114,14 @@ export default function CheckoutPage() {
         setRxStatus(storedStatus || 'Verified');
       }
       if (storedUrl) {
-        setAttachedPrescriptionPreview(storedUrl);
+        setAttachedPrescriptionPreview(getRxPreviewUrl(storedUrl));
       } else if (storedId) {
         api.get(`/prescriptions/${storedId}`).then(res => {
           if (res.data?.success && res.data.data?.fileUrl) {
-            setAttachedPrescriptionPreview(res.data.data.fileUrl);
-            sessionStorage.setItem('attachedPrescriptionUrl', res.data.data.fileUrl);
-            localStorage.setItem('attachedPrescriptionUrl', res.data.data.fileUrl);
+            const cleanUrl = getRxPreviewUrl(res.data.data.fileUrl);
+            setAttachedPrescriptionPreview(cleanUrl);
+            sessionStorage.setItem('attachedPrescriptionUrl', cleanUrl);
+            localStorage.setItem('attachedPrescriptionUrl', cleanUrl);
           }
         }).catch(err => console.error("Error fetching attached rx url:", err));
       }
@@ -202,10 +213,11 @@ export default function CheckoutPage() {
   const handleSelectSavedPrescription = (presc: any) => {
     setAttachedPrescriptionId(presc.id);
     setRxStatus(presc.status || 'Verified');
-    if (presc.fileUrl) {
-      setAttachedPrescriptionPreview(presc.fileUrl);
-      sessionStorage.setItem('attachedPrescriptionUrl', presc.fileUrl);
-      localStorage.setItem('attachedPrescriptionUrl', presc.fileUrl);
+    const cleanUrl = getRxPreviewUrl(presc.fileUrl);
+    if (cleanUrl) {
+      setAttachedPrescriptionPreview(cleanUrl);
+      sessionStorage.setItem('attachedPrescriptionUrl', cleanUrl);
+      localStorage.setItem('attachedPrescriptionUrl', cleanUrl);
     }
     sessionStorage.setItem('attachedPrescriptionId', presc.id.toString());
     sessionStorage.setItem('attachedPrescriptionStatus', presc.status || 'Verified');
@@ -1412,42 +1424,78 @@ export default function CheckoutPage() {
                       ) : (
                         /* Saved Prescriptions List with Small Image Cards */
                         <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                          {userSavedPrescriptions.map((p) => (
-                            <div
-                              key={p.id}
-                              className="p-3 rounded-xl border border-slate-200 hover:border-emerald-300 bg-slate-50 flex items-center justify-between transition-colors gap-3"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                {/* Small Card Thumbnail */}
-                                <div
-                                  onClick={() => p.fileUrl && setSelectedImageModal(p.fileUrl)}
-                                  className="w-12 h-14 rounded-lg border border-slate-300 bg-white overflow-hidden shrink-0 flex items-center justify-center cursor-pointer shadow-2xs hover:border-[#1F5C52] transition-colors"
-                                  title="Click to view full prescription"
-                                >
-                                  {p.fileUrl ? (
-                                    <img src={p.fileUrl} alt={`Rx #${p.id}`} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <span className="text-xs font-bold text-emerald-700">Rx</span>
-                                  )}
+                          {userSavedPrescriptions.map((p) => {
+                            const rxUrl = getRxPreviewUrl(p.fileUrl);
+                            const isPdf = (p.fileUrl || '').toLowerCase().endsWith('.pdf');
+                            return (
+                              <div
+                                key={p.id}
+                                className="p-3 rounded-xl border border-slate-200 hover:border-emerald-300 bg-slate-50 flex items-center justify-between transition-colors gap-3"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {/* Small Card Thumbnail with click to preview */}
+                                  <div
+                                    onClick={() => {
+                                      if (rxUrl) setSelectedImageModal(rxUrl);
+                                      else toast.error("Prescription file not found.");
+                                    }}
+                                    className="w-12 h-14 rounded-lg border border-slate-300 bg-white overflow-hidden shrink-0 flex items-center justify-center cursor-pointer shadow-2xs hover:border-[#1F5C52] transition-colors relative group"
+                                    title="Click to preview prescription"
+                                  >
+                                    {rxUrl && !isPdf ? (
+                                      <img
+                                        src={rxUrl}
+                                        alt={`Rx #${p.id}`}
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src =
+                                            "https://placehold.co/120x160/e2e8f0/1F5C52?text=Rx";
+                                        }}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-emerald-50 flex flex-col items-center justify-center text-emerald-800">
+                                        <FileText className="w-5 h-5 text-emerald-700" />
+                                        <span className="text-[9px] font-black uppercase">
+                                          {isPdf ? 'PDF' : 'Rx'}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-900 truncate">
+                                      Prescription #{p.id}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500">
+                                      Status: {p.status || "Approved"}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-bold text-slate-900 truncate">
-                                    Prescription #{p.id}
-                                  </p>
-                                  <p className="text-[11px] text-slate-500">
-                                    Status: {p.status || "Approved"}
-                                  </p>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (rxUrl) {
+                                        setSelectedImageModal(rxUrl);
+                                      } else {
+                                        toast.error("Prescription preview not available.");
+                                      }
+                                    }}
+                                    className="p-2 text-slate-600 hover:text-[#1F5C52] hover:bg-emerald-50 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+                                    title="Preview Full Prescription"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSelectSavedPrescription(p)}
+                                    className="bg-white hover:bg-[#1F5C52] hover:text-white border border-[#1F5C52]/40 text-[#1F5C52] font-bold text-xs py-2 px-3.5 rounded-lg transition-all cursor-pointer"
+                                  >
+                                    Select
+                                  </button>
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleSelectSavedPrescription(p)}
-                                className="bg-white hover:bg-[#1F5C52] hover:text-white border border-[#1F5C52]/40 text-[#1F5C52] font-bold text-xs py-2 px-3.5 rounded-lg transition-all cursor-pointer shrink-0"
-                              >
-                                Select
-                              </button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
 
@@ -1733,40 +1781,90 @@ export default function CheckoutPage() {
               </div>
 
               {/* Items List Preview */}
-              <div className="space-y-3 max-h-56 overflow-y-auto pr-1.5 custom-scrollbar">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/60 border border-slate-100"
-                  >
-                    <div className="w-11 h-11 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center p-1 shrink-0 overflow-hidden">
-                      <img
-                        src={item.image || "/images/capsule-placeholder.png"}
-                        alt={item.name}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "https://placehold.co/80x80/e2e8f0/1F5C52?text=Rx";
-                        }}
-                        className="w-full h-full object-contain"
-                      />
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-1.5 custom-scrollbar">
+                {cartItems.map((item) => {
+                  const papBenefit = calculatePapBenefit(item.quantity, item.papOffer);
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100 space-y-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                          <img
+                            src={item.image || "/images/capsule-placeholder.png"}
+                            alt={item.name}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://placehold.co/80x80/e2e8f0/1F5C52?text=Rx";
+                            }}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-800 line-clamp-1 leading-snug">
+                            {item.name}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            Qty: {item.quantity} × ₹{formatCurrency(item.discountPrice || item.price)}
+                          </p>
+                        </div>
+                        <span className="font-black text-xs text-slate-900 shrink-0">
+                          ₹{formatCurrency((item.discountPrice || item.price) * item.quantity)}
+                        </span>
+                      </div>
+
+                      {/* PAP Offer Notification Badge */}
+                      {papBenefit.pap && (
+                        <div className={`p-2 rounded-lg text-xs flex items-center justify-between border ${
+                          papBenefit.isEligible
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-950 font-semibold'
+                            : 'bg-amber-50/80 border-amber-200 text-amber-900 font-medium'
+                        }`}>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Sparkles className={`w-3.5 h-3.5 shrink-0 ${papBenefit.isEligible ? 'text-emerald-600' : 'text-amber-600'}`} />
+                            <span className="truncate text-[11px] font-bold">
+                              {papBenefit.isEligible
+                                ? `PAP Applied: Buy ${papBenefit.pap.buyQty} Get ${papBenefit.pap.freeQty} Free`
+                                : `PAP Offer: Buy ${papBenefit.pap.buyQty} Get ${papBenefit.pap.freeQty} Free`}
+                            </span>
+                          </div>
+                          {papBenefit.isEligible ? (
+                            <span className="bg-emerald-600 text-white font-black px-2 py-0.5 rounded text-[10px] uppercase tracking-wider shrink-0 ml-2">
+                              +{papBenefit.freeUnits} Free Unit{papBenefit.freeUnits > 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-700 shrink-0 ml-2">
+                              Add {papBenefit.neededForNext} for Free unit
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-800 line-clamp-1 leading-snug">
-                        {item.name}
-                      </p>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        Qty: {item.quantity} × ₹{formatCurrency(item.discountPrice || item.price)}
-                      </p>
-                    </div>
-                    <span className="font-black text-xs text-slate-900 shrink-0">
-                      ₹{formatCurrency((item.discountPrice || item.price) * item.quantity)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Bill Breakdown */}
               <div className="border-t border-slate-100 pt-4 space-y-2.5 text-xs font-semibold text-slate-600">
+                {/* Highlighted PAP Bonus Banner if any items qualified */}
+                {cartItems.reduce((acc, item) => acc + calculatePapBenefit(item.quantity, item.papOffer).freeUnits, 0) > 0 && (
+                  <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center justify-between text-xs text-emerald-950 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-xs">Patient Assistance (PAP)</p>
+                        <p className="text-[10px] text-emerald-700 font-medium">Free bonus units unlocked</p>
+                      </div>
+                    </div>
+                    <span className="bg-emerald-700 text-white px-2.5 py-0.5 rounded-lg text-[11px] font-black shadow-2xs shrink-0">
+                      +{cartItems.reduce((acc, item) => acc + calculatePapBenefit(item.quantity, item.papOffer).freeUnits, 0)} Free Units (₹0)
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span>Total MRP</span>
                   <span className="text-slate-900 font-bold">₹{formatCurrency(subtotal)}</span>
@@ -1781,8 +1879,19 @@ export default function CheckoutPage() {
                     <span>- ₹{formatCurrency(couponDiscount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>GST (5%)</span>
+                {cartItems.reduce((acc, item) => acc + calculatePapBenefit(item.quantity, item.papOffer).freeUnits, 0) > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-bold">
+                    <span>PAP Free Units</span>
+                    <span>+{cartItems.reduce((acc, item) => acc + calculatePapBenefit(item.quantity, item.papOffer).freeUnits, 0)} Units Included (₹0.00)</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-slate-600">
+                  <span className="flex items-center gap-1.5">
+                    <span>GST (5% Included in Price)</span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded">
+                      Inclusive
+                    </span>
+                  </span>
                   <span className="text-slate-900 font-bold">₹{formatCurrency(gstAmount)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -2016,20 +2125,41 @@ export default function CheckoutPage() {
                   <FileText className="w-4 h-4 text-[#1F5C52]" />
                   <h4 className="font-extrabold text-sm text-slate-900">Prescription Preview</h4>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedImageModal(null)}
-                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={selectedImageModal}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-bold text-[#1F5C52] hover:underline flex items-center gap-1"
+                  >
+                    Open Document
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImageModal(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="flex-1 overflow-auto rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-2">
-                <img
-                  src={selectedImageModal}
-                  alt="Prescription Full Preview"
-                  className="max-h-[70vh] w-auto object-contain rounded-lg shadow-xs"
-                />
+              <div className="flex-1 overflow-auto rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-2 min-h-[300px]">
+                {selectedImageModal.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={selectedImageModal}
+                    className="w-full h-[65vh] rounded-lg border-0 bg-white"
+                  />
+                ) : (
+                  <img
+                    src={selectedImageModal}
+                    alt="Prescription Full Preview"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://placehold.co/600x800/e2e8f0/1F5C52?text=Prescription+Document";
+                    }}
+                    className="max-h-[70vh] w-auto object-contain rounded-lg shadow-xs"
+                  />
+                )}
               </div>
             </motion.div>
           </motion.div>

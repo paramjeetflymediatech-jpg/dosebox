@@ -23,6 +23,7 @@ import { AlertService } from '../../services/AlertService';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../config/env';
+import { calculatePapBenefit } from '../../utils/papHelper';
 
 const C = {
   primary: '#1F5C52',
@@ -111,6 +112,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
       setIsClaimMode(true);
       setCancelModalOpen(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchOrderData = async () => {
@@ -185,6 +187,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
       return;
     }
     fetchOrderData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id]);
 
   if (!order) return <View style={styles.container} />;
@@ -266,6 +269,10 @@ export default function OrderTrackingScreen({ route, navigation }) {
   };
 
   const statusColors = getStatusColor(order.status);
+  const totalFreeUnits = (order?.items || []).reduce((acc, prod) => {
+    const b = calculatePapBenefit(prod.quantity, prod.medicine?.papOffer);
+    return acc + (b.freeUnits || 0);
+  }, 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -289,9 +296,17 @@ export default function OrderTrackingScreen({ route, navigation }) {
           <View style={styles.infoRow}>
             <View>
               <Text style={styles.infoLabel}>Status</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
-                <View style={[styles.statusDot, { backgroundColor: statusColors.text }]} />
-                <Text style={[styles.statusText, { color: statusColors.text }]}>{order.status}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
+                  <View style={[styles.statusDot, { backgroundColor: statusColors.text }]} />
+                  <Text style={[styles.statusText, { color: statusColors.text }]}>{order.status}</Text>
+                </View>
+                {totalFreeUnits > 0 && (
+                  <View style={styles.papBadge}>
+                    <Ionicons name="gift" size={rs(10)} color="#7E22CE" />
+                    <Text style={styles.papBadgeText}>+{totalFreeUnits} Free PAP</Text>
+                  </View>
+                )}
               </View>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
@@ -508,23 +523,40 @@ export default function OrderTrackingScreen({ route, navigation }) {
         {/* Ordered Items */}
         <View style={[styles.card, styles.shadow, { marginBottom: rv(20) }]}>
           <Text style={styles.sectionTitle}>Ordered Items</Text>
-          {order.items?.map((item, index) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.itemRow, index === order.items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}
-              onPress={() => navigation.navigate('MedicineDetail', { medicine: item.medicine })}
-              activeOpacity={0.7}
-            >
-              <View style={styles.itemImgWrapper}>
-                <Image source={{ uri: getImg(item) }} style={styles.itemImg} resizeMode="contain" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemName} numberOfLines={2}>{item.medicine?.name || 'Item'}</Text>
-                <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
-              </View>
-              <Text style={styles.itemTotal}>₹{Number(item.price) * item.quantity}</Text>
-            </TouchableOpacity>
-          ))}
+          {order.items?.map((item, index) => {
+            const b = calculatePapBenefit(item.quantity, item.medicine?.papOffer);
+            const freeUnits = b.freeUnits || 0;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.itemRow, index === order.items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}
+                onPress={() => navigation.navigate('MedicineDetail', { medicine: item.medicine })}
+                activeOpacity={0.7}
+              >
+                <View style={styles.itemImgWrapper}>
+                  <Image source={{ uri: getImg(item) }} style={styles.itemImg} resizeMode="contain" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemName} numberOfLines={2}>{item.medicine?.name || 'Item'}</Text>
+                  <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+                  {freeUnits > 0 && (
+                    <View style={styles.papTag}>
+                      <Ionicons name="gift-outline" size={rs(10)} color="#7E22CE" />
+                      <Text style={styles.papTagText}>+{freeUnits} Free Bonus (Total {item.quantity + freeUnits})</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.itemTotal}>₹{Number(item.price) * item.quantity}</Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          {totalFreeUnits > 0 && (
+            <View style={styles.papSummaryBox}>
+              <Ionicons name="gift" size={rs(13)} color="#7E22CE" />
+              <Text style={styles.papSummaryBoxText}>PAP Bonus Units: +{totalFreeUnits} Free Included (₹0.00)</Text>
+            </View>
+          )}
         </View>
 
         {/* Action Buttons */}
@@ -777,5 +809,56 @@ const styles = StyleSheet.create({
   fullPrescriptionImage: {
     width: '100%',
     height: '100%',
+  },
+  papBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: rs(6),
+    paddingVertical: rv(2),
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  papBadgeText: {
+    fontSize: rm(10),
+    fontWeight: '800',
+    color: '#7E22CE',
+  },
+  papTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F3E8FF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: rs(6),
+    paddingVertical: rv(2),
+    borderRadius: radius.xs,
+    marginTop: rv(3),
+    borderWidth: 0.5,
+    borderColor: '#D8B4FE',
+  },
+  papTagText: {
+    fontSize: rm(10),
+    fontWeight: '700',
+    color: '#6B21A8',
+  },
+  papSummaryBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FAF5FF',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: rv(8),
+    borderRadius: radius.sm,
+    marginTop: rv(10),
+    borderWidth: 1,
+    borderColor: '#F3E8FF',
+  },
+  papSummaryBoxText: {
+    fontSize: rm(11),
+    fontWeight: '700',
+    color: '#7E22CE',
   },
 });

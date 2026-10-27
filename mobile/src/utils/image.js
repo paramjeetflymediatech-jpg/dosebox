@@ -24,8 +24,23 @@ export const getFullImageUrl = (imgUri) => {
     parsedUri = null;
   }
 
-  if (parsedUri && typeof parsedUri === 'string' && !parsedUri.startsWith('http')) {
-    const baseUrl = API_URL.replace('/api', '');
+  if (!parsedUri || typeof parsedUri !== 'string') return null;
+
+  const baseUrl = API_URL.replace(/\/api\/?$/, '');
+
+  // Normalize localhost / 127.0.0.1 addresses to device accessible baseUrl
+  if (parsedUri.startsWith('http://localhost:3000') || parsedUri.startsWith('http://127.0.0.1:3000')) {
+    parsedUri = parsedUri.replace(/^http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+  }
+
+  // Ensure uploads route via Next.js dynamic streaming endpoint /api/file/
+  if (parsedUri.includes('/uploads/') && !parsedUri.includes('/api/file/')) {
+    parsedUri = parsedUri.replace('/uploads/', '/api/file/uploads/');
+  } else if (parsedUri.startsWith('uploads/')) {
+    parsedUri = `/api/file/${parsedUri}`;
+  }
+
+  if (!parsedUri.startsWith('http')) {
     const prefix = parsedUri.startsWith('/') ? '' : '/';
     return `${baseUrl}${prefix}${parsedUri}`;
   }
@@ -52,12 +67,20 @@ export const getAllImageUrls = (imgData) => {
     }
   }
 
-  const baseUrl = API_URL.replace('/api', '');
+  const baseUrl = API_URL.replace(/\/api\/?$/, '');
 
   return rawList
     .filter(item => item && typeof item === 'string' && item !== 'url' && item !== '[]' && item.trim() !== '')
     .map(item => {
-      const trimmed = item.trim();
+      let trimmed = item.trim();
+      if (trimmed.startsWith('http://localhost:3000') || trimmed.startsWith('http://127.0.0.1:3000')) {
+        trimmed = trimmed.replace(/^http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+      }
+      if (trimmed.includes('/uploads/') && !trimmed.includes('/api/file/')) {
+        trimmed = trimmed.replace('/uploads/', '/api/file/uploads/');
+      } else if (trimmed.startsWith('uploads/')) {
+        trimmed = `/api/file/${trimmed}`;
+      }
       if (!trimmed.startsWith('http')) {
         const prefix = trimmed.startsWith('/') ? '' : '/';
         return `${baseUrl}${prefix}${trimmed}`;

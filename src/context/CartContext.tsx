@@ -18,6 +18,7 @@ export interface CartItem {
   packSize?: string;
   dosageForm?: string;
   isColdChain?: boolean;
+  papOffer?: string;
 }
 
 interface CartContextType {
@@ -163,10 +164,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  // GST calculation (5% exclusive)
-  const gstAmount = Math.max(0, taxableAmount - couponDiscount) * 0.05;
+  // GST calculation (5% inclusive in catalogue prices)
+  const taxableAfterCoupon = Math.max(0, taxableAmount - couponDiscount);
+  const gstAmount = taxableAfterCoupon - (taxableAfterCoupon / 1.05);
 
-  const totalAmount = Math.max(0, taxableAmount - couponDiscount + gstAmount + shippingFee);
+  const totalAmount = Math.max(0, taxableAfterCoupon + shippingFee);
 
   const requiresPrescription = cartItems.some(item => item.prescriptionRequired);
 
