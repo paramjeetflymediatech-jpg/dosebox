@@ -162,25 +162,30 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.moveTo(205, 95).lineTo(400, 95).stroke(); // horizontal 2
         doc.moveTo(20, 140).lineTo(575, 140).stroke(); // Bottom of Header (full width)
 
-        doc.moveTo(265, 55).lineTo(265, 140).stroke(); // Vert 1 in middle
-        doc.moveTo(330, 55).lineTo(330, 140).stroke(); // Vert 2 in middle
+        doc.moveTo(252, 55).lineTo(252, 140).stroke(); // Vert 1 in middle
+        doc.moveTo(345, 55).lineTo(345, 140).stroke(); // Vert 2 in middle
 
-        doc.font('Helvetica-Bold').fontSize(8).fillColor('black');
+        doc.font('Helvetica-Bold').fontSize(7.5).fillColor('black');
         doc.text('Invoice No', 207, 60);
         doc.text('Invoice Date', 207, 100);
         doc.text('Due Date', 207, 112);
 
-        // Generate random 6-digit invoice number
-        const randomInvoiceNo = Math.floor(100000 + Math.random() * 900000);
-        doc.text(`${randomInvoiceNo}`, 267, 60);
-        const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB');
-        doc.text(orderDate, 267, 100);
-        doc.text(orderDate, 267, 112);
+        // Generate random invoice sequencing starting with DB-MMYYYY-XXXXXXXX
+        const orderDateObj = new Date(order.createdAt || Date.now());
+        const mm = String(orderDateObj.getMonth() + 1).padStart(2, '0');
+        const yyyy = String(orderDateObj.getFullYear());
+        const randomSuffix = Math.floor(10000000 + Math.random() * 90000000); // 8-digit random
+        const randomInvoiceNo = `DB-${mm}${yyyy}-${randomSuffix}`;
+        doc.text(randomInvoiceNo, 255, 60);
 
-        doc.text('Order No.', 332, 60);
-        doc.text('Order Date', 332, 72);
-        doc.text('L.R. No.', 332, 100);
-        doc.text('L.R. Date', 332, 112);
+        const orderDate = orderDateObj.toLocaleDateString('en-GB');
+        doc.text(orderDate, 255, 100);
+        doc.text(orderDate, 255, 112);
+
+        doc.text('Order No.', 347, 60);
+        doc.text('Order Date', 347, 72);
+        doc.text('L.R. No.', 347, 100);
+        doc.text('L.R. Date', 347, 112);
 
         // Right Box: Party Name (Buyer)
         const userAddressObj = order.shippingAddress;
@@ -443,8 +448,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.font('Helvetica-Oblique').fontSize(8);
         const amountWords = numberToWords(Number(order.finalAmount || 0));
         doc.text(`Rs. ${amountWords} only`, 25, 677, { width: 420 });
-        doc.text('MSG: RTGS/NEFT-A/C 005563400000856', 25, 689);
-        doc.text('IFSC-YESB0000055, YES BANK LTD, GREEN PARK, N.DELHI', 25, 699);
+        doc.text('MSG: RTGS/NEFT-A/C 926020019499401', 25, 689);
+        doc.text('IFSC-UTIB0003557, AXIS BANK, BHIKAJI CAMA PLACE DL, NEW DELHI, 110066', 25, 699);
 
         // Middle Footer: Items & Qty
         doc.font('Helvetica').fontSize(8);
