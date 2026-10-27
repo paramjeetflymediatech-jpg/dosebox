@@ -1,3 +1,14 @@
+# Release Notes - Version 1.0.4 (Build 18)
+
+## What's New
+- **Patient Assistance Program (PAP) Support**: Full PAP benefit indicators across medicine search, medicine details, cart/checkout, and order tracking.
+- **Admin Packaging Instructions**: Warehouse staff can now instantly view dedicated PAP packaging instructions detailing exact billed units, PAP complimentary units, and total quantity to pack.
+- **Top Selling UI Layout**: Refined medicine card responsive sizing so 2 cards fit side-by-side without edge-cutting on any device.
+- **Doctor Prescription Preview**: Fixed preview zoom modal for customer-selected prescriptions during checkout.
+- **Tax & Cart Calculations**: Ensured inclusive GST is accurately displayed without double calculation.
+
+---
+
 # Release Notes - Version 1.0.3 (Build 17)
 
 ## What's New

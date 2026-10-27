@@ -79,7 +79,7 @@ export default function RegisterScreen({ navigation }) {
         device_platform: Platform.OS,
         device_id: 'device_' + Math.random().toString(36).substring(7),
         push_token: fcmToken || '',
-        app_version: '1.0.3'
+        app_version: '1.0.4'
       };
 
       const response = await api.post('/auth/google', payload);
@@ -156,7 +156,7 @@ export default function RegisterScreen({ navigation }) {
             device_platform: Platform.OS,
             device_id: 'device_' + Math.random().toString(36).substring(7),
             push_token: fcmToken || '',
-            app_version: '1.0.3'
+            app_version: '1.0.4'
           };
 
           const response = await api.post('/auth/apple', payload);
@@ -214,7 +214,7 @@ export default function RegisterScreen({ navigation }) {
               device_platform: Platform.OS,
               device_id: 'device_' + Math.random().toString(36).substring(7),
               push_token: fcmToken || '',
-              app_version: '1.0.3'
+              app_version: '1.0.4'
             };
 
             const apiRes = await api.post('/auth/apple', payload);
@@ -342,7 +342,7 @@ export default function RegisterScreen({ navigation }) {
         device_platform: Platform.OS,
         device_id: 'device_' + Math.random().toString(36).substring(7),
         push_token: fcmToken || '',
-        app_version: '1.0.3',
+        app_version: '1.0.4',
       });
 
       const loginData = loginResponse.data;
