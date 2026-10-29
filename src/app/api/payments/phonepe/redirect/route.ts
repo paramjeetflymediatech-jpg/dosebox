@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { StandardCheckoutClient, Env } from '@phonepe-pg/pg-sdk-node';
-import { Order } from '../../../../../models';
+import { Order, Prescription } from '../../../../../models';
 
 const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID!;
 const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET!;
@@ -227,6 +227,11 @@ async function handleRedirect(req: NextRequest) {
 
     // If already marked Paid (webhook arrived first), just redirect to success
     if (order.paymentStatus === 'Paid') {
+      if (order.status === 'Payment Pending') {
+        const nextStatus = order.prescriptionId ? 'Prescription Review' : 'Confirmed';
+        await order.update({ status: nextStatus });
+        console.log(`Order ${orderId} status updated to ${nextStatus}`);
+      }
       console.log(`Order ${orderId} already marked Paid — redirecting to success`);
       return returnHtml('success');
     }
@@ -260,18 +265,20 @@ async function handleRedirect(req: NextRequest) {
       statusResponseAny?.paymentDetails?.[0]?.state === 'COMPLETED';
 
     if (paymentSuccess) {
-      if (order.paymentStatus !== 'Paid') {
+      if (order.paymentStatus !== 'Paid' || order.status === 'Payment Pending') {
         const timeline = JSON.parse((order as any).trackingTimeline || '[]');
         timeline.push({
           status: 'Payment Received',
           time: new Date().toISOString(),
           desc: `Payment verified via redirect. Ref: ${merchantOrderId}`,
         });
+        const nextStatus = order.prescriptionId ? 'Prescription Review' : 'Confirmed';
         await order.update({
+          status: nextStatus,
           paymentStatus: 'Paid',
           trackingTimeline: JSON.stringify(timeline),
         });
-        console.log(`Order ${orderId} marked as Paid via redirect verification`);
+        console.log(`Order ${orderId} marked as Paid and status updated to ${nextStatus} via redirect verification`);
       }
       return returnHtml('success');
     } else {

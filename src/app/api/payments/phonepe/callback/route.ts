@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { Order } from '../../../../../models';
+import { Order, Prescription } from '../../../../../models';
 
 const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET || '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399';
 const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
@@ -44,12 +44,16 @@ export async function POST(req: NextRequest) {
         desc: `Payment successful. Ref: ${transactionId}`
       });
 
+      const nextStatus = order.prescriptionId ? 'Prescription Review' : 'Confirmed';
+
       await order.update({
+        status: nextStatus,
         paymentStatus: 'Paid',
         trackingTimeline: JSON.stringify(timeline)
       });
     } else {
       await order.update({
+        status: 'Payment Pending',
         paymentStatus: 'Failed'
       });
     }

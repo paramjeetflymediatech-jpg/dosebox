@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
     // If the order is fully covered by DoseBox tokens, mark it paid directly
     // PhonePe requires a minimum of 100 paise (₹1)
     if (amountInPaise < 100) {
-      await order.update({ paymentStatus: 'Paid' });
+      const nextStatus = order.prescriptionId ? 'Prescription Review' : 'Confirmed';
+      await order.update({ status: nextStatus, paymentStatus: 'Paid' });
       return NextResponse.json({
         success: true,
         fullyPaidByTokens: true,

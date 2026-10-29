@@ -12,7 +12,8 @@ import {
   TextInput,
   Image,
   Alert,
-  RefreshControl
+  RefreshControl,
+  AppState
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -55,9 +56,10 @@ const getRichTimeline = (order, timeline) => {
     'Delivered'
   ];
 
+  const effectiveStatus = (order.paymentStatus === 'Paid' && order.status === 'Payment Pending') ? 'Confirmed' : order.status;
   let maxCompletedIndex = 0;
-  if (order.status === 'Payment Pending') maxCompletedIndex = -1;
-  if (order.status === 'Confirmed') maxCompletedIndex = Math.max(maxCompletedIndex, 1);
+  if (effectiveStatus === 'Payment Pending') maxCompletedIndex = -1;
+  if (effectiveStatus === 'Confirmed') maxCompletedIndex = Math.max(maxCompletedIndex, 1);
   if (order.status === 'Packed') maxCompletedIndex = Math.max(maxCompletedIndex, 3);
   if (order.status === 'Shipped') maxCompletedIndex = Math.max(maxCompletedIndex, 4);
   if (order.status === 'Out For Delivery') maxCompletedIndex = Math.max(maxCompletedIndex, 6);
@@ -105,6 +107,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
   const [previewRx, setPreviewRx] = useState(null);
 
   useEffect(() => {
+    fetchOrderData();
     if (route?.params?.autoOpenCancel) {
       setIsClaimMode(false);
       setCancelModalOpen(true);
@@ -115,7 +118,29 @@ export default function OrderTrackingScreen({ route, navigation }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Poll for status update when payment is pending (e.g. user returns from PhonePe/UPI)
+  useEffect(() => {
+    if (!order?.id || (order.status !== 'Payment Pending' && order.paymentStatus === 'Paid')) return;
+
+    fetchOrderData();
+    const interval = setInterval(() => {
+      fetchOrderData();
+    }, 3000);
+
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        fetchOrderData();
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [order?.id, order?.status, order?.paymentStatus]);
+
   const fetchOrderData = async () => {
+    if (!order?.id) return;
     await Promise.all([
       api.get('/orders').then(res => {
         if (res.data?.success) {
@@ -268,7 +293,8 @@ export default function OrderTrackingScreen({ route, navigation }) {
     return { bg: C.warningLight, text: C.warning };
   };
 
-  const statusColors = getStatusColor(order.status);
+  const displayStatus = (order?.paymentStatus === 'Paid' && order?.status === 'Payment Pending') ? 'Confirmed' : (order?.status || 'Pending');
+  const statusColors = getStatusColor(displayStatus);
   const totalFreeUnits = (order?.items || []).reduce((acc, prod) => {
     const b = calculatePapBenefit(prod.quantity, prod.medicine?.papOffer);
     return acc + (b.freeUnits || 0);
@@ -299,7 +325,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
                   <View style={[styles.statusDot, { backgroundColor: statusColors.text }]} />
-                  <Text style={[styles.statusText, { color: statusColors.text }]}>{order.status}</Text>
+                  <Text style={[styles.statusText, { color: statusColors.text }]}>{displayStatus}</Text>
                 </View>
                 {totalFreeUnits > 0 && (
                   <View style={styles.papBadge}>

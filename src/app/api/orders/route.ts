@@ -290,6 +290,14 @@ export async function GET(req: NextRequest) {
         offset
       });
 
+      for (const ord of orders) {
+        if (ord.paymentStatus === 'Paid' && ord.status === 'Payment Pending') {
+          const nextStatus = ord.prescriptionId ? 'Prescription Review' : 'Confirmed';
+          ord.status = nextStatus;
+          ord.update({ status: nextStatus }).catch(() => {});
+        }
+      }
+
       return NextResponse.json({
         success: true,
         data: orders,
@@ -313,6 +321,14 @@ export async function GET(req: NextRequest) {
         limit,
         offset
       });
+
+      for (const ord of orders) {
+        if (ord.paymentStatus === 'Paid' && ord.status === 'Payment Pending') {
+          const nextStatus = ord.prescriptionId ? 'Prescription Review' : 'Confirmed';
+          ord.status = nextStatus;
+          ord.update({ status: nextStatus }).catch(() => {});
+        }
+      }
 
       return NextResponse.json({
         success: true,
