@@ -278,10 +278,10 @@ export default function CartCheckoutScreen({ navigation }) {
 
   const handlePickRxImage = async (fromCamera = false) => {
     try {
-      const options = { mediaType: 'photo', quality: 0.8 };
+      const options = { mediaType: 'photo', quality: 0.8, saveToPhotos: false };
       let res = null;
       if (fromCamera) {
-        const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+        const hasPermission = await PermissionsService.requestCameraPermission();
         if (!hasPermission) return;
         res = await launchCamera(options);
       } else {

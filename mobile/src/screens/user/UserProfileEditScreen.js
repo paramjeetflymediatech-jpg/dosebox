@@ -118,9 +118,6 @@ export default function UserProfileEditScreen({ navigation }) {
 
   const handlePickFromGallery = async () => {
     try {
-      const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
-      if (!hasPermission) return;
-
       const response = await launchImageLibrary({
         mediaType: 'photo',
         quality: 0.8,
@@ -143,7 +140,7 @@ export default function UserProfileEditScreen({ navigation }) {
 
   const handleTakePhoto = async () => {
     try {
-      const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+      const hasPermission = await PermissionsService.requestCameraPermission();
       if (!hasPermission) return;
 
       const response = await launchCamera({
@@ -151,7 +148,7 @@ export default function UserProfileEditScreen({ navigation }) {
         quality: 0.8,
         maxWidth: 800,
         maxHeight: 800,
-        saveToPhotos: true,
+        saveToPhotos: false,
       });
 
       if (response.didCancel) return;

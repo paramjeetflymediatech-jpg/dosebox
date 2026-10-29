@@ -3,48 +3,47 @@ import { AlertService } from './AlertService';
 
 class PermissionsService {
   /**
-   * Request Camera and Gallery (Storage) permissions.
-   * Required for Prescription Upload and Profile Images.
+   * Request Camera permission.
+   * Required for taking photos with Camera.
+   * Note: Photo picking uses Android's native system Photo Picker and does NOT require any storage permission.
    */
-  static async requestCameraAndGalleryPermission() {
-    if (Platform.OS !== 'android') return true; // iOS handles via Info.plist automatically on access usually
+  static async requestCameraPermission() {
+    if (Platform.OS !== 'android') return true;
 
     try {
-      const permissions = [
+      const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.CAMERA,
-      ];
+        {
+          title: 'Camera Permission',
+          message: 'DoseBox needs access to your camera to capture prescription and profile photos.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
 
-      // Handle Storage permissions based on Android version
-      if (Platform.Version >= 33) {
-        permissions.push(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES);
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        return true;
       } else {
-        permissions.push(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
-        permissions.push(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
-      }
-
-      const granted = await PermissionsAndroid.requestMultiple(permissions);
-
-      const cameraGranted = granted[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED;
-      const storageGranted = Platform.Version >= 33 
-        ? granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] === PermissionsAndroid.RESULTS.GRANTED
-        : (granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED &&
-           granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED);
-
-      if (!cameraGranted || !storageGranted) {
         AlertService.show({
           type: 'error',
           title: 'Permission Denied',
-          message: 'Camera and Gallery permissions are required to upload prescriptions.'
+          message: 'Camera permission is required to capture photos.'
         });
         return false;
       }
-      return true;
     } catch (err) {
-      console.warn('Permission request error:', err);
-      // If we get an IllegalStateException (not attached to Activity), 
-      // just return true as a fallback because launchImageLibrary often doesn't need it anyway.
+      console.warn('Camera permission request error:', err);
       return true;
     }
+  }
+
+  /**
+   * Legacy alias: Camera only.
+   * Note: Photo picking uses Android's native system Photo Picker and does NOT require any storage permissions.
+   */
+  static async requestCameraAndGalleryPermission() {
+    return this.requestCameraPermission();
   }
 
   /**

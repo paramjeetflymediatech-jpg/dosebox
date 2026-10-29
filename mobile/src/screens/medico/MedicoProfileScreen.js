@@ -146,7 +146,7 @@ export default function MedicoProfileScreen({ navigation }) {
             </View>
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoLabel}>App Version</Text>
-              <Text style={styles.infoValue}>v1.0.5 (Build 19)</Text>
+              <Text style={styles.infoValue}>v1.0.6 (Build 20)</Text>
             </View>
           </View>
 

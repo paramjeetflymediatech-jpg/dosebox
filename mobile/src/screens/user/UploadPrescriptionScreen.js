@@ -57,13 +57,13 @@ export default function UploadPrescriptionScreen({ navigation }) {
 
   const takePhoto = async () => {
     try {
-      const hasPermission = await PermissionsService.requestCameraAndGalleryPermission();
+      const hasPermission = await PermissionsService.requestCameraPermission();
       if (!hasPermission) return;
 
       const response = await launchCamera({
         mediaType: 'photo',
         quality: 0.8,
-        saveToPhotos: true,
+        saveToPhotos: false,
       });
 
       if (response.didCancel) return;

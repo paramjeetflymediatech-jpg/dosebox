@@ -149,7 +149,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Dosebox v1.0.5</Text>
+        <Text style={styles.version}>Dosebox v1.0.6</Text>
       </ScrollView>
 
       {/* Custom Logout Confirmation Modal */}
