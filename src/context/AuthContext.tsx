@@ -10,6 +10,8 @@ interface UserProfile {
   phone?: string;
   role: 'Admin' | 'Customer' | 'SuperAdmin' | 'Pharmacist' | 'Medico' | 'Leadership';
   doseboxTokens?: number;
+  dlNo?: string;
+  gstin?: string;
 }
 
 interface AuthContextType {

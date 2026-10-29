@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
 import path from 'path';
 import { authenticateJWT } from '../../../../../middleware/auth';
 import { Order, OrderItem, Medicine, User, Setting, Address } from '../../../../../models';
@@ -153,7 +154,29 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.text(`D.L.No. : ${sellerDL}`, { width: 169, lineBreak: false });
         doc.text(`GSTIN : ${sellerGST}`, { width: 169, lineBreak: false });
 
-        // Middle Header
+        // Brand Header (Out of the box, above top border line)
+        const logoPath = path.join(process.cwd(), 'public', 'favicon.png');
+        const fallbackLogoPath = path.join(process.cwd(), 'public', 'Media.jpg');
+        const brandName = 'Dosebox';
+        const brandFontSize = 11;
+        doc.font('Helvetica-Bold').fontSize(brandFontSize).fillColor('#000080');
+
+        const activeLogo = fs.existsSync(logoPath) ? logoPath : (fs.existsSync(fallbackLogoPath) ? fallbackLogoPath : null);
+
+        if (activeLogo) {
+          const iconSize = 12;
+          const gap = 4;
+          const textWidth = doc.widthOfString(brandName);
+          const totalWidth = iconSize + gap + textWidth;
+          const startX = 205 + (195 - totalWidth) / 2;
+
+          doc.image(activeLogo, startX, 5, { fit: [iconSize, iconSize], align: 'center', valign: 'center' });
+          doc.text(brandName, startX + iconSize + gap, 5.5, { lineBreak: false });
+        } else {
+          doc.text(brandName, 205, 5.5, { width: 195, align: 'center' });
+        }
+
+        // Middle Header (Inside the box)
         doc.font('Helvetica-Bold').fontSize(12).fillColor('#000080').text('GST INVOICE', 205, 25, { width: 195, align: 'center' });
         doc.fontSize(10).text('CREDIT', 205, 40, { width: 195, align: 'center' });
 
@@ -170,22 +193,20 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.text('Invoice Date', 207, 100);
         doc.text('Due Date', 207, 112);
 
-        // Generate random invoice sequencing starting with DB-MMYYYY-XXXXXXXX
+        // Generate invoice number: DB-YY-XXXX (e.g. DB-26-1042)
         const orderDateObj = new Date(order.createdAt || Date.now());
-        const mm = String(orderDateObj.getMonth() + 1).padStart(2, '0');
-        const yyyy = String(orderDateObj.getFullYear());
-        const randomSuffix = Math.floor(10000000 + Math.random() * 90000000); // 8-digit random
-        const randomInvoiceNo = `DB-${mm}${yyyy}-${randomSuffix}`;
-        doc.text(randomInvoiceNo, 255, 60);
+        const yy = String(orderDateObj.getFullYear()).slice(-2);
+        const invoiceNo = `DB-${yy}-${String(order.id).padStart(4, '0')}`;
+        doc.text(invoiceNo, 255, 60);
 
         const orderDate = orderDateObj.toLocaleDateString('en-GB');
         doc.text(orderDate, 255, 100);
         doc.text(orderDate, 255, 112);
 
         doc.text('Order No.', 347, 60);
-        doc.text('Order Date', 347, 72);
-        doc.text('L.R. No.', 347, 100);
-        doc.text('L.R. Date', 347, 112);
+        doc.text(`OD-${order.id}`, 347, 72);
+        doc.text('Order Date', 347, 100);
+        doc.text(orderDate, 347, 112);
 
         // Right Box: Party Name (Buyer)
         const userAddressObj = order.shippingAddress;
@@ -224,6 +245,14 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.font('Helvetica').fontSize(7.5);
         doc.text(formattedBuyerAddress, 408, 50, { width: 160 });
         doc.text(`PHONE. : ${order.user?.phone || 'N/A'}`, 408, 88);
+        let buyerExtraY = 100;
+        if (order.user?.dlNo) {
+          doc.text(`D.L.No. : ${order.user.dlNo}`, 408, buyerExtraY);
+          buyerExtraY += 12;
+        }
+        if (order.user?.gstin) {
+          doc.text(`GSTIN : ${order.user.gstin}`, 408, buyerExtraY);
+        }
 
         // 2. Table Headers (y = 140 to 155)
         doc.rect(20, 140, 555, 15).fillColor('#d1d5db').fill();
@@ -527,8 +556,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.text('Terms & Conditions', 25, 725);
         doc.font('Helvetica').fontSize(8);
         doc.text('Goods once sold will not be taken back or exchanged.', 25, 737);
-        doc.text('All disputes subject to Jurisdication only.', 25, 747);
-        doc.text('Bills not paid due date will attract 24% interest.', 25, 757);
+        doc.text('All disputes subject to Delhi Jurisdication only.', 25, 747);
+        doc.text('Bills not paid due date will attract 1% interest.', 25, 757);
 
         doc.font('Helvetica-Bold').fontSize(9);
         doc.text(`FOR  ${sellerName}`, 300, 725, { width: 270, align: 'center' });

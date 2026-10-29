@@ -180,67 +180,126 @@ export default function PrescriptionsPage() {
           
           {prescriptions.length > 0 ? (
             <>
-              <div className="overflow-x-auto bg-white rounded-xl border border-slate-100 shadow-sm">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold text-slate-600">ID & Date</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Notes</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {prescriptions.map((presc) => (
-                    <tr key={presc.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-4">
-                        <span className="font-bold text-slate-800 block">#{presc.id}</span>
-                        <span className="text-xs text-slate-500">{new Date(presc.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          presc.status === 'Approved' ? 'bg-emerald-50 text-emerald-600' :
-                          presc.status === 'Rejected' ? 'bg-rose-50 text-rose-600' :
-                          'bg-amber-50 text-amber-600'
-                        }`}>
-                          {presc.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-slate-600 font-medium whitespace-normal min-w-[200px]">
-                        {presc.pharmacistNotes ? presc.pharmacistNotes : <span className="text-slate-400 italic">No notes</span>}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {presc.status === 'Approved' && presc.draftCart && (
-                            <button
-                              onClick={() => handleCheckoutDraft(presc.draftCart, presc.id)}
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200"
-                            >
-                              <ShoppingCart className="w-3.5 h-3.5" />
-                              Checkout Approved
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setSelectedPrescriptionUrl(presc.fileUrl.replace(/^\/uploads\//, '/api/file/'))}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors border border-brand-100"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleDeletePrescription(presc.id)}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors border border-rose-100"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+              {/* Desktop Table View (No horizontal scroll, fully responsive) */}
+              <div className="hidden md:block bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold text-slate-600 w-44">ID & Date</th>
+                      <th className="px-4 py-3 font-semibold text-slate-600 w-32">Status</th>
+                      <th className="px-4 py-3 font-semibold text-slate-600">Notes</th>
+                      <th className="px-4 py-3 font-semibold text-slate-600 text-right w-64">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {prescriptions.map((presc) => (
+                      <tr key={presc.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-4 align-top">
+                          <span className="font-bold text-slate-800 block">#{presc.id}</span>
+                          <span className="text-xs text-slate-500 block">
+                            {new Date(presc.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 align-top">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            presc.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                            presc.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                            'bg-amber-50 text-amber-600 border border-amber-100'
+                          }`}>
+                            {presc.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-slate-600 font-medium align-top break-words">
+                          {presc.pharmacistNotes ? presc.pharmacistNotes : <span className="text-slate-400 italic">No notes</span>}
+                        </td>
+                        <td className="px-4 py-4 text-right align-top">
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            {presc.status === 'Approved' && presc.draftCart && (
+                              <button
+                                onClick={() => handleCheckoutDraft(presc.draftCart, presc.id)}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200"
+                              >
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                Checkout Approved
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setSelectedPrescriptionUrl(presc.fileUrl.replace(/^\/uploads\//, '/api/file/'))}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors border border-brand-100"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleDeletePrescription(presc.id)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors border border-rose-100"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View (Zero horizontal scrolling) */}
+              <div className="md:hidden space-y-3">
+                {prescriptions.map((presc) => (
+                  <div key={presc.id} className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-bold text-slate-900 text-sm block">Prescription #{presc.id}</span>
+                        <span className="text-xs text-slate-500">
+                          {new Date(presc.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
+                        presc.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                        presc.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                        'bg-amber-50 text-amber-600 border border-amber-100'
+                      }`}>
+                        {presc.status}
+                      </span>
+                    </div>
+
+                    <div className="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                      <span className="font-bold text-slate-600 block mb-0.5">Pharmacist Notes:</span>
+                      <span className="text-slate-600 break-words">
+                        {presc.pharmacistNotes ? presc.pharmacistNotes : <span className="text-slate-400 italic">No notes</span>}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 flex-wrap">
+                      {presc.status === 'Approved' && presc.draftCart && (
+                        <button
+                          onClick={() => handleCheckoutDraft(presc.draftCart, presc.id)}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          Checkout Approved
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setSelectedPrescriptionUrl(presc.fileUrl.replace(/^\/uploads\//, '/api/file/'))}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors border border-brand-100"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleDeletePrescription(presc.id)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors border border-rose-100"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             
             {/* Pagination Controls */}
             {totalPages > 1 && (
