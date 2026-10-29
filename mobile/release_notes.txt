@@ -1,3 +1,13 @@
+# Release Notes - Version 1.0.5 (Build 19)
+
+## What's New
+- **Online Payment Auto-Confirmation**: Instant order confirmation upon successful payment via PhonePe/UPI.
+- **Real-Time Order Tracking**: Automatically syncs payment and delivery status upon app foregrounding and return from payment apps.
+- **Enhanced Account & Profile**: Upgraded buyer information and prescription management.
+- **Bug Fixes & Performance**: Enhanced reliability and security across all checkout flows.
+
+---
+
 # Release Notes - Version 1.0.4 (Build 18)
 
 ## What's New
