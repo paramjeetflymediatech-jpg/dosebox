@@ -91,7 +91,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         const sellerGST = settings.enterprise_gst || '07AAECJ0285F1ZQ';
 
         // Generate "Scan & Book / Improve Your Health" QR Code
-        const qrUrl = 'https://dosebox.in/blogs';
+        const qrUrl = 'https://margcompusoft.com/digital-health/index.html?id=0-187504-CBB415CC-0C47-4D2E-ABAB-B0774EAFBFF3';
         let qrBuffer: Buffer | null = null;
         try {
           qrBuffer = await QRCode.toBuffer(qrUrl, {
@@ -176,9 +176,13 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
           doc.text(brandName, 205, 5.5, { width: 195, align: 'center' });
         }
 
-        // Middle Header (Inside the box)
-        doc.font('Helvetica-Bold').fontSize(12).fillColor('#000080').text('GST INVOICE', 205, 25, { width: 195, align: 'center' });
-        doc.fontSize(10).text('CREDIT', 205, 40, { width: 195, align: 'center' });
+        // Dynamic Payment Mode (COD vs PREPAID)
+        const paymentMethodRaw = String(order.paymentMethod || '').trim().toLowerCase();
+        const isCod = paymentMethodRaw.includes('cod') || paymentMethodRaw.includes('cash');
+        const paymentModeText = isCod ? 'COD' : 'PREPAID';
+
+        // Middle Header (Inside the box - Clean & Centered)
+        doc.font('Helvetica-Bold').fontSize(13).fillColor('#000080').text('GST INVOICE', 205, 33, { width: 195, align: 'center' });
 
         // Middle Sub-grid
         doc.moveTo(205, 55).lineTo(400, 55).stroke(); // horizontal 1
@@ -189,6 +193,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         doc.moveTo(345, 55).lineTo(345, 140).stroke(); // Vert 2 in middle
 
         doc.font('Helvetica-Bold').fontSize(7.5).fillColor('black');
+        doc.text('Order Type', 207, 74);
         doc.text('Invoice No', 207, 60);
         doc.text('Invoice Date', 207, 100);
         doc.text('Due Date', 207, 112);
@@ -198,13 +203,14 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         const yy = String(orderDateObj.getFullYear()).slice(-2);
         const invoiceNo = `DB-${yy}-${String(order.id).padStart(4, '0')}`;
         doc.text(invoiceNo, 255, 60);
+        doc.text(paymentModeText, 255, 74);
 
         const orderDate = orderDateObj.toLocaleDateString('en-GB');
         doc.text(orderDate, 255, 100);
         doc.text(orderDate, 255, 112);
 
         doc.text('Order No.', 347, 60);
-        doc.text(`OD-${order.id}`, 347, 72);
+        doc.text(`OD-${order.id}`, 347, 74);
         doc.text('Order Date', 347, 100);
         doc.text(orderDate, 347, 112);
 
@@ -319,17 +325,17 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             totalValue += value;
             const mrpVal = Number(medicine.price || rate);
             const rateVal = Number(item.price);
-            
+
             const itemProductDiscount = Math.max(0, mrpVal - rateVal) * qty;
-            const itemProportionalCouponDiscount = itemsTotalBilling > 0 
-              ? (orderLevelDiscount * (rateVal * qty)) / itemsTotalBilling 
+            const itemProportionalCouponDiscount = itemsTotalBilling > 0
+              ? (orderLevelDiscount * (rateVal * qty)) / itemsTotalBilling
               : 0;
             const itemTotalDiscount = itemProductDiscount + itemProportionalCouponDiscount;
             const itemTotalMRP = mrpVal * qty;
-            const discountPct = itemTotalMRP > 0 
-              ? Math.round((itemTotalDiscount / itemTotalMRP) * 100) 
+            const discountPct = itemTotalMRP > 0
+              ? Math.round((itemTotalDiscount / itemTotalMRP) * 100)
               : 0;
-            
+
             const mrp = mrpVal.toFixed(2); // Dynamic MRP
 
             doc.font('Helvetica').fontSize(8);
