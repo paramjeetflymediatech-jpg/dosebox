@@ -46,6 +46,7 @@
     "backend/dist",
     "dist",
     "mobile",
-    "mobile/**/*"
+    "mobile/**/*",
+    ".next"
   ]
 }

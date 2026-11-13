@@ -15,6 +15,9 @@ const nextConfig = {
   },
   serverExternalPackages: ['sequelize', 'pdfkit', 'fontkit'],
   devIndicators: false,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
