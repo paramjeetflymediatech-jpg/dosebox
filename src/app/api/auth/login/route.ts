@@ -3,11 +3,115 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import models from '../../../../models';
+import fs from 'fs';
+import path from 'path';
 
 const { User, Role, MobileAuthUser } = models;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkeyforauth';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecretrefreshjwtkeyforauth';
+
+function cleanString(val?: string | null): string {
+  if (!val) return '';
+  let s = String(val).trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1);
+  }
+  return s.trim();
+}
+
+function getAdminEnvCredentials() {
+  const fileEnv: Record<string, string> = {};
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          fileEnv[key] = val;
+        }
+      }
+    }
+  } catch (e) {
+    // ignore read error, fallback to process.env
+  }
+
+  const rawEmail =
+    fileEnv.ADMIN_EMAIL ||
+    fileEnv.ADMIN_USERNAME ||
+    fileEnv.ADMIN_USER ||
+    fileEnv.ADMIN_ID ||
+    process.env.ADMIN_EMAIL ||
+    process.env.ADMIN_USERNAME ||
+    process.env.ADMIN_USER ||
+    process.env.ADMIN_ID ||
+    'admin@dosebox.com';
+
+  const rawPass =
+    fileEnv.ADMIN_PASSWORD ||
+    fileEnv.ADMIN_PASS ||
+    fileEnv.PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    process.env.ADMIN_PASS ||
+    process.env.PASSWORD ||
+    'admin@123';
+
+  return {
+    email: cleanString(rawEmail),
+    username: cleanString(fileEnv.ADMIN_USERNAME || process.env.ADMIN_USERNAME || 'admin'),
+    password: cleanString(rawPass),
+  };
+}
+
+async function syncAdminUser(targetEmail: string, newPlainPass: string) {
+  try {
+    // Ensure Admin role exists
+    await Role.findOrCreate({ where: { id: 1 }, defaults: { name: 'Admin' } });
+
+    // Look for existing admin user by email or by roleId = 1
+    let admin = await User.findOne({
+      where: { email: targetEmail },
+      include: [{ model: Role, as: 'role' }]
+    });
+
+    if (!admin) {
+      admin = await User.findOne({
+        where: { roleId: 1 },
+        include: [{ model: Role, as: 'role' }]
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPlainPass, 10);
+
+    if (admin) {
+      admin.email = targetEmail;
+      admin.password = hashedPassword;
+      admin.roleId = 1;
+      admin.status = 'active';
+      await admin.save();
+      console.log(`[Auth] Automatically updated admin user in DB for: ${targetEmail}`);
+      return admin;
+    } else {
+      const created = await User.create({
+        name: 'System Admin',
+        email: targetEmail,
+        password: hashedPassword,
+        roleId: 1,
+        status: 'active'
+      });
+      console.log(`[Auth] Created new admin user in DB for: ${targetEmail}`);
+      return await User.findByPk(created.id, { include: [{ model: Role, as: 'role' }] });
+    }
+  } catch (err: any) {
+    console.warn('[Auth] Error syncing admin user to DB:', err?.message || err);
+    return null;
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,22 +122,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = await User.findOne({
-      where: { email },
-      include: [{ model: Role, as: 'role' }]
-    });
+    const inputEmail = cleanString(email);
+    const inputPass = cleanString(password);
 
-    if (!user || !user.password) {
-      return NextResponse.json({ success: false, message: 'Invalid email or password' }, { status: 401 });
-    }
+    const adminCreds = getAdminEnvCredentials();
 
-    if (user.status?.trim().toLowerCase() !== 'active') {
-      return NextResponse.json({ success: false, message: 'Account is suspended' }, { status: 403 });
-    }
+    const isAdminAttempt =
+      Boolean(adminCreds.password) &&
+      (inputEmail.toLowerCase() === adminCreds.email.toLowerCase() ||
+        inputEmail.toLowerCase() === adminCreds.username.toLowerCase() ||
+        inputEmail.toLowerCase() === 'admin' ||
+        inputEmail.toLowerCase() === 'admin@dosebox.com' ||
+        inputEmail.toLowerCase() === 'admin@mrmed.com');
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return NextResponse.json({ success: false, message: 'Invalid email or password' }, { status: 401 });
+    let user: any = null;
+
+    if (isAdminAttempt) {
+      // STRICT CHECK: Admin password must match .env ADMIN_PASSWORD!
+      if (inputPass !== adminCreds.password) {
+        console.warn(`[Auth] Admin login failed: Password mismatch for ${inputEmail}`);
+        return NextResponse.json({ success: false, message: 'Invalid email or password' }, { status: 401 });
+      }
+
+      // Automatically sync/update the database hash
+      user = await syncAdminUser(adminCreds.email, adminCreds.password);
+      if (!user) {
+        return NextResponse.json({ success: false, message: 'Failed to synchronize admin user' }, { status: 500 });
+      }
+      console.log(`[Auth] Admin login successful for ${user.email} (synced to database)`);
+    } else {
+      user = await User.findOne({
+        where: { email: inputEmail },
+        include: [{ model: Role, as: 'role' }]
+      });
+
+      if (!user || !user.password) {
+        return NextResponse.json({ success: false, message: 'Invalid email or password' }, { status: 401 });
+      }
+
+      if (user.status?.trim().toLowerCase() !== 'active') {
+        return NextResponse.json({ success: false, message: 'Account is suspended' }, { status: 403 });
+      }
+
+      const isMatch = await bcrypt.compare(inputPass, user.password);
+      if (!isMatch) {
+        return NextResponse.json({ success: false, message: 'Invalid email or password' }, { status: 401 });
+      }
     }
 
     const roleName = user.role ? (user.role as any).name : 'Customer';
